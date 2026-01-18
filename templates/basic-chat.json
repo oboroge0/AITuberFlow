@@ -1,0 +1,53 @@
+{
+  "id": "template-basic-chat",
+  "name": "Basic Chat Response",
+  "description": "A simple workflow that takes input, generates a response using OpenAI, and outputs to the console.",
+  "nodes": [
+    {
+      "id": "node-1",
+      "type": "manual-input",
+      "position": { "x": 100, "y": 200 },
+      "config": {
+        "placeholder": "Enter your message...",
+        "inputText": "Hello! How are you today?"
+      }
+    },
+    {
+      "id": "node-2",
+      "type": "openai-llm",
+      "position": { "x": 400, "y": 200 },
+      "config": {
+        "apiKey": "",
+        "model": "gpt-4o-mini",
+        "systemPrompt": "You are a friendly and helpful AI assistant. Keep your responses concise and engaging.",
+        "temperature": 0.7,
+        "maxTokens": 256
+      }
+    },
+    {
+      "id": "node-3",
+      "type": "console-output",
+      "position": { "x": 700, "y": 200 },
+      "config": {
+        "prefix": "[AI Response]",
+        "logLevel": "info"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn-1",
+      "from": { "nodeId": "node-1", "port": "text" },
+      "to": { "nodeId": "node-2", "port": "prompt" }
+    },
+    {
+      "id": "conn-2",
+      "from": { "nodeId": "node-2", "port": "response" },
+      "to": { "nodeId": "node-3", "port": "text" }
+    }
+  ],
+  "character": {
+    "name": "AI Assistant",
+    "personality": "Friendly, helpful, and concise"
+  }
+}

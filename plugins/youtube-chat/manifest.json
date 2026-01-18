@@ -1,0 +1,68 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "youtube-chat",
+  "name": "YouTube Chat",
+  "version": "1.0.0",
+  "description": "Fetch live chat messages from YouTube streams. Emits events for regular messages, superchats, and memberships.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "input",
+  "node": {
+    "inputs": [],
+    "outputs": [
+      {
+        "id": "message",
+        "type": "Message",
+        "description": "The latest chat message"
+      },
+      {
+        "id": "author",
+        "type": "string",
+        "description": "Message author name"
+      },
+      {
+        "id": "text",
+        "type": "string",
+        "description": "Message text content"
+      }
+    ],
+    "events": {
+      "emits": ["message.received", "message.superchat", "message.membership"],
+      "listens": []
+    }
+  },
+  "config": {
+    "videoId": {
+      "type": "string",
+      "label": "Video ID",
+      "description": "YouTube video ID or full URL",
+      "required": true
+    },
+    "apiKey": {
+      "type": "string",
+      "label": "YouTube API Key",
+      "description": "Your YouTube Data API v3 key",
+      "required": true
+    },
+    "pollInterval": {
+      "type": "number",
+      "label": "Poll Interval (ms)",
+      "description": "How often to check for new messages",
+      "default": 3000,
+      "min": 1000,
+      "max": 10000
+    },
+    "filterBots": {
+      "type": "boolean",
+      "label": "Filter Bot Messages",
+      "description": "Ignore messages from known bots",
+      "default": true
+    }
+  },
+  "dependencies": {
+    "python": ["httpx>=0.26.0"]
+  }
+}

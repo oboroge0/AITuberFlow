@@ -1,0 +1,76 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "switch",
+  "name": "Switch",
+  "version": "1.0.0",
+  "description": "Conditional routing based on input values. Routes data to different outputs based on conditions.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "control",
+  "node": {
+    "inputs": [
+      {
+        "id": "value",
+        "type": "any",
+        "description": "Value to evaluate"
+      },
+      {
+        "id": "data",
+        "type": "any",
+        "description": "Data to pass through"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "true",
+        "type": "any",
+        "description": "Output when condition is true"
+      },
+      {
+        "id": "false",
+        "type": "any",
+        "description": "Output when condition is false"
+      },
+      {
+        "id": "match",
+        "type": "any",
+        "description": "Output when value matches"
+      }
+    ],
+    "events": {
+      "emits": [],
+      "listens": []
+    }
+  },
+  "config": {
+    "mode": {
+      "type": "select",
+      "label": "Mode",
+      "description": "How to evaluate the condition",
+      "default": "truthy",
+      "options": [
+        {"label": "Truthy/Falsy", "value": "truthy"},
+        {"label": "Equals", "value": "equals"},
+        {"label": "Contains", "value": "contains"},
+        {"label": "Regex Match", "value": "regex"},
+        {"label": "Greater Than", "value": "gt"},
+        {"label": "Less Than", "value": "lt"}
+      ]
+    },
+    "compareValue": {
+      "type": "string",
+      "label": "Compare Value",
+      "description": "Value to compare against (for equals/contains/regex/gt/lt modes)",
+      "default": ""
+    },
+    "caseSensitive": {
+      "type": "boolean",
+      "label": "Case Sensitive",
+      "description": "Use case-sensitive comparison",
+      "default": false
+    }
+  }
+}

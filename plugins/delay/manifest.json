@@ -1,0 +1,65 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "delay",
+  "name": "Delay",
+  "version": "1.0.0",
+  "description": "Add a time delay before passing data to the next node. Useful for pacing responses.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "control",
+  "node": {
+    "inputs": [
+      {
+        "id": "input",
+        "type": "any",
+        "description": "Data to pass through after delay"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "output",
+        "type": "any",
+        "description": "Delayed data output"
+      }
+    ],
+    "events": {
+      "emits": [],
+      "listens": []
+    }
+  },
+  "config": {
+    "delayMs": {
+      "type": "number",
+      "label": "Delay (ms)",
+      "description": "Delay time in milliseconds",
+      "default": 1000,
+      "min": 0,
+      "max": 60000
+    },
+    "randomize": {
+      "type": "boolean",
+      "label": "Randomize",
+      "description": "Add random variation to delay",
+      "default": false
+    },
+    "randomMin": {
+      "type": "number",
+      "label": "Random Min (ms)",
+      "description": "Minimum delay when randomized",
+      "default": 500,
+      "min": 0,
+      "max": 60000
+    },
+    "randomMax": {
+      "type": "number",
+      "label": "Random Max (ms)",
+      "description": "Maximum delay when randomized",
+      "default": 2000,
+      "min": 0,
+      "max": 60000
+    }
+  }
+}

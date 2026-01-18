@@ -1,0 +1,46 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "console-output",
+  "name": "Console Output",
+  "version": "1.0.0",
+  "description": "Display text in the execution log panel. Useful for debugging and monitoring workflow output.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "output",
+  "node": {
+    "inputs": [
+      {
+        "id": "text",
+        "type": "string",
+        "description": "The text to display in the log"
+      }
+    ],
+    "outputs": [],
+    "events": {
+      "emits": [],
+      "listens": []
+    }
+  },
+  "config": {
+    "prefix": {
+      "type": "string",
+      "label": "Prefix",
+      "description": "Prefix to add before each output message",
+      "default": "[Output]"
+    },
+    "logLevel": {
+      "type": "select",
+      "label": "Log Level",
+      "description": "The log level for output messages",
+      "default": "info",
+      "options": [
+        {"label": "Info", "value": "info"},
+        {"label": "Debug", "value": "debug"},
+        {"label": "Warning", "value": "warning"}
+      ]
+    }
+  }
+}

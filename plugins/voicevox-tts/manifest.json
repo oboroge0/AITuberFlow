@@ -1,0 +1,87 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "voicevox-tts",
+  "name": "VOICEVOX TTS",
+  "version": "1.0.0",
+  "description": "Convert text to speech using VOICEVOX engine. Requires VOICEVOX to be running locally.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "output",
+  "node": {
+    "inputs": [
+      {
+        "id": "text",
+        "type": "string",
+        "description": "Text to convert to speech"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "audioUrl",
+        "type": "string",
+        "description": "URL or path to generated audio"
+      },
+      {
+        "id": "duration",
+        "type": "number",
+        "description": "Audio duration in seconds"
+      }
+    ],
+    "events": {
+      "emits": ["audio.generated", "audio.playing", "audio.finished"],
+      "listens": []
+    }
+  },
+  "config": {
+    "host": {
+      "type": "string",
+      "label": "VOICEVOX Host",
+      "description": "VOICEVOX engine host URL",
+      "default": "http://localhost:50021"
+    },
+    "speaker": {
+      "type": "number",
+      "label": "Speaker ID",
+      "description": "VOICEVOX speaker/character ID (e.g., 1=四国めたん, 3=ずんだもん)",
+      "default": 1,
+      "min": 0,
+      "max": 100
+    },
+    "speedScale": {
+      "type": "number",
+      "label": "Speed",
+      "description": "Speech speed (0.5-2.0)",
+      "default": 1.0,
+      "min": 0.5,
+      "max": 2.0
+    },
+    "pitchScale": {
+      "type": "number",
+      "label": "Pitch",
+      "description": "Voice pitch (-0.15 to 0.15)",
+      "default": 0.0,
+      "min": -0.15,
+      "max": 0.15
+    },
+    "volumeScale": {
+      "type": "number",
+      "label": "Volume",
+      "description": "Audio volume (0.0-2.0)",
+      "default": 1.0,
+      "min": 0.0,
+      "max": 2.0
+    },
+    "outputDir": {
+      "type": "string",
+      "label": "Output Directory",
+      "description": "Directory to save audio files (optional)",
+      "default": ""
+    }
+  },
+  "dependencies": {
+    "python": ["httpx>=0.26.0"]
+  }
+}

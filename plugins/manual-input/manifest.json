@@ -1,0 +1,41 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "manual-input",
+  "name": "Manual Input",
+  "version": "1.0.0",
+  "description": "Enter text manually to send downstream. Useful for testing workflows.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "input",
+  "node": {
+    "inputs": [],
+    "outputs": [
+      {
+        "id": "text",
+        "type": "string",
+        "description": "The input text"
+      }
+    ],
+    "events": {
+      "emits": [],
+      "listens": []
+    }
+  },
+  "config": {
+    "placeholder": {
+      "type": "string",
+      "label": "Placeholder",
+      "description": "Placeholder text for the input field",
+      "default": "Enter text..."
+    },
+    "inputText": {
+      "type": "textarea",
+      "label": "Input Text",
+      "description": "Text to send downstream when executed",
+      "default": ""
+    }
+  }
+}

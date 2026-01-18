@@ -1,0 +1,77 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "openai-llm",
+  "name": "OpenAI LLM",
+  "version": "1.0.0",
+  "description": "Generate text using OpenAI GPT models. Supports GPT-4o, GPT-4 Turbo, and GPT-4o Mini.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "process",
+  "node": {
+    "inputs": [
+      {
+        "id": "prompt",
+        "type": "string",
+        "description": "The input prompt to send to the model"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "response",
+        "type": "string",
+        "description": "The generated response from the model"
+      }
+    ],
+    "events": {
+      "emits": ["response.generated"],
+      "listens": []
+    }
+  },
+  "config": {
+    "apiKey": {
+      "type": "string",
+      "label": "API Key",
+      "description": "Your OpenAI API key",
+      "required": true
+    },
+    "model": {
+      "type": "select",
+      "label": "Model",
+      "description": "The GPT model to use",
+      "default": "gpt-4o-mini",
+      "options": [
+        {"label": "GPT-4o Mini", "value": "gpt-4o-mini"},
+        {"label": "GPT-4o", "value": "gpt-4o"},
+        {"label": "GPT-4 Turbo", "value": "gpt-4-turbo"}
+      ]
+    },
+    "systemPrompt": {
+      "type": "textarea",
+      "label": "System Prompt",
+      "description": "The system message that sets the AI's behavior",
+      "default": "You are a helpful assistant."
+    },
+    "temperature": {
+      "type": "number",
+      "label": "Temperature",
+      "description": "Controls randomness. Higher = more creative, Lower = more focused (0-2)",
+      "default": 0.7,
+      "min": 0,
+      "max": 2
+    },
+    "maxTokens": {
+      "type": "number",
+      "label": "Max Tokens",
+      "description": "Maximum number of tokens in the response",
+      "default": 1024,
+      "min": 1,
+      "max": 4096
+    }
+  },
+  "dependencies": {
+    "python": ["openai>=1.0.0"]
+  }
+}
