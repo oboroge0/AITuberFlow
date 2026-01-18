@@ -1,140 +1,265 @@
 # AITuberFlow
 
-A visual workflow editor for building AI-powered virtual streamers.
+**ノーコードでAITuberを作成できるビジュアルワークフローエディタ**
 
-## Overview
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org/)
 
-AITuberFlow allows users to create custom AITuber pipelines by connecting nodes in a visual editor. Build event-driven AI characters without writing code.
+---
 
-## Features (MVP Phase 1)
+## 概要
 
-- **Visual Workflow Editor**: Drag-and-drop node editor powered by React Flow
-- **Node Connection System**: Connect nodes to create data pipelines
-- **Basic Nodes**: Manual Input, OpenAI LLM, Console Output
-- **Workflow Persistence**: Save and load workflows with SQLite
-- **Real-time Execution**: WebSocket-based live execution logs
+AITuberFlowは、AIを活用したバーチャル配信者（AITuber）のパイプラインを視覚的に構築できるツールです。ノードをドラッグ＆ドロップで配置し、接続するだけで、コードを書かずにAIキャラクターを作成できます。
 
-## Project Structure
+### 主な特徴
 
-```
-aituber-flow/
-├── apps/
-│   ├── web/           # Next.js frontend
-│   └── server/        # FastAPI backend
-├── packages/
-│   └── sdk/           # Plugin SDK
-├── plugins/           # Official plugins
-├── templates/         # Workflow templates
-└── docs/
-```
+- **ビジュアルエディタ** - 直感的なドラッグ＆ドロップ操作
+- **プラグインシステム** - 機能を自由に拡張可能
+- **リアルタイム実行** - WebSocketによるライブログ表示
+- **VOICEVOX連携** - 日本語音声合成に対応
 
-## Getting Started
+---
 
-### Prerequisites
+## スクリーンショット
 
-- Node.js 18+ and npm
-- Python 3.11+
-- [uv](https://docs.astral.sh/uv/) (recommended) or pip
+![ワークフローエディタ](docs/images/editor-screenshot.png)
+*ノードを接続してワークフローを構築*
 
-### Backend Setup (using uv)
+---
+
+## 機能
+
+### 入力ノード
+| ノード | 説明 |
+|--------|------|
+| **Manual Input** | テキストを手動入力 |
+| **YouTube Chat** | YouTubeライブのチャットを取得 |
+| **Twitch Chat** | Twitchチャットを取得 |
+
+### 処理ノード
+| ノード | 説明 |
+|--------|------|
+| **LLM (OpenAI)** | GPTモデルでテキスト生成 |
+| **Switch** | 条件分岐 |
+| **Delay** | 遅延処理 |
+
+### 出力ノード
+| ノード | 説明 |
+|--------|------|
+| **TTS (VOICEVOX)** | テキストを音声に変換 |
+| **Console Output** | ログに出力 |
+
+---
+
+## セットアップ
+
+### 必要な環境
+
+- **Node.js** 18以上
+- **Python** 3.11以上
+- **VOICEVOX** （音声合成を使用する場合）
+
+### 1. バックエンドのセットアップ
 
 ```bash
 cd apps/server
 
-# Install dependencies and create virtual environment
-uv sync
-
-# Copy environment file
-cp .env.example .env
-
-# Start the server
-uv run python main.py
-```
-
-### Backend Setup (using pip)
-
-```bash
-cd apps/server
-
-# Create virtual environment
+# 仮想環境を作成
 python -m venv .venv
 
-# Activate virtual environment
+# 仮想環境を有効化
 # Windows:
 .venv\Scripts\activate
 # macOS/Linux:
 source .venv/bin/activate
 
-# Install dependencies
+# 依存関係をインストール
 pip install -r requirements.txt
 
-# Copy environment file
+# 環境設定ファイルをコピー
 cp .env.example .env
 
-# Start the server
+# サーバーを起動
 python main.py
 ```
 
-The backend will be available at `http://localhost:8000`.
+バックエンドは `http://localhost:8001` で起動します。
 
-### Frontend Setup
+### 2. フロントエンドのセットアップ
 
 ```bash
 cd apps/web
 
-# Install dependencies
+# 依存関係をインストール
 npm install
 
-# Copy environment file
+# 環境設定ファイルをコピー
 cp .env.example .env.local
 
-# Start development server
+# 開発サーバーを起動
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:3000`.
+フロントエンドは `http://localhost:3000` で起動します。
 
-## Usage
+### 3. VOICEVOX（オプション）
 
-1. Open `http://localhost:3000` in your browser
-2. Click "New Workflow" to create a workflow
-3. Drag nodes from the sidebar onto the canvas
-4. Connect nodes by dragging from output ports to input ports
-5. Click on a node to configure its settings
-6. Click "Save" to persist your workflow
-7. Click "Start" to execute the workflow
+音声合成を使用する場合は、[VOICEVOX](https://voicevox.hiroshiba.jp/)をインストールして起動してください。
 
-## Basic Workflow Example
+デフォルトでは `http://localhost:50021` に接続します。
 
-1. Add a **Manual Input** node - configure some input text
-2. Add an **OpenAI LLM** node - add your API key and system prompt
-3. Add a **Console Output** node
-4. Connect: Manual Input → OpenAI LLM → Console Output
-5. Run the workflow to see the AI response in the log panel
+---
 
-## API Documentation
+## 使い方
 
-When the backend is running, visit `http://localhost:8000/docs` for interactive API documentation.
+### 基本的な流れ
 
-## Plugin Development
+1. ブラウザで `http://localhost:3000` を開く
+2. 「New Workflow」をクリックして新しいワークフローを作成
+3. サイドバーからノードをキャンバスにドラッグ
+4. ノード間を接続（出力ポートから入力ポートへドラッグ）
+5. ノードをクリックして設定を変更
+6. 「Run Workflow」で実行
 
-See `packages/sdk/` for the Plugin SDK documentation.
+### サンプルワークフロー：AIチャットボット
 
-Basic plugin structure:
-
-```python
-from aituber_flow_sdk import BaseNode, NodeContext
-
-class MyNode(BaseNode):
-    async def setup(self, config: dict, context: NodeContext) -> None:
-        # Initialize with configuration
-        pass
-
-    async def execute(self, inputs: dict, context: NodeContext) -> dict:
-        # Process inputs and return outputs
-        return {"output": "result"}
+```
+[Manual Input] → [LLM] → [TTS] → [Console Output]
 ```
 
-## License
+1. **Manual Input**: テキストを入力
+2. **LLM**: OpenAI APIキーとシステムプロンプトを設定
+3. **TTS**: VOICEVOXのスピーカーを選択
+4. **Console Output**: 結果を確認
 
-MIT
+実行すると、入力テキストに対してAIが応答し、音声で読み上げます。
+
+---
+
+## プロジェクト構成
+
+```
+AITuberFlow/
+├── apps/
+│   ├── web/           # Next.js フロントエンド
+│   └── server/        # FastAPI バックエンド
+├── packages/
+│   └── sdk/           # プラグインSDK
+├── plugins/           # 公式プラグイン
+│   ├── manual-input/
+│   ├── openai-llm/
+│   ├── voicevox-tts/
+│   ├── console-output/
+│   ├── youtube-chat/
+│   ├── twitch-chat/
+│   ├── switch/
+│   └── delay/
+├── templates/         # ワークフローテンプレート
+└── docs/              # ドキュメント
+```
+
+---
+
+## プラグイン開発
+
+独自のノードを作成できます。
+
+```python
+from aituber_flow_sdk import BaseNode, NodeContext, Event
+
+class MyCustomNode(BaseNode):
+    async def setup(self, config: dict, context: NodeContext) -> None:
+        """初期化処理"""
+        self.my_setting = config.get("mySetting", "default")
+
+    async def execute(self, inputs: dict, context: NodeContext) -> dict:
+        """メイン処理"""
+        input_text = inputs.get("text", "")
+
+        # ログを出力
+        await context.log(f"処理中: {input_text}")
+
+        # 結果を返す
+        return {"output": f"処理結果: {input_text}"}
+
+    async def teardown(self) -> None:
+        """終了処理"""
+        pass
+```
+
+詳細は `packages/sdk/README.md` を参照してください。
+
+---
+
+## API ドキュメント
+
+バックエンド起動後、`http://localhost:8001/docs` でSwagger UIを確認できます。
+
+### 主要なエンドポイント
+
+| メソッド | パス | 説明 |
+|----------|------|------|
+| GET | `/api/workflows` | ワークフロー一覧 |
+| POST | `/api/workflows` | ワークフロー作成 |
+| GET | `/api/workflows/{id}` | ワークフロー取得 |
+| PUT | `/api/workflows/{id}` | ワークフロー更新 |
+| DELETE | `/api/workflows/{id}` | ワークフロー削除 |
+| POST | `/api/workflows/{id}/start` | ワークフロー実行 |
+| POST | `/api/workflows/{id}/stop` | ワークフロー停止 |
+
+---
+
+## トラブルシューティング
+
+### バックエンドに接続できない
+
+- サーバーが起動しているか確認（`http://localhost:8001/health`）
+- ファイアウォールの設定を確認
+
+### VOICEVOXに接続できない
+
+- VOICEVOXが起動しているか確認
+- TTSノードのホスト設定を確認（デフォルト: `http://localhost:50021`）
+
+### 音声が再生されない
+
+- ブラウザの自動再生ポリシーにより、最初の再生がブロックされる場合があります
+- ページをクリックしてからワークフローを実行してください
+
+---
+
+## 今後の予定
+
+- [ ] より多くのLLMプロバイダー対応（Claude, Gemini等）
+- [ ] 画像生成ノード
+- [ ] OBS連携
+- [ ] キャラクター状態管理（感情、記憶）
+- [ ] ワークフローのインポート/エクスポート
+
+---
+
+## コントリビューション
+
+プルリクエストを歓迎します！
+
+1. このリポジトリをフォーク
+2. 機能ブランチを作成 (`git checkout -b feature/amazing-feature`)
+3. 変更をコミット (`git commit -m 'Add amazing feature'`)
+4. ブランチをプッシュ (`git push origin feature/amazing-feature`)
+5. プルリクエストを作成
+
+---
+
+## ライセンス
+
+MIT License - 詳細は [LICENSE](LICENSE) を参照してください。
+
+---
+
+## 謝辞
+
+- [React Flow](https://reactflow.dev/) - ノードエディタライブラリ
+- [VOICEVOX](https://voicevox.hiroshiba.jp/) - 無料の音声合成エンジン
+- [FastAPI](https://fastapi.tiangolo.com/) - Python Webフレームワーク
+- [Next.js](https://nextjs.org/) - React フレームワーク
