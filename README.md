@@ -62,6 +62,25 @@ AITuberFlowは、AIを活用したバーチャル配信者（AITuber）のパイ
 
 ### 1. バックエンドのセットアップ
 
+#### uv を使用する場合（推奨）
+
+[uv](https://docs.astral.sh/uv/) は高速なPythonパッケージマネージャーです。
+
+```bash
+cd apps/server
+
+# 依存関係のインストールと仮想環境の作成を一括で実行
+uv sync
+
+# 環境設定ファイルをコピー
+cp .env.example .env
+
+# サーバーを起動
+uv run python main.py
+```
+
+#### pip を使用する場合
+
 ```bash
 cd apps/server
 
