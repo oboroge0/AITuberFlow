@@ -23,7 +23,7 @@ AITuberFlowは、AIを活用したバーチャル配信者（AITuber）のパイ
 
 ## スクリーンショット
 
-![ワークフローエディタ](docs/images/editor-screenshot.png)
+![ワークフローエディタ](docs/images/image.png)
 *ノードを接続してワークフローを構築*
 
 ---
