@@ -115,6 +115,69 @@ async def delete_workflow(workflow_id: str, db: Session = Depends(get_db)):
     return {"status": "deleted"}
 
 
+@router.post("/{workflow_id}/duplicate", response_model=dict)
+async def duplicate_workflow(workflow_id: str, db: Session = Depends(get_db)):
+    """Duplicate a workflow."""
+    db_workflow = db.query(WorkflowDB).filter(WorkflowDB.id == workflow_id).first()
+    if not db_workflow:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+
+    new_id = str(uuid4())
+    new_workflow = WorkflowDB(
+        id=new_id,
+        name=f"{db_workflow.name} (Copy)",
+        description=db_workflow.description,
+    )
+    new_workflow.nodes = db_workflow.nodes.copy() if db_workflow.nodes else []
+    new_workflow.connections = db_workflow.connections.copy() if db_workflow.connections else []
+    new_workflow.character = db_workflow.character.copy() if db_workflow.character else {}
+
+    db.add(new_workflow)
+    db.commit()
+    db.refresh(new_workflow)
+
+    return workflow_to_response(new_workflow)
+
+
+@router.get("/{workflow_id}/export", response_model=dict)
+async def export_workflow(workflow_id: str, db: Session = Depends(get_db)):
+    """Export a workflow as JSON."""
+    db_workflow = db.query(WorkflowDB).filter(WorkflowDB.id == workflow_id).first()
+    if not db_workflow:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+
+    return {
+        "name": db_workflow.name,
+        "description": db_workflow.description,
+        "nodes": db_workflow.nodes,
+        "connections": db_workflow.connections,
+        "character": db_workflow.character,
+        "exportedAt": datetime.utcnow().isoformat(),
+        "version": "1.0",
+    }
+
+
+@router.post("/import", response_model=dict)
+async def import_workflow(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Import a workflow from JSON."""
+    workflow_id = str(uuid4())
+
+    db_workflow = WorkflowDB(
+        id=workflow_id,
+        name=data.get("name", "Imported Workflow"),
+        description=data.get("description"),
+    )
+    db_workflow.nodes = data.get("nodes", [])
+    db_workflow.connections = data.get("connections", [])
+    db_workflow.character = data.get("character", {"name": "AI Assistant", "personality": "Friendly"})
+
+    db.add(db_workflow)
+    db.commit()
+    db.refresh(db_workflow)
+
+    return workflow_to_response(db_workflow)
+
+
 @router.post("/{workflow_id}/start")
 async def start_workflow(
     workflow_id: str,

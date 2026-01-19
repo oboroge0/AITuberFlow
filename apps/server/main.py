@@ -107,6 +107,21 @@ async def join(sid, data):
 
         executor.set_log_callback(workflow_id, log_callback)
 
+        # Set up status callback for node status updates
+        async def status_callback(node_id, status, data=None):
+            await sio.emit(
+                "node.status",
+                {
+                    "nodeId": node_id,
+                    "status": status,
+                    "data": data,
+                    "timestamp": __import__("datetime").datetime.utcnow().isoformat(),
+                },
+                room=f"workflow:{workflow_id}",
+            )
+
+        executor.set_status_callback(workflow_id, status_callback)
+
         # Set up event callback for audio events
         async def event_callback(event):
             if event.type == "audio.generated":

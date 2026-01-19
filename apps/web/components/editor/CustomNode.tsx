@@ -310,7 +310,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const getStatusText = () => {
     if (status?.status === 'running') return 'Processing...';
     if (status?.status === 'error') return 'Error occurred';
-    if (status?.status === 'success') return 'Completed';
+    if (status?.status === 'completed') return 'Completed';
 
     // Show config-based status
     if (data.type === 'openai-llm' && data.config?.model) {
@@ -440,7 +440,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           <span className="w-3 h-3 rounded-full bg-yellow-400 animate-pulse block" />
         </div>
       )}
-      {status?.status === 'success' && (
+      {status?.status === 'completed' && (
         <div className="absolute -top-1 -right-1">
           <span className="w-3 h-3 rounded-full bg-green-400 block" />
         </div>

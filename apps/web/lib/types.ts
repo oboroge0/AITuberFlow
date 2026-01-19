@@ -116,7 +116,7 @@ export interface ExecutionLog {
 
 export interface NodeStatus {
   nodeId: string;
-  status: 'idle' | 'running' | 'success' | 'error';
+  status: 'idle' | 'running' | 'completed' | 'error';
   data?: any;
 }
 

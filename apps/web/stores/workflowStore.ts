@@ -277,7 +277,10 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   },
 
   // Execution actions
-  setExecuting: (executing) => set({ isExecuting: executing }),
+  setExecuting: (executing) => set({
+    isExecuting: executing,
+    nodeStatuses: executing ? {} : {}, // Clear statuses when starting
+  }),
 
   addLog: (log) => {
     const newLog: ExecutionLog = {

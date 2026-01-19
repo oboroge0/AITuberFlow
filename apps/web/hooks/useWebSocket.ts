@@ -43,7 +43,7 @@ export function useWebSocket(workflowId: string | null) {
     socket.on('node.status', (data: { nodeId: string; status: string; data?: any }) => {
       setNodeStatus(
         data.nodeId,
-        data.status as 'idle' | 'running' | 'success' | 'error',
+        data.status as 'idle' | 'running' | 'completed' | 'error',
         data.data
       );
     });

@@ -63,6 +63,23 @@ class ApiClient {
     });
   }
 
+  async duplicateWorkflow(id: string): Promise<ApiResponse<Workflow>> {
+    return this.request<Workflow>(`/api/workflows/${id}/duplicate`, {
+      method: 'POST',
+    });
+  }
+
+  async exportWorkflow(id: string): Promise<ApiResponse<WorkflowExport>> {
+    return this.request<WorkflowExport>(`/api/workflows/${id}/export`);
+  }
+
+  async importWorkflow(data: WorkflowExport): Promise<ApiResponse<Workflow>> {
+    return this.request<Workflow>('/api/workflows/import', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Execution endpoints
   async startWorkflow(
     id: string,
@@ -122,6 +139,19 @@ export interface TemplateSummary {
   description: string;
   nodeCount: number;
   connectionCount: number;
+}
+
+export interface WorkflowExport {
+  name: string;
+  description?: string;
+  nodes: any[];
+  connections: any[];
+  character: {
+    name: string;
+    personality: string;
+  };
+  exportedAt?: string;
+  version?: string;
 }
 
 export interface Template {

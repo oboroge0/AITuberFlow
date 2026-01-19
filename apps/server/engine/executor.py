@@ -61,6 +61,7 @@ class WorkflowExecutor:
         self._event_buses: Dict[str, EventBus] = {}
         self._log_callbacks: Dict[str, Any] = {}
         self._event_callbacks: Dict[str, Any] = {}
+        self._status_callbacks: Dict[str, Any] = {}
 
     def set_log_callback(self, workflow_id: str, callback):
         """Set the log callback for a workflow."""
@@ -69,6 +70,10 @@ class WorkflowExecutor:
     def set_event_callback(self, workflow_id: str, callback):
         """Set the event callback for a workflow (for audio events, etc.)."""
         self._event_callbacks[workflow_id] = callback
+
+    def set_status_callback(self, workflow_id: str, callback):
+        """Set the status callback for node execution status updates."""
+        self._status_callbacks[workflow_id] = callback
 
     def get_status(self, workflow_id: str) -> Dict[str, Any]:
         """Get the execution status of a workflow."""
@@ -180,6 +185,7 @@ class WorkflowExecutor:
 
                 # Execute node
                 await self._log(workflow_id, node_id, f"Executing node: {node_type}", "info")
+                await self._update_node_status(workflow_id, node_id, "running")
 
                 try:
                     outputs = await self._execute_node(
@@ -187,10 +193,12 @@ class WorkflowExecutor:
                     )
                     node_outputs[node_id] = outputs or {}
 
+                    await self._update_node_status(workflow_id, node_id, "completed")
                     await self._log(
                         workflow_id, node_id, f"Node completed: {node_type}", "info"
                     )
                 except Exception as e:
+                    await self._update_node_status(workflow_id, node_id, "error", {"error": str(e)})
                     await self._log(
                         workflow_id, node_id, f"Node error: {str(e)}", "error"
                     )
@@ -453,3 +461,11 @@ class WorkflowExecutor:
         callback = self._log_callbacks.get(workflow_id)
         if callback:
             await callback(node_id, message, level)
+
+    async def _update_node_status(
+        self, workflow_id: str, node_id: str, status: str, data: Optional[Dict] = None
+    ):
+        """Send node status update to the callback."""
+        callback = self._status_callbacks.get(workflow_id)
+        if callback:
+            await callback(node_id, status, data)

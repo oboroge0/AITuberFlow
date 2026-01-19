@@ -57,3 +57,6 @@ nul
 
 # Claude
 .claude/
+
+# Specs (private)
+SPEC.md
