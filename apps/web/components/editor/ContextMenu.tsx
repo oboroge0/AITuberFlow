@@ -8,6 +8,7 @@ export interface ContextMenuItem {
   onClick: () => void;
   danger?: boolean;
   divider?: boolean;
+  shortcut?: string;
 }
 
 interface ContextMenuProps {
@@ -78,7 +79,10 @@ export default function ContextMenu({ x, y, items, onClose }: ContextMenuProps) 
             `}
           >
             {item.icon && <span className="w-4 h-4">{item.icon}</span>}
-            {item.label}
+            <span className="flex-1">{item.label}</span>
+            {item.shortcut && (
+              <span className="text-xs text-white/40">{item.shortcut}</span>
+            )}
           </button>
         </React.Fragment>
       ))}

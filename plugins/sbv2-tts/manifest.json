@@ -1,0 +1,84 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "sbv2-tts",
+  "name": "Style-Bert-VITS2 TTS",
+  "version": "1.0.0",
+  "description": "Text-to-speech using Style-Bert-VITS2. High-quality Japanese voice synthesis with style control.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "output",
+  "node": {
+    "inputs": [
+      {
+        "id": "text",
+        "type": "string",
+        "description": "Text to convert to speech"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "audio",
+        "type": "string",
+        "description": "Path to generated audio file"
+      }
+    ],
+    "events": {
+      "emits": ["audio.generated"],
+      "listens": []
+    }
+  },
+  "config": {
+    "host": {
+      "type": "string",
+      "label": "Host",
+      "description": "Style-Bert-VITS2 API server URL",
+      "default": "http://localhost:5000"
+    },
+    "modelName": {
+      "type": "string",
+      "label": "Model Name",
+      "description": "Model name to use",
+      "default": ""
+    },
+    "speakerId": {
+      "type": "number",
+      "label": "Speaker ID",
+      "description": "Speaker ID",
+      "default": 0,
+      "min": 0
+    },
+    "style": {
+      "type": "string",
+      "label": "Style",
+      "description": "Voice style (Neutral, Happy, Sad, etc.)",
+      "default": "Neutral"
+    },
+    "styleWeight": {
+      "type": "number",
+      "label": "Style Weight",
+      "description": "Style influence (0.0-1.0)",
+      "default": 1.0,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "length": {
+      "type": "number",
+      "label": "Length Scale",
+      "description": "Speech speed (0.5-2.0)",
+      "default": 1.0,
+      "min": 0.5,
+      "max": 2.0
+    },
+    "sdpRatio": {
+      "type": "number",
+      "label": "SDP Ratio",
+      "description": "SDP ratio (0.0-1.0)",
+      "default": 0.2,
+      "min": 0.0,
+      "max": 1.0
+    }
+  }
+}

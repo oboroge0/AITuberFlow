@@ -1,0 +1,55 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "timer",
+  "name": "Timer",
+  "version": "1.0.0",
+  "description": "Triggers at regular intervals. Useful for periodic actions.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "input",
+  "node": {
+    "inputs": [],
+    "outputs": [
+      {
+        "id": "tick",
+        "type": "number",
+        "description": "Current tick count"
+      },
+      {
+        "id": "timestamp",
+        "type": "string",
+        "description": "Current timestamp"
+      }
+    ],
+    "events": {
+      "emits": ["timer.tick"],
+      "listens": []
+    }
+  },
+  "config": {
+    "intervalMs": {
+      "type": "number",
+      "label": "Interval (ms)",
+      "description": "Time between ticks in milliseconds",
+      "default": 5000,
+      "min": 100,
+      "max": 3600000
+    },
+    "maxTicks": {
+      "type": "number",
+      "label": "Max Ticks",
+      "description": "Maximum number of ticks (0 = unlimited)",
+      "default": 0,
+      "min": 0
+    },
+    "immediate": {
+      "type": "boolean",
+      "label": "Immediate",
+      "description": "Fire immediately on start",
+      "default": true
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "anthropic-llm",
+  "name": "Claude (Anthropic)",
+  "version": "1.0.0",
+  "description": "Generate text using Anthropic's Claude models. Supports Claude 3 family.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "process",
+  "node": {
+    "inputs": [
+      {
+        "id": "prompt",
+        "type": "string",
+        "description": "User message to send to Claude"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "response",
+        "type": "string",
+        "description": "Generated response from Claude"
+      }
+    ],
+    "events": {
+      "emits": [],
+      "listens": []
+    }
+  },
+  "config": {
+    "apiKey": {
+      "type": "password",
+      "label": "API Key",
+      "description": "Your Anthropic API key",
+      "default": ""
+    },
+    "model": {
+      "type": "select",
+      "label": "Model",
+      "description": "Claude model to use",
+      "default": "claude-3-haiku-20240307",
+      "options": ["claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307", "claude-3-5-sonnet-20241022"]
+    },
+    "systemPrompt": {
+      "type": "textarea",
+      "label": "System Prompt",
+      "description": "System instructions for the model",
+      "default": "You are a helpful assistant."
+    },
+    "maxTokens": {
+      "type": "number",
+      "label": "Max Tokens",
+      "description": "Maximum tokens in the response",
+      "default": 1024,
+      "min": 1,
+      "max": 4096
+    },
+    "temperature": {
+      "type": "number",
+      "label": "Temperature",
+      "description": "Sampling temperature (0-1)",
+      "default": 0.7,
+      "min": 0,
+      "max": 1
+    }
+  }
+}

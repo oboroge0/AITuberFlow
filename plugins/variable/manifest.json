@@ -1,0 +1,54 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "variable",
+  "name": "Variable",
+  "version": "1.0.0",
+  "description": "Store and retrieve values. Can be used as a constant or to pass data between nodes.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "control",
+  "node": {
+    "inputs": [
+      {
+        "id": "set",
+        "type": "any",
+        "description": "Value to store (overrides default)"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "value",
+        "type": "any",
+        "description": "Stored value"
+      }
+    ],
+    "events": {
+      "emits": [],
+      "listens": []
+    }
+  },
+  "config": {
+    "name": {
+      "type": "string",
+      "label": "Variable Name",
+      "description": "Name of the variable (for reference)",
+      "default": "myVariable"
+    },
+    "defaultValue": {
+      "type": "string",
+      "label": "Default Value",
+      "description": "Default value if no input is provided",
+      "default": ""
+    },
+    "valueType": {
+      "type": "select",
+      "label": "Value Type",
+      "description": "Type of the value",
+      "default": "string",
+      "options": ["string", "number", "boolean", "json"]
+    }
+  }
+}

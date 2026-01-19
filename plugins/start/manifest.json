@@ -1,0 +1,23 @@
+{
+  "id": "start",
+  "name": "Start",
+  "version": "1.0.0",
+  "description": "Workflow entry point - marks the beginning of execution",
+  "author": "AITuber Flow",
+  "category": "control",
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "trigger",
+      "label": "Trigger",
+      "type": "trigger"
+    }
+  ],
+  "config": {
+    "autoStart": {
+      "type": "boolean",
+      "default": true,
+      "description": "Start automatically when workflow runs"
+    }
+  }
+}

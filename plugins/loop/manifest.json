@@ -1,0 +1,54 @@
+{
+  "id": "loop",
+  "name": "Loop",
+  "version": "1.0.0",
+  "description": "Iterates execution a specified number of times or while a condition is true",
+  "author": "AITuber Flow",
+  "category": "control",
+  "inputs": [
+    {
+      "id": "input",
+      "label": "Input",
+      "type": "any"
+    },
+    {
+      "id": "loopback",
+      "label": "Loop Back",
+      "type": "any"
+    }
+  ],
+  "outputs": [
+    {
+      "id": "loop",
+      "label": "Loop",
+      "type": "any"
+    },
+    {
+      "id": "done",
+      "label": "Done",
+      "type": "any"
+    }
+  ],
+  "config": {
+    "mode": {
+      "type": "string",
+      "default": "count",
+      "description": "Loop mode: count, while, or infinite"
+    },
+    "count": {
+      "type": "number",
+      "default": 3,
+      "description": "Number of iterations (for count mode)"
+    },
+    "condition": {
+      "type": "string",
+      "default": "",
+      "description": "Condition expression (for while mode)"
+    },
+    "maxIterations": {
+      "type": "number",
+      "default": 100,
+      "description": "Maximum iterations (safety limit)"
+    }
+  }
+}

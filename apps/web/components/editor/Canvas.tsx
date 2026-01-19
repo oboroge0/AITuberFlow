@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useRef, useMemo, useState } from 'react';
+import React, { useCallback, useRef, useMemo, useState, useEffect } from 'react';
 import {
   ReactFlow,
   Background,
@@ -14,6 +14,7 @@ import {
   type OnNodesChange,
   type OnEdgesChange,
   type OnConnect,
+  type OnReconnect,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useWorkflowStore } from '@/stores/workflowStore';
@@ -23,6 +24,8 @@ import { nodeTypes as sidebarNodeTypes } from './Sidebar';
 
 interface CanvasProps {
   onNodeSelect?: (nodeId: string | null) => void;
+  onSave?: () => void;
+  onRunWorkflow?: () => void;
 }
 
 const nodeTypes: NodeTypes = {
@@ -31,14 +34,35 @@ const nodeTypes: NodeTypes = {
 
 // Node type colors for edge styling
 const nodeTypeColors: Record<string, string> = {
+  // Control flow
+  'start': '#10B981',
+  'end': '#EF4444',
+  'loop': '#F59E0B',
+  'foreach': '#F97316',
+  // Input
   'youtube-chat': '#FF0000',
   'twitch-chat': '#9146FF',
   'manual-input': '#22C55E',
+  'timer': '#06B6D4',
+  // LLM
   'openai-llm': '#10B981',
+  'anthropic-llm': '#D97706',
+  'google-llm': '#4285F4',
+  'ollama-llm': '#6B7280',
+  // TTS
   'voicevox-tts': '#F59E0B',
+  'coeiroink-tts': '#E91E63',
+  'sbv2-tts': '#9C27B0',
+  // Output
   'console-output': '#A855F7',
+  // Control
   'switch': '#F97316',
   'delay': '#F97316',
+  // Utility
+  'http-request': '#3B82F6',
+  'text-transform': '#EC4899',
+  'random': '#8B5CF6',
+  'variable': '#14B8A6',
 };
 
 interface ContextMenuState {
@@ -49,7 +73,7 @@ interface ContextMenuState {
   nodeId?: string;
 }
 
-export default function Canvas({ onNodeSelect }: CanvasProps) {
+export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     show: false,
@@ -64,53 +88,184 @@ export default function Canvas({ onNodeSelect }: CanvasProps) {
     addNode,
     setNodePosition,
     addConnection,
+    updateConnection,
     removeConnection,
     selectNode,
     selectedNodeId,
     removeNode,
+    undo,
+    redo,
+    copySelectedNodes,
+    pasteNodes,
   } = useWorkflowStore();
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ignore if typing in an input field
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      const isCtrlOrCmd = event.ctrlKey || event.metaKey;
+
+      // Ctrl+Z: Undo
+      if (isCtrlOrCmd && event.key === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        undo();
+      }
+
+      // Ctrl+Y or Ctrl+Shift+Z: Redo
+      if (isCtrlOrCmd && (event.key === 'y' || (event.key === 'z' && event.shiftKey))) {
+        event.preventDefault();
+        redo();
+      }
+
+      // Ctrl+C: Copy
+      if (isCtrlOrCmd && event.key === 'c') {
+        event.preventDefault();
+        copySelectedNodes();
+      }
+
+      // Ctrl+V: Paste
+      if (isCtrlOrCmd && event.key === 'v') {
+        event.preventDefault();
+        pasteNodes();
+      }
+
+      // Ctrl+S: Save
+      if (isCtrlOrCmd && event.key === 's') {
+        event.preventDefault();
+        onSave?.();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo, copySelectedNodes, pasteNodes, onSave]);
+
+  // Calculate which nodes are reachable from Start nodes
+  const { reachableNodes, hasStartNode } = useMemo(() => {
+    // Build adjacency list
+    const adjacency: Record<string, string[]> = {};
+    workflowNodes.forEach((n) => {
+      adjacency[n.id] = [];
+    });
+
+    connections.forEach((conn) => {
+      const fromId = conn.from.nodeId;
+      const toId = conn.to.nodeId;
+      if (fromId && toId && adjacency[fromId]) {
+        adjacency[fromId].push(toId);
+      }
+    });
+
+    // Find Start nodes
+    const startNodes = workflowNodes.filter((n) => n.type === 'start').map((n) => n.id);
+    const hasStart = startNodes.length > 0;
+
+    // If no Start node, all nodes with no incoming connections are entry points
+    let entryPoints: string[];
+    if (hasStart) {
+      entryPoints = startNodes;
+    } else {
+      // Find nodes with no incoming connections
+      const incomingCount: Record<string, number> = {};
+      workflowNodes.forEach((n) => {
+        incomingCount[n.id] = 0;
+      });
+      connections.forEach((conn) => {
+        if (incomingCount[conn.to.nodeId] !== undefined) {
+          incomingCount[conn.to.nodeId]++;
+        }
+      });
+      entryPoints = Object.entries(incomingCount)
+        .filter(([, count]) => count === 0)
+        .map(([id]) => id);
+    }
+
+    // BFS to find all reachable nodes
+    const reachable = new Set<string>();
+    const queue = [...entryPoints];
+    while (queue.length > 0) {
+      const nodeId = queue.shift()!;
+      if (reachable.has(nodeId)) continue;
+      reachable.add(nodeId);
+      (adjacency[nodeId] || []).forEach((neighbor) => {
+        if (!reachable.has(neighbor)) {
+          queue.push(neighbor);
+        }
+      });
+    }
+
+    return { reachableNodes: reachable, hasStartNode: hasStart };
+  }, [workflowNodes, connections]);
 
   // Convert workflow nodes to React Flow nodes
   const flowNodes: Node[] = useMemo(
-    () =>
-      workflowNodes.map((node) => ({
-        id: node.id,
-        type: 'custom',
-        position: node.position,
-        data: {
-          label: getNodeLabel(node.type),
-          type: node.type,
-          category: getNodeCategory(node.type),
-          config: node.config,
-          inputs: getNodeInputs(node.type),
-          outputs: getNodeOutputs(node.type),
-        } as CustomNodeData,
-        selected: node.id === selectedNodeId,
-      })),
-    [workflowNodes, selectedNodeId]
+    () => {
+      // Entry point node types (nodes with no inputs that can start execution)
+      const entryPointTypes = new Set(['start', 'manual-input', 'youtube-chat', 'twitch-chat', 'timer']);
+
+      return workflowNodes.map((node) => {
+        const nodeInputs = getNodeInputs(node.type);
+        const isEntryPoint = entryPointTypes.has(node.type) || nodeInputs.length === 0;
+        const isReachable = !hasStartNode || reachableNodes.has(node.id);
+
+        return {
+          id: node.id,
+          type: 'custom',
+          position: node.position,
+          data: {
+            label: getNodeLabel(node.type),
+            type: node.type,
+            category: getNodeCategory(node.type),
+            config: node.config,
+            inputs: nodeInputs,
+            outputs: getNodeOutputs(node.type),
+            isReachable,
+            isEntryPoint,
+            onPlayClick: onRunWorkflow,
+          } as CustomNodeData,
+          selected: node.id === selectedNodeId,
+        };
+      });
+    },
+    [workflowNodes, selectedNodeId, reachableNodes, hasStartNode, onRunWorkflow]
   );
 
   // Convert workflow connections to React Flow edges with gradient style
+  // Lines to/from unreachable nodes are dashed
   const flowEdges: Edge[] = useMemo(
     () =>
       connections.map((conn) => {
         const sourceNode = workflowNodes.find((n) => n.id === conn.from.nodeId);
         const edgeColor = sourceNode ? nodeTypeColors[sourceNode.type] || '#10B981' : '#10B981';
+
+        // Check if this edge involves unreachable nodes (only when Start node exists)
+        const sourceReachable = !hasStartNode || reachableNodes.has(conn.from.nodeId);
+        const targetReachable = !hasStartNode || reachableNodes.has(conn.to.nodeId);
+        const isReachableEdge = sourceReachable && targetReachable;
+
         return {
           id: conn.id,
           source: conn.from.nodeId,
           sourceHandle: conn.from.port,
           target: conn.to.nodeId,
           targetHandle: conn.to.port,
-          animated: true,
+          animated: true, // Always animate edges
           style: {
             stroke: edgeColor,
             strokeWidth: 3,
+            strokeDasharray: isReachableEdge ? undefined : '8 4', // Dashed for unreachable
             filter: `drop-shadow(0 0 4px ${edgeColor}50)`,
           },
         };
       }),
-    [connections, workflowNodes]
+    [connections, workflowNodes, reachableNodes, hasStartNode]
   );
 
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState(flowNodes);
@@ -165,6 +320,19 @@ export default function Canvas({ onNodeSelect }: CanvasProps) {
       }
     },
     [addConnection]
+  );
+
+  // Handle edge reconnection (dragging edge end to a new target)
+  const onReconnect: OnReconnect = useCallback(
+    (oldEdge: Edge, newConnection: Connection) => {
+      if (newConnection.source && newConnection.target && newConnection.sourceHandle && newConnection.targetHandle) {
+        updateConnection(oldEdge.id, {
+          from: { nodeId: newConnection.source, port: newConnection.sourceHandle },
+          to: { nodeId: newConnection.target, port: newConnection.targetHandle },
+        });
+      }
+    },
+    [updateConnection]
   );
 
   const onNodeClick = useCallback(
@@ -255,6 +423,18 @@ export default function Canvas({ onNodeSelect }: CanvasProps) {
       const node = workflowNodes.find((n) => n.id === contextMenu.nodeId);
       return [
         {
+          label: 'Copy',
+          shortcut: 'Ctrl+C',
+          icon: (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          ),
+          onClick: () => {
+            copySelectedNodes();
+          },
+        },
+        {
           label: 'Duplicate',
           icon: (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -273,6 +453,7 @@ export default function Canvas({ onNodeSelect }: CanvasProps) {
         },
         {
           label: 'Delete',
+          shortcut: 'Del',
           icon: (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -324,6 +505,8 @@ export default function Canvas({ onNodeSelect }: CanvasProps) {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onReconnect={onReconnect}
+        reconnectRadius={10}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
         onDragOver={onDragOver}
@@ -365,62 +548,157 @@ export default function Canvas({ onNodeSelect }: CanvasProps) {
 // Helper functions to get node metadata
 function getNodeLabel(type: string): string {
   const labels: Record<string, string> = {
+    // Control flow
+    'start': 'Start',
+    'end': 'End',
+    'loop': 'Loop',
+    'foreach': 'ForEach',
+    // Input
     'manual-input': 'Manual Input',
     'youtube-chat': 'YouTube Chat',
     'twitch-chat': 'Twitch Chat',
-    'openai-llm': 'LLM',
+    'timer': 'Timer',
+    // LLM
+    'openai-llm': 'ChatGPT',
+    'anthropic-llm': 'Claude',
+    'google-llm': 'Gemini',
+    'ollama-llm': 'Ollama',
+    // Control
     'switch': 'Switch',
     'delay': 'Delay',
+    // Output
     'console-output': 'Console Output',
-    'voicevox-tts': 'TTS',
+    'voicevox-tts': 'VOICEVOX',
+    'coeiroink-tts': 'COEIROINK',
+    'sbv2-tts': 'Style-Bert-VITS2',
+    // Utility
+    'http-request': 'HTTP Request',
+    'text-transform': 'Text Transform',
+    'random': 'Random',
+    'variable': 'Variable',
   };
   return labels[type] || type;
 }
 
 function getNodeCategory(type: string): 'input' | 'process' | 'output' | 'control' {
   const categories: Record<string, 'input' | 'process' | 'output' | 'control'> = {
+    // Control flow
+    'start': 'control',
+    'end': 'control',
+    'loop': 'control',
+    'foreach': 'control',
+    // Input
     'manual-input': 'input',
     'youtube-chat': 'input',
     'twitch-chat': 'input',
+    'timer': 'input',
+    // Process
     'openai-llm': 'process',
+    'anthropic-llm': 'process',
+    'google-llm': 'process',
+    'ollama-llm': 'process',
+    'http-request': 'process',
+    'text-transform': 'process',
+    // Control
     'switch': 'control',
     'delay': 'control',
+    'random': 'control',
+    'variable': 'control',
+    // Output
     'console-output': 'output',
     'voicevox-tts': 'output',
+    'coeiroink-tts': 'output',
+    'sbv2-tts': 'output',
   };
   return categories[type] || 'process';
 }
 
 function getNodeInputs(type: string): { id: string; label: string }[] {
   const inputs: Record<string, { id: string; label: string }[]> = {
+    // Control flow
+    'start': [],
+    'end': [{ id: 'input', label: 'Input' }],
+    'loop': [
+      { id: 'input', label: 'Input' },
+      { id: 'loopback', label: 'Loop Back' },
+    ],
+    'foreach': [{ id: 'list', label: 'List' }],
+    // Input
     'manual-input': [],
     'youtube-chat': [],
     'twitch-chat': [],
+    'timer': [],
+    // LLM
     'openai-llm': [{ id: 'prompt', label: 'Prompt' }],
+    'anthropic-llm': [{ id: 'prompt', label: 'Prompt' }],
+    'google-llm': [{ id: 'prompt', label: 'Prompt' }],
+    'ollama-llm': [{ id: 'prompt', label: 'Prompt' }],
+    // Control
     'switch': [
       { id: 'value', label: 'Value' },
       { id: 'data', label: 'Data' },
     ],
     'delay': [{ id: 'input', label: 'Input' }],
+    // Output
     'console-output': [{ id: 'text', label: 'Text' }],
     'voicevox-tts': [{ id: 'text', label: 'Text' }],
+    'coeiroink-tts': [{ id: 'text', label: 'Text' }],
+    'sbv2-tts': [{ id: 'text', label: 'Text' }],
+    // Utility
+    'http-request': [{ id: 'body', label: 'Body' }],
+    'text-transform': [{ id: 'text', label: 'Text' }],
+    'random': [{ id: 'trigger', label: 'Trigger' }],
+    'variable': [{ id: 'set', label: 'Set' }],
   };
   return inputs[type] || [];
 }
 
 function getNodeOutputs(type: string): { id: string; label: string }[] {
   const outputs: Record<string, { id: string; label: string }[]> = {
+    // Control flow
+    'start': [{ id: 'trigger', label: 'Trigger' }],
+    'end': [],
+    'loop': [
+      { id: 'loop', label: 'Loop' },
+      { id: 'done', label: 'Done' },
+    ],
+    'foreach': [
+      { id: 'item', label: 'Item' },
+      { id: 'index', label: 'Index' },
+      { id: 'done', label: 'Done' },
+    ],
+    // Input
     'manual-input': [{ id: 'text', label: 'Text' }],
     'youtube-chat': [{ id: 'message', label: 'Message' }],
     'twitch-chat': [{ id: 'message', label: 'Message' }],
+    'timer': [
+      { id: 'tick', label: 'Tick' },
+      { id: 'timestamp', label: 'Timestamp' },
+    ],
+    // LLM
     'openai-llm': [{ id: 'response', label: 'Response' }],
+    'anthropic-llm': [{ id: 'response', label: 'Response' }],
+    'google-llm': [{ id: 'response', label: 'Response' }],
+    'ollama-llm': [{ id: 'response', label: 'Response' }],
+    // Control
     'switch': [
       { id: 'true', label: 'True' },
       { id: 'false', label: 'False' },
     ],
     'delay': [{ id: 'output', label: 'Output' }],
+    // Output
     'console-output': [],
     'voicevox-tts': [{ id: 'audio', label: 'Audio' }],
+    'coeiroink-tts': [{ id: 'audio', label: 'Audio' }],
+    'sbv2-tts': [{ id: 'audio', label: 'Audio' }],
+    // Utility
+    'http-request': [
+      { id: 'response', label: 'Response' },
+      { id: 'status', label: 'Status' },
+    ],
+    'text-transform': [{ id: 'result', label: 'Result' }],
+    'random': [{ id: 'value', label: 'Value' }],
+    'variable': [{ id: 'value', label: 'Value' }],
   };
   return outputs[type] || [];
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ReactFlowProvider } from '@xyflow/react';
 import Canvas from '@/components/editor/Canvas';
@@ -17,17 +17,43 @@ export default function EditorPage() {
   const workflowId = params.id as string;
 
   const [saving, setSaving] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   const {
     loadWorkflow,
     getWorkflowData,
     workflowName,
+    setWorkflowName,
     isExecuting,
     setExecuting,
     addLog,
     clearLogs,
     selectedNodeId,
   } = useWorkflowStore();
+
+  // Handle name editing
+  const handleStartEditingName = () => {
+    setEditedName(workflowName);
+    setIsEditingName(true);
+    setTimeout(() => nameInputRef.current?.focus(), 0);
+  };
+
+  const handleFinishEditingName = () => {
+    if (editedName.trim()) {
+      setWorkflowName(editedName.trim());
+    }
+    setIsEditingName(false);
+  };
+
+  const handleNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleFinishEditingName();
+    } else if (e.key === 'Escape') {
+      setIsEditingName(false);
+    }
+  };
 
   // Connect WebSocket
   useWebSocket(workflowId);
@@ -153,9 +179,37 @@ export default function EditorPage() {
             </svg>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white m-0">
-              {workflowName || 'AITuber Flow'}
-            </h1>
+            {isEditingName ? (
+              <input
+                ref={nameInputRef}
+                type="text"
+                value={editedName}
+                onChange={(e) => setEditedName(e.target.value)}
+                onBlur={handleFinishEditingName}
+                onKeyDown={handleNameKeyDown}
+                className="text-xl font-bold text-white bg-white/10 border border-white/20 rounded px-2 py-0.5 outline-none focus:border-emerald-500 w-[200px]"
+              />
+            ) : (
+              <h1
+                className="text-xl font-bold text-white m-0 cursor-pointer hover:text-emerald-400 transition-colors"
+                onClick={handleStartEditingName}
+                title="Click to edit name"
+              >
+                {workflowName || 'AITuber Flow'}
+                <svg
+                  className="inline-block ml-2 opacity-50"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+              </h1>
+            )}
             <p className="text-xs text-white/50 m-0">
               Build your AI streamer visually
             </p>
@@ -172,7 +226,7 @@ export default function EditorPage() {
 
         {/* Canvas */}
         <div className="absolute inset-0 pr-[300px] pb-[170px]">
-          <Canvas />
+          <Canvas onSave={handleSave} onRunWorkflow={handleStart} />
         </div>
 
         {/* Log Panel at bottom */}

@@ -15,6 +15,42 @@ interface NodeField {
 
 // Simplified node config schemas
 const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
+  'start': {
+    label: 'Start',
+    fields: [
+      { key: 'autoStart', type: 'checkbox', label: 'Auto Start', placeholder: 'Start automatically when workflow runs' },
+    ],
+  },
+  'end': {
+    label: 'End',
+    fields: [
+      { key: 'message', type: 'text', label: 'Completion Message', placeholder: 'Workflow completed' },
+    ],
+  },
+  'loop': {
+    label: 'Loop',
+    fields: [
+      {
+        key: 'mode',
+        type: 'select',
+        label: 'Loop Mode',
+        options: [
+          { label: 'Count', value: 'count' },
+          { label: 'While Condition', value: 'while' },
+          { label: 'Infinite', value: 'infinite' },
+        ],
+      },
+      { key: 'count', type: 'number', label: 'Loop Count', placeholder: '3' },
+      { key: 'condition', type: 'text', label: 'Condition (for While)', placeholder: '{{value}} > 0' },
+      { key: 'maxIterations', type: 'number', label: 'Max Iterations (safety)', placeholder: '100' },
+    ],
+  },
+  'foreach': {
+    label: 'ForEach',
+    fields: [
+      { key: 'separator', type: 'text', label: 'Separator', placeholder: '\\n (newline) or , (comma)' },
+    ],
+  },
   'youtube-chat': {
     label: 'YouTube Chat',
     fields: [
@@ -29,7 +65,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
     ],
   },
   'openai-llm': {
-    label: 'LLM',
+    label: 'ChatGPT (OpenAI)',
     fields: [
       { key: 'apiKey', type: 'text', label: 'API Key', placeholder: 'sk-...' },
       {
@@ -37,25 +73,118 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         type: 'select',
         label: 'Model',
         options: [
-          { label: 'GPT-4o Mini', value: 'gpt-4o-mini' },
+          { label: 'GPT-5.2', value: 'gpt-5.2' },
+          { label: 'GPT-5.2 Codex', value: 'gpt-5.2-codex' },
+          { label: 'GPT-5.1', value: 'gpt-5.1' },
+          { label: 'GPT-5.1 Codex', value: 'gpt-5.1-codex' },
+          { label: 'GPT-5.1 Codex Mini', value: 'gpt-5.1-codex-mini' },
+          { label: 'GPT-5', value: 'gpt-5' },
+          { label: 'GPT-5 Mini', value: 'gpt-5-mini' },
+          { label: 'GPT-5 Nano', value: 'gpt-5-nano' },
+          { label: 'GPT-4.1', value: 'gpt-4.1' },
+          { label: 'GPT-4.1 Mini', value: 'gpt-4.1-mini' },
+          { label: 'GPT-4.1 Nano', value: 'gpt-4.1-nano' },
+          { label: 'o4 Mini', value: 'o4-mini' },
+          { label: 'o3', value: 'o3' },
+          { label: 'o3 Mini', value: 'o3-mini' },
           { label: 'GPT-4o', value: 'gpt-4o' },
-          { label: 'GPT-4 Turbo', value: 'gpt-4-turbo' },
+          { label: 'GPT-4o Mini', value: 'gpt-4o-mini' },
         ],
       },
       { key: 'systemPrompt', type: 'textarea', label: 'System Prompt', placeholder: 'Enter character settings...' },
+      { key: 'temperature', type: 'number', label: 'Temperature', placeholder: '0.7' },
+    ],
+  },
+  'anthropic-llm': {
+    label: 'Claude (Anthropic)',
+    fields: [
+      { key: 'apiKey', type: 'text', label: 'API Key', placeholder: 'sk-ant-...' },
+      {
+        key: 'model',
+        type: 'select',
+        label: 'Model',
+        options: [
+          { label: 'Claude Opus 4', value: 'claude-opus-4-20250514' },
+          { label: 'Claude Sonnet 4', value: 'claude-sonnet-4-20250514' },
+          { label: 'Claude 3.7 Sonnet', value: 'claude-3-7-sonnet-20250219' },
+          { label: 'Claude 3.5 Sonnet', value: 'claude-3-5-sonnet-20241022' },
+          { label: 'Claude 3.5 Haiku', value: 'claude-3-5-haiku-20241022' },
+          { label: 'Claude 3 Opus', value: 'claude-3-opus-20240229' },
+          { label: 'Claude 3 Haiku', value: 'claude-3-haiku-20240307' },
+        ],
+      },
+      { key: 'systemPrompt', type: 'textarea', label: 'System Prompt', placeholder: 'Enter character settings...' },
+      { key: 'maxTokens', type: 'number', label: 'Max Tokens', placeholder: '1024' },
+      { key: 'temperature', type: 'number', label: 'Temperature', placeholder: '0.7' },
+    ],
+  },
+  'google-llm': {
+    label: 'Gemini (Google)',
+    fields: [
+      { key: 'apiKey', type: 'text', label: 'API Key', placeholder: 'AI...' },
+      {
+        key: 'model',
+        type: 'select',
+        label: 'Model',
+        options: [
+          { label: 'Gemini 3 Pro Preview', value: 'gemini-3-pro-preview' },
+          { label: 'Gemini 3 Flash Preview', value: 'gemini-3-flash-preview' },
+          { label: 'Gemini 2.5 Pro', value: 'gemini-2.5-pro-preview-05-06' },
+          { label: 'Gemini 2.5 Flash', value: 'gemini-2.5-flash-preview-05-20' },
+          { label: 'Gemini 2.0 Flash', value: 'gemini-2.0-flash' },
+          { label: 'Gemini 2.0 Flash Lite', value: 'gemini-2.0-flash-lite' },
+          { label: 'Gemini 1.5 Pro', value: 'gemini-1.5-pro' },
+          { label: 'Gemini 1.5 Flash', value: 'gemini-1.5-flash' },
+        ],
+      },
+      { key: 'systemPrompt', type: 'textarea', label: 'System Prompt', placeholder: 'Enter character settings...' },
+      { key: 'maxTokens', type: 'number', label: 'Max Tokens', placeholder: '1024' },
+      { key: 'temperature', type: 'number', label: 'Temperature', placeholder: '0.7' },
+    ],
+  },
+  'ollama-llm': {
+    label: 'LLM (Ollama)',
+    fields: [
+      { key: 'host', type: 'text', label: 'Ollama Host', placeholder: 'http://localhost:11434' },
+      { key: 'model', type: 'text', label: 'Model', placeholder: 'llama3.2, mistral, gemma2...' },
+      { key: 'systemPrompt', type: 'textarea', label: 'System Prompt', placeholder: 'Enter character settings...' },
+      { key: 'temperature', type: 'number', label: 'Temperature', placeholder: '0.7' },
+      { key: 'contextLength', type: 'number', label: 'Context Length', placeholder: '4096' },
     ],
   },
   'voicevox-tts': {
-    label: 'TTS',
+    label: 'TTS (VOICEVOX)',
     fields: [
       { key: 'host', type: 'text', label: 'VOICEVOX Host', placeholder: 'http://localhost:50021' },
       {
         key: 'speaker',
         type: 'select',
         label: 'Speaker',
-        dynamic: true, // Will be loaded from API
-        options: [], // Will be populated dynamically
+        dynamic: true,
+        options: [],
       },
+      { key: 'speedScale', type: 'number', label: 'Speed', placeholder: '1.0' },
+    ],
+  },
+  'coeiroink-tts': {
+    label: 'TTS (COEIROINK)',
+    fields: [
+      { key: 'host', type: 'text', label: 'COEIROINK Host', placeholder: 'http://localhost:50032' },
+      { key: 'speakerUuid', type: 'text', label: 'Speaker UUID', placeholder: 'Get from COEIROINK' },
+      { key: 'styleId', type: 'number', label: 'Style ID', placeholder: '0' },
+      { key: 'speedScale', type: 'number', label: 'Speed', placeholder: '1.0' },
+      { key: 'pitchScale', type: 'number', label: 'Pitch', placeholder: '1.0' },
+    ],
+  },
+  'sbv2-tts': {
+    label: 'TTS (Style-Bert-VITS2)',
+    fields: [
+      { key: 'host', type: 'text', label: 'SBV2 Host', placeholder: 'http://localhost:5000' },
+      { key: 'modelName', type: 'text', label: 'Model Name', placeholder: 'Model name' },
+      { key: 'speakerId', type: 'number', label: 'Speaker ID', placeholder: '0' },
+      { key: 'style', type: 'text', label: 'Style', placeholder: 'Neutral, Happy, Sad...' },
+      { key: 'styleWeight', type: 'number', label: 'Style Weight', placeholder: '1.0' },
+      { key: 'length', type: 'number', label: 'Speed', placeholder: '1.0' },
     ],
   },
   'manual-input': {
@@ -90,6 +219,100 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
     label: 'Delay',
     fields: [
       { key: 'delayMs', type: 'number', label: 'Delay (ms)', placeholder: '1000' },
+      { key: 'randomize', type: 'checkbox', label: 'Randomize' },
+      { key: 'randomMin', type: 'number', label: 'Random Min (ms)', placeholder: '500' },
+      { key: 'randomMax', type: 'number', label: 'Random Max (ms)', placeholder: '2000' },
+    ],
+  },
+  'http-request': {
+    label: 'HTTP Request',
+    fields: [
+      { key: 'url', type: 'text', label: 'URL', placeholder: 'https://api.example.com/...' },
+      {
+        key: 'method',
+        type: 'select',
+        label: 'Method',
+        options: [
+          { label: 'GET', value: 'GET' },
+          { label: 'POST', value: 'POST' },
+          { label: 'PUT', value: 'PUT' },
+          { label: 'DELETE', value: 'DELETE' },
+          { label: 'PATCH', value: 'PATCH' },
+        ],
+      },
+      { key: 'headers', type: 'textarea', label: 'Headers (JSON)', placeholder: '{"Authorization": "Bearer ..."}' },
+      { key: 'timeout', type: 'number', label: 'Timeout (ms)', placeholder: '30000' },
+    ],
+  },
+  'text-transform': {
+    label: 'Text Transform',
+    fields: [
+      {
+        key: 'operation',
+        type: 'select',
+        label: 'Operation',
+        options: [
+          { label: 'Template', value: 'template' },
+          { label: 'Uppercase', value: 'uppercase' },
+          { label: 'Lowercase', value: 'lowercase' },
+          { label: 'Trim', value: 'trim' },
+          { label: 'Replace', value: 'replace' },
+          { label: 'Prefix', value: 'prefix' },
+          { label: 'Suffix', value: 'suffix' },
+          { label: 'Split First', value: 'split_first' },
+          { label: 'Split Last', value: 'split_last' },
+          { label: 'Length', value: 'length' },
+        ],
+      },
+      { key: 'template', type: 'textarea', label: 'Template', placeholder: '{{text}} を変換' },
+      { key: 'find', type: 'text', label: 'Find (for Replace)', placeholder: 'Text to find' },
+      { key: 'replaceWith', type: 'text', label: 'Replace With', placeholder: 'Replacement text' },
+      { key: 'delimiter', type: 'text', label: 'Delimiter (for Split)', placeholder: ' ' },
+    ],
+  },
+  'random': {
+    label: 'Random',
+    fields: [
+      {
+        key: 'mode',
+        type: 'select',
+        label: 'Mode',
+        options: [
+          { label: 'Number', value: 'number' },
+          { label: 'Choice', value: 'choice' },
+          { label: 'Boolean', value: 'boolean' },
+        ],
+      },
+      { key: 'min', type: 'number', label: 'Min (for Number)', placeholder: '0' },
+      { key: 'max', type: 'number', label: 'Max (for Number)', placeholder: '100' },
+      { key: 'choices', type: 'text', label: 'Choices (comma separated)', placeholder: 'option1, option2, option3' },
+      { key: 'trueProbability', type: 'number', label: 'True Probability % (for Boolean)', placeholder: '50' },
+    ],
+  },
+  'timer': {
+    label: 'Timer',
+    fields: [
+      { key: 'intervalMs', type: 'number', label: 'Interval (ms)', placeholder: '5000' },
+      { key: 'maxTicks', type: 'number', label: 'Max Ticks (0=unlimited)', placeholder: '0' },
+      { key: 'immediate', type: 'checkbox', label: 'Fire Immediately' },
+    ],
+  },
+  'variable': {
+    label: 'Variable',
+    fields: [
+      { key: 'name', type: 'text', label: 'Variable Name', placeholder: 'myVariable' },
+      { key: 'defaultValue', type: 'text', label: 'Default Value', placeholder: 'Default value' },
+      {
+        key: 'valueType',
+        type: 'select',
+        label: 'Value Type',
+        options: [
+          { label: 'String', value: 'string' },
+          { label: 'Number', value: 'number' },
+          { label: 'Boolean', value: 'boolean' },
+          { label: 'JSON', value: 'json' },
+        ],
+      },
     ],
   },
 };
@@ -266,6 +489,19 @@ export default function NodeSettings() {
               </option>
             ))}
           </select>
+        );
+
+      case 'checkbox':
+        return (
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!!value}
+              onChange={(e) => handleChange(field.key, e.target.checked)}
+              className="w-4 h-4 rounded border-white/20 bg-black/30 text-emerald-500 focus:ring-emerald-500"
+            />
+            <span className="text-white/70 text-xs">{field.placeholder || 'Enabled'}</span>
+          </label>
         );
 
       default:

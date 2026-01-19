@@ -137,8 +137,23 @@ class WorkflowExecutor:
             # Build execution order (topological sort for linear flow)
             execution_order = self._get_execution_order(nodes, connections)
 
-            # Log start
-            await self._log(workflow_id, None, "Workflow execution started", "info")
+            # Check for Start node and log appropriately
+            has_start_node = any(n.get("type") == "start" for n in nodes)
+            total_nodes = len(nodes)
+            executing_nodes = len(execution_order)
+            skipped_nodes = total_nodes - executing_nodes
+
+            if executing_nodes == 0:
+                await self._log(workflow_id, None, "No executable nodes found. Add nodes and connect them.", "warning")
+                return
+
+            if has_start_node:
+                if skipped_nodes > 0:
+                    await self._log(workflow_id, None, f"Workflow started: {executing_nodes}/{total_nodes} nodes ({skipped_nodes} not connected to Start)", "info")
+                else:
+                    await self._log(workflow_id, None, f"Workflow started ({executing_nodes} nodes)", "info")
+            else:
+                await self._log(workflow_id, None, f"Workflow started ({executing_nodes} nodes) - Tip: Add a Start node for better control", "info")
 
             # Execute nodes in order
             node_outputs: Dict[str, Dict[str, Any]] = {}
@@ -199,8 +214,12 @@ class WorkflowExecutor:
     ) -> List[Dict]:
         """
         Get nodes in execution order (topological sort).
-        For MVP, we use a simple approach based on connections.
+        - If Start node(s) exist: only nodes reachable from Start nodes execute
+        - If no Start node: all nodes with no incoming connections are entry points (backward compatible)
         """
+        if not nodes:
+            return []
+
         # Build adjacency list
         node_map = {n["id"]: n for n in nodes}
         in_degree = {n["id"]: 0 for n in nodes}
@@ -209,22 +228,65 @@ class WorkflowExecutor:
         for conn in connections:
             from_id = conn.get("from", {}).get("nodeId")
             to_id = conn.get("to", {}).get("nodeId")
-            if from_id and to_id:
+            if from_id and to_id and from_id in adjacency and to_id in in_degree:
                 adjacency[from_id].append(to_id)
                 in_degree[to_id] += 1
 
-        # Kahn's algorithm
-        queue = [nid for nid, deg in in_degree.items() if deg == 0]
-        order = []
+        # Find all Start nodes
+        start_nodes = [n["id"] for n in nodes if n.get("type") == "start"]
+        has_start_node = len(start_nodes) > 0
 
+        # Determine entry points
+        if has_start_node:
+            # If Start nodes exist, only use Start nodes as entry points
+            entry_points = start_nodes
+            logger.info(f"Found {len(start_nodes)} Start node(s)")
+        else:
+            # No Start node - use all nodes with no incoming connections (backward compatible)
+            entry_points = [nid for nid, deg in in_degree.items() if deg == 0]
+            logger.info(f"No Start node found. Using {len(entry_points)} entry point(s) with no incoming connections")
+
+        # If no entry points at all, return empty (shouldn't happen normally)
+        if not entry_points:
+            logger.warning("No entry points found in workflow")
+            return []
+
+        # Find all nodes reachable from entry points using BFS
+        reachable = set()
+        queue = list(entry_points)
         while queue:
             node_id = queue.pop(0)
+            if node_id in reachable:
+                continue
+            reachable.add(node_id)
+            for neighbor in adjacency.get(node_id, []):
+                if neighbor not in reachable:
+                    queue.append(neighbor)
+
+        # If Start node exists but some entry_point nodes with no incoming connections exist,
+        # only execute Start-connected nodes (this is the intended behavior)
+
+        # Recalculate in_degree for reachable nodes only
+        filtered_in_degree = {nid: 0 for nid in reachable}
+        for conn in connections:
+            from_id = conn.get("from", {}).get("nodeId")
+            to_id = conn.get("to", {}).get("nodeId")
+            if from_id in reachable and to_id in reachable:
+                filtered_in_degree[to_id] += 1
+
+        # Kahn's algorithm on reachable nodes only
+        exec_queue = [nid for nid, deg in filtered_in_degree.items() if deg == 0]
+        order = []
+
+        while exec_queue:
+            node_id = exec_queue.pop(0)
             order.append(node_map[node_id])
 
-            for neighbor in adjacency[node_id]:
-                in_degree[neighbor] -= 1
-                if in_degree[neighbor] == 0:
-                    queue.append(neighbor)
+            for neighbor in adjacency.get(node_id, []):
+                if neighbor in filtered_in_degree:
+                    filtered_in_degree[neighbor] -= 1
+                    if filtered_in_degree[neighbor] == 0:
+                        exec_queue.append(neighbor)
 
         return order
 
@@ -307,7 +369,17 @@ class WorkflowExecutor:
         context: NodeContext,
     ) -> Dict[str, Any]:
         """Execute built-in node types."""
-        if node_type == "manual-input":
+        # Control flow nodes
+        if node_type == "start":
+            await context.log("Workflow started from Start node")
+            return {"trigger": True}
+
+        elif node_type == "end":
+            message = config.get("message", "Workflow completed")
+            await context.log(f"Workflow ended: {message}")
+            return {}
+
+        elif node_type == "manual-input":
             # Return the configured input text
             text = config.get("inputText", "")
             await context.log(f"Input: {text}")

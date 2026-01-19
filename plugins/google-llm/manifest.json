@@ -1,0 +1,70 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "google-llm",
+  "name": "Gemini (Google)",
+  "version": "1.0.0",
+  "description": "Generate text using Google's Gemini models.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "process",
+  "node": {
+    "inputs": [
+      {
+        "id": "prompt",
+        "type": "string",
+        "description": "User message to send to Gemini"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "response",
+        "type": "string",
+        "description": "Generated response from Gemini"
+      }
+    ],
+    "events": {
+      "emits": [],
+      "listens": []
+    }
+  },
+  "config": {
+    "apiKey": {
+      "type": "password",
+      "label": "API Key",
+      "description": "Your Google AI API key",
+      "default": ""
+    },
+    "model": {
+      "type": "select",
+      "label": "Model",
+      "description": "Gemini model to use",
+      "default": "gemini-1.5-flash",
+      "options": ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"]
+    },
+    "systemPrompt": {
+      "type": "textarea",
+      "label": "System Prompt",
+      "description": "System instructions for the model",
+      "default": "You are a helpful assistant."
+    },
+    "maxTokens": {
+      "type": "number",
+      "label": "Max Tokens",
+      "description": "Maximum tokens in the response",
+      "default": 1024,
+      "min": 1,
+      "max": 8192
+    },
+    "temperature": {
+      "type": "number",
+      "label": "Temperature",
+      "description": "Sampling temperature (0-1)",
+      "default": 0.7,
+      "min": 0,
+      "max": 1
+    }
+  }
+}

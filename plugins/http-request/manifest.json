@@ -1,0 +1,67 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "http-request",
+  "name": "HTTP Request",
+  "version": "1.0.0",
+  "description": "Make HTTP requests to external APIs. Supports GET, POST, PUT, DELETE methods.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "process",
+  "node": {
+    "inputs": [
+      {
+        "id": "body",
+        "type": "any",
+        "description": "Request body data (for POST/PUT)"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "response",
+        "type": "any",
+        "description": "Response data from the API"
+      },
+      {
+        "id": "status",
+        "type": "number",
+        "description": "HTTP status code"
+      }
+    ],
+    "events": {
+      "emits": [],
+      "listens": []
+    }
+  },
+  "config": {
+    "url": {
+      "type": "string",
+      "label": "URL",
+      "description": "The URL to send the request to",
+      "default": ""
+    },
+    "method": {
+      "type": "select",
+      "label": "Method",
+      "description": "HTTP method",
+      "default": "GET",
+      "options": ["GET", "POST", "PUT", "DELETE", "PATCH"]
+    },
+    "headers": {
+      "type": "string",
+      "label": "Headers (JSON)",
+      "description": "Request headers as JSON",
+      "default": "{}"
+    },
+    "timeout": {
+      "type": "number",
+      "label": "Timeout (ms)",
+      "description": "Request timeout in milliseconds",
+      "default": 30000,
+      "min": 1000,
+      "max": 120000
+    }
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "coeiroink-tts",
+  "name": "COEIROINK TTS",
+  "version": "1.0.0",
+  "description": "Text-to-speech using COEIROINK. Free Japanese voice synthesis engine.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "output",
+  "node": {
+    "inputs": [
+      {
+        "id": "text",
+        "type": "string",
+        "description": "Text to convert to speech"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "audio",
+        "type": "string",
+        "description": "Path to generated audio file"
+      }
+    ],
+    "events": {
+      "emits": ["audio.generated"],
+      "listens": []
+    }
+  },
+  "config": {
+    "host": {
+      "type": "string",
+      "label": "Host",
+      "description": "COEIROINK server URL",
+      "default": "http://localhost:50032"
+    },
+    "speakerUuid": {
+      "type": "string",
+      "label": "Speaker UUID",
+      "description": "Speaker UUID (get from COEIROINK)",
+      "default": ""
+    },
+    "styleId": {
+      "type": "number",
+      "label": "Style ID",
+      "description": "Voice style ID",
+      "default": 0,
+      "min": 0
+    },
+    "speedScale": {
+      "type": "number",
+      "label": "Speed",
+      "description": "Speech speed (0.5-2.0)",
+      "default": 1.0,
+      "min": 0.5,
+      "max": 2.0
+    },
+    "volumeScale": {
+      "type": "number",
+      "label": "Volume",
+      "description": "Volume scale (0.0-2.0)",
+      "default": 1.0,
+      "min": 0.0,
+      "max": 2.0
+    },
+    "pitchScale": {
+      "type": "number",
+      "label": "Pitch",
+      "description": "Pitch scale (0.5-2.0)",
+      "default": 1.0,
+      "min": 0.5,
+      "max": 2.0
+    }
+  }
+}

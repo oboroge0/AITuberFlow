@@ -7,3 +7,10 @@ aiosqlite==0.19.0
 httpx==0.26.0
 openai==1.10.0
 python-dotenv==1.0.0
+
+# Additional LLM providers
+anthropic>=0.18.0
+google-generativeai>=0.4.0
+
+# HTTP client for async requests
+aiohttp>=3.9.0

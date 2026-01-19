@@ -1,0 +1,23 @@
+{
+  "id": "end",
+  "name": "End",
+  "version": "1.0.0",
+  "description": "Workflow exit point - marks the end of execution",
+  "author": "AITuber Flow",
+  "category": "control",
+  "inputs": [
+    {
+      "id": "input",
+      "label": "Input",
+      "type": "any"
+    }
+  ],
+  "outputs": [],
+  "config": {
+    "message": {
+      "type": "string",
+      "default": "Workflow completed",
+      "description": "Message to display when workflow ends"
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "text-transform",
+  "name": "Text Transform",
+  "version": "1.0.0",
+  "description": "Transform text with various operations: uppercase, lowercase, trim, replace, template, etc.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "process",
+  "node": {
+    "inputs": [
+      {
+        "id": "text",
+        "type": "string",
+        "description": "Text to transform"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "result",
+        "type": "string",
+        "description": "Transformed text"
+      }
+    ],
+    "events": {
+      "emits": [],
+      "listens": []
+    }
+  },
+  "config": {
+    "operation": {
+      "type": "select",
+      "label": "Operation",
+      "description": "Transformation to apply",
+      "default": "template",
+      "options": ["template", "uppercase", "lowercase", "trim", "replace", "split_first", "split_last", "length", "prefix", "suffix"]
+    },
+    "template": {
+      "type": "string",
+      "label": "Template",
+      "description": "Template string. Use {{text}} for input text.",
+      "default": "{{text}}"
+    },
+    "find": {
+      "type": "string",
+      "label": "Find",
+      "description": "Text to find (for replace operation)",
+      "default": ""
+    },
+    "replaceWith": {
+      "type": "string",
+      "label": "Replace With",
+      "description": "Text to replace with",
+      "default": ""
+    },
+    "delimiter": {
+      "type": "string",
+      "label": "Delimiter",
+      "description": "Delimiter for split operations",
+      "default": " "
+    }
+  }
+}

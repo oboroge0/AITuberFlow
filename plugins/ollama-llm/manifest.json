@@ -1,0 +1,69 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "ollama-llm",
+  "name": "Ollama (Local)",
+  "version": "1.0.0",
+  "description": "Generate text using Ollama local LLM server. Supports various open-source models.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "process",
+  "node": {
+    "inputs": [
+      {
+        "id": "prompt",
+        "type": "string",
+        "description": "User message to send to the model"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "response",
+        "type": "string",
+        "description": "Generated response from the model"
+      }
+    ],
+    "events": {
+      "emits": [],
+      "listens": []
+    }
+  },
+  "config": {
+    "host": {
+      "type": "string",
+      "label": "Host",
+      "description": "Ollama server URL",
+      "default": "http://localhost:11434"
+    },
+    "model": {
+      "type": "string",
+      "label": "Model",
+      "description": "Model name (e.g., llama3.2, mistral, gemma2)",
+      "default": "llama3.2"
+    },
+    "systemPrompt": {
+      "type": "textarea",
+      "label": "System Prompt",
+      "description": "System instructions for the model",
+      "default": "You are a helpful assistant."
+    },
+    "temperature": {
+      "type": "number",
+      "label": "Temperature",
+      "description": "Sampling temperature (0-1)",
+      "default": 0.7,
+      "min": 0,
+      "max": 1
+    },
+    "contextLength": {
+      "type": "number",
+      "label": "Context Length",
+      "description": "Maximum context window size",
+      "default": 4096,
+      "min": 512,
+      "max": 32768
+    }
+  }
+}
