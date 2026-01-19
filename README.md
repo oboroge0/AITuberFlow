@@ -17,7 +17,9 @@ AITuberFlowは、AIを活用したバーチャル配信者（AITuber）のパイ
 - **ビジュアルエディタ** - 直感的なドラッグ＆ドロップ操作
 - **プラグインシステム** - 機能を自由に拡張可能
 - **リアルタイム実行** - WebSocketによるライブログ表示
-- **VOICEVOX連携** - 日本語音声合成に対応
+- **複数LLM対応** - OpenAI, Anthropic Claude, Google Gemini, Ollama
+- **複数TTS対応** - VOICEVOX, COEIROINK, Style-Bert-VITS2
+- **制御フロー** - Start, End, Loop, ForEachノードで複雑なフローを構築
 
 ---
 
@@ -30,24 +32,50 @@ AITuberFlowは、AIを活用したバーチャル配信者（AITuber）のパイ
 
 ## 機能
 
+### 制御フローノード
+| ノード | 説明 |
+|--------|------|
+| **Start** | ワークフローの開始点 |
+| **End** | ワークフローの終了点 |
+| **Loop** | 指定回数の繰り返し処理 |
+| **ForEach** | リスト内の各アイテムに対して処理 |
+
 ### 入力ノード
 | ノード | 説明 |
 |--------|------|
 | **Manual Input** | テキストを手動入力 |
 | **YouTube Chat** | YouTubeライブのチャットを取得 |
 | **Twitch Chat** | Twitchチャットを取得 |
+| **Timer** | 定期的にトリガーを発火 |
 
-### 処理ノード
+### LLMノード
 | ノード | 説明 |
 |--------|------|
-| **LLM (OpenAI)** | GPTモデルでテキスト生成 |
+| **ChatGPT** | OpenAI GPTモデル (GPT-4o, GPT-5等) |
+| **Claude** | Anthropic Claudeモデル |
+| **Gemini** | Google Geminiモデル |
+| **Ollama** | ローカルLLM (Ollama経由) |
+
+### TTSノード（音声合成）
+| ノード | 説明 |
+|--------|------|
+| **VOICEVOX** | 無料の日本語音声合成 |
+| **COEIROINK** | 高品質な日本語音声合成 |
+| **Style-Bert-VITS2** | 感情豊かな音声合成 |
+
+### ユーティリティノード
+| ノード | 説明 |
+|--------|------|
+| **HTTP Request** | 外部APIを呼び出し |
+| **Text Transform** | テキストを加工（大文字/小文字/トリム等） |
+| **Random** | ランダムな数値や選択を生成 |
+| **Variable** | 変数の保存と取得 |
 | **Switch** | 条件分岐 |
 | **Delay** | 遅延処理 |
 
 ### 出力ノード
 | ノード | 説明 |
 |--------|------|
-| **TTS (VOICEVOX)** | テキストを音声に変換 |
 | **Console Output** | ログに出力 |
 
 ---
@@ -141,6 +169,25 @@ npm run dev
 5. ノードをクリックして設定を変更
 6. 「Run Workflow」で実行
 
+### エディタの機能
+
+| 操作 | 説明 |
+|------|------|
+| **ドラッグ＆ドロップ** | サイドバーからノードを追加 |
+| **接続線のドラッグ** | 接続線の端をドラッグして別のノードに繋ぎ替え |
+| **右クリック** | コンテキストメニューを表示 |
+| **Ctrl+Z** | 元に戻す（Undo） |
+| **Ctrl+Y** | やり直し（Redo） |
+| **Ctrl+C/V** | コピー＆ペースト |
+| **Ctrl+S** | ワークフローを保存 |
+| **Delete** | 選択したノードを削除 |
+
+### Startノードについて
+
+- **Startノード**を配置すると、そこから接続されたノードのみが実行されます
+- Startノードに接続されていないノードは点線で表示され、実行されません
+- Startノードがない場合は、すべてのノードが実行されます（後方互換性）
+
 ### サンプルワークフロー：AIチャットボット
 
 ```
@@ -166,12 +213,26 @@ AITuberFlow/
 ├── packages/
 │   └── sdk/           # プラグインSDK
 ├── plugins/           # 公式プラグイン
-│   ├── manual-input/
-│   ├── openai-llm/
-│   ├── voicevox-tts/
-│   ├── console-output/
+│   ├── start/         # 制御フロー
+│   ├── end/
+│   ├── loop/
+│   ├── foreach/
+│   ├── manual-input/  # 入力
 │   ├── youtube-chat/
 │   ├── twitch-chat/
+│   ├── timer/
+│   ├── openai-llm/    # LLM
+│   ├── anthropic-llm/
+│   ├── google-llm/
+│   ├── ollama-llm/
+│   ├── voicevox-tts/  # TTS
+│   ├── coeiroink-tts/
+│   ├── sbv2-tts/
+│   ├── console-output/ # 出力
+│   ├── http-request/   # ユーティリティ
+│   ├── text-transform/
+│   ├── random/
+│   ├── variable/
 │   ├── switch/
 │   └── delay/
 ├── templates/         # ワークフローテンプレート
@@ -250,11 +311,13 @@ class MyCustomNode(BaseNode):
 
 ## 今後の予定
 
-- [ ] より多くのLLMプロバイダー対応（Claude, Gemini等）
+- [x] ~~より多くのLLMプロバイダー対応（Claude, Gemini等）~~ ✅ 実装済み
+- [x] ~~制御フローノード（Start, End, Loop, ForEach）~~ ✅ 実装済み
 - [ ] 画像生成ノード
 - [ ] OBS連携
 - [ ] キャラクター状態管理（感情、記憶）
 - [ ] ワークフローのインポート/エクスポート
+- [ ] VRMモデル表示・リップシンク
 
 ---
 
