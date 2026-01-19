@@ -1,0 +1,68 @@
+{
+  "id": "template-voice-chatbot",
+  "name": "Voice Chat Bot",
+  "description": "A chatbot that responds with voice using VOICEVOX. Input -> LLM -> TTS -> Output.",
+  "nodes": [
+    {
+      "id": "node-input",
+      "type": "manual-input",
+      "position": { "x": 100, "y": 200 },
+      "config": {
+        "placeholder": "Enter your message...",
+        "inputText": "Tell me a short joke!"
+      }
+    },
+    {
+      "id": "node-llm",
+      "type": "openai-llm",
+      "position": { "x": 350, "y": 200 },
+      "config": {
+        "apiKey": "",
+        "model": "gpt-4o-mini",
+        "systemPrompt": "You are a friendly virtual streamer. Keep your responses short (under 100 characters) and fun!",
+        "temperature": 0.8,
+        "maxTokens": 128
+      }
+    },
+    {
+      "id": "node-tts",
+      "type": "voicevox-tts",
+      "position": { "x": 600, "y": 200 },
+      "config": {
+        "host": "http://localhost:50021",
+        "speakerId": 1,
+        "speedScale": 1.0
+      }
+    },
+    {
+      "id": "node-output",
+      "type": "console-output",
+      "position": { "x": 850, "y": 200 },
+      "config": {
+        "prefix": "[AI]",
+        "logLevel": "info"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn-1",
+      "from": { "nodeId": "node-input", "port": "text" },
+      "to": { "nodeId": "node-llm", "port": "prompt" }
+    },
+    {
+      "id": "conn-2",
+      "from": { "nodeId": "node-llm", "port": "response" },
+      "to": { "nodeId": "node-tts", "port": "text" }
+    },
+    {
+      "id": "conn-3",
+      "from": { "nodeId": "node-llm", "port": "response" },
+      "to": { "nodeId": "node-output", "port": "text" }
+    }
+  ],
+  "character": {
+    "name": "AI Vtuber",
+    "personality": "Cheerful and entertaining virtual streamer"
+  }
+}

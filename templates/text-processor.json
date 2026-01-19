@@ -1,0 +1,62 @@
+{
+  "id": "template-text-processor",
+  "name": "Text Processing Pipeline",
+  "description": "Demonstrates text transformation with multiple processing steps.",
+  "nodes": [
+    {
+      "id": "node-input",
+      "type": "manual-input",
+      "position": { "x": 100, "y": 200 },
+      "config": {
+        "placeholder": "Enter text to process...",
+        "inputText": "  Hello, World!  This is a TEST message.  "
+      }
+    },
+    {
+      "id": "node-trim",
+      "type": "text-transform",
+      "position": { "x": 350, "y": 200 },
+      "config": {
+        "operation": "trim"
+      }
+    },
+    {
+      "id": "node-lowercase",
+      "type": "text-transform",
+      "position": { "x": 600, "y": 200 },
+      "config": {
+        "operation": "lowercase"
+      }
+    },
+    {
+      "id": "node-output",
+      "type": "console-output",
+      "position": { "x": 850, "y": 200 },
+      "config": {
+        "prefix": "[Processed]",
+        "logLevel": "info"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn-1",
+      "from": { "nodeId": "node-input", "port": "text" },
+      "to": { "nodeId": "node-trim", "port": "text" }
+    },
+    {
+      "id": "conn-2",
+      "from": { "nodeId": "node-trim", "port": "result" },
+      "to": { "nodeId": "node-lowercase", "port": "text" }
+    },
+    {
+      "id": "conn-3",
+      "from": { "nodeId": "node-lowercase", "port": "result" },
+      "to": { "nodeId": "node-output", "port": "text" }
+    }
+  ],
+  "character": {
+    "name": "Text Processor",
+    "personality": "Efficient and precise"
+  }
+}

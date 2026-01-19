@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import socketio
 
 from db.database import init_db
-from routers import workflows, plugins, integrations
+from routers import workflows, plugins, integrations, templates
 from engine.executor import WorkflowExecutor
 
 # Configure logging
@@ -65,6 +65,7 @@ app.add_middleware(
 app.include_router(workflows.router)
 app.include_router(plugins.router)
 app.include_router(integrations.router)
+app.include_router(templates.router)
 
 # Mount Socket.IO
 socket_app = socketio.ASGIApp(sio, other_asgi_app=app, socketio_path="/ws/socket.io")

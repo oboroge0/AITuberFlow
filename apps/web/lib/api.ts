@@ -89,6 +89,15 @@ class ApiClient {
     return this.request<PluginManifest>(`/api/plugins/${id}`);
   }
 
+  // Template endpoints
+  async listTemplates(): Promise<ApiResponse<TemplateSummary[]>> {
+    return this.request<TemplateSummary[]>('/api/templates');
+  }
+
+  async getTemplate(id: string): Promise<ApiResponse<Template>> {
+    return this.request<Template>(`/api/templates/${id}`);
+  }
+
   // VOICEVOX integration
   async getVoicevoxSpeakers(
     host: string = 'http://localhost:50021'
@@ -105,6 +114,26 @@ class ApiClient {
       `/api/integrations/voicevox/health?host=${encodeURIComponent(host)}`
     );
   }
+}
+
+export interface TemplateSummary {
+  id: string;
+  name: string;
+  description: string;
+  nodeCount: number;
+  connectionCount: number;
+}
+
+export interface Template {
+  id: string;
+  name: string;
+  description: string;
+  nodes: any[];
+  connections: any[];
+  character: {
+    name: string;
+    personality: string;
+  };
 }
 
 export interface VoicevoxSpeaker {
