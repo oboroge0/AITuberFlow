@@ -25,7 +25,7 @@ export interface EventFilter {
 
 export interface Connection {
   id: string;
-  from: { nodeId: string; port: string };
+  from: { nodeId: string; port: string; fieldPaths?: string[] };
   to: { nodeId: string; port: string };
 }
 

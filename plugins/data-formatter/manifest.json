@@ -1,0 +1,59 @@
+{
+  "id": "data-formatter",
+  "name": "Data Formatter",
+  "version": "1.0.0",
+  "description": "Format data as JSON, XML, or YAML for structured output",
+  "author": "AITuberFlow",
+  "category": "utility",
+  "inputs": [
+    {
+      "id": "data",
+      "label": "Data",
+      "type": "any",
+      "description": "Input data to format (object, string, or any value)"
+    }
+  ],
+  "outputs": [
+    {
+      "id": "formatted",
+      "label": "Formatted",
+      "type": "string",
+      "description": "Formatted output string"
+    },
+    {
+      "id": "parsed",
+      "label": "Parsed",
+      "type": "object",
+      "description": "Parsed data object (useful for chaining)"
+    }
+  ],
+  "config": [
+    {
+      "key": "format",
+      "label": "Output Format",
+      "type": "select",
+      "options": ["json", "xml", "yaml"],
+      "default": "json"
+    },
+    {
+      "key": "template",
+      "label": "Template",
+      "type": "textarea",
+      "description": "Template for structured output. Use {{field}} for substitution.",
+      "default": "{\n  \"message\": \"{{text}}\",\n  \"author\": \"{{author}}\"\n}"
+    },
+    {
+      "key": "rootElement",
+      "label": "XML Root Element",
+      "type": "text",
+      "default": "data",
+      "description": "Root element name for XML output"
+    },
+    {
+      "key": "prettyPrint",
+      "label": "Pretty Print",
+      "type": "checkbox",
+      "default": true
+    }
+  ]
+}

@@ -131,6 +131,40 @@ class ApiClient {
       `/api/integrations/voicevox/health?host=${encodeURIComponent(host)}`
     );
   }
+
+  // Model upload endpoints
+  async uploadModel(file: File): Promise<ApiResponse<ModelUploadResult>> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`${this.baseUrl}/api/integrations/models/upload`, {
+        method: 'POST',
+        body: formData,
+        // Don't set Content-Type header - browser will set it with boundary
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        return { error: error.detail || `HTTP ${response.status}` };
+      }
+
+      const data = await response.json();
+      return { data };
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Upload failed' };
+    }
+  }
+
+  async listModels(): Promise<ApiResponse<{ models: ModelInfo[] }>> {
+    return this.request<{ models: ModelInfo[] }>('/api/integrations/models');
+  }
+
+  async deleteModel(filename: string): Promise<ApiResponse<{ success: boolean }>> {
+    return this.request<{ success: boolean }>(`/api/integrations/models/${filename}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export interface TemplateSummary {
@@ -171,6 +205,20 @@ export interface VoicevoxSpeaker {
   name: string;
   style: string;
   label: string;
+}
+
+export interface ModelUploadResult {
+  success: boolean;
+  filename: string;
+  url: string;
+  size: number;
+}
+
+export interface ModelInfo {
+  filename: string;
+  url: string;
+  size: number;
+  type: 'vrm' | 'image';
 }
 
 export const api = new ApiClient(API_BASE);

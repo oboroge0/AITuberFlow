@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, use } from 'react';
+import React, { useEffect, useState, useCallback, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { io, Socket } from 'socket.io-client';
 import { AvatarView, AvatarState, RendererType } from '@/components/avatar';
-import api from '@/lib/api';
+import api, { ModelInfo } from '@/lib/api';
 import { Workflow } from '@/lib/types';
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8001';
@@ -52,6 +52,12 @@ export default function PreviewPage({ params }: PreviewPageProps) {
   // Background settings
   const [bgColor, setBgColor] = useState('transparent');
   const [showControls, setShowControls] = useState(false);
+
+  // Model upload
+  const [models, setModels] = useState<ModelInfo[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load workflow data
   useEffect(() => {
@@ -167,6 +173,57 @@ export default function PreviewPage({ params }: PreviewPageProps) {
   // Expression test buttons (for development)
   const testExpressions = ['neutral', 'happy', 'sad', 'angry', 'surprised'];
 
+  // Load models list
+  const loadModels = useCallback(async () => {
+    const response = await api.listModels();
+    if (response.data) {
+      setModels(response.data.models);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadModels();
+  }, [loadModels]);
+
+  // Handle file upload
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setUploadError(null);
+
+    const response = await api.uploadModel(file);
+
+    if (response.data) {
+      setAvatarConfig((prev) => ({ ...prev, modelUrl: response.data!.url }));
+      loadModels();
+    } else if (response.error) {
+      setUploadError(response.error);
+    }
+
+    setUploading(false);
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [loadModels]);
+
+  // Handle model delete
+  const handleDeleteModel = useCallback(async (filename: string) => {
+    if (!confirm(`Delete ${filename}?`)) return;
+
+    const response = await api.deleteModel(filename);
+    if (response.data?.success) {
+      loadModels();
+      // Clear model URL if the deleted model was selected
+      if (avatarConfig.modelUrl === `/models/${filename}`) {
+        setAvatarConfig((prev) => ({ ...prev, modelUrl: '' }));
+      }
+    }
+  }, [loadModels, avatarConfig.modelUrl]);
+
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col">
       {/* Header */}
@@ -242,14 +299,86 @@ export default function PreviewPage({ params }: PreviewPageProps) {
           {/* Model URL (for VRM) */}
           {avatarConfig.renderer === 'vrm' && (
             <div className="mb-6">
-              <label className="text-white/50 text-xs uppercase tracking-wide">VRM Model URL</label>
-              <input
-                type="text"
-                value={avatarConfig.modelUrl || ''}
-                onChange={(e) => setAvatarConfig((prev) => ({ ...prev, modelUrl: e.target.value }))}
-                placeholder="/models/avatar.vrm"
-                className="w-full mt-1 px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
-              />
+              <label className="text-white/50 text-xs uppercase tracking-wide">VRM Model</label>
+
+              {/* Upload button */}
+              <div className="mt-2 flex gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".vrm"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="flex-1 px-3 py-2 bg-purple-500/20 border border-purple-500/50 text-purple-300 rounded text-sm hover:bg-purple-500/30 transition-colors disabled:opacity-50"
+                >
+                  {uploading ? 'Uploading...' : 'Upload VRM'}
+                </button>
+              </div>
+
+              {uploadError && (
+                <div className="mt-2 text-red-400 text-xs">{uploadError}</div>
+              )}
+
+              {/* Model selector */}
+              {models.filter(m => m.type === 'vrm').length > 0 && (
+                <div className="mt-3">
+                  <label className="text-white/50 text-xs">Select Model</label>
+                  <select
+                    value={avatarConfig.modelUrl || ''}
+                    onChange={(e) => setAvatarConfig((prev) => ({ ...prev, modelUrl: e.target.value }))}
+                    className="w-full mt-1 px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
+                  >
+                    <option value="">-- Select --</option>
+                    {models.filter(m => m.type === 'vrm').map((model) => (
+                      <option key={model.filename} value={model.url}>
+                        {model.filename} ({(model.size / 1024 / 1024).toFixed(1)}MB)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Model list with delete */}
+              {models.filter(m => m.type === 'vrm').length > 0 && (
+                <div className="mt-3 space-y-1">
+                  <label className="text-white/50 text-xs">Uploaded Models</label>
+                  {models.filter(m => m.type === 'vrm').map((model) => (
+                    <div
+                      key={model.filename}
+                      className={`flex items-center justify-between px-2 py-1 rounded text-xs ${
+                        avatarConfig.modelUrl === model.url
+                          ? 'bg-purple-500/20 text-purple-300'
+                          : 'bg-white/5 text-white/70'
+                      }`}
+                    >
+                      <span className="truncate flex-1">{model.filename}</span>
+                      <button
+                        onClick={() => handleDeleteModel(model.filename)}
+                        className="ml-2 text-red-400 hover:text-red-300"
+                        title="Delete"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Manual URL input */}
+              <div className="mt-3">
+                <label className="text-white/50 text-xs">Or enter URL manually</label>
+                <input
+                  type="text"
+                  value={avatarConfig.modelUrl || ''}
+                  onChange={(e) => setAvatarConfig((prev) => ({ ...prev, modelUrl: e.target.value }))}
+                  placeholder="/models/avatar.vrm"
+                  className="w-full mt-1 px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
+                />
+              </div>
             </div>
           )}
 
