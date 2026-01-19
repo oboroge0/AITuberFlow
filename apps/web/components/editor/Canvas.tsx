@@ -529,8 +529,46 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
           size={1}
           style={{ background: 'transparent' }}
         />
-        <Controls className="!bg-black/50 !border-white/10 !rounded-lg" />
+        <Controls
+          className="!bg-gray-800/90 !border-white/20 !rounded-lg !shadow-lg"
+          showZoom={true}
+          showFitView={true}
+          showInteractive={true}
+        />
       </ReactFlow>
+
+      {/* Custom styles for React Flow */}
+      <style jsx global>{`
+        .react-flow__controls {
+          background: rgba(31, 41, 55, 0.95) !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+          border-radius: 8px !important;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+        }
+        .react-flow__controls-button {
+          background: transparent !important;
+          border: none !important;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+          color: white !important;
+          width: 28px !important;
+          height: 28px !important;
+          padding: 4px !important;
+        }
+        .react-flow__controls-button:last-child {
+          border-bottom: none !important;
+        }
+        .react-flow__controls-button:hover {
+          background: rgba(255, 255, 255, 0.1) !important;
+        }
+        .react-flow__controls-button svg {
+          fill: white !important;
+          max-width: 14px !important;
+          max-height: 14px !important;
+        }
+        .react-flow__attribution {
+          display: none !important;
+        }
+      `}</style>
 
       {/* Context Menu */}
       {contextMenu.show && (

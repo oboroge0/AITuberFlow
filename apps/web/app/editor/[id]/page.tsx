@@ -165,8 +165,20 @@ export default function EditorPage() {
           }}
         />
 
-        {/* Title in top-left */}
-        <div className="absolute top-5 left-5 flex items-center gap-3 z-10">
+        {/* Header */}
+        <div className="absolute top-5 left-5 z-10 flex items-center gap-4">
+          {/* Back button */}
+          <button
+            onClick={() => router.push('/')}
+            className="w-10 h-10 rounded-[10px] flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all"
+            title="Back to Workflows"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+          </button>
+
+          {/* Logo */}
           <div
             className="w-10 h-10 rounded-[10px] flex items-center justify-center"
             style={{
@@ -178,6 +190,8 @@ export default function EditorPage() {
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
             </svg>
           </div>
+
+          {/* Title */}
           <div>
             {isEditingName ? (
               <input
@@ -215,14 +229,6 @@ export default function EditorPage() {
             </p>
           </div>
         </div>
-
-        {/* Back button */}
-        <button
-          onClick={() => router.push('/')}
-          className="absolute top-5 left-[180px] text-xs text-white/50 hover:text-white transition-colors z-10 bg-black/20 px-3 py-1.5 rounded-lg"
-        >
-          ← Workflows
-        </button>
 
         {/* Canvas */}
         <div className="absolute inset-0 pr-[300px] pb-[170px]">
