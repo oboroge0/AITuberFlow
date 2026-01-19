@@ -33,6 +33,7 @@ export interface AvatarViewProps {
   subtitleText?: string;
   backgroundColor?: string;
   enableControls?: boolean;
+  showGrid?: boolean;
 }
 
 export interface PNGAvatarConfig {
@@ -124,6 +125,7 @@ export default function AvatarView({
   subtitleText = '',
   backgroundColor = 'transparent',
   enableControls = false,
+  showGrid = false,
 }: AvatarViewProps) {
   const renderAvatar = useCallback(() => {
     switch (renderer) {
@@ -143,6 +145,7 @@ export default function AvatarView({
             lookAt={state.lookAt}
             backgroundColor={backgroundColor}
             enableControls={enableControls}
+            showGrid={showGrid}
             idleAnimation={true}
           />
         );
@@ -177,7 +180,7 @@ export default function AvatarView({
           </div>
         );
     }
-  }, [renderer, modelUrl, pngConfig, vtubePort, state, backgroundColor, enableControls]);
+  }, [renderer, modelUrl, pngConfig, vtubePort, state, backgroundColor, enableControls, showGrid]);
 
   return (
     <div className={`avatar-view relative w-full h-full ${className}`}>

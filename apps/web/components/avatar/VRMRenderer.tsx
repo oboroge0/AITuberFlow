@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useCallback, useState, useImperativeHandle, forwardRef } from 'react';
 import * as THREE from 'three';
 import { VRM, VRMLoaderPlugin, VRMExpressionPresetName } from '@pixiv/three-vrm';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -16,6 +16,11 @@ export interface VRMRendererProps {
   enableControls?: boolean;
   autoRotate?: boolean;
   idleAnimation?: boolean;
+  showGrid?: boolean;
+}
+
+export interface VRMRendererRef {
+  resetCamera: () => void;
 }
 
 // Map custom expression names to VRM preset names
@@ -37,7 +42,7 @@ const visemeMap: Record<string, VRMExpressionPresetName> = {
   oh: 'oh',
 };
 
-export default function VRMRenderer({
+const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRenderer({
   modelUrl,
   expression = 'neutral',
   mouthOpen = 0,
@@ -47,7 +52,8 @@ export default function VRMRenderer({
   enableControls = false,
   autoRotate = false,
   idleAnimation = true,
-}: VRMRendererProps) {
+  showGrid = false,
+}, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const vrmRef = useRef<VRM | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -56,15 +62,33 @@ export default function VRMRenderer({
   const clockRef = useRef<THREE.Clock>(new THREE.Clock());
   const animationFrameRef = useRef<number>(0);
   const controlsRef = useRef<OrbitControls | null>(null);
+  const gridRef = useRef<THREE.GridHelper | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sceneReady, setSceneReady] = useState(false);
 
-  // Initialize Three.js scene
+  // Expose resetCamera to parent via ref
+  useImperativeHandle(ref, () => ({
+    resetCamera: () => {
+      if (cameraRef.current && controlsRef.current) {
+        cameraRef.current.position.set(0, 1.4, 2.0);
+        controlsRef.current.target.set(0, 1.3, 0);
+        controlsRef.current.update();
+      }
+    },
+  }));
+
+  // Initialize Three.js scene (only depends on backgroundColor)
   const initScene = useCallback(() => {
     if (!containerRef.current) return;
 
     const container = containerRef.current;
+
+    // Remove any existing canvas elements first
+    const existingCanvases = container.querySelectorAll('canvas');
+    existingCanvases.forEach((canvas) => canvas.remove());
+
     const width = container.clientWidth || 400;
     const height = container.clientHeight || 600;
 
@@ -77,9 +101,9 @@ export default function VRMRenderer({
     }
     sceneRef.current = scene;
 
-    // Camera
-    const camera = new THREE.PerspectiveCamera(30, width / height, 0.1, 20);
-    camera.position.set(0, 1.3, 2.5);
+    // Camera - positioned to see upper body/face
+    const camera = new THREE.PerspectiveCamera(30, width / height, 0.1, 100);
+    camera.position.set(0, 1.4, 2.0);
     cameraRef.current = camera;
 
     // Renderer
@@ -105,20 +129,8 @@ export default function VRMRenderer({
     backLight.position.set(-1, 1, -1);
     scene.add(backLight);
 
-    // Controls (optional)
-    if (enableControls) {
-      const controls = new OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.05;
-      controls.target.set(0, 1, 0);
-      controls.autoRotate = autoRotate;
-      controls.autoRotateSpeed = 1;
-      controls.update();
-      controlsRef.current = controls;
-    }
-
     return { scene, camera, renderer };
-  }, [backgroundColor, enableControls, autoRotate]);
+  }, [backgroundColor]);
 
   // Load VRM model
   const loadVRM = useCallback(async (url: string, scene: THREE.Scene) => {
@@ -224,6 +236,48 @@ export default function VRMRenderer({
     vrmRef.current.lookAt.target = targetObject;
   }, [lookAt]);
 
+  // Handle controls toggle (separate from scene initialization)
+  useEffect(() => {
+    if (!sceneReady || !cameraRef.current || !rendererRef.current) return;
+
+    if (enableControls) {
+      if (!controlsRef.current) {
+        const controls = new OrbitControls(cameraRef.current, rendererRef.current.domElement);
+        controls.target.set(0, 1.3, 0);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 1;
+        controls.maxDistance = 10;
+        controls.maxPolarAngle = Math.PI * 0.9;
+        controls.autoRotate = autoRotate;
+        controls.autoRotateSpeed = 1.0;
+        controlsRef.current = controls;
+      } else {
+        controlsRef.current.autoRotate = autoRotate;
+      }
+    } else if (controlsRef.current) {
+      controlsRef.current.dispose();
+      controlsRef.current = null;
+    }
+  }, [sceneReady, enableControls, autoRotate]);
+
+  // Handle grid toggle (separate from scene initialization)
+  useEffect(() => {
+    if (!sceneReady || !sceneRef.current) return;
+
+    if (showGrid) {
+      if (!gridRef.current) {
+        const gridHelper = new THREE.GridHelper(10, 20, 0x444444, 0x222222);
+        sceneRef.current.add(gridHelper);
+        gridRef.current = gridHelper;
+      }
+    } else if (gridRef.current) {
+      sceneRef.current.remove(gridRef.current);
+      gridRef.current.dispose();
+      gridRef.current = null;
+    }
+  }, [sceneReady, showGrid]);
+
   // Initialize scene and load model
   useEffect(() => {
     const result = initScene();
@@ -234,6 +288,9 @@ export default function VRMRenderer({
 
     // Start animation loop
     animate();
+
+    // Mark scene as ready for controls/grid setup
+    setSceneReady(true);
 
     // Handle resize
     const handleResize = () => {
@@ -251,6 +308,7 @@ export default function VRMRenderer({
 
     // Cleanup
     return () => {
+      setSceneReady(false);
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameRef.current);
 
@@ -273,6 +331,8 @@ export default function VRMRenderer({
       }
 
       controlsRef.current?.dispose();
+      controlsRef.current = null;
+      gridRef.current = null;
     };
   }, [modelUrl, initScene, loadVRM, animate]);
 
@@ -297,4 +357,6 @@ export default function VRMRenderer({
       )}
     </div>
   );
-}
+});
+
+export default VRMRenderer;

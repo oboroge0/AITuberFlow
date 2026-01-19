@@ -263,6 +263,47 @@ const nodeTypes = [
     ),
     defaultConfig: { host: 'http://localhost:5000', modelName: '', speakerId: 0, style: 'Neutral', length: 1.0 },
   },
+  // Avatar Nodes
+  {
+    id: 'avatar-display',
+    label: 'Avatar',
+    color: '#E879F9',
+    bgColor: 'rgba(232, 121, 249, 0.1)',
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 20v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/>
+      </svg>
+    ),
+    defaultConfig: { renderer: 'vrm', model_url: '', auto_emotion: true, auto_lipsync: true, show_subtitle: true },
+  },
+  {
+    id: 'emotion-analyzer',
+    label: 'Emotion',
+    color: '#F472B6',
+    bgColor: 'rgba(244, 114, 182, 0.1)',
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+        <line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
+      </svg>
+    ),
+    defaultConfig: { method: 'rule-based', language: 'ja', emit_events: true },
+  },
+  {
+    id: 'lip-sync',
+    label: 'LipSync',
+    color: '#FB7185',
+    bgColor: 'rgba(251, 113, 133, 0.1)',
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M12 18c-4 0-6-2-6-2s2-2 6-2 6 2 6 2-2 2-6 2z"/>
+        <circle cx="12" cy="12" r="10"/>
+      </svg>
+    ),
+    defaultConfig: { method: 'volume', sensitivity: 1.0, smoothing: 0.3, emit_realtime: true },
+  },
 ];
 
 // Export for use in Canvas

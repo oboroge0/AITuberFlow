@@ -3,10 +3,12 @@
 import React, { useCallback, useRef, useMemo, useState, useEffect } from 'react';
 import {
   ReactFlow,
+  ReactFlowProvider,
   Background,
   Controls,
   useNodesState,
   useEdgesState,
+  useReactFlow,
   type Connection,
   type Edge,
   type Node,
@@ -63,6 +65,10 @@ const nodeTypeColors: Record<string, string> = {
   'text-transform': '#EC4899',
   'random': '#8B5CF6',
   'variable': '#14B8A6',
+  // Avatar
+  'avatar-display': '#E879F9',
+  'emotion-analyzer': '#F472B6',
+  'lip-sync': '#FB7185',
 };
 
 interface ContextMenuState {
@@ -74,8 +80,18 @@ interface ContextMenuState {
   edgeId?: string;
 }
 
-export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
+// Wrapper component to provide ReactFlowProvider context
+export default function Canvas(props: CanvasProps) {
+  return (
+    <ReactFlowProvider>
+      <CanvasInner {...props} />
+    </ReactFlowProvider>
+  );
+}
+
+function CanvasInner({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const { screenToFlowPosition } = useReactFlow();
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     show: false,
     x: 0,
@@ -385,13 +401,15 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
       try {
         const { nodeType, defaultConfig } = JSON.parse(data);
 
-        const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
-        if (!reactFlowBounds) return;
+        // Use screenToFlowPosition for accurate positioning with zoom/pan
+        const position = screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        });
 
-        const position = {
-          x: event.clientX - reactFlowBounds.left - 80,
-          y: event.clientY - reactFlowBounds.top - 30,
-        };
+        // Offset to center the node on the drop point
+        position.x -= 80;
+        position.y -= 30;
 
         addNode({
           type: nodeType,
@@ -402,7 +420,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         console.error('Failed to parse drop data:', e);
       }
     },
-    [addNode]
+    [addNode, screenToFlowPosition]
   );
 
   // Right-click context menu handlers
@@ -673,6 +691,10 @@ function getNodeLabel(type: string): string {
     'text-transform': 'Text Transform',
     'random': 'Random',
     'variable': 'Variable',
+    // Avatar
+    'avatar-display': 'Avatar Display',
+    'emotion-analyzer': 'Emotion Analyzer',
+    'lip-sync': 'Lip Sync',
   };
   return labels[type] || type;
 }
@@ -706,6 +728,10 @@ function getNodeCategory(type: string): 'input' | 'process' | 'output' | 'contro
     'voicevox-tts': 'output',
     'coeiroink-tts': 'output',
     'sbv2-tts': 'output',
+    // Avatar
+    'avatar-display': 'output',
+    'emotion-analyzer': 'process',
+    'lip-sync': 'process',
   };
   return categories[type] || 'process';
 }
@@ -746,6 +772,13 @@ function getNodeInputs(type: string): { id: string; label: string }[] {
     'text-transform': [{ id: 'text', label: 'Text' }],
     'random': [{ id: 'trigger', label: 'Trigger' }],
     'variable': [{ id: 'set', label: 'Set' }],
+    // Avatar
+    'avatar-display': [
+      { id: 'text', label: 'Text' },
+      { id: 'audio', label: 'Audio' },
+    ],
+    'emotion-analyzer': [{ id: 'text', label: 'Text' }],
+    'lip-sync': [{ id: 'audio', label: 'Audio' }],
   };
   return inputs[type] || [];
 }
@@ -796,6 +829,16 @@ function getNodeOutputs(type: string): { id: string; label: string }[] {
     'text-transform': [{ id: 'result', label: 'Result' }],
     'random': [{ id: 'value', label: 'Value' }],
     'variable': [{ id: 'value', label: 'Value' }],
+    // Avatar
+    'avatar-display': [{ id: 'status', label: 'Status' }],
+    'emotion-analyzer': [
+      { id: 'expression', label: 'Expression' },
+      { id: 'text', label: 'Text' },
+    ],
+    'lip-sync': [
+      { id: 'mouth_values', label: 'Mouth' },
+      { id: 'audio', label: 'Audio' },
+    ],
   };
   return outputs[type] || [];
 }

@@ -8,6 +8,21 @@ import api, { ModelInfo } from '@/lib/api';
 import { Workflow } from '@/lib/types';
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8001';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+
+// Helper to get full model URL (backend serves uploaded models)
+const getFullModelUrl = (url: string | undefined): string | undefined => {
+  if (!url) return undefined;
+  // If it's already an absolute URL or a local public path (not API path), return as-is
+  if (url.startsWith('http') || url.startsWith('/models/')) {
+    return url;
+  }
+  // If it's an API path, prepend the API base
+  if (url.startsWith('/api/')) {
+    return `${API_BASE}${url}`;
+  }
+  return url;
+};
 
 interface AvatarConfig {
   renderer: RendererType;
@@ -42,8 +57,19 @@ export default function PreviewPage({ params }: PreviewPageProps) {
   // Avatar config (from workflow settings or defaults)
   const [avatarConfig, setAvatarConfig] = useState<AvatarConfig>({
     renderer: 'vrm',
-    modelUrl: '/models/default.vrm',
+    modelUrl: '',
   });
+
+  // Load saved model URL from localStorage on mount
+  useEffect(() => {
+    const savedModelUrl = localStorage.getItem('aituber_selected_model');
+    if (savedModelUrl) {
+      setAvatarConfig((prev) => ({
+        ...prev,
+        modelUrl: prev.modelUrl || savedModelUrl,
+      }));
+    }
+  }, []);
 
   // Subtitle state
   const [subtitle, setSubtitle] = useState('');
@@ -51,7 +77,8 @@ export default function PreviewPage({ params }: PreviewPageProps) {
 
   // Background settings
   const [bgColor, setBgColor] = useState('transparent');
-  const [showControls, setShowControls] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const [showGrid, setShowGrid] = useState(true);
 
   // Model upload
   const [models, setModels] = useState<ModelInfo[]>([]);
@@ -73,12 +100,14 @@ export default function PreviewPage({ params }: PreviewPageProps) {
           );
 
           if (avatarNode?.config) {
-            setAvatarConfig({
+            const workflowModelUrl = avatarNode.config.model_url || avatarNode.config.vrm_model;
+            setAvatarConfig((prev) => ({
               renderer: avatarNode.config.renderer || 'vrm',
-              modelUrl: avatarNode.config.model_url || avatarNode.config.vrm_model,
+              // Keep saved model URL if workflow doesn't have one
+              modelUrl: workflowModelUrl || prev.modelUrl,
               vtubePort: avatarNode.config.vtube_port,
               pngConfig: avatarNode.config.png_config,
-            });
+            }));
           }
         }
       } catch (error) {
@@ -185,6 +214,13 @@ export default function PreviewPage({ params }: PreviewPageProps) {
     loadModels();
   }, [loadModels]);
 
+  // Save selected model URL to localStorage
+  useEffect(() => {
+    if (avatarConfig.modelUrl) {
+      localStorage.setItem('aituber_selected_model', avatarConfig.modelUrl);
+    }
+  }, [avatarConfig.modelUrl]);
+
   // Handle file upload
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -218,16 +254,16 @@ export default function PreviewPage({ params }: PreviewPageProps) {
     if (response.data?.success) {
       loadModels();
       // Clear model URL if the deleted model was selected
-      if (avatarConfig.modelUrl === `/models/${filename}`) {
+      if (avatarConfig.modelUrl?.includes(filename)) {
         setAvatarConfig((prev) => ({ ...prev, modelUrl: '' }));
       }
     }
   }, [loadModels, avatarConfig.modelUrl]);
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col">
+    <div className="h-screen bg-slate-900 flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="h-12 bg-black/50 backdrop-blur-sm border-b border-white/10 flex items-center justify-between px-4">
+      <header className="h-12 flex-shrink-0 bg-black/50 backdrop-blur-sm border-b border-white/10 flex items-center justify-between px-4">
         <div className="flex items-center gap-4">
           <button
             onClick={handleBackToEditor}
@@ -262,12 +298,12 @@ export default function PreviewPage({ params }: PreviewPageProps) {
       </header>
 
       {/* Main content */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex min-h-0">
         {/* Avatar view */}
-        <div className="flex-1 relative" style={{ backgroundColor: bgColor === 'transparent' ? '#0f172a' : bgColor }}>
+        <div className="flex-1 relative min-h-0" style={{ backgroundColor: bgColor === 'transparent' ? '#0f172a' : bgColor }}>
           <AvatarView
             renderer={avatarConfig.renderer}
-            modelUrl={avatarConfig.modelUrl}
+            modelUrl={getFullModelUrl(avatarConfig.modelUrl)}
             pngConfig={avatarConfig.pngConfig}
             vtubePort={avatarConfig.vtubePort}
             state={avatarState}
@@ -275,11 +311,12 @@ export default function PreviewPage({ params }: PreviewPageProps) {
             subtitleText={subtitle}
             backgroundColor={bgColor}
             enableControls={showControls}
+            showGrid={showGrid}
           />
         </div>
 
         {/* Side panel */}
-        <div className="w-72 bg-black/30 border-l border-white/10 p-4 overflow-y-auto">
+        <div className="w-72 flex-shrink-0 bg-black/30 border-l border-white/10 p-4 overflow-y-auto">
           <h2 className="text-white text-sm font-medium mb-4">Preview Settings</h2>
 
           {/* Avatar Config */}
@@ -418,7 +455,30 @@ export default function PreviewPage({ params }: PreviewPageProps) {
               />
               Enable 3D Controls
             </label>
+            <label className="flex items-center gap-2 text-white/70 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showGrid}
+                onChange={(e) => setShowGrid(e.target.checked)}
+                className="w-4 h-4 rounded"
+              />
+              Show Grid
+            </label>
           </div>
+
+          {/* Camera Controls */}
+          {showControls && (
+            <div className="mb-6">
+              <label className="text-white/50 text-xs uppercase tracking-wide mb-2 block">
+                Camera Controls
+              </label>
+              <div className="text-white/50 text-xs space-y-1 mb-2">
+                <div>• Left drag: Rotate</div>
+                <div>• Right drag: Pan</div>
+                <div>• Scroll: Zoom</div>
+              </div>
+            </div>
+          )}
 
           {/* Expression Test (Development) */}
           <div className="mb-6">

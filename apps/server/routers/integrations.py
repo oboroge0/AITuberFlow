@@ -137,8 +137,8 @@ async def upload_model(file: UploadFile = File(...)):
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # Return the URL path (relative to public folder)
-        url_path = f"/models/{safe_filename}"
+        # Return the URL path (served by backend API)
+        url_path = f"/api/integrations/models/file/{safe_filename}"
 
         logger.info(f"Uploaded model: {safe_filename}")
 
@@ -168,7 +168,7 @@ async def list_models():
             if file_path.is_file() and file_path.suffix.lower() in ALLOWED_EXTENSIONS:
                 models.append({
                     "filename": file_path.name,
-                    "url": f"/models/{file_path.name}",
+                    "url": f"/api/integrations/models/file/{file_path.name}",
                     "size": file_path.stat().st_size,
                     "type": "vrm" if file_path.suffix.lower() == ".vrm" else "image"
                 })
@@ -202,3 +202,37 @@ async def delete_model(filename: str):
     except Exception as e:
         logger.error(f"Error deleting file: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
+
+
+@router.get("/models/file/{filename}")
+async def serve_model(filename: str):
+    """
+    Serve uploaded model files directly from backend.
+    This allows access without Next.js dev server restart.
+    """
+    # Security: validate filename
+    if ".." in filename or "/" in filename or "\\" in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    file_path = UPLOAD_DIR / filename
+
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    # Determine media type
+    ext = file_path.suffix.lower()
+    media_types = {
+        ".vrm": "model/gltf-binary",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".gif": "image/gif",
+        ".webp": "image/webp",
+    }
+    media_type = media_types.get(ext, "application/octet-stream")
+
+    return FileResponse(
+        path=str(file_path),
+        media_type=media_type,
+        filename=filename
+    )
