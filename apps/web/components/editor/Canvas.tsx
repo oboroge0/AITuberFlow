@@ -69,8 +69,9 @@ interface ContextMenuState {
   show: boolean;
   x: number;
   y: number;
-  type: 'pane' | 'node';
+  type: 'pane' | 'node' | 'edge';
   nodeId?: string;
+  edgeId?: string;
 }
 
 export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
@@ -322,9 +323,18 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     [addConnection]
   );
 
+  // Track if edge was successfully reconnected
+  const edgeReconnectSuccessful = useRef(true);
+
+  // Called when edge reconnection starts
+  const onReconnectStart = useCallback(() => {
+    edgeReconnectSuccessful.current = false;
+  }, []);
+
   // Handle edge reconnection (dragging edge end to a new target)
   const onReconnect: OnReconnect = useCallback(
     (oldEdge: Edge, newConnection: Connection) => {
+      edgeReconnectSuccessful.current = true;
       if (newConnection.source && newConnection.target && newConnection.sourceHandle && newConnection.targetHandle) {
         updateConnection(oldEdge.id, {
           from: { nodeId: newConnection.source, port: newConnection.sourceHandle },
@@ -333,6 +343,17 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
       }
     },
     [updateConnection]
+  );
+
+  // Called when edge reconnection ends - delete edge if not reconnected
+  const onReconnectEnd = useCallback(
+    (_event: MouseEvent | TouchEvent, edge: Edge) => {
+      if (!edgeReconnectSuccessful.current) {
+        removeConnection(edge.id);
+      }
+      edgeReconnectSuccessful.current = true;
+    },
+    [removeConnection]
   );
 
   const onNodeClick = useCallback(
@@ -413,6 +434,20 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     []
   );
 
+  const onEdgeContextMenu = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      event.preventDefault();
+      setContextMenu({
+        show: true,
+        x: event.clientX,
+        y: event.clientY,
+        type: 'edge',
+        edgeId: edge.id,
+      });
+    },
+    []
+  );
+
   const closeContextMenu = useCallback(() => {
     setContextMenu({ show: false, x: 0, y: 0, type: 'pane' });
   }, []);
@@ -470,6 +505,27 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
       ];
     }
 
+    // Edge context menu
+    if (contextMenu.type === 'edge' && contextMenu.edgeId) {
+      return [
+        {
+          label: 'Delete Connection',
+          shortcut: 'Del',
+          icon: (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+          ),
+          onClick: () => {
+            if (contextMenu.edgeId) {
+              removeConnection(contextMenu.edgeId);
+            }
+          },
+          danger: true,
+        },
+      ];
+    }
+
     // Pane context menu - add nodes
     return sidebarNodeTypes.map((nodeType) => ({
       label: `Add ${nodeType.label}`,
@@ -505,7 +561,9 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onReconnectStart={onReconnectStart}
         onReconnect={onReconnect}
+        onReconnectEnd={onReconnectEnd}
         reconnectRadius={10}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
@@ -513,6 +571,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         onDrop={onDrop}
         onNodeContextMenu={onNodeContextMenu}
         onPaneContextMenu={onPaneContextMenu}
+        onEdgeContextMenu={onEdgeContextMenu}
         nodeTypes={nodeTypes}
         fitView
         className="!bg-transparent"
