@@ -57,7 +57,7 @@ export default function PreviewPage({ params }: PreviewPageProps) {
   // Avatar config (from workflow settings or defaults)
   const [avatarConfig, setAvatarConfig] = useState<AvatarConfig>({
     renderer: 'vrm',
-    modelUrl: '',
+    modelUrl: '/models/a1185aea_Flowchan.vrm',
   });
 
   // Load saved model URL from localStorage on mount
