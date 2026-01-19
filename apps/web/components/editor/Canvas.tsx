@@ -9,6 +9,7 @@ import {
   useNodesState,
   useEdgesState,
   useReactFlow,
+  ConnectionMode,
   type Connection,
   type Edge,
   type Node,
@@ -21,7 +22,9 @@ import {
 import '@xyflow/react/dist/style.css';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import CustomNode, { type CustomNodeData } from './CustomNode';
+import FieldSelectorNode from './FieldSelectorNode';
 import ContextMenu, { type ContextMenuItem } from './ContextMenu';
+import DataPreviewPopup from './DataPreviewPopup';
 import { nodeTypes as sidebarNodeTypes } from './Sidebar';
 
 interface CanvasProps {
@@ -32,6 +35,7 @@ interface CanvasProps {
 
 const nodeTypes: NodeTypes = {
   custom: CustomNode,
+  'field-selector': FieldSelectorNode,
 };
 
 // Node type colors for edge styling
@@ -63,6 +67,7 @@ const nodeTypeColors: Record<string, string> = {
   // Utility
   'http-request': '#3B82F6',
   'text-transform': '#EC4899',
+  'field-selector': '#8B5CF6',
   'random': '#8B5CF6',
   'variable': '#14B8A6',
   // Avatar
@@ -78,6 +83,15 @@ interface ContextMenuState {
   type: 'pane' | 'node' | 'edge';
   nodeId?: string;
   edgeId?: string;
+}
+
+interface DataPreviewState {
+  show: boolean;
+  x: number;
+  y: number;
+  edgeId: string;
+  sourceNodeId: string;
+  targetNodeId: string;
 }
 
 // Wrapper component to provide ReactFlowProvider context
@@ -98,6 +112,7 @@ function CanvasInner({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
     y: 0,
     type: 'pane',
   });
+  const [dataPreview, setDataPreview] = useState<DataPreviewState | null>(null);
 
   const {
     nodes: workflowNodes,
@@ -114,6 +129,7 @@ function CanvasInner({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
     redo,
     copySelectedNodes,
     pasteNodes,
+    nodeStatuses,
   } = useWorkflowStore();
 
   // Keyboard shortcuts
@@ -232,9 +248,12 @@ function CanvasInner({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
         const isEntryPoint = entryPointTypes.has(node.type) || nodeInputs.length === 0;
         const isReachable = !hasStartNode || reachableNodes.has(node.id);
 
+        // Use special node types for custom node components
+        const reactFlowNodeType = node.type === 'field-selector' ? 'field-selector' : 'custom';
+
         return {
           id: node.id,
-          type: 'custom',
+          type: reactFlowNodeType,
           position: node.position,
           data: {
             label: getNodeLabel(node.type),
@@ -384,7 +403,24 @@ function CanvasInner({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
     selectNode(null);
     onNodeSelect?.(null);
     setContextMenu({ show: false, x: 0, y: 0, type: 'pane' });
+    setDataPreview(null);
   }, [selectNode, onNodeSelect]);
+
+  // Handle edge click to show data preview
+  const onEdgeClick = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      event.stopPropagation();
+      setDataPreview({
+        show: true,
+        x: event.clientX,
+        y: event.clientY,
+        edgeId: edge.id,
+        sourceNodeId: edge.source,
+        targetNodeId: edge.target,
+      });
+    },
+    []
+  );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -584,6 +620,7 @@ function CanvasInner({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
         onReconnectEnd={onReconnectEnd}
         reconnectRadius={10}
         onNodeClick={onNodeClick}
+        onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
         onDragOver={onDragOver}
         onDrop={onDrop}
@@ -593,6 +630,7 @@ function CanvasInner({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
         nodeTypes={nodeTypes}
         fitView
         className="!bg-transparent"
+        connectionMode={ConnectionMode.Loose}
         defaultEdgeOptions={{
           animated: true,
           style: { stroke: '#10B981', strokeWidth: 3 },
@@ -656,6 +694,32 @@ function CanvasInner({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
           onClose={closeContextMenu}
         />
       )}
+
+      {/* Data Preview Popup */}
+      {dataPreview && (() => {
+        const connection = connections.find((c) => c.id === dataPreview.edgeId);
+        const sourceNode = workflowNodes.find((n) => n.id === dataPreview.sourceNodeId);
+        const targetNode = workflowNodes.find((n) => n.id === dataPreview.targetNodeId);
+        return (
+          <DataPreviewPopup
+            x={dataPreview.x}
+            y={dataPreview.y}
+            sourceNodeLabel={getNodeLabel(sourceNode?.type || '')}
+            sourceNodeType={sourceNode?.type || ''}
+            targetNodeLabel={getNodeLabel(targetNode?.type || '')}
+            data={nodeStatuses[dataPreview.sourceNodeId]?.data?.outputs}
+            selectedFields={connection?.from.fieldPaths || []}
+            onFieldsChange={(fieldPaths) => {
+              if (connection) {
+                updateConnection(connection.id, {
+                  from: { ...connection.from, fieldPaths },
+                });
+              }
+            }}
+            onClose={() => setDataPreview(null)}
+          />
+        );
+      })()}
     </div>
   );
 }
@@ -689,6 +753,7 @@ function getNodeLabel(type: string): string {
     // Utility
     'http-request': 'HTTP Request',
     'text-transform': 'Text Transform',
+    'field-selector': 'Field Selector',
     'random': 'Random',
     'variable': 'Variable',
     // Avatar
@@ -718,6 +783,7 @@ function getNodeCategory(type: string): 'input' | 'process' | 'output' | 'contro
     'ollama-llm': 'process',
     'http-request': 'process',
     'text-transform': 'process',
+    'field-selector': 'process',
     // Control
     'switch': 'control',
     'delay': 'control',
@@ -770,6 +836,7 @@ function getNodeInputs(type: string): { id: string; label: string }[] {
     // Utility
     'http-request': [{ id: 'body', label: 'Body' }],
     'text-transform': [{ id: 'text', label: 'Text' }],
+    'field-selector': [{ id: 'input', label: 'Input' }],
     'random': [{ id: 'trigger', label: 'Trigger' }],
     'variable': [{ id: 'set', label: 'Set' }],
     // Avatar
@@ -827,6 +894,7 @@ function getNodeOutputs(type: string): { id: string; label: string }[] {
       { id: 'status', label: 'Status' },
     ],
     'text-transform': [{ id: 'result', label: 'Result' }],
+    'field-selector': [{ id: 'output', label: 'Output' }],
     'random': [{ id: 'value', label: 'Value' }],
     'variable': [{ id: 'value', label: 'Value' }],
     // Avatar
