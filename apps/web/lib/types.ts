@@ -120,6 +120,53 @@ export interface NodeStatus {
   data?: any;
 }
 
+// Avatar types
+export type AvatarRendererType = 'vrm' | 'vtube-studio' | 'png';
+
+export interface AvatarState {
+  expression: string;
+  mouthOpen: number;
+  motion?: string;
+  lookAt?: { x: number; y: number };
+}
+
+export interface AvatarConfig {
+  renderer: AvatarRendererType;
+  modelUrl?: string;
+  vtubePort?: number;
+  pngConfig?: PNGAvatarConfig;
+  autoEmotion?: boolean;
+  autoLipsync?: boolean;
+}
+
+export interface PNGAvatarConfig {
+  baseUrl: string;
+  expressions: Record<string, string>;
+  defaultExpression: string;
+}
+
+// Avatar WebSocket events
+export interface AvatarExpressionEvent {
+  expression: string;
+  intensity?: number;
+}
+
+export interface AvatarMouthEvent {
+  value: number;
+  viseme?: string;
+}
+
+export interface AvatarMotionEvent {
+  motion: string;
+}
+
+export interface AvatarLookAtEvent {
+  x: number;
+  y: number;
+}
+
+export interface AvatarUpdateEvent extends Partial<AvatarState> {}
+
 // API response types
 export interface ApiResponse<T> {
   data?: T;

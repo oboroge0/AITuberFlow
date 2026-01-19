@@ -122,7 +122,7 @@ async def join(sid, data):
 
         executor.set_status_callback(workflow_id, status_callback)
 
-        # Set up event callback for audio events
+        # Set up event callback for audio, avatar, and subtitle events
         async def event_callback(event):
             if event.type == "audio.generated":
                 filename = event.payload.get("filename", "")
@@ -136,6 +136,46 @@ async def join(sid, data):
                         },
                         room=f"workflow:{workflow_id}",
                     )
+            elif event.type == "avatar.expression":
+                await sio.emit(
+                    "avatar.expression",
+                    {
+                        "expression": event.payload.get("expression", "neutral"),
+                        "intensity": event.payload.get("intensity", 1.0),
+                    },
+                    room=f"workflow:{workflow_id}",
+                )
+            elif event.type == "avatar.mouth":
+                await sio.emit(
+                    "avatar.mouth",
+                    {
+                        "value": event.payload.get("value", 0.0),
+                        "viseme": event.payload.get("viseme"),
+                    },
+                    room=f"workflow:{workflow_id}",
+                )
+            elif event.type == "avatar.motion":
+                await sio.emit(
+                    "avatar.motion",
+                    {
+                        "motion": event.payload.get("motion", ""),
+                    },
+                    room=f"workflow:{workflow_id}",
+                )
+            elif event.type == "avatar.update":
+                await sio.emit(
+                    "avatar.update",
+                    event.payload,
+                    room=f"workflow:{workflow_id}",
+                )
+            elif event.type == "subtitle":
+                await sio.emit(
+                    "subtitle",
+                    {
+                        "text": event.payload.get("text", ""),
+                    },
+                    room=f"workflow:{workflow_id}",
+                )
 
         executor.set_event_callback(workflow_id, event_callback)
 

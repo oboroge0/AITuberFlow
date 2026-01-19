@@ -315,6 +315,84 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
       },
     ],
   },
+  // Avatar nodes
+  'emotion-analyzer': {
+    label: 'Emotion Analyzer',
+    fields: [
+      {
+        key: 'method',
+        type: 'select',
+        label: 'Analysis Method',
+        options: [
+          { label: 'Rule-based (Keywords)', value: 'rule-based' },
+          { label: 'LLM-based', value: 'llm' },
+        ],
+      },
+      {
+        key: 'language',
+        type: 'select',
+        label: 'Language',
+        options: [
+          { label: 'Japanese', value: 'ja' },
+          { label: 'English', value: 'en' },
+          { label: 'Auto-detect', value: 'auto' },
+        ],
+      },
+      { key: 'custom_mappings', type: 'textarea', label: 'Custom Emotion Mappings (JSON)', placeholder: '{"happy": ["keyword1", "keyword2"]}' },
+      { key: 'emit_events', type: 'checkbox', label: 'Emit Avatar Events' },
+    ],
+  },
+  'lip-sync': {
+    label: 'Lip Sync',
+    fields: [
+      {
+        key: 'method',
+        type: 'select',
+        label: 'Lip Sync Method',
+        options: [
+          { label: 'Volume-based (Simple)', value: 'volume' },
+          { label: 'Envelope Following', value: 'envelope' },
+        ],
+      },
+      { key: 'sensitivity', type: 'number', label: 'Sensitivity (0.1-3.0)', placeholder: '1.0' },
+      { key: 'smoothing', type: 'number', label: 'Smoothing (0.0-1.0)', placeholder: '0.3' },
+      { key: 'threshold', type: 'number', label: 'Threshold (0.0-1.0)', placeholder: '0.1' },
+      { key: 'emit_realtime', type: 'checkbox', label: 'Emit Realtime Events' },
+      { key: 'frame_rate', type: 'number', label: 'Frame Rate', placeholder: '30' },
+    ],
+  },
+  'avatar-display': {
+    label: 'Avatar Display',
+    fields: [
+      {
+        key: 'renderer',
+        type: 'select',
+        label: 'Renderer',
+        options: [
+          { label: 'VRM (Built-in)', value: 'vrm' },
+          { label: 'VTube Studio', value: 'vtube-studio' },
+          { label: 'PNG Images', value: 'png' },
+        ],
+      },
+      { key: 'model_url', type: 'text', label: 'Model URL/Path', placeholder: '/models/avatar.vrm' },
+      { key: 'vtube_port', type: 'number', label: 'VTube Studio Port', placeholder: '8001' },
+      { key: 'png_config', type: 'textarea', label: 'PNG Configuration (JSON)', placeholder: '{"baseUrl": "/images/avatar.png", "expressions": {}}' },
+      { key: 'auto_emotion', type: 'checkbox', label: 'Auto Emotion Detection' },
+      { key: 'auto_lipsync', type: 'checkbox', label: 'Auto Lip Sync' },
+      { key: 'show_subtitle', type: 'checkbox', label: 'Show Subtitle' },
+      { key: 'lipsync_sensitivity', type: 'number', label: 'Lip Sync Sensitivity', placeholder: '1.0' },
+      {
+        key: 'emotion_language',
+        type: 'select',
+        label: 'Emotion Detection Language',
+        options: [
+          { label: 'Japanese', value: 'ja' },
+          { label: 'English', value: 'en' },
+          { label: 'Auto-detect', value: 'auto' },
+        ],
+      },
+    ],
+  },
 };
 
 export default function NodeSettings() {

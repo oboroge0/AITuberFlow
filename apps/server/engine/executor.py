@@ -92,13 +92,19 @@ class WorkflowExecutor:
         await event_bus.start()
         self._event_buses[workflow_id] = event_bus
 
-        # Subscribe to audio events and forward to callback
+        # Subscribe to events and forward to callback
         event_callback = self._event_callbacks.get(workflow_id)
         if event_callback:
-            async def forward_audio_event(event: Event):
-                if event.type == "audio.generated":
+            async def forward_event(event: Event):
+                # Forward audio, avatar, and subtitle events
+                if event.type.startswith("audio.") or \
+                   event.type.startswith("avatar.") or \
+                   event.type == "subtitle":
                     await event_callback(event)
-            event_bus.subscribe("audio.*", forward_audio_event)
+
+            event_bus.subscribe("audio.*", forward_event)
+            event_bus.subscribe("avatar.*", forward_event)
+            event_bus.subscribe("subtitle", forward_event)
 
         # Track running state
         self._running_workflows[workflow_id] = {

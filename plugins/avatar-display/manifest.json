@@ -1,0 +1,117 @@
+{
+  "id": "avatar-display",
+  "name": "Avatar Display",
+  "version": "1.0.0",
+  "description": "Integrated avatar display with automatic emotion detection and lip sync",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/aituberflow"
+  },
+  "license": "MIT",
+  "category": "output",
+  "node": {
+    "inputs": [
+      {
+        "id": "text",
+        "type": "string",
+        "description": "Text for emotion analysis and subtitle display"
+      },
+      {
+        "id": "audio",
+        "type": "audio",
+        "description": "Audio data for lip sync"
+      },
+      {
+        "id": "expression",
+        "type": "string",
+        "description": "Manual expression override (optional)"
+      },
+      {
+        "id": "motion",
+        "type": "string",
+        "description": "Motion to trigger (optional)"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "status",
+        "type": "string",
+        "description": "Status of avatar update"
+      }
+    ],
+    "events": {
+      "emits": ["avatar.expression", "avatar.mouth", "avatar.motion", "avatar.update", "subtitle"]
+    }
+  },
+  "config": {
+    "renderer": {
+      "type": "select",
+      "label": "Renderer",
+      "description": "Avatar renderer to use",
+      "options": [
+        { "label": "VRM (Built-in)", "value": "vrm" },
+        { "label": "VTube Studio", "value": "vtube-studio" },
+        { "label": "PNG Images", "value": "png" }
+      ],
+      "default": "vrm"
+    },
+    "model_url": {
+      "type": "string",
+      "label": "Model URL/Path",
+      "description": "URL or path to VRM model file",
+      "default": "/models/avatar.vrm"
+    },
+    "vtube_port": {
+      "type": "number",
+      "label": "VTube Studio Port",
+      "description": "Port for VTube Studio API connection",
+      "default": 8001
+    },
+    "png_config": {
+      "type": "textarea",
+      "label": "PNG Configuration (JSON)",
+      "description": "Configuration for PNG avatar expressions",
+      "default": "{\"baseUrl\": \"/images/avatar/default.png\", \"expressions\": {}, \"defaultExpression\": \"neutral\"}"
+    },
+    "auto_emotion": {
+      "type": "boolean",
+      "label": "Auto Emotion Detection",
+      "description": "Automatically detect emotion from text",
+      "default": true
+    },
+    "auto_lipsync": {
+      "type": "boolean",
+      "label": "Auto Lip Sync",
+      "description": "Automatically generate lip sync from audio",
+      "default": true
+    },
+    "show_subtitle": {
+      "type": "boolean",
+      "label": "Show Subtitle",
+      "description": "Display text as subtitle",
+      "default": true
+    },
+    "lipsync_sensitivity": {
+      "type": "number",
+      "label": "Lip Sync Sensitivity",
+      "description": "Sensitivity of lip sync (0.1 - 3.0)",
+      "default": 1.0,
+      "min": 0.1,
+      "max": 3.0
+    },
+    "emotion_language": {
+      "type": "select",
+      "label": "Emotion Detection Language",
+      "description": "Language for emotion keyword detection",
+      "options": [
+        { "label": "Japanese", "value": "ja" },
+        { "label": "English", "value": "en" },
+        { "label": "Auto-detect", "value": "auto" }
+      ],
+      "default": "ja"
+    }
+  },
+  "dependencies": {
+    "python": []
+  }
+}

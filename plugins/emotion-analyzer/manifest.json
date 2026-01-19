@@ -1,0 +1,76 @@
+{
+  "id": "emotion-analyzer",
+  "name": "Emotion Analyzer",
+  "version": "1.0.0",
+  "description": "Analyzes text to detect emotions for avatar expression control",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/aituberflow"
+  },
+  "license": "MIT",
+  "category": "avatar",
+  "node": {
+    "inputs": [
+      {
+        "id": "text",
+        "type": "string",
+        "description": "Text to analyze for emotions"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "expression",
+        "type": "string",
+        "description": "Detected expression (happy, sad, angry, surprised, neutral)"
+      },
+      {
+        "id": "intensity",
+        "type": "number",
+        "description": "Intensity of the expression (0.0 - 1.0)"
+      },
+      {
+        "id": "text",
+        "type": "string",
+        "description": "Pass-through of input text"
+      }
+    ],
+    "events": {
+      "emits": ["avatar.expression"]
+    }
+  },
+  "config": {
+    "method": {
+      "type": "select",
+      "label": "Analysis Method",
+      "description": "Method to use for emotion detection",
+      "options": [
+        { "label": "Rule-based (Keywords)", "value": "rule-based" },
+        { "label": "LLM-based", "value": "llm" }
+      ],
+      "default": "rule-based"
+    },
+    "language": {
+      "type": "select",
+      "label": "Language",
+      "description": "Language for keyword matching",
+      "options": [
+        { "label": "Japanese", "value": "ja" },
+        { "label": "English", "value": "en" },
+        { "label": "Auto-detect", "value": "auto" }
+      ],
+      "default": "ja"
+    },
+    "custom_mappings": {
+      "type": "textarea",
+      "label": "Custom Emotion Mappings (JSON)",
+      "description": "Custom keyword to expression mappings",
+      "default": "{}"
+    },
+    "emit_events": {
+      "type": "boolean",
+      "label": "Emit Avatar Events",
+      "description": "Emit avatar.expression events via WebSocket",
+      "default": true
+    }
+  }
+}
