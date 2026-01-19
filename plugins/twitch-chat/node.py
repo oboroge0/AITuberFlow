@@ -169,13 +169,31 @@ class TwitchChatNode(BaseNode):
         return tags
 
     async def execute(self, inputs: dict, context: NodeContext) -> dict:
-        """Return the latest message."""
-        if self._last_message:
-            return {
-                "message": self._last_message,
-                "author": self._last_message.get("author", ""),
-                "text": self._last_message.get("text", ""),
-            }
+        """Wait for and return the next chat message."""
+        if not self._running:
+            await context.log("Not connected to Twitch", "error")
+            return {"message": None, "author": "", "text": ""}
+
+        # Clear any previous message
+        self._last_message = None
+
+        await context.log("Waiting for chat message...")
+
+        # Wait for a message with timeout
+        timeout = 300  # 5 minutes
+        elapsed = 0
+        while self._running and elapsed < timeout:
+            if self._last_message:
+                msg = self._last_message
+                return {
+                    "message": msg,
+                    "author": msg.get("author", ""),
+                    "text": msg.get("text", ""),
+                }
+            await asyncio.sleep(0.1)
+            elapsed += 0.1
+
+        await context.log("Timeout waiting for chat message", "warning")
         return {"message": None, "author": "", "text": ""}
 
     async def teardown(self) -> None:

@@ -41,9 +41,15 @@ class TimerNode(BaseNode):
         await context.log(f"Timer configured: interval={self.interval_ms}ms")
 
     async def execute(self, inputs: dict, context: NodeContext) -> dict:
-        """Generate a timer tick."""
-        self.tick_count += 1
+        """Wait for interval then generate a timer tick."""
+        import asyncio
 
+        # Wait for the first tick if not immediate
+        if not self.immediate or self.tick_count > 0:
+            await context.log(f"Waiting {self.interval_ms}ms...")
+            await asyncio.sleep(self.interval_ms / 1000)
+
+        self.tick_count += 1
         timestamp = datetime.utcnow().isoformat()
 
         await context.log(f"Timer tick #{self.tick_count}")
