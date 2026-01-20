@@ -23,6 +23,16 @@
         "id": "audio",
         "type": "string",
         "description": "Path to generated audio file"
+      },
+      {
+        "id": "filename",
+        "type": "string",
+        "description": "Generated audio filename"
+      },
+      {
+        "id": "duration",
+        "type": "number",
+        "description": "Audio duration in seconds"
       }
     ],
     "events": {

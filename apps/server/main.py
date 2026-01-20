@@ -31,6 +31,10 @@ sio = socketio.AsyncServer(
 # Global executor instance (shared with workflows router)
 executor = WorkflowExecutor()
 
+# Share executor with workflows router
+workflows.set_executor(executor)
+workflows.set_socketio(sio)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -146,10 +150,12 @@ async def join(sid, data):
                     room=f"workflow:{workflow_id}",
                 )
             elif event.type == "avatar.mouth":
+                value = event.payload.get("value", 0.0)
+                logger.info(f"Sending avatar.mouth event: value={value}")
                 await sio.emit(
                     "avatar.mouth",
                     {
-                        "value": event.payload.get("value", 0.0),
+                        "value": value,
                         "viseme": event.payload.get("viseme"),
                     },
                     room=f"workflow:{workflow_id}",

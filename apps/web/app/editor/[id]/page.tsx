@@ -106,9 +106,13 @@ export default function EditorPage() {
     setSaving(false);
   };
 
-  const handleStart = async () => {
+  const handleStart = async (startNodeId?: string) => {
     clearLogs();
-    addLog({ level: 'info', message: '▶ Starting workflow...' });
+    if (startNodeId) {
+      addLog({ level: 'info', message: `▶ Starting from node: ${startNodeId}` });
+    } else {
+      addLog({ level: 'info', message: '▶ Starting workflow...' });
+    }
 
     // Get current workflow data from store (not saved version)
     const currentData = getWorkflowData();
@@ -117,6 +121,7 @@ export default function EditorPage() {
       nodes: currentData.nodes,
       connections: currentData.connections,
       character: currentData.character,
+      startNodeId,
     });
 
     if (response.error) {
@@ -229,17 +234,17 @@ export default function EditorPage() {
             </p>
           </div>
 
-          {/* Preview button */}
+          {/* Display button */}
           <button
-            onClick={() => router.push(`/preview/${workflowId}`)}
+            onClick={() => router.push(`/display/${workflowId}`)}
             className="px-4 py-2 rounded-lg bg-purple-500/20 border border-purple-500/50 text-purple-300 hover:bg-purple-500/30 transition-all flex items-center gap-2 text-sm"
-            title="Open Avatar Preview"
+            title="Open Avatar Display"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
               <circle cx="12" cy="12" r="3"/>
             </svg>
-            Preview
+            Display
           </button>
         </div>
 

@@ -30,7 +30,7 @@ import { nodeTypes as sidebarNodeTypes } from './Sidebar';
 interface CanvasProps {
   onNodeSelect?: (nodeId: string | null) => void;
   onSave?: () => void;
-  onRunWorkflow?: () => void;
+  onRunWorkflow?: (startNodeId?: string) => void;
 }
 
 const nodeTypes: NodeTypes = {
@@ -71,9 +71,11 @@ const nodeTypeColors: Record<string, string> = {
   'random': '#8B5CF6',
   'variable': '#14B8A6',
   // Avatar
-  'avatar-display': '#E879F9',
+  'avatar-controller': '#E879F9',
   'emotion-analyzer': '#F472B6',
   'lip-sync': '#FB7185',
+  'subtitle-display': '#A855F7',
+  'audio-player': '#8B5CF6',
 };
 
 interface ContextMenuState {
@@ -264,7 +266,7 @@ function CanvasInner({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
             outputs: getNodeOutputs(node.type),
             isReachable,
             isEntryPoint,
-            onPlayClick: onRunWorkflow,
+            onPlayClick: () => onRunWorkflow?.(node.id),
           } as CustomNodeData,
           selected: node.id === selectedNodeId,
         };
@@ -757,9 +759,11 @@ function getNodeLabel(type: string): string {
     'random': 'Random',
     'variable': 'Variable',
     // Avatar
-    'avatar-display': 'Avatar Display',
+    'avatar-controller': 'Avatar Controller',
     'emotion-analyzer': 'Emotion Analyzer',
     'lip-sync': 'Lip Sync',
+    'subtitle-display': 'Subtitle Display',
+    'audio-player': 'Audio Player',
   };
   return labels[type] || type;
 }
@@ -795,9 +799,11 @@ function getNodeCategory(type: string): 'input' | 'process' | 'output' | 'contro
     'coeiroink-tts': 'output',
     'sbv2-tts': 'output',
     // Avatar
-    'avatar-display': 'output',
+    'avatar-controller': 'output',
     'emotion-analyzer': 'process',
     'lip-sync': 'process',
+    'subtitle-display': 'output',
+    'audio-player': 'output',
   };
   return categories[type] || 'process';
 }
@@ -840,12 +846,21 @@ function getNodeInputs(type: string): { id: string; label: string }[] {
     'random': [{ id: 'trigger', label: 'Trigger' }],
     'variable': [{ id: 'set', label: 'Set' }],
     // Avatar
-    'avatar-display': [
-      { id: 'text', label: 'Text' },
-      { id: 'audio', label: 'Audio' },
+    'avatar-controller': [
+      { id: 'expression', label: 'Expression' },
+      { id: 'intensity', label: 'Intensity' },
+      { id: 'mouth', label: 'Mouth' },
+      { id: 'motion', label: 'Motion' },
     ],
     'emotion-analyzer': [{ id: 'text', label: 'Text' }],
-    'lip-sync': [{ id: 'audio', label: 'Audio' }],
+    'lip-sync': [
+      { id: 'audio', label: 'Audio' },
+    ],
+    'subtitle-display': [{ id: 'text', label: 'Text' }],
+    'audio-player': [
+      { id: 'audio', label: 'Audio' },
+      { id: 'duration', label: 'Duration' },
+    ],
   };
   return inputs[type] || [];
 }
@@ -898,14 +913,21 @@ function getNodeOutputs(type: string): { id: string; label: string }[] {
     'random': [{ id: 'value', label: 'Value' }],
     'variable': [{ id: 'value', label: 'Value' }],
     // Avatar
-    'avatar-display': [{ id: 'status', label: 'Status' }],
+    'avatar-controller': [{ id: 'status', label: 'Status' }],
     'emotion-analyzer': [
       { id: 'expression', label: 'Expression' },
+      { id: 'intensity', label: 'Intensity' },
       { id: 'text', label: 'Text' },
     ],
     'lip-sync': [
       { id: 'mouth_values', label: 'Mouth' },
+      { id: 'duration', label: 'Duration' },
       { id: 'audio', label: 'Audio' },
+    ],
+    'subtitle-display': [{ id: 'text', label: 'Text' }],
+    'audio-player': [
+      { id: 'audio', label: 'Audio' },
+      { id: 'duration', label: 'Duration' },
     ],
   };
   return outputs[type] || [];

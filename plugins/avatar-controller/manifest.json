@@ -1,0 +1,87 @@
+{
+  "id": "avatar-controller",
+  "name": "Avatar Controller",
+  "version": "1.0.0",
+  "description": "Core avatar controller - receives expression, mouth, and motion inputs and emits avatar events",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/aituberflow"
+  },
+  "license": "MIT",
+  "category": "avatar",
+  "node": {
+    "inputs": [
+      {
+        "id": "expression",
+        "type": "string",
+        "description": "Expression name (happy, sad, angry, surprised, relaxed, neutral)"
+      },
+      {
+        "id": "intensity",
+        "type": "number",
+        "description": "Expression intensity (0.0 - 1.0)"
+      },
+      {
+        "id": "mouth",
+        "type": "number",
+        "description": "Mouth open value (0.0 - 1.0)"
+      },
+      {
+        "id": "motion",
+        "type": "string",
+        "description": "Motion/animation name to trigger"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "status",
+        "type": "string",
+        "description": "Status of avatar update"
+      }
+    ],
+    "events": {
+      "emits": ["avatar.expression", "avatar.mouth", "avatar.motion", "avatar.update"],
+      "listens": ["avatar.mouth"]
+    }
+  },
+  "config": {
+    "renderer": {
+      "type": "select",
+      "label": "Renderer",
+      "description": "Avatar renderer type",
+      "options": [
+        { "label": "VRM (Built-in)", "value": "vrm" },
+        { "label": "VTube Studio", "value": "vtube-studio" },
+        { "label": "PNG Images", "value": "png" }
+      ],
+      "default": "vrm"
+    },
+    "model_url": {
+      "type": "string",
+      "label": "Model URL/Path",
+      "description": "URL or path to VRM model file",
+      "default": "/models/avatar.vrm"
+    },
+    "vtube_port": {
+      "type": "number",
+      "label": "VTube Studio Port",
+      "description": "Port for VTube Studio API connection",
+      "default": 8001
+    },
+    "png_config": {
+      "type": "textarea",
+      "label": "PNG Configuration (JSON)",
+      "description": "Configuration for PNG avatar expressions",
+      "default": "{\"baseUrl\": \"/images/avatar/\", \"expressions\": {}}"
+    },
+    "idle_animation": {
+      "type": "string",
+      "label": "Idle Animation URL",
+      "description": "Path to idle animation file (Mixamo FBX)",
+      "default": ""
+    }
+  },
+  "dependencies": {
+    "python": []
+  }
+}

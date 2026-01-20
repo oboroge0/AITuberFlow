@@ -7,6 +7,8 @@ import asyncio
 import struct
 import wave
 import io
+import tempfile
+from pathlib import Path
 from typing import Any
 from aituber_flow_sdk import BaseNode, NodeContext
 
@@ -17,9 +19,12 @@ class LipSyncNode(BaseNode):
     async def setup(self, config: dict[str, Any], context: NodeContext) -> None:
         """Initialize the lip sync processor."""
         self.method = config.get("method", "volume")
-        self.sensitivity = float(config.get("sensitivity", 1.0))
+        # Sensitivity: RMS values for speech are typically 0.05-0.2, so we need
+        # to scale up significantly. Default 5.0 means RMS of 0.2 -> mouth 1.0
+        self.sensitivity = float(config.get("sensitivity", 5.0))
         self.smoothing = float(config.get("smoothing", 0.3))
-        self.threshold = float(config.get("threshold", 0.1))
+        # Threshold: filter out silence/noise. 0.02 catches most speech
+        self.threshold = float(config.get("threshold", 0.02))
         self.emit_realtime = config.get("emit_realtime", True)
         self.frame_rate = int(config.get("frame_rate", 30))
 
@@ -28,25 +33,48 @@ class LipSyncNode(BaseNode):
     ) -> dict[str, Any]:
         """Process audio and generate lip sync data."""
         audio = inputs.get("audio")
-        audio_url = inputs.get("audio_url")
+        # Support both audio_url and audioUrl (for compatibility with voicevox-tts)
+        audio_url = inputs.get("audio_url") or inputs.get("audioUrl")
+
+        # Track original path for output
+        original_path: str | None = None
+
+        # Handle case where audio is a dict (e.g., from voicevox-tts output)
+        if isinstance(audio, dict):
+            # Extract audioUrl from the dict if present
+            original_path = (
+                audio.get("audioUrl")
+                or audio.get("audio_url")
+                or audio.get("audio")
+                or audio.get("filename")
+            )
+            if not audio_url:
+                audio_url = original_path
+            audio = None  # Reset audio so we load from URL
+        elif isinstance(audio, str):
+            original_path = audio
+            if not audio_url:
+                audio_url = audio
+            audio = None  # Reset audio so we load from URL
 
         if not audio and not audio_url:
             await context.log("No audio input provided", "warning")
             return {
                 "mouth_values": [],
                 "duration": 0.0,
-                "audio": None
+                "audio": ""
             }
 
-        # If audio_url is provided, load the audio
+        # If audio_url is provided, load the audio from file or URL
         if audio_url and not audio:
-            audio = await self._load_audio_from_url(audio_url, context)
+            await context.log(f"Loading audio from: {audio_url}")
+            audio = await self._load_audio(audio_url, context)
 
         if not audio:
             return {
                 "mouth_values": [],
                 "duration": 0.0,
-                "audio": None
+                "audio": original_path or ""
             }
 
         # Analyze audio
@@ -57,29 +85,38 @@ class LipSyncNode(BaseNode):
             return {
                 "mouth_values": [],
                 "duration": 0.0,
-                "audio": audio
+                "audio": original_path or ""
             }
 
         await context.log(f"Generated {len(mouth_values)} lip sync frames for {duration:.2f}s audio")
 
         # Emit realtime events if enabled
         if self.emit_realtime and mouth_values:
-            asyncio.create_task(
+            context.create_task(
                 self._emit_realtime_events(mouth_values, duration, context)
             )
 
         return {
             "mouth_values": mouth_values,
             "duration": duration,
-            "audio": audio
+            "audio": original_path or ""
         }
 
-    async def _load_audio_from_url(self, url: str, context: NodeContext) -> bytes | None:
-        """Load audio from URL."""
+    async def _load_audio(self, path_or_url: str, context: NodeContext) -> bytes | None:
+        """Load audio from URL or local file path."""
+        resolved_path = self._resolve_audio_path(path_or_url)
+        if resolved_path:
+            try:
+                return await asyncio.to_thread(resolved_path.read_bytes)
+            except Exception as e:
+                await context.log(f"Error reading audio file: {e}", "error")
+                return None
+
+        # Otherwise, treat as URL
         try:
             import httpx
             async with httpx.AsyncClient() as client:
-                response = await client.get(url)
+                response = await client.get(path_or_url)
                 if response.status_code == 200:
                     return response.content
                 else:
@@ -88,6 +125,27 @@ class LipSyncNode(BaseNode):
         except Exception as e:
             await context.log(f"Error loading audio from URL: {e}", "error")
             return None
+
+    def _resolve_audio_path(self, path_or_url: str) -> Path | None:
+        """Resolve audio path from direct path or known output folders."""
+        path = Path(path_or_url)
+        if path.is_file():
+            return path
+
+        filename = path.name
+        if not filename:
+            return None
+
+        temp_candidate = Path(tempfile.gettempdir()) / filename
+        if temp_candidate.is_file():
+            return temp_candidate
+
+        project_root = Path(__file__).parent.parent.parent
+        audio_output = project_root / "apps" / "server" / "audio_output" / filename
+        if audio_output.is_file():
+            return audio_output
+
+        return None
 
     async def _analyze_audio(
         self, audio: bytes, context: NodeContext
@@ -107,38 +165,72 @@ class LipSyncNode(BaseNode):
 
         # Generate mouth values at specified frame rate
         frame_interval = 1.0 / self.frame_rate
-        num_frames = int(duration * self.frame_rate)
+        num_frames = max(1, int(duration * self.frame_rate))
         samples_per_frame = len(samples) // num_frames if num_frames > 0 else len(samples)
 
         mouth_values = []
         prev_value = 0.0
+        min_visible = max(0.02, self.threshold)
+        max_gain = 12.0
+        target_peak = 0.8
 
+        frame_values: list[float] = []
         for i in range(num_frames):
             start_idx = i * samples_per_frame
             end_idx = min(start_idx + samples_per_frame, len(samples))
             frame_samples = samples[start_idx:end_idx]
 
             if not frame_samples:
-                mouth_values.append(0.0)
+                frame_values.append(0.0)
                 continue
 
             if self.method == "volume":
                 # Simple RMS volume
-                rms = self._calculate_rms(frame_samples)
-                value = min(1.0, rms * self.sensitivity)
+                raw_value = self._calculate_rms(frame_samples)
             else:
                 # Envelope following
-                value = self._calculate_envelope(frame_samples, self.sensitivity)
+                raw_value = self._calculate_envelope(frame_samples)
 
-            # Apply threshold
+            frame_values.append(raw_value)
+
+        max_value = max(frame_values) if frame_values else 0.0
+        if max_value > 0:
+            gain = max(1.0, min(
+                max_gain,
+                target_peak / (max_value * max(self.sensitivity, 0.001))
+            ))
+        else:
+            gain = 1.0
+
+        for raw_value in frame_values:
+            if raw_value <= 0:
+                mouth_values.append(0.0)
+                prev_value = 0.0
+                continue
+
+            value = min(1.0, raw_value * self.sensitivity * gain)
+
+            # Apply threshold (silence detection)
             if value < self.threshold:
                 value = 0.0
 
             # Apply smoothing
             smoothed_value = prev_value * self.smoothing + value * (1 - self.smoothing)
-            prev_value = smoothed_value
 
+            # Force to 0 if below minimum visible threshold (prevents lingering open mouth)
+            if smoothed_value < min_visible:
+                smoothed_value = 0.0
+
+            prev_value = smoothed_value
             mouth_values.append(round(smoothed_value, 3))
+
+        # Ensure the last few frames close the mouth (add decay frames)
+        for _ in range(5):
+            prev_value *= 0.3  # Quick decay
+            if prev_value < min_visible:
+                mouth_values.append(0.0)
+                break
+            mouth_values.append(round(prev_value, 3))
 
         return mouth_values, duration
 
@@ -190,12 +282,12 @@ class LipSyncNode(BaseNode):
         mean = sum(squared) / len(squared)
         return mean ** 0.5
 
-    def _calculate_envelope(self, samples: list[float], sensitivity: float) -> float:
+    def _calculate_envelope(self, samples: list[float]) -> float:
         """Calculate envelope following value."""
         if not samples:
             return 0.0
         peak = max(abs(s) for s in samples)
-        return min(1.0, peak * sensitivity)
+        return peak
 
     async def _emit_realtime_events(
         self, mouth_values: list[float], duration: float, context: NodeContext
@@ -204,7 +296,8 @@ class LipSyncNode(BaseNode):
         if not mouth_values:
             return
 
-        frame_interval = duration / len(mouth_values)
+        # Use fixed frame interval based on frame_rate
+        frame_interval = 1.0 / self.frame_rate
 
         for value in mouth_values:
             await context.emit_event({
@@ -213,7 +306,7 @@ class LipSyncNode(BaseNode):
             })
             await asyncio.sleep(frame_interval)
 
-        # Close mouth at the end
+        # Ensure mouth is closed at the end
         await context.emit_event({
             "type": "avatar.mouth",
             "value": 0.0

@@ -1,0 +1,70 @@
+{
+  "id": "audio-player",
+  "name": "Audio Player",
+  "version": "1.0.0",
+  "description": "Plays audio files and emits playback events for synchronization",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/aituberflow"
+  },
+  "license": "MIT",
+  "category": "output",
+  "node": {
+    "inputs": [
+      {
+        "id": "audio",
+        "type": "string",
+        "description": "Path to audio file"
+      },
+      {
+        "id": "duration",
+        "type": "number",
+        "description": "Audio duration in seconds (optional, will be calculated if not provided)"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "audio",
+        "type": "string",
+        "description": "Pass-through of audio path"
+      },
+      {
+        "id": "duration",
+        "type": "number",
+        "description": "Audio duration in seconds"
+      }
+    ],
+    "events": {
+      "emits": ["audio.play", "audio.stop"]
+    }
+  },
+  "config": {
+    "wait_for_completion": {
+      "type": "boolean",
+      "label": "Wait for Completion",
+      "description": "Wait until audio finishes playing before continuing workflow",
+      "default": true
+    },
+    "volume": {
+      "type": "number",
+      "label": "Volume",
+      "description": "Playback volume (0.0 - 1.0)",
+      "default": 1.0,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "output_device": {
+      "type": "select",
+      "label": "Output Device",
+      "description": "Where to play the audio",
+      "options": [
+        { "label": "Browser (Frontend)", "value": "browser" },
+        { "label": "Server (Local)", "value": "server" }
+      ],
+      "default": "browser"
+    }
+  },
+  "dependencies": {
+    "python": []
+  }
+}

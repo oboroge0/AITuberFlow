@@ -266,7 +266,7 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
     ),
     statusText: 'Engine: Style-Bert-VITS2',
   },
-  'avatar-display': {
+  'avatar-controller': {
     color: '#E879F9',
     bgColor: 'rgba(232, 121, 249, 0.1)',
     icon: (
@@ -275,7 +275,7 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
         <path d="M4 20v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/>
       </svg>
     ),
-    statusText: 'Avatar Display',
+    statusText: 'Avatar Controller',
   },
   'emotion-analyzer': {
     color: '#F472B6',
@@ -299,6 +299,30 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Lip Sync',
+  },
+  'subtitle-display': {
+    color: '#A855F7',
+    bgColor: 'rgba(168, 85, 247, 0.1)',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="2" y="6" width="20" height="12" rx="2"/>
+        <line x1="6" y1="12" x2="18" y2="12"/>
+        <line x1="6" y1="15" x2="14" y2="15"/>
+      </svg>
+    ),
+    statusText: 'Subtitle Display',
+  },
+  'audio-player': {
+    color: '#8B5CF6',
+    bgColor: 'rgba(139, 92, 246, 0.1)',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+      </svg>
+    ),
+    statusText: 'Audio Player',
   },
 };
 

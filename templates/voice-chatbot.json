@@ -1,7 +1,7 @@
 {
   "id": "template-voice-chatbot",
   "name": "Voice Chat Bot",
-  "description": "A chatbot that responds with voice using VOICEVOX. Input -> LLM -> TTS -> Output.",
+  "description": "A chatbot that responds with voice using VOICEVOX. Input -> LLM -> TTS -> Audio playback.",
   "nodes": [
     {
       "id": "node-input",
@@ -30,14 +30,24 @@
       "position": { "x": 600, "y": 200 },
       "config": {
         "host": "http://localhost:50021",
-        "speakerId": 1,
+        "speaker": 1,
         "speedScale": 1.0
+      }
+    },
+    {
+      "id": "node-audio",
+      "type": "audio-player",
+      "position": { "x": 850, "y": 200 },
+      "config": {
+        "wait_for_completion": true,
+        "volume": 1.0,
+        "output_device": "browser"
       }
     },
     {
       "id": "node-output",
       "type": "console-output",
-      "position": { "x": 850, "y": 200 },
+      "position": { "x": 600, "y": 350 },
       "config": {
         "prefix": "[AI]",
         "logLevel": "info"
@@ -57,6 +67,11 @@
     },
     {
       "id": "conn-3",
+      "from": { "nodeId": "node-tts", "port": "audio" },
+      "to": { "nodeId": "node-audio", "port": "audio" }
+    },
+    {
+      "id": "conn-4",
       "from": { "nodeId": "node-llm", "port": "response" },
       "to": { "nodeId": "node-output", "port": "text" }
     }

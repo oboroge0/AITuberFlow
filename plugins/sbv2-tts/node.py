@@ -7,6 +7,7 @@ Text-to-speech using Style-Bert-VITS2.
 import sys
 import json
 import uuid
+import wave
 from pathlib import Path
 from urllib.parse import urlencode
 
@@ -102,6 +103,8 @@ class SBV2TTSNode(BaseNode):
                     filepath = AUDIO_DIR / filename
                     filepath.write_bytes(audio_data)
 
+                    duration = self._get_wav_duration(filepath)
+
                     await context.log(f"Audio generated: {filename}")
 
                     # Emit audio event
@@ -110,11 +113,11 @@ class SBV2TTSNode(BaseNode):
                         payload={
                             "filename": filename,
                             "text": text,
-                            "duration": 0
+                            "duration": duration
                         }
                     ))
 
-                    return {"audio": filename}
+                    return {"audio": str(filepath), "filename": filename, "duration": duration}
 
         except Exception as e:
             await context.log(f"Style-Bert-VITS2 error: {str(e)}", "error")
@@ -149,6 +152,8 @@ class SBV2TTSNode(BaseNode):
                 filepath = AUDIO_DIR / filename
                 filepath.write_bytes(audio_data)
 
+                duration = self._get_wav_duration(filepath)
+
                 await context.log(f"Audio generated: {filename}")
 
                 await context.emit_event(Event(
@@ -156,11 +161,11 @@ class SBV2TTSNode(BaseNode):
                     payload={
                         "filename": filename,
                         "text": text,
-                        "duration": 0
+                        "duration": duration
                     }
                 ))
 
-                return {"audio": filename}
+                return {"audio": str(filepath), "filename": filename, "duration": duration}
 
         except Exception as e:
             await context.log(f"Style-Bert-VITS2 error: {str(e)}", "error")
@@ -169,3 +174,13 @@ class SBV2TTSNode(BaseNode):
     async def teardown(self) -> None:
         """No cleanup needed."""
         pass
+
+    def _get_wav_duration(self, file_path: Path) -> float:
+        """Get duration of a WAV file in seconds."""
+        try:
+            with wave.open(str(file_path), 'rb') as wav_file:
+                frames = wav_file.getnframes()
+                rate = wav_file.getframerate()
+                return frames / float(rate)
+        except Exception:
+            return 0.0

@@ -1,0 +1,106 @@
+{
+  "id": "subtitle-display",
+  "name": "Subtitle Display",
+  "version": "1.0.0",
+  "description": "Display text as subtitle overlay for streaming",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/aituberflow"
+  },
+  "license": "MIT",
+  "category": "output",
+  "node": {
+    "inputs": [
+      {
+        "id": "text",
+        "type": "string",
+        "description": "Text to display as subtitle"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "text",
+        "type": "string",
+        "description": "Pass-through of input text"
+      }
+    ],
+    "events": {
+      "emits": ["subtitle"]
+    }
+  },
+  "config": {
+    "style": {
+      "type": "select",
+      "label": "Style Preset",
+      "description": "Subtitle style preset",
+      "options": [
+        { "label": "Default", "value": "default" },
+        { "label": "Gaming", "value": "gaming" },
+        { "label": "Minimal", "value": "minimal" },
+        { "label": "Custom", "value": "custom" }
+      ],
+      "default": "default"
+    },
+    "position": {
+      "type": "select",
+      "label": "Position",
+      "description": "Subtitle position on screen",
+      "options": [
+        { "label": "Bottom Center", "value": "bottom-center" },
+        { "label": "Bottom Left", "value": "bottom-left" },
+        { "label": "Top Center", "value": "top-center" },
+        { "label": "Center", "value": "center" }
+      ],
+      "default": "bottom-center"
+    },
+    "font_size": {
+      "type": "number",
+      "label": "Font Size (px)",
+      "description": "Font size in pixels",
+      "default": 24,
+      "min": 12,
+      "max": 72
+    },
+    "font_color": {
+      "type": "string",
+      "label": "Font Color",
+      "description": "Text color (CSS color value)",
+      "default": "#ffffff"
+    },
+    "background_color": {
+      "type": "string",
+      "label": "Background Color",
+      "description": "Background color with alpha (CSS color value)",
+      "default": "rgba(0, 0, 0, 0.7)"
+    },
+    "show_speaker": {
+      "type": "boolean",
+      "label": "Show Speaker Name",
+      "description": "Display character name before text",
+      "default": false
+    },
+    "animation": {
+      "type": "select",
+      "label": "Animation",
+      "description": "Text appearance animation",
+      "options": [
+        { "label": "None", "value": "none" },
+        { "label": "Fade In", "value": "fade" },
+        { "label": "Typewriter", "value": "typewriter" },
+        { "label": "Slide Up", "value": "slide" }
+      ],
+      "default": "fade"
+    },
+    "duration": {
+      "type": "number",
+      "label": "Display Duration (ms)",
+      "description": "How long to show subtitle (0 = until next subtitle)",
+      "default": 0,
+      "min": 0,
+      "max": 30000
+    }
+  },
+  "dependencies": {
+    "python": []
+  }
+}

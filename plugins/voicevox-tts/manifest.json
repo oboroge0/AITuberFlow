@@ -20,9 +20,14 @@
     ],
     "outputs": [
       {
-        "id": "audioUrl",
+        "id": "audio",
         "type": "string",
-        "description": "URL or path to generated audio"
+        "description": "Path to generated audio file"
+      },
+      {
+        "id": "filename",
+        "type": "string",
+        "description": "Generated audio filename"
       },
       {
         "id": "duration",

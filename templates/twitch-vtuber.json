@@ -1,0 +1,148 @@
+{
+  "id": "template-twitch-vtuber",
+  "name": "Twitch VTuber",
+  "description": "VTuber workflow for Twitch streaming. Responds to chat messages with voice and avatar.",
+  "nodes": [
+    {
+      "id": "node-chat",
+      "type": "twitch-chat",
+      "position": { "x": 100, "y": 250 },
+      "config": {
+        "channel": "",
+        "username": "",
+        "oauthToken": "",
+        "filterBots": true
+      }
+    },
+    {
+      "id": "node-llm",
+      "type": "openai-llm",
+      "position": { "x": 350, "y": 250 },
+      "config": {
+        "apiKey": "",
+        "model": "gpt-4o-mini",
+        "systemPrompt": "You are an interactive Twitch streamer. Respond to chat messages with energy and enthusiasm. Keep responses under 150 characters. Use emotes like PogChamp, Kappa, or LUL references when appropriate. Always engage with your chat!",
+        "temperature": 0.8,
+        "maxTokens": 200
+      }
+    },
+    {
+      "id": "node-emotion",
+      "type": "emotion-analyzer",
+      "position": { "x": 600, "y": 150 },
+      "config": {
+        "method": "rule-based",
+        "language": "auto",
+        "emit_events": true
+      }
+    },
+    {
+      "id": "node-tts",
+      "type": "voicevox-tts",
+      "position": { "x": 600, "y": 350 },
+      "config": {
+        "host": "http://localhost:50021",
+        "speaker": 1,
+        "speedScale": 1.0
+      }
+    },
+    {
+      "id": "node-lipsync",
+      "type": "lip-sync",
+      "position": { "x": 850, "y": 350 },
+      "config": {
+        "method": "volume",
+        "sensitivity": 5.0,
+        "smoothing": 0.3,
+        "threshold": 0.02,
+        "emit_realtime": true,
+        "frame_rate": 30
+      }
+    },
+    {
+      "id": "node-audio",
+      "type": "audio-player",
+      "position": { "x": 1100, "y": 350 },
+      "config": {
+        "wait_for_completion": true,
+        "volume": 1.0,
+        "output_device": "browser"
+      }
+    },
+    {
+      "id": "node-subtitle",
+      "type": "subtitle-display",
+      "position": { "x": 850, "y": 150 },
+      "config": {
+        "style": "default",
+        "position": "bottom-center",
+        "font_size": 28,
+        "font_color": "#ffffff",
+        "background_color": "rgba(0, 0, 0, 0.7)",
+        "animation": "fade",
+        "show_speaker": false
+      }
+    },
+    {
+      "id": "node-avatar",
+      "type": "avatar-controller",
+      "position": { "x": 1100, "y": 150 },
+      "config": {
+        "renderer": "vrm",
+        "model_url": "",
+        "idle_animation": ""
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn-1",
+      "from": { "nodeId": "node-chat", "port": "message" },
+      "to": { "nodeId": "node-llm", "port": "prompt" }
+    },
+    {
+      "id": "conn-2",
+      "from": { "nodeId": "node-llm", "port": "response" },
+      "to": { "nodeId": "node-emotion", "port": "text" }
+    },
+    {
+      "id": "conn-3",
+      "from": { "nodeId": "node-llm", "port": "response" },
+      "to": { "nodeId": "node-tts", "port": "text" }
+    },
+    {
+      "id": "conn-4",
+      "from": { "nodeId": "node-tts", "port": "audio" },
+      "to": { "nodeId": "node-lipsync", "port": "audio" }
+    },
+    {
+      "id": "conn-5",
+      "from": { "nodeId": "node-lipsync", "port": "audio" },
+      "to": { "nodeId": "node-audio", "port": "audio" }
+    },
+    {
+      "id": "conn-6",
+      "from": { "nodeId": "node-lipsync", "port": "duration" },
+      "to": { "nodeId": "node-audio", "port": "duration" }
+    },
+    {
+      "id": "conn-7",
+      "from": { "nodeId": "node-emotion", "port": "text" },
+      "to": { "nodeId": "node-subtitle", "port": "text" }
+    },
+    {
+      "id": "conn-8",
+      "from": { "nodeId": "node-emotion", "port": "expression" },
+      "to": { "nodeId": "node-avatar", "port": "expression" }
+    },
+    {
+      "id": "conn-9",
+      "from": { "nodeId": "node-emotion", "port": "intensity" },
+      "to": { "nodeId": "node-avatar", "port": "intensity" }
+    }
+  ],
+  "character": {
+    "name": "AI VTuber",
+    "personality": "Energetic Twitch streamer who interacts with chat"
+  }
+}

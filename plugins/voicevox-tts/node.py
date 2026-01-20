@@ -6,12 +6,10 @@ Converts text to speech using VOICEVOX engine.
 
 import sys
 import os
-import tempfile
+import uuid
 import wave
-import struct
 from pathlib import Path
 from typing import Optional
-from datetime import datetime
 
 # Add SDK to path for development
 sdk_path = Path(__file__).parent.parent.parent / "packages" / "sdk"
@@ -24,6 +22,10 @@ try:
     import httpx
 except ImportError:
     httpx = None
+
+
+# Audio output directory
+AUDIO_DIR = Path(__file__).parent.parent.parent / "apps" / "server" / "audio_output"
 
 
 class VoicevoxTTSNode(BaseNode):
@@ -53,9 +55,14 @@ class VoicevoxTTSNode(BaseNode):
         self.speed_scale = float(config.get("speedScale", 1.0))
         self.pitch_scale = float(config.get("pitchScale", 0.0))
         self.volume_scale = float(config.get("volumeScale", 1.0))
-        self.output_dir = config.get("outputDir", "")
+        self.output_dir = str(AUDIO_DIR)
 
         self.client = httpx.AsyncClient(timeout=60.0)
+
+        AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+
+        if config.get("outputDir"):
+            await context.log("outputDir is ignored; using server audio_output directory", "warning")
 
         # Test connection
         try:
@@ -114,13 +121,8 @@ class VoicevoxTTSNode(BaseNode):
 
             # Save audio file
             audio_data = synth_response.content
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-            if self.output_dir:
-                os.makedirs(self.output_dir, exist_ok=True)
-                audio_path = os.path.join(self.output_dir, f"tts_{timestamp}.wav")
-            else:
-                audio_path = os.path.join(tempfile.gettempdir(), f"aituber_tts_{timestamp}.wav")
+            filename = f"voicevox_{uuid.uuid4().hex[:8]}.wav"
+            audio_path = os.path.join(self.output_dir, filename)
 
             with open(audio_path, "wb") as f:
                 f.write(audio_data)
@@ -130,13 +132,11 @@ class VoicevoxTTSNode(BaseNode):
 
             await context.log(f"Audio generated: {duration:.2f}s")
 
-            # Get just the filename for the API URL
-            filename = os.path.basename(audio_path)
-
             # Emit event with both local path and API-accessible filename
             await context.emit_event(Event(
                 type="audio.generated",
                 payload={
+                    "audio": audio_path,
                     "audioUrl": audio_path,
                     "filename": filename,
                     "duration": duration,
@@ -144,7 +144,7 @@ class VoicevoxTTSNode(BaseNode):
                 }
             ))
 
-            return {"audioUrl": audio_path, "filename": filename, "duration": duration}
+            return {"audio": audio_path, "audioUrl": audio_path, "filename": filename, "duration": duration}
 
         except httpx.ConnectError:
             await context.log(f"Cannot connect to VOICEVOX at {self.host}", "error")

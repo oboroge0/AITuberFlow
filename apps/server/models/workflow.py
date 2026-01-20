@@ -89,3 +89,7 @@ class ExecutionRequest(BaseModel):
     nodes: Optional[List[NodeModel]] = None
     connections: Optional[List[ConnectionModel]] = None
     character: Optional[CharacterConfig] = None
+    start_node_id: Optional[str] = Field(default=None, alias="startNodeId")
+
+    class Config:
+        populate_by_name = True

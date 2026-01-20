@@ -12,12 +12,25 @@ from models.workflow import (
     ExecutionStatus,
     ExecutionRequest,
 )
-from engine.executor import WorkflowExecutor
 
 router = APIRouter(prefix="/api/workflows", tags=["workflows"])
 
-# Global executor instance
-executor = WorkflowExecutor()
+# Executor will be set by main.py
+executor = None
+# Socket.IO server (set by main.py)
+socketio = None
+
+
+def set_executor(exec_instance):
+    """Set the shared executor instance."""
+    global executor
+    executor = exec_instance
+
+
+def set_socketio(sio_instance):
+    """Set the Socket.IO server for execution events."""
+    global socketio
+    socketio = sio_instance
 
 
 def workflow_to_response(db_workflow: WorkflowDB) -> dict:
@@ -205,6 +218,9 @@ async def start_workflow(
     else:
         character = db_workflow.character
 
+    # Get start node ID if specified
+    start_node_id = request.start_node_id if request else None
+
     # Start execution with current state
     workflow_data = {
         "id": db_workflow.id,
@@ -214,7 +230,10 @@ async def start_workflow(
         "character": character,
     }
 
-    await executor.start_workflow(workflow_id, workflow_data)
+    await executor.start_workflow(workflow_id, workflow_data, start_node_id=start_node_id)
+
+    if socketio:
+        await socketio.emit("execution.started", room=f"workflow:{workflow_id}")
 
     return {"status": "started", "workflow_id": workflow_id}
 
@@ -223,6 +242,12 @@ async def start_workflow(
 async def stop_workflow(workflow_id: str):
     """Stop workflow execution."""
     await executor.stop_workflow(workflow_id)
+    if socketio:
+        await socketio.emit(
+            "execution.stopped",
+            {"reason": "HTTP stop"},
+            room=f"workflow:{workflow_id}",
+        )
     return {"status": "stopped", "workflow_id": workflow_id}
 
 
