@@ -8,7 +8,6 @@ from typing import List, Optional
 from pathlib import Path
 import httpx
 import logging
-import tempfile
 import os
 import shutil
 import uuid
@@ -22,8 +21,17 @@ router = APIRouter(prefix="/api/integrations", tags=["integrations"])
 UPLOAD_DIR = Path(__file__).parent.parent.parent.parent / "apps" / "web" / "public" / "models"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
+# Directory for uploaded animations
+ANIMATIONS_DIR = Path(__file__).parent.parent.parent.parent / "apps" / "web" / "public" / "animations"
+ANIMATIONS_DIR.mkdir(parents=True, exist_ok=True)
+
+# Directory for generated audio files
+AUDIO_DIR = Path(__file__).parent.parent.parent.parent / "apps" / "server" / "audio_output"
+AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {".vrm", ".png", ".jpg", ".jpeg", ".gif", ".webp"}
+ALLOWED_ANIMATION_EXTENSIONS = {".fbx", ".glb", ".gltf"}
 
 
 @router.get("/voicevox/speakers")
@@ -91,16 +99,16 @@ async def check_voicevox_health(
 async def serve_audio(filename: str):
     """
     Serve generated audio files.
-    Audio files are stored in the system temp directory with prefix 'aituber_tts_'.
+    Audio files are stored in the server audio_output directory.
     """
-    # Security: only allow specific filename patterns
-    if not filename.startswith("aituber_tts_") or not filename.endswith(".wav"):
+    # Security: allow only .wav files with no path traversal
+    if ".." in filename or "/" in filename or "\\" in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    if not filename.lower().endswith(".wav"):
         raise HTTPException(status_code=400, detail="Invalid filename")
 
-    # Check in temp directory
-    audio_path = Path(tempfile.gettempdir()) / filename
-
-    if not audio_path.exists():
+    audio_path = (AUDIO_DIR / filename).resolve()
+    if not audio_path.exists() or audio_path.parent != AUDIO_DIR.resolve():
         raise HTTPException(status_code=404, detail="Audio file not found")
 
     return FileResponse(
@@ -228,6 +236,127 @@ async def serve_model(filename: str):
         ".jpeg": "image/jpeg",
         ".gif": "image/gif",
         ".webp": "image/webp",
+    }
+    media_type = media_types.get(ext, "application/octet-stream")
+
+    return FileResponse(
+        path=str(file_path),
+        media_type=media_type,
+        filename=filename
+    )
+
+
+# Animation file endpoints
+@router.post("/animations/upload")
+async def upload_animation(file: UploadFile = File(...)):
+    """
+    Upload an animation file (FBX from Mixamo, etc.).
+    Returns the URL path to access the uploaded file.
+    """
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No filename provided")
+
+    # Check file extension
+    ext = Path(file.filename).suffix.lower()
+    if ext not in ALLOWED_ANIMATION_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File type not allowed. Allowed types: {', '.join(ALLOWED_ANIMATION_EXTENSIONS)}"
+        )
+
+    # Generate unique filename to avoid conflicts
+    unique_id = str(uuid.uuid4())[:8]
+    safe_filename = f"{unique_id}_{Path(file.filename).stem}{ext}"
+    file_path = ANIMATIONS_DIR / safe_filename
+
+    try:
+        # Save file
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        # Return the URL path
+        url_path = f"/api/integrations/animations/file/{safe_filename}"
+
+        logger.info(f"Uploaded animation: {safe_filename}")
+
+        return {
+            "success": True,
+            "filename": safe_filename,
+            "url": url_path,
+            "size": file_path.stat().st_size
+        }
+
+    except Exception as e:
+        logger.error(f"Error uploading animation: {e}")
+        if file_path.exists():
+            file_path.unlink()
+        raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
+
+
+@router.get("/animations")
+async def list_animations():
+    """
+    List all uploaded animations.
+    """
+    try:
+        animations = []
+        for file_path in ANIMATIONS_DIR.iterdir():
+            if file_path.is_file() and file_path.suffix.lower() in ALLOWED_ANIMATION_EXTENSIONS:
+                animations.append({
+                    "filename": file_path.name,
+                    "url": f"/api/integrations/animations/file/{file_path.name}",
+                    "size": file_path.stat().st_size,
+                    "type": file_path.suffix.lower()[1:]  # fbx, glb, etc.
+                })
+
+        return {"animations": animations}
+
+    except Exception as e:
+        logger.error(f"Error listing animations: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to list animations: {str(e)}")
+
+
+@router.delete("/animations/{filename}")
+async def delete_animation(filename: str):
+    """
+    Delete an uploaded animation.
+    """
+    if ".." in filename or "/" in filename or "\\" in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    file_path = ANIMATIONS_DIR / filename
+
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    try:
+        file_path.unlink()
+        logger.info(f"Deleted animation: {filename}")
+        return {"success": True, "message": f"Deleted {filename}"}
+
+    except Exception as e:
+        logger.error(f"Error deleting animation: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
+
+
+@router.get("/animations/file/{filename}")
+async def serve_animation(filename: str):
+    """
+    Serve uploaded animation files.
+    """
+    if ".." in filename or "/" in filename or "\\" in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    file_path = ANIMATIONS_DIR / filename
+
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    ext = file_path.suffix.lower()
+    media_types = {
+        ".fbx": "application/octet-stream",
+        ".glb": "model/gltf-binary",
+        ".gltf": "model/gltf+json",
     }
     media_type = media_types.get(ext, "application/octet-stream")
 

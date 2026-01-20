@@ -147,6 +147,7 @@ export default function PreviewPage({ params }: PreviewPageProps) {
     });
 
     newSocket.on('avatar.mouth', (data: { value: number }) => {
+      console.log('Received avatar.mouth:', data.value);
       setAvatarState((prev) => ({ ...prev, mouthOpen: data.value }));
     });
 
@@ -182,6 +183,12 @@ export default function PreviewPage({ params }: PreviewPageProps) {
         // Create and play new audio
         const audio = new Audio(audioUrl);
         audioRef.current = audio;
+
+        // Close mouth when audio ends
+        audio.onended = () => {
+          setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
+        };
+
         audio.play().catch((err) => {
           console.error('Failed to play audio:', err);
         });
@@ -191,10 +198,14 @@ export default function PreviewPage({ params }: PreviewPageProps) {
     // Execution events
     newSocket.on('execution.started', () => {
       setIsRunning(true);
+      // Reset mouth when starting
+      setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
     });
 
     newSocket.on('execution.stopped', () => {
       setIsRunning(false);
+      // Close mouth when stopping
+      setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
     });
 
     setSocket(newSocket);

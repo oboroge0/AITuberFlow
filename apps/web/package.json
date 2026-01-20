@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@pixiv/three-vrm": "^3.4.5",
+    "@pixiv/three-vrm-animation": "^3.4.5",
     "@types/three": "^0.182.0",
     "@xyflow/react": "^12.0.0",
     "next": "^16.1.3",

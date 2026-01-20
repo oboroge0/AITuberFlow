@@ -25,6 +25,7 @@ export interface AvatarState {
 export interface AvatarViewProps {
   renderer: RendererType;
   modelUrl?: string;
+  animationUrl?: string; // URL to Mixamo FBX animation
   pngConfig?: PNGAvatarConfig;
   vtubePort?: number;
   state: AvatarState;
@@ -117,6 +118,7 @@ function VTubeStudioRenderer({
 export default function AvatarView({
   renderer,
   modelUrl,
+  animationUrl,
   pngConfig,
   vtubePort = 8001,
   state,
@@ -140,6 +142,7 @@ export default function AvatarView({
         return (
           <VRMRenderer
             modelUrl={modelUrl}
+            animationUrl={animationUrl}
             expression={state.expression}
             mouthOpen={state.mouthOpen}
             lookAt={state.lookAt}
@@ -180,7 +183,7 @@ export default function AvatarView({
           </div>
         );
     }
-  }, [renderer, modelUrl, pngConfig, vtubePort, state, backgroundColor, enableControls, showGrid]);
+  }, [renderer, modelUrl, animationUrl, pngConfig, vtubePort, state, backgroundColor, enableControls, showGrid]);
 
   return (
     <div className={`avatar-view relative w-full h-full ${className}`}>

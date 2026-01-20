@@ -2,12 +2,14 @@
 
 import React, { useEffect, useRef, useCallback, useState, useImperativeHandle, forwardRef } from 'react';
 import * as THREE from 'three';
-import { VRM, VRMLoaderPlugin, VRMExpressionPresetName } from '@pixiv/three-vrm';
+import { VRM, VRMLoaderPlugin, VRMExpressionPresetName, VRMHumanBoneName } from '@pixiv/three-vrm';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { loadMixamoAnimation } from './loadMixamoAnimation';
 
 export interface VRMRendererProps {
   modelUrl: string;
+  animationUrl?: string; // URL to Mixamo FBX animation file
   expression?: string;
   mouthOpen?: number;
   lookAt?: { x: number; y: number };
@@ -42,8 +44,74 @@ const visemeMap: Record<string, VRMExpressionPresetName> = {
   oh: 'oh',
 };
 
+// Expressions that significantly open the mouth (need special handling for lip sync)
+const mouthOpeningExpressions = new Set(['happy', 'surprised']);
+
+const applyRelaxedPose = (vrm: VRM) => {
+  const humanoid = vrm.humanoid;
+  if (!humanoid) return;
+
+  const rotate = (boneName: VRMHumanBoneName, x: number, y: number, z: number) => {
+    const bone =
+      humanoid.getNormalizedBoneNode(boneName) ?? humanoid.getRawBoneNode(boneName);
+    if (!bone) return;
+    bone.rotation.x += x;
+    bone.rotation.y += y;
+    bone.rotation.z += z;
+  };
+
+  // Subtle body posture - slight forward lean for natural stance
+  rotate('spine', 0.02, 0, 0);
+  rotate('upperChest', 0.03, 0, 0);
+  rotate('neck', 0.05, 0, 0.02); // Slight head tilt for natural look
+
+  // Relaxed shoulders - slightly lowered and forward
+  rotate('leftShoulder', 0.05, 0, -0.05);
+  rotate('rightShoulder', 0.05, 0, 0.05);
+
+  // Arms hanging naturally at sides with slight asymmetry
+  // Z rotation needs to be large (~1.0 rad) to bring arms down from T-pose
+  rotate('leftUpperArm', 0.2, 0.1, -1.0);
+  rotate('rightUpperArm', 0.15, -0.08, 1.05);
+
+  // Slight elbow bend - arms not stiff
+  rotate('leftLowerArm', 0.1, 0, -0.2);
+  rotate('rightLowerArm', 0.08, 0, 0.15);
+
+  // Relaxed wrists
+  rotate('leftHand', 0.1, 0.05, -0.08);
+  rotate('rightHand', 0.08, -0.03, 0.1);
+
+  // Fingers slightly curled (if available)
+  const fingerBones: VRMHumanBoneName[] = [
+    'leftThumbProximal', 'leftThumbIntermediate', 'leftThumbDistal',
+    'leftIndexProximal', 'leftIndexIntermediate', 'leftIndexDistal',
+    'leftMiddleProximal', 'leftMiddleIntermediate', 'leftMiddleDistal',
+    'leftRingProximal', 'leftRingIntermediate', 'leftRingDistal',
+    'leftLittleProximal', 'leftLittleIntermediate', 'leftLittleDistal',
+    'rightThumbProximal', 'rightThumbIntermediate', 'rightThumbDistal',
+    'rightIndexProximal', 'rightIndexIntermediate', 'rightIndexDistal',
+    'rightMiddleProximal', 'rightMiddleIntermediate', 'rightMiddleDistal',
+    'rightRingProximal', 'rightRingIntermediate', 'rightRingDistal',
+    'rightLittleProximal', 'rightLittleIntermediate', 'rightLittleDistal',
+  ];
+
+  fingerBones.forEach((boneName) => {
+    if (boneName.includes('Thumb')) {
+      rotate(boneName, 0.15, 0, 0);
+    } else if (boneName.includes('Proximal')) {
+      rotate(boneName, 0.25, 0, 0);
+    } else if (boneName.includes('Intermediate')) {
+      rotate(boneName, 0.2, 0, 0);
+    } else if (boneName.includes('Distal')) {
+      rotate(boneName, 0.15, 0, 0);
+    }
+  });
+};
+
 const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRenderer({
   modelUrl,
+  animationUrl,
   expression = 'neutral',
   mouthOpen = 0,
   lookAt,
@@ -63,6 +131,8 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
   const animationFrameRef = useRef<number>(0);
   const controlsRef = useRef<OrbitControls | null>(null);
   const gridRef = useRef<THREE.GridHelper | null>(null);
+  const mixerRef = useRef<THREE.AnimationMixer | null>(null);
+  const animationLoadedRef = useRef<boolean>(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -133,9 +203,10 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
   }, [backgroundColor]);
 
   // Load VRM model
-  const loadVRM = useCallback(async (url: string, scene: THREE.Scene) => {
+  const loadVRM = useCallback(async (url: string, scene: THREE.Scene, animUrl?: string) => {
     setLoading(true);
     setError(null);
+    animationLoadedRef.current = false;
 
     try {
       const loader = new GLTFLoader();
@@ -153,9 +224,33 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
       scene.add(vrm.scene);
       vrmRef.current = vrm;
 
-      // Initial expression
+      // Load Mixamo animation if URL is provided
+      if (animUrl) {
+        try {
+          const clip = await loadMixamoAnimation(animUrl, vrm);
+          const mixer = new THREE.AnimationMixer(vrm.scene);
+          const action = mixer.clipAction(clip);
+          action.play();
+          mixerRef.current = mixer;
+          animationLoadedRef.current = true;
+        } catch (animErr) {
+          console.warn('Failed to load animation, falling back to static pose:', animErr);
+          // Fall back to static pose if animation fails
+          applyRelaxedPose(vrm);
+        }
+      } else {
+        // Apply static relaxed pose if no animation
+        applyRelaxedPose(vrm);
+      }
+
+      // Reset all expressions to ensure clean state
       if (vrm.expressionManager) {
-        vrm.expressionManager.setValue('neutral', 1);
+        Object.values(expressionMap).forEach((preset) => {
+          vrm.expressionManager!.setValue(preset, 0);
+        });
+        Object.values(visemeMap).forEach((viseme) => {
+          vrm.expressionManager!.setValue(viseme, 0);
+        });
       }
 
       setLoading(false);
@@ -173,12 +268,17 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
     const delta = clockRef.current.getDelta();
     const elapsed = clockRef.current.getElapsedTime();
 
+    // Update animation mixer if present
+    if (mixerRef.current) {
+      mixerRef.current.update(delta);
+    }
+
     if (vrmRef.current) {
       // Update VRM
       vrmRef.current.update(delta);
 
-      // Idle animation (subtle breathing/movement)
-      if (idleAnimation) {
+      // Idle animation (subtle breathing/movement) - only if no Mixamo animation
+      if (idleAnimation && !animationLoadedRef.current) {
         const breathe = Math.sin(elapsed * 1.5) * 0.005;
         vrmRef.current.scene.position.y = breathe;
       }
@@ -193,31 +293,32 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
     }
   }, [idleAnimation]);
 
-  // Handle expression changes
+  // Handle expression and mouth changes together
   useEffect(() => {
     if (!vrmRef.current?.expressionManager) return;
 
     const manager = vrmRef.current.expressionManager;
+    const mouthValue = Math.min(1, Math.max(0, mouthOpen ?? 0));
 
-    // Reset all expressions
+    // Step 1: Reset ALL expressions (both preset expressions and visemes)
     Object.values(expressionMap).forEach((preset) => {
       manager.setValue(preset, 0);
     });
+    Object.values(visemeMap).forEach((viseme) => {
+      manager.setValue(viseme, 0);
+    });
 
-    // Set new expression
+    // Step 2: Set expression (keep steady so eyes don't pulse with lip sync)
     const mappedExpression = expressionMap[expression] || 'neutral';
-    manager.setValue(mappedExpression, 1);
-  }, [expression]);
+    if (mappedExpression !== 'neutral') {
+      const isMouthOpening = mouthOpeningExpressions.has(mappedExpression);
+      const intensity = isMouthOpening ? 0.2 : 1.0;
+      manager.setValue(mappedExpression, intensity);
+    }
 
-  // Handle mouth/lip sync changes
-  useEffect(() => {
-    if (!vrmRef.current?.expressionManager) return;
-
-    const manager = vrmRef.current.expressionManager;
-
-    // Use 'aa' for simple mouth open/close
-    manager.setValue('aa', Math.min(1, Math.max(0, mouthOpen)));
-  }, [mouthOpen]);
+    // Step 3: Apply lip sync value
+    manager.setValue('aa', mouthValue);
+  }, [expression, mouthOpen]);
 
   // Handle look at target
   useEffect(() => {
@@ -284,7 +385,7 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
     if (!result) return;
 
     const { scene } = result;
-    loadVRM(modelUrl, scene);
+    loadVRM(modelUrl, scene, animationUrl);
 
     // Start animation loop
     animate();
@@ -312,6 +413,12 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameRef.current);
 
+      // Stop and dispose animation mixer
+      if (mixerRef.current) {
+        mixerRef.current.stopAllAction();
+        mixerRef.current = null;
+      }
+
       if (rendererRef.current && containerRef.current) {
         containerRef.current.removeChild(rendererRef.current.domElement);
         rendererRef.current.dispose();
@@ -334,7 +441,7 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
       controlsRef.current = null;
       gridRef.current = null;
     };
-  }, [modelUrl, initScene, loadVRM, animate]);
+  }, [modelUrl, animationUrl, initScene, loadVRM, animate]);
 
   return (
     <div

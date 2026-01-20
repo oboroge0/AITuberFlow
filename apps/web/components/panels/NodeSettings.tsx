@@ -1,16 +1,17 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useWorkflowStore } from '@/stores/workflowStore';
-import api, { VoicevoxSpeaker } from '@/lib/api';
+import api, { VoicevoxSpeaker, AnimationInfo } from '@/lib/api';
 
 interface NodeField {
   key: string;
-  type: 'text' | 'number' | 'textarea' | 'select' | 'checkbox';
+  type: 'text' | 'number' | 'textarea' | 'select' | 'checkbox' | 'animation-file';
   label: string;
   placeholder?: string;
   options?: { label: string; value: string | number }[];
   dynamic?: boolean; // For dynamically loaded options
+  accept?: string; // For file inputs
 }
 
 // Simplified node config schemas
@@ -354,9 +355,9 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
           { label: 'Envelope Following', value: 'envelope' },
         ],
       },
-      { key: 'sensitivity', type: 'number', label: 'Sensitivity (0.1-3.0)', placeholder: '1.0' },
-      { key: 'smoothing', type: 'number', label: 'Smoothing (0.0-1.0)', placeholder: '0.3' },
-      { key: 'threshold', type: 'number', label: 'Threshold (0.0-1.0)', placeholder: '0.1' },
+      { key: 'sensitivity', type: 'number', label: 'Sensitivity (1.0-10.0)', placeholder: '5.0' },
+      { key: 'smoothing', type: 'number', label: 'Smoothing (0.0-0.9)', placeholder: '0.3' },
+      { key: 'threshold', type: 'number', label: 'Threshold (0.0-0.2)', placeholder: '0.02' },
       { key: 'emit_realtime', type: 'checkbox', label: 'Emit Realtime Events' },
       { key: 'frame_rate', type: 'number', label: 'Frame Rate', placeholder: '30' },
     ],
@@ -375,12 +376,15 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         ],
       },
       { key: 'model_url', type: 'text', label: 'Model URL/Path', placeholder: '/models/avatar.vrm' },
+      { key: 'animation_url', type: 'animation-file', label: 'Idle Animation (FBX)', placeholder: 'Upload Mixamo FBX...', accept: '.fbx' },
       { key: 'vtube_port', type: 'number', label: 'VTube Studio Port', placeholder: '8001' },
       { key: 'png_config', type: 'textarea', label: 'PNG Configuration (JSON)', placeholder: '{"baseUrl": "/images/avatar.png", "expressions": {}}' },
       { key: 'auto_emotion', type: 'checkbox', label: 'Auto Emotion Detection' },
       { key: 'auto_lipsync', type: 'checkbox', label: 'Auto Lip Sync' },
       { key: 'show_subtitle', type: 'checkbox', label: 'Show Subtitle' },
-      { key: 'lipsync_sensitivity', type: 'number', label: 'Lip Sync Sensitivity', placeholder: '1.0' },
+      { key: 'lipsync_sensitivity', type: 'number', label: 'Lip Sync Sensitivity (1.0-10.0)', placeholder: '5.0' },
+      { key: 'lipsync_smoothing', type: 'number', label: 'Lip Sync Smoothing (0.0-0.9)', placeholder: '0.3' },
+      { key: 'lipsync_threshold', type: 'number', label: 'Lip Sync Threshold (0.0-0.2)', placeholder: '0.02' },
       {
         key: 'emotion_language',
         type: 'select',
@@ -401,8 +405,47 @@ export default function NodeSettings() {
   const [voicevoxSpeakers, setVoicevoxSpeakers] = useState<VoicevoxSpeaker[]>([]);
   const [voicevoxLoading, setVoicevoxLoading] = useState(false);
   const [voicevoxError, setVoicevoxError] = useState<string | null>(null);
+  const [animations, setAnimations] = useState<AnimationInfo[]>([]);
+  const [animationUploading, setAnimationUploading] = useState(false);
+  const animationInputRef = useRef<HTMLInputElement>(null);
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
+
+  // Fetch animations list
+  const fetchAnimations = useCallback(async () => {
+    try {
+      const response = await api.listAnimations();
+      if (response.data) {
+        setAnimations(response.data.animations);
+      }
+    } catch (err) {
+      console.error('Failed to fetch animations:', err);
+    }
+  }, []);
+
+  // Handle animation file upload
+  const handleAnimationUpload = useCallback(async (file: File, fieldKey: string) => {
+    setAnimationUploading(true);
+    try {
+      const response = await api.uploadAnimation(file);
+      if (response.data) {
+        // Update the config with the new animation URL
+        const newConfig = { ...localConfig, [fieldKey]: response.data.url };
+        setLocalConfig(newConfig);
+        if (selectedNode) {
+          updateNode(selectedNode.id, { config: newConfig });
+        }
+        // Refresh the animations list
+        fetchAnimations();
+      } else if (response.error) {
+        alert(`Upload failed: ${response.error}`);
+      }
+    } catch (err) {
+      alert('Failed to upload animation file');
+    } finally {
+      setAnimationUploading(false);
+    }
+  }, [localConfig, selectedNode, updateNode, fetchAnimations]);
 
   // Fetch VOICEVOX speakers when node is selected or host changes
   const fetchVoicevoxSpeakers = useCallback(async (host: string) => {
@@ -433,8 +476,13 @@ export default function NodeSettings() {
         const host = (selectedNode.config?.host as string) || 'http://localhost:50021';
         fetchVoicevoxSpeakers(host);
       }
+
+      // Fetch animations if this is an avatar-display node
+      if (selectedNode.type === 'avatar-display') {
+        fetchAnimations();
+      }
     }
-  }, [selectedNode, fetchVoicevoxSpeakers]);
+  }, [selectedNode, fetchVoicevoxSpeakers, fetchAnimations]);
 
   if (!selectedNode) {
     return null;
@@ -580,6 +628,85 @@ export default function NodeSettings() {
             />
             <span className="text-white/70 text-xs">{field.placeholder || 'Enabled'}</span>
           </label>
+        );
+
+      case 'animation-file':
+        return (
+          <div className="space-y-2">
+            {/* Current value display */}
+            {value && (
+              <div className="flex items-center justify-between p-2 rounded bg-emerald-500/10 border border-emerald-500/30">
+                <span className="text-xs text-emerald-400 truncate flex-1">
+                  {(value as string).split('/').pop()}
+                </span>
+                <button
+                  onClick={() => handleChange(field.key, '')}
+                  className="ml-2 text-red-400 hover:text-red-300 text-xs"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+
+            {/* Upload button */}
+            <div className="flex gap-2">
+              <input
+                type="file"
+                ref={animationInputRef}
+                accept={field.accept || '.fbx'}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleAnimationUpload(file, field.key);
+                  }
+                  e.target.value = '';
+                }}
+                className="hidden"
+              />
+              <button
+                onClick={() => animationInputRef.current?.click()}
+                disabled={animationUploading}
+                style={{
+                  ...inputStyle,
+                  cursor: animationUploading ? 'wait' : 'pointer',
+                  textAlign: 'center',
+                  background: animationUploading ? 'rgba(255,255,255,0.1)' : 'rgba(59, 130, 246, 0.2)',
+                  border: '1px solid rgba(59, 130, 246, 0.5)',
+                }}
+              >
+                {animationUploading ? 'Uploading...' : 'Upload FBX'}
+              </button>
+            </div>
+
+            {/* Existing animations dropdown */}
+            {animations.length > 0 && (
+              <select
+                value={value as string}
+                onChange={(e) => handleChange(field.key, e.target.value)}
+                style={inputStyle}
+              >
+                <option value="">Select existing animation...</option>
+                {animations.map((anim) => (
+                  <option key={anim.filename} value={anim.url}>
+                    {anim.filename}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            <div className="text-[10px] text-white/40">
+              Download idle animations from{' '}
+              <a
+                href="https://www.mixamo.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:underline"
+              >
+                Mixamo
+              </a>
+              {' '}(FBX format, Without Skin)
+            </div>
+          </div>
         );
 
       default:

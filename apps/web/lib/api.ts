@@ -83,7 +83,7 @@ class ApiClient {
   // Execution endpoints
   async startWorkflow(
     id: string,
-    data?: { nodes: any[]; connections: any[]; character: any }
+    data?: { nodes: any[]; connections: any[]; character: any; startNodeId?: string }
   ): Promise<ApiResponse<{ status: string }>> {
     return this.request<{ status: string }>(`/api/workflows/${id}/start`, {
       method: 'POST',
@@ -165,6 +165,39 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // Animation upload endpoints
+  async uploadAnimation(file: File): Promise<ApiResponse<AnimationUploadResult>> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`${this.baseUrl}/api/integrations/animations/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        return { error: error.detail || `HTTP ${response.status}` };
+      }
+
+      const data = await response.json();
+      return { data };
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Upload failed' };
+    }
+  }
+
+  async listAnimations(): Promise<ApiResponse<{ animations: AnimationInfo[] }>> {
+    return this.request<{ animations: AnimationInfo[] }>('/api/integrations/animations');
+  }
+
+  async deleteAnimation(filename: string): Promise<ApiResponse<{ success: boolean }>> {
+    return this.request<{ success: boolean }>(`/api/integrations/animations/${filename}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export interface TemplateSummary {
@@ -219,6 +252,20 @@ export interface ModelInfo {
   url: string;
   size: number;
   type: 'vrm' | 'image';
+}
+
+export interface AnimationUploadResult {
+  success: boolean;
+  filename: string;
+  url: string;
+  size: number;
+}
+
+export interface AnimationInfo {
+  filename: string;
+  url: string;
+  size: number;
+  type: string;
 }
 
 export const api = new ApiClient(API_BASE);
