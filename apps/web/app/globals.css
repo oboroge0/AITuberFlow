@@ -42,7 +42,7 @@ body {
 }
 
 .react-flow__handle:hover {
-  transform: scale(1.2);
+  /* No transform to prevent movement */
 }
 
 .react-flow__controls {

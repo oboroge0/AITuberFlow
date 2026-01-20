@@ -1,9 +1,10 @@
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useState, useRef } from 'react';
 import { Handle, Position, type Node } from '@xyflow/react';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { useUIPreferencesStore, type NodeDisplayMode } from '@/stores/uiPreferencesStore';
+import { useLocaleStore } from '@/stores/localeStore';
 import { type PortDefinition, PORT_TYPE_COLORS } from '@/lib/portTypes';
 
 export interface CustomNodeData extends Record<string, unknown> {
@@ -20,8 +21,17 @@ export interface CustomNodeData extends Record<string, unknown> {
 
 export type CustomNodeType = Node<CustomNodeData>;
 
-// Node type configurations with colors and icons
-const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: React.ReactNode; statusText: string }> = {
+// Node type configurations with colors, icons, and descriptions
+interface NodeTypeConfig {
+  color: string;
+  bgColor: string;
+  icon: React.ReactNode;
+  statusText: string;
+  descriptionJa: string;
+  descriptionEn: string;
+}
+
+const nodeTypeConfig: Record<string, NodeTypeConfig> = {
   'start': {
     color: '#10B981',
     bgColor: 'rgba(16, 185, 129, 0.15)',
@@ -31,6 +41,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Workflow entry point',
+    descriptionJa: 'ワークフローの開始点。\n【使い方】このノードから処理が始まります。次のノードに接続してください。',
+    descriptionEn: 'Workflow entry point.\n[Usage] Processing starts from here. Connect to the next node.',
   },
   'end': {
     color: '#EF4444',
@@ -41,6 +53,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Workflow exit point',
+    descriptionJa: 'ワークフローの終了点。\n【使い方】処理の最後に配置。入力を受けて処理を完了します。',
+    descriptionEn: 'Workflow exit point.\n[Usage] Place at the end of processing. Receives input and completes the workflow.',
   },
   'loop': {
     color: '#F59E0B',
@@ -52,6 +66,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Loop iteration',
+    descriptionJa: '指定回数だけ処理を繰り返すループノード。\n【使い方】設定で繰り返し回数を指定。body出力に繰り返す処理を接続。',
+    descriptionEn: 'Loop node that repeats processing.\n[Usage] Set the repeat count in config. Connect nodes to repeat to the body output.',
   },
   'foreach': {
     color: '#F97316',
@@ -63,6 +79,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'ForEach iteration',
+    descriptionJa: '配列の各要素に対して処理を繰り返すノード。\n【使い方】array入力に配列を接続。itemには現在の要素が出力されます。',
+    descriptionEn: 'Node that iterates over each element in an array.\n[Usage] Connect array to input. Current element is output to item.',
   },
   'youtube-chat': {
     color: '#FF0000',
@@ -73,6 +91,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Waiting for comments...',
+    descriptionJa: 'YouTubeライブのコメントを取得する入力ノード。\n【使い方】設定でVideo IDを入力。コメントが来るとmessageとauthorを出力。',
+    descriptionEn: 'Input node for YouTube Live comments.\n[Usage] Set Video ID in config. Outputs message and author when comments arrive.',
   },
   'twitch-chat': {
     color: '#9146FF',
@@ -83,6 +103,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Waiting for chat...',
+    descriptionJa: 'Twitchのチャットメッセージを取得する入力ノード。\n【使い方】設定でチャンネル名を入力。チャットが来るとmessageとauthorを出力。',
+    descriptionEn: 'Input node for Twitch chat.\n[Usage] Set channel name in config. Outputs message and author when chats arrive.',
   },
   'manual-input': {
     color: '#22C55E',
@@ -94,6 +116,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Ready for input',
+    descriptionJa: '手動でテキストを入力するノード。\n【使い方】実行時にテキストを入力。テスト・デバッグに便利。',
+    descriptionEn: 'Manual text input node.\n[Usage] Enter text at runtime. Useful for testing and debugging.',
   },
   'openai-llm': {
     color: '#10B981',
@@ -108,6 +132,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Model: gpt-4o-mini',
+    descriptionJa: 'OpenAI APIでテキスト生成するLLMノード。\n【使い方】promptに質問を接続。設定でモデルとシステムプロンプトを指定。',
+    descriptionEn: 'LLM node using OpenAI API.\n[Usage] Connect prompt input. Set model and system prompt in config.',
   },
   'voicevox-tts': {
     color: '#F59E0B',
@@ -120,6 +146,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Engine: VOICEVOX',
+    descriptionJa: 'VOICEVOXでテキストを音声に変換するTTSノード。\n【使い方】textに読み上げテキストを接続。設定で話者を選択。※VOICEVOX起動が必要',
+    descriptionEn: 'TTS node using VOICEVOX.\n[Usage] Connect text to read. Select speaker in config. *Requires VOICEVOX running.',
   },
   'console-output': {
     color: '#A855F7',
@@ -130,6 +158,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Ready to display',
+    descriptionJa: 'データをコンソールに出力するデバッグ用ノード。\n【使い方】任意のデータを接続。画面下部のコンソールに出力されます。',
+    descriptionEn: 'Debug node for console output.\n[Usage] Connect any data. Output appears in the console at the bottom.',
   },
   'switch': {
     color: '#F97316',
@@ -142,6 +172,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Conditional routing',
+    descriptionJa: '条件に基づいて処理を分岐させるノード。\n【使い方】valueに判定値を接続。設定で条件を指定し、true/falseに分岐。',
+    descriptionEn: 'Conditional branching node.\n[Usage] Connect value to check. Set conditions in config. Branches to true/false.',
   },
   'delay': {
     color: '#F97316',
@@ -152,6 +184,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Delay: 1000ms',
+    descriptionJa: '指定時間だけ処理を遅延させるノード。\n【使い方】入力を接続し、設定で遅延時間(ms)を指定。タイミング調整に使用。',
+    descriptionEn: 'Delay node.\n[Usage] Connect input. Set delay time (ms) in config. Used for timing adjustments.',
   },
   'http-request': {
     color: '#3B82F6',
@@ -163,6 +197,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'HTTP Request',
+    descriptionJa: '外部APIにHTTPリクエストを送信するノード。\n【使い方】設定でURL・メソッド・ヘッダーを指定。レスポンスがresponseに出力。',
+    descriptionEn: 'HTTP request node.\n[Usage] Set URL, method, headers in config. Response is output to response.',
   },
   'text-transform': {
     color: '#EC4899',
@@ -174,6 +210,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Text Transform',
+    descriptionJa: 'テキストをテンプレートで変換するノード。\n【使い方】textに入力を接続。設定でテンプレートを指定。{{text}}で入力を参照。',
+    descriptionEn: 'Text transformation node.\n[Usage] Connect input to text. Set template in config. Use {{text}} to reference input.',
   },
   'random': {
     color: '#8B5CF6',
@@ -186,6 +224,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Random Generator',
+    descriptionJa: 'ランダムな値を生成するノード。\n【使い方】設定で範囲や選択肢を指定。毎回異なる値がvalueに出力。',
+    descriptionEn: 'Random value generator.\n[Usage] Set range or options in config. Different value output to value each time.',
   },
   'timer': {
     color: '#06B6D4',
@@ -196,6 +236,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Timer',
+    descriptionJa: '一定間隔で自動トリガーするタイマーノード。\n【使い方】設定で間隔(ms)を指定。定期実行したい処理に接続。',
+    descriptionEn: 'Auto-trigger timer node.\n[Usage] Set interval (ms) in config. Connect to processes for periodic execution.',
   },
   'variable': {
     color: '#14B8A6',
@@ -207,6 +249,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Variable',
+    descriptionJa: 'データを保存・取得する変数ノード。\n【使い方】設定で変数名を指定。setで保存、getで取得。ワークフロー内で値を共有。',
+    descriptionEn: 'Variable storage node.\n[Usage] Set variable name in config. Use set to save, get to retrieve. Share values in workflow.',
   },
   'anthropic-llm': {
     color: '#D97706',
@@ -219,6 +263,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Model: Claude',
+    descriptionJa: 'Anthropic APIでテキスト生成するLLMノード。\n【使い方】promptに質問を接続。設定でモデルとシステムプロンプトを指定。',
+    descriptionEn: 'LLM node using Anthropic API.\n[Usage] Connect prompt input. Set model and system prompt in config.',
   },
   'google-llm': {
     color: '#4285F4',
@@ -231,6 +277,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Model: Gemini',
+    descriptionJa: 'Google AI APIでテキスト生成するLLMノード。\n【使い方】promptに質問を接続。設定でモデルとシステムプロンプトを指定。',
+    descriptionEn: 'LLM node using Google AI API.\n[Usage] Connect prompt input. Set model and system prompt in config.',
   },
   'ollama-llm': {
     color: '#1F2937',
@@ -243,6 +291,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Model: Ollama',
+    descriptionJa: 'ローカルOllamaでテキスト生成するLLMノード。\n【使い方】promptに質問を接続。設定でモデルを指定。※Ollama起動が必要',
+    descriptionEn: 'LLM node using local Ollama.\n[Usage] Connect prompt input. Set model in config. *Requires Ollama running.',
   },
   'coeiroink-tts': {
     color: '#E91E63',
@@ -255,6 +305,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Engine: COEIROINK',
+    descriptionJa: 'COEIROINKでテキストを音声に変換するTTSノード。\n【使い方】textに読み上げテキストを接続。設定で話者を選択。※COEIROINK起動が必要',
+    descriptionEn: 'TTS node using COEIROINK.\n[Usage] Connect text to read. Select speaker in config. *Requires COEIROINK running.',
   },
   'sbv2-tts': {
     color: '#9C27B0',
@@ -267,6 +319,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Engine: Style-Bert-VITS2',
+    descriptionJa: 'Style-Bert-VITS2でテキストを音声に変換するTTSノード。\n【使い方】textに読み上げテキストを接続。設定でモデルを選択。※API起動が必要',
+    descriptionEn: 'TTS node using Style-Bert-VITS2.\n[Usage] Connect text to read. Select model in config. *Requires API running.',
   },
   'avatar-controller': {
     color: '#E879F9',
@@ -278,6 +332,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Avatar Controller',
+    descriptionJa: 'VRMアバターを制御するノード。\n【使い方】expression/motion/mouthに値を接続。オーバーレイでアバターが動作。',
+    descriptionEn: 'VRM avatar control node.\n[Usage] Connect values to expression/motion/mouth. Avatar animates on overlay.',
   },
   'emotion-analyzer': {
     color: '#F472B6',
@@ -290,6 +346,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Emotion Analyzer',
+    descriptionJa: 'テキストから感情を分析するノード。\n【使い方】textに分析するテキストを接続。emotion/intensityが出力。',
+    descriptionEn: 'Emotion analysis node.\n[Usage] Connect text to analyze. Outputs emotion and intensity.',
   },
   'lip-sync': {
     color: '#FB7185',
@@ -301,6 +359,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Lip Sync',
+    descriptionJa: '音声から口パクデータを生成するノード。\n【使い方】audioに音声を接続。mouth値がリアルタイムで出力。',
+    descriptionEn: 'Lip-sync generation node.\n[Usage] Connect audio input. Mouth values output in real-time.',
   },
   'subtitle-display': {
     color: '#A855F7',
@@ -313,6 +373,8 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Subtitle Display',
+    descriptionJa: 'オーバーレイに字幕を表示するノード。\n【使い方】textに表示テキストを接続。オーバーレイ画面に字幕が表示されます。',
+    descriptionEn: 'Subtitle display node.\n[Usage] Connect text to display. Subtitles appear on overlay screen.',
   },
   'audio-player': {
     color: '#8B5CF6',
@@ -325,11 +387,13 @@ const nodeTypeConfig: Record<string, { color: string; bgColor: string; icon: Rea
       </svg>
     ),
     statusText: 'Audio Player',
+    descriptionJa: 'オーバーレイで音声を再生するノード。\n【使い方】audioに音声データを接続。オーバーレイ画面で音声が再生されます。',
+    descriptionEn: 'Audio playback node.\n[Usage] Connect audio data. Audio plays on overlay screen.',
   },
 };
 
 // Default config for unknown node types
-const defaultNodeConfig = {
+const defaultNodeConfig: NodeTypeConfig = {
   color: '#6B7280',
   bgColor: 'rgba(107, 114, 128, 0.1)',
   icon: (
@@ -338,6 +402,8 @@ const defaultNodeConfig = {
     </svg>
   ),
   statusText: 'Ready',
+  descriptionJa: 'カスタムノード',
+  descriptionEn: 'Custom node',
 };
 
 interface CustomNodeProps {
@@ -349,11 +415,29 @@ interface CustomNodeProps {
 function CustomNode({ id, data, selected }: CustomNodeProps) {
   const { nodeStatuses, selectNode } = useWorkflowStore();
   const { nodeDisplayMode } = useUIPreferencesStore();
+  const { locale } = useLocaleStore();
+  const [showTooltip, setShowTooltip] = useState(false);
+  const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const status = nodeStatuses[id];
   const config = nodeTypeConfig[data.type] || defaultNodeConfig;
 
   // Check if node is an entry point
   const isEntryPoint = data.isEntryPoint === true;
+
+  // Tooltip show/hide with delay
+  const handleMouseEnter = () => {
+    tooltipTimeoutRef.current = setTimeout(() => {
+      setShowTooltip(true);
+    }, 500); // 500ms delay
+  };
+
+  const handleMouseLeave = () => {
+    if (tooltipTimeoutRef.current) {
+      clearTimeout(tooltipTimeoutRef.current);
+      tooltipTimeoutRef.current = null;
+    }
+    setShowTooltip(false);
+  };
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -402,9 +486,9 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       case 'simple':
         return { ...baseStyle, padding: '8px 12px', minWidth: '120px' };
       case 'detailed':
-        return { ...baseStyle, padding: '0', minWidth: '200px' };
+        return { ...baseStyle, padding: '0', minWidth: '220px' };
       default: // standard
-        return { ...baseStyle, padding: '12px 16px', minWidth: '160px' };
+        return { ...baseStyle, padding: '12px 16px', minWidth: '180px' };
     }
   };
 
@@ -449,10 +533,41 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     </>
   );
 
+  // Tooltip component
+  const Tooltip = () => {
+    const description = locale === 'ja' ? config.descriptionJa : config.descriptionEn;
+
+    return showTooltip ? (
+      <div
+        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-50 pointer-events-none"
+        style={{ minWidth: '180px', maxWidth: '260px' }}
+      >
+        <div
+          className="bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-lg p-3 shadow-xl"
+        >
+          <div className="text-[11px] text-white/90 whitespace-pre-line leading-relaxed">
+            {description}
+          </div>
+        </div>
+        {/* Arrow */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-gray-900/95 border-r border-b border-white/20 rotate-45"
+        />
+      </div>
+    ) : null;
+  };
+
   // ============ SIMPLE MODE ============
   if (nodeDisplayMode === 'simple') {
     return (
-      <div onClick={handleClick} className="relative" style={getNodeStyle()}>
+      <div
+        onClick={handleClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className="relative"
+        style={getNodeStyle()}
+      >
+        <Tooltip />
         <PlayButton />
 
         {/* Input handles - simple circles */}
@@ -529,7 +644,14 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   // ============ DETAILED MODE ============
   if (nodeDisplayMode === 'detailed') {
     return (
-      <div onClick={handleClick} className="relative" style={getNodeStyle()}>
+      <div
+        onClick={handleClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className="relative"
+        style={getNodeStyle()}
+      >
+        <Tooltip />
         <PlayButton />
 
         {/* Header section */}
@@ -632,67 +754,20 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   }
 
   // ============ STANDARD MODE (default) ============
+  const inputCount = data.inputs?.length || 0;
+  const outputCount = data.outputs?.length || 0;
+  const maxPorts = Math.max(inputCount, outputCount);
+
   return (
-    <div onClick={handleClick} className="relative" style={getNodeStyle()}>
+    <div
+      onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className="relative"
+      style={getNodeStyle()}
+    >
+      <Tooltip />
       <PlayButton />
-
-      {/* Input handles with labels */}
-      {data.inputs && data.inputs.length > 0 && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2">
-          {data.inputs.map((input, idx) => (
-            <div key={input.id} className="flex items-center" style={{ marginTop: idx > 0 ? '8px' : '0' }}>
-              <Handle
-                type="target"
-                position={Position.Left}
-                id={input.id}
-                style={{
-                  width: '14px',
-                  height: '14px',
-                  borderRadius: '50%',
-                  background: PORT_TYPE_COLORS[input.type] || '#374151',
-                  border: '2px solid #1F2937',
-                  position: 'relative',
-                }}
-              />
-              <span
-                className="text-[9px] text-white/60 ml-1 whitespace-nowrap"
-                style={{ transform: 'translateX(8px)' }}
-              >
-                {input.label}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Output handles with labels */}
-      {data.outputs && data.outputs.length > 0 && (
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2">
-          {data.outputs.map((output, idx) => (
-            <div key={output.id} className="flex items-center justify-end" style={{ marginTop: idx > 0 ? '8px' : '0' }}>
-              <span
-                className="text-[9px] text-white/60 mr-1 whitespace-nowrap"
-                style={{ transform: 'translateX(-8px)' }}
-              >
-                {output.label}
-              </span>
-              <Handle
-                type="source"
-                position={Position.Right}
-                id={output.id}
-                style={{
-                  width: '14px',
-                  height: '14px',
-                  borderRadius: '50%',
-                  background: PORT_TYPE_COLORS[output.type] || config.color,
-                  border: '2px solid #1F2937',
-                  position: 'relative',
-                }}
-              />
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Header */}
       <div className="flex items-center gap-2 mb-2">
@@ -706,17 +781,73 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             alignItems: 'center',
             justifyContent: 'center',
             color: 'white',
+            flexShrink: 0,
           }}
         >
           {config.icon}
         </div>
-        <span className="font-semibold text-[13px] text-white">
+        <span className="font-semibold text-[13px] text-white truncate">
           {data.label}
         </span>
       </div>
 
+      {/* Ports section - only show if there are ports */}
+      {maxPorts > 0 && (
+        <div className="flex justify-between gap-4 my-2">
+          {/* Input ports */}
+          <div className="flex flex-col gap-1">
+            {data.inputs?.map((input) => (
+              <div key={input.id} className="flex items-center gap-1 relative h-5">
+                <Handle
+                  type="target"
+                  position={Position.Left}
+                  id={input.id}
+                  style={{
+                    width: '12px',
+                    height: '12px',
+                    borderRadius: '50%',
+                    background: PORT_TYPE_COLORS[input.type] || '#374151',
+                    border: '2px solid #1F2937',
+                    left: '-6px',
+                    position: 'absolute',
+                  }}
+                />
+                <span className="text-[10px] text-white/60 pl-2 whitespace-nowrap">
+                  {input.label}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Output ports */}
+          <div className="flex flex-col gap-1 items-end">
+            {data.outputs?.map((output) => (
+              <div key={output.id} className="flex items-center gap-1 relative h-5">
+                <span className="text-[10px] text-white/60 pr-2 whitespace-nowrap">
+                  {output.label}
+                </span>
+                <Handle
+                  type="source"
+                  position={Position.Right}
+                  id={output.id}
+                  style={{
+                    width: '12px',
+                    height: '12px',
+                    borderRadius: '50%',
+                    background: PORT_TYPE_COLORS[output.type] || config.color,
+                    border: '2px solid #1F2937',
+                    right: '-6px',
+                    position: 'absolute',
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Status */}
-      <div className="text-[11px] text-white/50">
+      <div className="text-[10px] text-white/40 truncate">
         {getStatusText()}
       </div>
 

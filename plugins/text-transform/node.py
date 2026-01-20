@@ -5,6 +5,7 @@ Transforms text with various operations.
 """
 
 import sys
+import re
 from pathlib import Path
 
 # Add SDK to path for development
@@ -20,6 +21,7 @@ class TextTransformNode(BaseNode):
     Text Transform Node
 
     Applies various transformations to text.
+    Supports multiple dynamic inputs in template mode using {{varname}} syntax.
     """
 
     def __init__(self):
@@ -28,6 +30,7 @@ class TextTransformNode(BaseNode):
         self.find = ""
         self.replace_with = ""
         self.delimiter = " "
+        self.template_inputs = []  # Additional input port names
 
     async def setup(self, config: dict, context: NodeContext) -> None:
         """Initialize with configuration."""
@@ -36,16 +39,26 @@ class TextTransformNode(BaseNode):
         self.find = config.get("find", "")
         self.replace_with = config.get("replaceWith", "")
         self.delimiter = config.get("delimiter", " ")
+        self.template_inputs = config.get("templateInputs", [])  # List of input names
 
         await context.log(f"Text transform configured: {self.operation}")
 
+    def _get_input_value(self, inputs: dict, key: str) -> str:
+        """Get input value, handling objects by extracting common fields."""
+        value = inputs.get(key, "")
+        if isinstance(value, dict):
+            # Try common fields for chat messages
+            if "message" in value:
+                value = value["message"]
+            elif "text" in value:
+                value = value["text"]
+            else:
+                value = str(value)
+        return str(value) if value is not None else ""
+
     async def execute(self, inputs: dict, context: NodeContext) -> dict:
         """Transform the input text."""
-        text = inputs.get("text", "")
-
-        if not isinstance(text, str):
-            text = str(text) if text is not None else ""
-
+        text = self._get_input_value(inputs, "text")
         result = text
 
         if self.operation == "uppercase":
@@ -69,7 +82,15 @@ class TextTransformNode(BaseNode):
         elif self.operation == "suffix":
             result = text + self.template
         elif self.operation == "template":
-            result = self.template.replace("{{text}}", text)
+            # Replace all {{varname}} patterns with corresponding input values
+            result = self.template
+
+            # Find all {{...}} patterns in template
+            placeholders = re.findall(r'\{\{(\w+)\}\}', self.template)
+
+            for placeholder in placeholders:
+                input_value = self._get_input_value(inputs, placeholder)
+                result = result.replace(f"{{{{{placeholder}}}}}", input_value)
 
         await context.log(f"Transformed: '{text[:30]}...' -> '{result[:30]}...'")
         return {"result": result}

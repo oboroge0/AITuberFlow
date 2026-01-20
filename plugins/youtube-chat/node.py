@@ -180,7 +180,7 @@ class YouTubeChatNode(BaseNode):
 
         self._last_message = msg
 
-        # Emit appropriate event
+        # Emit appropriate event with separate fields for easy connection
         if message_type == "superChatEvent":
             super_chat = snippet.get("superChatDetails", {})
             msg["superchatAmount"] = super_chat.get("amountMicros", 0) / 1000000
@@ -188,7 +188,9 @@ class YouTubeChatNode(BaseNode):
             await self._context.emit_event(Event(
                 type="message.superchat",
                 payload={
-                    "message": msg,
+                    "message": msg,        # Full object for advanced use
+                    "text": msg["text"],   # Just the text (string)
+                    "author": msg["author"],  # Just the author name (string)
                     "amount": msg["superchatAmount"],
                     "currency": msg["superchatCurrency"],
                 }
@@ -200,14 +202,22 @@ class YouTubeChatNode(BaseNode):
         elif message_type == "memberMilestoneChatEvent":
             await self._context.emit_event(Event(
                 type="message.membership",
-                payload={"message": msg}
+                payload={
+                    "message": msg,        # Full object for advanced use
+                    "text": msg["text"],   # Just the text (string)
+                    "author": msg["author"],  # Just the author name (string)
+                }
             ))
             await self._context.log(f"Membership: {msg['author']}")
 
         else:
             await self._context.emit_event(Event(
                 type="message.received",
-                payload={"message": msg}
+                payload={
+                    "message": msg,        # Full object for advanced use
+                    "text": msg["text"],   # Just the text (string)
+                    "author": msg["author"],  # Just the author name (string)
+                }
             ))
             await self._context.log(f"{msg['author']}: {text[:50]}...")
 

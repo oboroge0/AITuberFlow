@@ -6,12 +6,97 @@ import api, { VoicevoxSpeaker, AnimationInfo } from '@/lib/api';
 
 interface NodeField {
   key: string;
-  type: 'text' | 'number' | 'textarea' | 'select' | 'checkbox' | 'animation-file';
+  type: 'text' | 'number' | 'textarea' | 'select' | 'checkbox' | 'animation-file' | 'prompt-builder' | 'input-list';
   label: string;
   placeholder?: string;
   options?: { label: string; value: string | number }[];
   dynamic?: boolean; // For dynamically loaded options
   accept?: string; // For file inputs
+}
+
+// Prompt section for structured prompt building
+export interface PromptSection {
+  id: string;
+  type: 'text' | 'input';
+  content: string; // For text: the actual text, For input: the input port name
+}
+
+// Separate component for input-list field to properly use hooks
+interface InputListFieldProps {
+  value: string[];
+  onChange: (newValue: string[]) => void;
+  placeholder?: string;
+}
+
+function InputListField({ value, onChange, placeholder }: InputListFieldProps) {
+  const [newInput, setNewInput] = useState('');
+  const inputs = value || [];
+
+  const addInput = () => {
+    const trimmed = newInput.trim().replace(/\s/g, '_');
+    if (trimmed && !inputs.includes(trimmed)) {
+      onChange([...inputs, trimmed]);
+      setNewInput('');
+    }
+  };
+
+  const removeInput = (index: number) => {
+    onChange(inputs.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="space-y-2">
+      {/* Existing inputs */}
+      <div className="flex flex-wrap gap-1">
+        {inputs.map((input, index) => (
+          <div
+            key={index}
+            className="flex items-center gap-1 px-2 py-1 rounded bg-blue-500/20 border border-blue-500/30 text-[11px] text-blue-300"
+          >
+            <span>{`{{${input}}}`}</span>
+            <button
+              onClick={() => removeInput(index)}
+              className="text-red-400 hover:text-red-300 ml-1"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Add new input */}
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={newInput}
+          onChange={(e) => setNewInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && addInput()}
+          placeholder={placeholder || 'input_name'}
+          style={{
+            flex: 1,
+            padding: '6px 8px',
+            borderRadius: '6px',
+            border: '1px solid rgba(255,255,255,0.2)',
+            background: 'rgba(0,0,0,0.3)',
+            color: '#fff',
+            fontSize: '11px',
+            outline: 'none',
+          }}
+        />
+        <button
+          onClick={addInput}
+          className="px-3 py-1 rounded-md border border-blue-500/50 bg-blue-500/10 text-blue-400 text-[11px] cursor-pointer hover:bg-blue-500/20"
+        >
+          Add
+        </button>
+      </div>
+
+      {/* Help text */}
+      <div className="text-[9px] text-white/40">
+        Add input names to create ports. Use {`{{name}}`} in template.
+      </div>
+    </div>
+  );
 }
 
 // Simplified node config schemas
@@ -93,6 +178,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         ],
       },
       { key: 'systemPrompt', type: 'textarea', label: 'System Prompt', placeholder: 'Enter character settings...' },
+      { key: 'promptSections', type: 'prompt-builder', label: 'Prompt Builder' },
       { key: 'temperature', type: 'number', label: 'Temperature', placeholder: '0.7' },
     ],
   },
@@ -265,7 +351,8 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
           { label: 'Length', value: 'length' },
         ],
       },
-      { key: 'template', type: 'textarea', label: 'Template', placeholder: '{{text}} を変換' },
+      { key: 'template', type: 'textarea', label: 'Template', placeholder: '{{author}}さん: {{message}}' },
+      { key: 'templateInputs', type: 'input-list', label: 'Template Inputs', placeholder: 'author, message...' },
       { key: 'find', type: 'text', label: 'Find (for Replace)', placeholder: 'Text to find' },
       { key: 'replaceWith', type: 'text', label: 'Replace With', placeholder: 'Replacement text' },
       { key: 'delimiter', type: 'text', label: 'Delimiter (for Split)', placeholder: ' ' },
@@ -707,6 +794,175 @@ export default function NodeSettings() {
               {' '}(FBX format, Without Skin)
             </div>
           </div>
+        );
+
+      case 'prompt-builder': {
+        const sections = (value as PromptSection[]) || [];
+
+        const addSection = (type: 'text' | 'input') => {
+          const newSection: PromptSection = {
+            id: `section-${Date.now()}`,
+            type,
+            content: type === 'text' ? '' : `input_${sections.filter(s => s.type === 'input').length + 1}`,
+          };
+          handleChange(field.key, [...sections, newSection]);
+        };
+
+        const updateSection = (id: string, content: string) => {
+          const updated = sections.map(s => s.id === id ? { ...s, content } : s);
+          handleChange(field.key, updated);
+        };
+
+        const removeSection = (id: string) => {
+          handleChange(field.key, sections.filter(s => s.id !== id));
+        };
+
+        const moveSection = (index: number, direction: 'up' | 'down') => {
+          const newIndex = direction === 'up' ? index - 1 : index + 1;
+          if (newIndex < 0 || newIndex >= sections.length) return;
+          const newSections = [...sections];
+          [newSections[index], newSections[newIndex]] = [newSections[newIndex], newSections[index]];
+          handleChange(field.key, newSections);
+        };
+
+        return (
+          <div className="space-y-2">
+            {/* Existing sections */}
+            {sections.map((section, index) => (
+              <div key={section.id} className="relative">
+                {section.type === 'text' ? (
+                  <div className="border border-white/20 rounded-md overflow-hidden">
+                    <div className="flex items-center justify-between px-2 py-1 bg-emerald-500/20 text-[10px] text-emerald-400">
+                      <span>Text Block</span>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => moveSection(index, 'up')}
+                          disabled={index === 0}
+                          className="px-1 hover:bg-white/10 rounded disabled:opacity-30"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          onClick={() => moveSection(index, 'down')}
+                          disabled={index === sections.length - 1}
+                          className="px-1 hover:bg-white/10 rounded disabled:opacity-30"
+                        >
+                          ↓
+                        </button>
+                        <button
+                          onClick={() => removeSection(section.id)}
+                          className="px-1 hover:bg-red-500/20 rounded text-red-400"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                    <textarea
+                      value={section.content}
+                      onChange={(e) => updateSection(section.id, e.target.value)}
+                      placeholder="Enter static text for this part of the prompt..."
+                      rows={2}
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        border: 'none',
+                        background: 'rgba(0,0,0,0.3)',
+                        color: '#fff',
+                        fontSize: '11px',
+                        resize: 'vertical',
+                        minHeight: '40px',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="border border-blue-500/30 rounded-md overflow-hidden">
+                    <div className="flex items-center justify-between px-2 py-1 bg-blue-500/20 text-[10px] text-blue-400">
+                      <span>Input Port (Dynamic)</span>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => moveSection(index, 'up')}
+                          disabled={index === 0}
+                          className="px-1 hover:bg-white/10 rounded disabled:opacity-30"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          onClick={() => moveSection(index, 'down')}
+                          disabled={index === sections.length - 1}
+                          className="px-1 hover:bg-white/10 rounded disabled:opacity-30"
+                        >
+                          ↓
+                        </button>
+                        <button
+                          onClick={() => removeSection(section.id)}
+                          className="px-1 hover:bg-red-500/20 rounded text-red-400"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                    <div className="p-2 bg-black/30">
+                      <input
+                        type="text"
+                        value={section.content}
+                        onChange={(e) => updateSection(section.id, e.target.value.replace(/\s/g, '_'))}
+                        placeholder="input_name"
+                        style={{
+                          width: '100%',
+                          padding: '6px 8px',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(59, 130, 246, 0.3)',
+                          background: 'rgba(59, 130, 246, 0.1)',
+                          color: '#93c5fd',
+                          fontSize: '11px',
+                          outline: 'none',
+                        }}
+                      />
+                      <div className="text-[9px] text-white/40 mt-1">
+                        This will create an input port named "{section.content}"
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Add section buttons */}
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => addSection('text')}
+                className="flex-1 py-2 rounded-md border border-emerald-500/50 bg-emerald-500/10 text-emerald-400 text-[11px] cursor-pointer transition-colors hover:bg-emerald-500/20"
+              >
+                + Text Block
+              </button>
+              <button
+                onClick={() => addSection('input')}
+                className="flex-1 py-2 rounded-md border border-blue-500/50 bg-blue-500/10 text-blue-400 text-[11px] cursor-pointer transition-colors hover:bg-blue-500/20"
+              >
+                + Input Port
+              </button>
+            </div>
+
+            {/* Info text */}
+            {sections.length === 0 && (
+              <div className="text-[10px] text-white/40 text-center py-2">
+                Build your prompt by adding text blocks and input ports.
+                <br />
+                Input ports will appear as connection points on the node.
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      case 'input-list':
+        return (
+          <InputListField
+            value={(value as string[]) || []}
+            onChange={(newValue) => handleChange(field.key, newValue)}
+            placeholder={field.placeholder}
+          />
         );
 
       default:

@@ -28,6 +28,7 @@ import DataPreviewPopup from './DataPreviewPopup';
 import { nodeTypes as sidebarNodeTypes } from './Sidebar';
 import { type PortType, type PortDefinition } from '@/lib/portTypes';
 import { useUIPreferencesStore, type NodeDisplayMode } from '@/stores/uiPreferencesStore';
+import { type PromptSection } from '@/components/panels/NodeSettings';
 
 interface CanvasProps {
   onNodeSelect?: (nodeId: string | null) => void;
@@ -250,7 +251,7 @@ function CanvasInner({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
       const entryPointTypes = new Set(['start', 'manual-input', 'youtube-chat', 'twitch-chat', 'timer']);
 
       return workflowNodes.map((node) => {
-        const nodeInputs = getNodeInputs(node.type);
+        const nodeInputs = getNodeInputs(node.type, node.config);
         const isEntryPoint = entryPointTypes.has(node.type) || nodeInputs.length === 0;
         const isReachable = !hasStartNode || reachableNodes.has(node.id);
 
@@ -659,7 +660,7 @@ function CanvasInner({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
       </ReactFlow>
 
       {/* Display Mode Toggle */}
-      <div className="absolute top-4 left-4 flex gap-1 bg-gray-800/95 rounded-lg p-1 border border-white/10 shadow-lg z-10">
+      <div className="absolute top-4 right-4 flex gap-1 bg-gray-800/95 rounded-lg p-1 border border-white/10 shadow-lg z-10">
         <span className="px-2 py-1.5 text-[10px] text-white/40">表示:</span>
         {(['simple', 'standard', 'detailed'] as const).map((mode) => (
           <button
@@ -830,7 +831,37 @@ function getNodeCategory(type: string): 'input' | 'process' | 'output' | 'contro
   return categories[type] || 'process';
 }
 
-function getNodeInputs(type: string): PortDefinition[] {
+function getNodeInputs(type: string, config?: Record<string, unknown>): PortDefinition[] {
+  // For LLM nodes with prompt builder, generate dynamic inputs from promptSections
+  if (type === 'openai-llm' && config?.promptSections) {
+    const sections = config.promptSections as PromptSection[];
+    const inputSections = sections.filter(s => s.type === 'input');
+    if (inputSections.length > 0) {
+      // Generate dynamic input ports from prompt sections
+      return inputSections.map(section => ({
+        id: section.content, // The input port name
+        label: section.content.replace(/_/g, ' '), // Convert underscores to spaces for display
+        type: 'string' as PortType,
+      }));
+    }
+    // If promptSections exists but has no inputs, still use default prompt
+    return [{ id: 'prompt', label: 'Prompt', type: 'string' }];
+  }
+
+  // For text-transform with templateInputs, generate dynamic inputs
+  if (type === 'text-transform' && config?.templateInputs) {
+    const templateInputs = config.templateInputs as string[];
+    if (templateInputs.length > 0) {
+      return templateInputs.map(inputName => ({
+        id: inputName,
+        label: inputName.replace(/_/g, ' '),
+        type: 'string' as PortType,
+      }));
+    }
+    // Fall back to default text input
+    return [{ id: 'text', label: 'Text', type: 'string' }];
+  }
+
   const inputs: Record<string, PortDefinition[]> = {
     // Control flow
     'start': [],
@@ -903,8 +934,16 @@ function getNodeOutputs(type: string): PortDefinition[] {
     ],
     // Input
     'manual-input': [{ id: 'text', label: 'Text', type: 'string' }],
-    'youtube-chat': [{ id: 'message', label: 'Message', type: 'string' }],
-    'twitch-chat': [{ id: 'message', label: 'Message', type: 'string' }],
+    'youtube-chat': [
+      { id: 'text', label: 'Text', type: 'string' },
+      { id: 'author', label: 'Author', type: 'string' },
+      { id: 'message', label: 'Full Data', type: 'object' },
+    ],
+    'twitch-chat': [
+      { id: 'text', label: 'Text', type: 'string' },
+      { id: 'author', label: 'Author', type: 'string' },
+      { id: 'message', label: 'Full Data', type: 'object' },
+    ],
     'timer': [
       { id: 'tick', label: 'Tick', type: 'number' },
       { id: 'timestamp', label: 'Timestamp', type: 'string' },

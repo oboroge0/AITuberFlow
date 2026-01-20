@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ReactFlowProvider } from '@xyflow/react';
 import Canvas from '@/components/editor/Canvas';
@@ -20,6 +20,8 @@ export default function EditorPage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const isInitialLoad = useRef(true);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
     loadWorkflow,
@@ -31,6 +33,9 @@ export default function EditorPage() {
     addLog,
     clearLogs,
     selectedNodeId,
+    nodes,
+    connections,
+    character,
   } = useWorkflowStore();
 
   // Handle name editing
@@ -66,6 +71,7 @@ export default function EditorPage() {
   }, [workflowId]);
 
   const loadWorkflowData = async () => {
+    isInitialLoad.current = true;
     const response = await api.getWorkflow(workflowId);
     if (response.data) {
       loadWorkflow({
@@ -78,6 +84,10 @@ export default function EditorPage() {
           personality: 'Friendly and helpful',
         },
       });
+      // Allow auto-save after initial load settles
+      setTimeout(() => {
+        isInitialLoad.current = false;
+      }, 500);
     } else if (response.error) {
       console.error('Failed to load workflow:', response.error);
       if (response.error.includes('not found')) {
@@ -85,6 +95,50 @@ export default function EditorPage() {
       }
     }
   };
+
+  // Auto-save when workflow changes (debounced)
+  const performAutoSave = useCallback(async () => {
+    if (saving || workflowId === 'new') return;
+
+    setSaving(true);
+    const data = getWorkflowData();
+
+    const response = await api.updateWorkflow(workflowId, {
+      name: data.name,
+      nodes: data.nodes,
+      connections: data.connections,
+      character: data.character,
+    });
+
+    if (response.error) {
+      console.error('Auto-save failed:', response.error);
+    }
+
+    setSaving(false);
+  }, [workflowId, saving, getWorkflowData]);
+
+  // Watch for changes and trigger auto-save
+  useEffect(() => {
+    // Skip auto-save during initial load
+    if (isInitialLoad.current) return;
+
+    // Clear existing timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Set new timeout for auto-save (2 seconds after last change)
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      performAutoSave();
+    }, 2000);
+
+    // Cleanup on unmount
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [nodes, connections, workflowName, character, performAutoSave]);
 
   const handleSave = async () => {
     setSaving(true);

@@ -150,11 +150,15 @@ class TwitchChatNode(BaseNode):
 
             self._last_message = msg
 
-            # Emit event
+            # Emit event with separate fields for easy connection
             if self._context:
                 await self._context.emit_event(Event(
                     type="message.received",
-                    payload={"message": msg}
+                    payload={
+                        "message": msg,        # Full object for advanced use
+                        "text": msg["text"],   # Just the text (string)
+                        "author": msg["author"],  # Just the author name (string)
+                    }
                 ))
                 await self._context.log(f"{msg['author']}: {text[:50]}...")
 

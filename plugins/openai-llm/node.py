@@ -34,6 +34,7 @@ class OpenAILLMNode(BaseNode):
         self.system_prompt = "You are a helpful assistant."
         self.temperature = 0.7
         self.max_tokens = 1024
+        self.prompt_sections = None  # For structured prompt building
 
     async def setup(self, config: dict, context: NodeContext) -> None:
         """Initialize the OpenAI client."""
@@ -46,6 +47,7 @@ class OpenAILLMNode(BaseNode):
         self.system_prompt = config.get("systemPrompt", "You are a helpful assistant.")
         self.temperature = config.get("temperature", 0.7)
         self.max_tokens = config.get("maxTokens", 1024)
+        self.prompt_sections = config.get("promptSections")  # Structured prompt config
 
         if not self.api_key:
             await context.log("OpenAI API key not configured", "warning")
@@ -53,13 +55,48 @@ class OpenAILLMNode(BaseNode):
             self.client = openai.AsyncOpenAI(api_key=self.api_key)
             await context.log(f"OpenAI client initialized (model: {self.model})")
 
+    def _build_prompt_from_sections(self, inputs: dict) -> str:
+        """Build prompt from sections configuration."""
+        if not self.prompt_sections:
+            return inputs.get("prompt", "")
+
+        parts = []
+        for section in self.prompt_sections:
+            section_type = section.get("type")
+            content = section.get("content", "")
+
+            if section_type == "text":
+                # Static text block
+                parts.append(content)
+            elif section_type == "input":
+                # Dynamic input from connection - content is the port name
+                input_value = inputs.get(content, "")
+                # Handle objects by extracting common fields
+                if isinstance(input_value, dict):
+                    # Try to extract message or text field, common in chat inputs
+                    if "message" in input_value:
+                        input_value = input_value["message"]
+                    elif "text" in input_value:
+                        input_value = input_value["text"]
+                    else:
+                        # Convert to string representation
+                        input_value = str(input_value)
+                parts.append(str(input_value) if input_value else "")
+
+        return "\n".join(parts)
+
     async def execute(self, inputs: dict, context: NodeContext) -> dict:
         """Generate a response from the model."""
         if not self.client:
             await context.log("OpenAI client not initialized", "error")
             return {"response": "Error: OpenAI client not initialized"}
 
-        prompt = inputs.get("prompt", "")
+        # Build prompt from sections or use simple prompt input
+        if self.prompt_sections:
+            prompt = self._build_prompt_from_sections(inputs)
+        else:
+            prompt = inputs.get("prompt", "")
+
         if not prompt:
             await context.log("No prompt provided", "warning")
             return {"response": ""}
