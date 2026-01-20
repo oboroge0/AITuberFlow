@@ -659,7 +659,8 @@ function CanvasInner({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
       </ReactFlow>
 
       {/* Display Mode Toggle */}
-      <div className="absolute bottom-4 left-14 flex gap-1 bg-gray-800/95 rounded-lg p-1 border border-white/10 shadow-lg z-10">
+      <div className="absolute top-4 left-4 flex gap-1 bg-gray-800/95 rounded-lg p-1 border border-white/10 shadow-lg z-10">
+        <span className="px-2 py-1.5 text-[10px] text-white/40">表示:</span>
         {(['simple', 'standard', 'detailed'] as const).map((mode) => (
           <button
             key={mode}
