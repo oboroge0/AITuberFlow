@@ -26,6 +26,8 @@ import FieldSelectorNode from './FieldSelectorNode';
 import ContextMenu, { type ContextMenuItem } from './ContextMenu';
 import DataPreviewPopup from './DataPreviewPopup';
 import { nodeTypes as sidebarNodeTypes } from './Sidebar';
+import { type PortType, type PortDefinition } from '@/lib/portTypes';
+import { useUIPreferencesStore, type NodeDisplayMode } from '@/stores/uiPreferencesStore';
 
 interface CanvasProps {
   onNodeSelect?: (nodeId: string | null) => void;
@@ -133,6 +135,8 @@ function CanvasInner({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
     pasteNodes,
     nodeStatuses,
   } = useWorkflowStore();
+
+  const { nodeDisplayMode, setNodeDisplayMode } = useUIPreferencesStore();
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -654,6 +658,23 @@ function CanvasInner({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
         />
       </ReactFlow>
 
+      {/* Display Mode Toggle */}
+      <div className="absolute bottom-4 left-14 flex gap-1 bg-gray-800/95 rounded-lg p-1 border border-white/10 shadow-lg z-10">
+        {(['simple', 'standard', 'detailed'] as const).map((mode) => (
+          <button
+            key={mode}
+            onClick={() => setNodeDisplayMode(mode)}
+            className={`px-3 py-1.5 text-[11px] rounded transition-colors ${
+              nodeDisplayMode === mode
+                ? 'bg-white/20 text-white font-medium'
+                : 'text-white/60 hover:bg-white/10 hover:text-white/80'
+            }`}
+          >
+            {mode === 'simple' ? '簡易' : mode === 'standard' ? '標準' : '詳細'}
+          </button>
+        ))}
+      </div>
+
       {/* Custom styles for React Flow */}
       <style jsx global>{`
         .react-flow__controls {
@@ -808,126 +829,126 @@ function getNodeCategory(type: string): 'input' | 'process' | 'output' | 'contro
   return categories[type] || 'process';
 }
 
-function getNodeInputs(type: string): { id: string; label: string }[] {
-  const inputs: Record<string, { id: string; label: string }[]> = {
+function getNodeInputs(type: string): PortDefinition[] {
+  const inputs: Record<string, PortDefinition[]> = {
     // Control flow
     'start': [],
-    'end': [{ id: 'input', label: 'Input' }],
+    'end': [{ id: 'input', label: 'Input', type: 'any' }],
     'loop': [
-      { id: 'input', label: 'Input' },
-      { id: 'loopback', label: 'Loop Back' },
+      { id: 'input', label: 'Input', type: 'any' },
+      { id: 'loopback', label: 'Loop Back', type: 'any' },
     ],
-    'foreach': [{ id: 'list', label: 'List' }],
+    'foreach': [{ id: 'list', label: 'List', type: 'array' }],
     // Input
     'manual-input': [],
     'youtube-chat': [],
     'twitch-chat': [],
     'timer': [],
     // LLM
-    'openai-llm': [{ id: 'prompt', label: 'Prompt' }],
-    'anthropic-llm': [{ id: 'prompt', label: 'Prompt' }],
-    'google-llm': [{ id: 'prompt', label: 'Prompt' }],
-    'ollama-llm': [{ id: 'prompt', label: 'Prompt' }],
+    'openai-llm': [{ id: 'prompt', label: 'Prompt', type: 'string' }],
+    'anthropic-llm': [{ id: 'prompt', label: 'Prompt', type: 'string' }],
+    'google-llm': [{ id: 'prompt', label: 'Prompt', type: 'string' }],
+    'ollama-llm': [{ id: 'prompt', label: 'Prompt', type: 'string' }],
     // Control
     'switch': [
-      { id: 'value', label: 'Value' },
-      { id: 'data', label: 'Data' },
+      { id: 'value', label: 'Value', type: 'any' },
+      { id: 'data', label: 'Data', type: 'any' },
     ],
-    'delay': [{ id: 'input', label: 'Input' }],
+    'delay': [{ id: 'input', label: 'Input', type: 'any' }],
     // Output
-    'console-output': [{ id: 'text', label: 'Text' }],
-    'voicevox-tts': [{ id: 'text', label: 'Text' }],
-    'coeiroink-tts': [{ id: 'text', label: 'Text' }],
-    'sbv2-tts': [{ id: 'text', label: 'Text' }],
+    'console-output': [{ id: 'text', label: 'Text', type: 'string' }],
+    'voicevox-tts': [{ id: 'text', label: 'Text', type: 'string' }],
+    'coeiroink-tts': [{ id: 'text', label: 'Text', type: 'string' }],
+    'sbv2-tts': [{ id: 'text', label: 'Text', type: 'string' }],
     // Utility
-    'http-request': [{ id: 'body', label: 'Body' }],
-    'text-transform': [{ id: 'text', label: 'Text' }],
-    'field-selector': [{ id: 'input', label: 'Input' }],
-    'random': [{ id: 'trigger', label: 'Trigger' }],
-    'variable': [{ id: 'set', label: 'Set' }],
+    'http-request': [{ id: 'body', label: 'Body', type: 'object' }],
+    'text-transform': [{ id: 'text', label: 'Text', type: 'string' }],
+    'field-selector': [{ id: 'input', label: 'Input', type: 'object' }],
+    'random': [{ id: 'trigger', label: 'Trigger', type: 'any' }],
+    'variable': [{ id: 'set', label: 'Set', type: 'any' }],
     // Avatar
     'avatar-controller': [
-      { id: 'expression', label: 'Expression' },
-      { id: 'intensity', label: 'Intensity' },
-      { id: 'mouth', label: 'Mouth' },
-      { id: 'motion', label: 'Motion' },
+      { id: 'expression', label: 'Expression', type: 'string' },
+      { id: 'intensity', label: 'Intensity', type: 'number' },
+      { id: 'mouth', label: 'Mouth', type: 'number' },
+      { id: 'motion', label: 'Motion', type: 'string' },
     ],
-    'emotion-analyzer': [{ id: 'text', label: 'Text' }],
+    'emotion-analyzer': [{ id: 'text', label: 'Text', type: 'string' }],
     'lip-sync': [
-      { id: 'audio', label: 'Audio' },
+      { id: 'audio', label: 'Audio', type: 'audio' },
     ],
-    'subtitle-display': [{ id: 'text', label: 'Text' }],
+    'subtitle-display': [{ id: 'text', label: 'Text', type: 'string' }],
     'audio-player': [
-      { id: 'audio', label: 'Audio' },
-      { id: 'duration', label: 'Duration' },
+      { id: 'audio', label: 'Audio', type: 'audio' },
+      { id: 'duration', label: 'Duration', type: 'number' },
     ],
   };
   return inputs[type] || [];
 }
 
-function getNodeOutputs(type: string): { id: string; label: string }[] {
-  const outputs: Record<string, { id: string; label: string }[]> = {
+function getNodeOutputs(type: string): PortDefinition[] {
+  const outputs: Record<string, PortDefinition[]> = {
     // Control flow
-    'start': [{ id: 'trigger', label: 'Trigger' }],
+    'start': [{ id: 'trigger', label: 'Trigger', type: 'any' }],
     'end': [],
     'loop': [
-      { id: 'loop', label: 'Loop' },
-      { id: 'done', label: 'Done' },
+      { id: 'loop', label: 'Loop', type: 'any' },
+      { id: 'done', label: 'Done', type: 'boolean' },
     ],
     'foreach': [
-      { id: 'item', label: 'Item' },
-      { id: 'index', label: 'Index' },
-      { id: 'done', label: 'Done' },
+      { id: 'item', label: 'Item', type: 'any' },
+      { id: 'index', label: 'Index', type: 'number' },
+      { id: 'done', label: 'Done', type: 'boolean' },
     ],
     // Input
-    'manual-input': [{ id: 'text', label: 'Text' }],
-    'youtube-chat': [{ id: 'message', label: 'Message' }],
-    'twitch-chat': [{ id: 'message', label: 'Message' }],
+    'manual-input': [{ id: 'text', label: 'Text', type: 'string' }],
+    'youtube-chat': [{ id: 'message', label: 'Message', type: 'string' }],
+    'twitch-chat': [{ id: 'message', label: 'Message', type: 'string' }],
     'timer': [
-      { id: 'tick', label: 'Tick' },
-      { id: 'timestamp', label: 'Timestamp' },
+      { id: 'tick', label: 'Tick', type: 'number' },
+      { id: 'timestamp', label: 'Timestamp', type: 'string' },
     ],
     // LLM
-    'openai-llm': [{ id: 'response', label: 'Response' }],
-    'anthropic-llm': [{ id: 'response', label: 'Response' }],
-    'google-llm': [{ id: 'response', label: 'Response' }],
-    'ollama-llm': [{ id: 'response', label: 'Response' }],
+    'openai-llm': [{ id: 'response', label: 'Response', type: 'string' }],
+    'anthropic-llm': [{ id: 'response', label: 'Response', type: 'string' }],
+    'google-llm': [{ id: 'response', label: 'Response', type: 'string' }],
+    'ollama-llm': [{ id: 'response', label: 'Response', type: 'string' }],
     // Control
     'switch': [
-      { id: 'true', label: 'True' },
-      { id: 'false', label: 'False' },
+      { id: 'true', label: 'True', type: 'any' },
+      { id: 'false', label: 'False', type: 'any' },
     ],
-    'delay': [{ id: 'output', label: 'Output' }],
+    'delay': [{ id: 'output', label: 'Output', type: 'any' }],
     // Output
     'console-output': [],
-    'voicevox-tts': [{ id: 'audio', label: 'Audio' }],
-    'coeiroink-tts': [{ id: 'audio', label: 'Audio' }],
-    'sbv2-tts': [{ id: 'audio', label: 'Audio' }],
+    'voicevox-tts': [{ id: 'audio', label: 'Audio', type: 'audio' }],
+    'coeiroink-tts': [{ id: 'audio', label: 'Audio', type: 'audio' }],
+    'sbv2-tts': [{ id: 'audio', label: 'Audio', type: 'audio' }],
     // Utility
     'http-request': [
-      { id: 'response', label: 'Response' },
-      { id: 'status', label: 'Status' },
+      { id: 'response', label: 'Response', type: 'object' },
+      { id: 'status', label: 'Status', type: 'number' },
     ],
-    'text-transform': [{ id: 'result', label: 'Result' }],
-    'field-selector': [{ id: 'output', label: 'Output' }],
-    'random': [{ id: 'value', label: 'Value' }],
-    'variable': [{ id: 'value', label: 'Value' }],
+    'text-transform': [{ id: 'result', label: 'Result', type: 'string' }],
+    'field-selector': [{ id: 'output', label: 'Output', type: 'any' }],
+    'random': [{ id: 'value', label: 'Value', type: 'number' }],
+    'variable': [{ id: 'value', label: 'Value', type: 'any' }],
     // Avatar
-    'avatar-controller': [{ id: 'status', label: 'Status' }],
+    'avatar-controller': [{ id: 'status', label: 'Status', type: 'string' }],
     'emotion-analyzer': [
-      { id: 'expression', label: 'Expression' },
-      { id: 'intensity', label: 'Intensity' },
-      { id: 'text', label: 'Text' },
+      { id: 'expression', label: 'Expression', type: 'string' },
+      { id: 'intensity', label: 'Intensity', type: 'number' },
+      { id: 'text', label: 'Text', type: 'string' },
     ],
     'lip-sync': [
-      { id: 'mouth_values', label: 'Mouth' },
-      { id: 'duration', label: 'Duration' },
-      { id: 'audio', label: 'Audio' },
+      { id: 'mouth_values', label: 'Mouth', type: 'array' },
+      { id: 'duration', label: 'Duration', type: 'number' },
+      { id: 'audio', label: 'Audio', type: 'audio' },
     ],
-    'subtitle-display': [{ id: 'text', label: 'Text' }],
+    'subtitle-display': [{ id: 'text', label: 'Text', type: 'string' }],
     'audio-player': [
-      { id: 'audio', label: 'Audio' },
-      { id: 'duration', label: 'Duration' },
+      { id: 'audio', label: 'Audio', type: 'audio' },
+      { id: 'duration', label: 'Duration', type: 'number' },
     ],
   };
   return outputs[type] || [];

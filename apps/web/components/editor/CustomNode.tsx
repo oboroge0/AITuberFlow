@@ -3,14 +3,16 @@
 import React, { memo } from 'react';
 import { Handle, Position, type Node } from '@xyflow/react';
 import { useWorkflowStore } from '@/stores/workflowStore';
+import { useUIPreferencesStore, type NodeDisplayMode } from '@/stores/uiPreferencesStore';
+import { type PortDefinition, PORT_TYPE_COLORS } from '@/lib/portTypes';
 
 export interface CustomNodeData extends Record<string, unknown> {
   label: string;
   type: string;
   category: 'input' | 'process' | 'output' | 'control';
   config: Record<string, unknown>;
-  inputs?: { id: string; label: string }[];
-  outputs?: { id: string; label: string }[];
+  inputs?: PortDefinition[];
+  outputs?: PortDefinition[];
   isReachable?: boolean;  // Whether this node is reachable from Start
   isEntryPoint?: boolean; // Whether this node can start execution (no inputs)
   onPlayClick?: () => void; // Callback when play button is clicked
@@ -346,6 +348,7 @@ interface CustomNodeProps {
 
 function CustomNode({ id, data, selected }: CustomNodeProps) {
   const { nodeStatuses, selectNode } = useWorkflowStore();
+  const { nodeDisplayMode } = useUIPreferencesStore();
   const status = nodeStatuses[id];
   const config = nodeTypeConfig[data.type] || defaultNodeConfig;
 
@@ -383,85 +386,310 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     return config.statusText;
   };
 
-  return (
-    <div
-      onClick={handleClick}
-      className="relative"
-      style={{
-        background: config.bgColor,
-        border: `2px solid ${selected ? config.color : 'rgba(255,255,255,0.1)'}`,
-        borderRadius: '12px',
-        padding: '12px 16px',
-        minWidth: '160px',
-        boxShadow: selected
-          ? `0 0 20px ${config.color}40, 0 4px 20px rgba(0,0,0,0.3)`
-          : '0 4px 20px rgba(0,0,0,0.2)',
-        transition: 'box-shadow 0.2s, border-color 0.2s',
-      }}
-    >
-      {/* Play button for entry-point nodes */}
-      {isEntryPoint && (
-        <button
-          onClick={handlePlayClick}
-          className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-transform hover:scale-110 z-10"
-          style={{
-            background: 'linear-gradient(135deg, #10B981, #059669)',
-            border: '2px solid #1F2937',
-            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
-          }}
-          title="Run from this node"
-        >
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="white" stroke="none">
-            <polygon points="5 3 19 12 5 21 5 3"/>
-          </svg>
-        </button>
+  // Get dimensions based on display mode
+  const getNodeStyle = () => {
+    const baseStyle = {
+      background: config.bgColor,
+      border: `2px solid ${selected ? config.color : 'rgba(255,255,255,0.1)'}`,
+      borderRadius: '12px',
+      boxShadow: selected
+        ? `0 0 20px ${config.color}40, 0 4px 20px rgba(0,0,0,0.3)`
+        : '0 4px 20px rgba(0,0,0,0.2)',
+      transition: 'box-shadow 0.2s, border-color 0.2s',
+    };
+
+    switch (nodeDisplayMode) {
+      case 'simple':
+        return { ...baseStyle, padding: '8px 12px', minWidth: '120px' };
+      case 'detailed':
+        return { ...baseStyle, padding: '0', minWidth: '200px' };
+      default: // standard
+        return { ...baseStyle, padding: '12px 16px', minWidth: '160px' };
+    }
+  };
+
+  // Play button component
+  const PlayButton = () => (
+    isEntryPoint ? (
+      <button
+        onClick={handlePlayClick}
+        className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-transform hover:scale-110 z-10"
+        style={{
+          background: 'linear-gradient(135deg, #10B981, #059669)',
+          border: '2px solid #1F2937',
+          boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
+        }}
+        title="Run from this node"
+      >
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="white" stroke="none">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+      </button>
+    ) : null
+  );
+
+  // Status indicator component
+  const StatusIndicator = () => (
+    <>
+      {status?.status === 'running' && (
+        <div className="absolute -top-1 -right-1">
+          <span className="w-3 h-3 rounded-full bg-yellow-400 animate-pulse block" />
+        </div>
       )}
-      {/* Input handles */}
+      {status?.status === 'completed' && (
+        <div className="absolute -top-1 -right-1">
+          <span className="w-3 h-3 rounded-full bg-green-400 block" />
+        </div>
+      )}
+      {status?.status === 'error' && (
+        <div className="absolute -top-1 -right-1">
+          <span className="w-3 h-3 rounded-full bg-red-400 block" />
+        </div>
+      )}
+    </>
+  );
+
+  // ============ SIMPLE MODE ============
+  if (nodeDisplayMode === 'simple') {
+    return (
+      <div onClick={handleClick} className="relative" style={getNodeStyle()}>
+        <PlayButton />
+
+        {/* Input handles - simple circles */}
+        {data.inputs && data.inputs.length > 0 && (
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 flex flex-col gap-1">
+            {data.inputs.map((input) => (
+              <Handle
+                key={input.id}
+                type="target"
+                position={Position.Left}
+                id={input.id}
+                style={{
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  background: PORT_TYPE_COLORS[input.type] || '#374151',
+                  border: '2px solid #1F2937',
+                  position: 'relative',
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Output handles - simple circles */}
+        {data.outputs && data.outputs.length > 0 && (
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 flex flex-col gap-1">
+            {data.outputs.map((output) => (
+              <Handle
+                key={output.id}
+                type="source"
+                position={Position.Right}
+                id={output.id}
+                style={{
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  background: PORT_TYPE_COLORS[output.type] || config.color,
+                  border: '2px solid #1F2937',
+                  position: 'relative',
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Compact header - icon and label only */}
+        <div className="flex items-center gap-2">
+          <div
+            style={{
+              width: '24px',
+              height: '24px',
+              borderRadius: '4px',
+              background: config.color,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              flexShrink: 0,
+            }}
+          >
+            {config.icon}
+          </div>
+          <span className="font-semibold text-[12px] text-white truncate">
+            {data.label}
+          </span>
+        </div>
+
+        <StatusIndicator />
+      </div>
+    );
+  }
+
+  // ============ DETAILED MODE ============
+  if (nodeDisplayMode === 'detailed') {
+    return (
+      <div onClick={handleClick} className="relative" style={getNodeStyle()}>
+        <PlayButton />
+
+        {/* Header section */}
+        <div
+          className="flex items-center gap-2 px-3 py-2"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}
+        >
+          <div
+            style={{
+              width: '24px',
+              height: '24px',
+              borderRadius: '4px',
+              background: config.color,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              flexShrink: 0,
+            }}
+          >
+            {config.icon}
+          </div>
+          <span className="font-semibold text-[12px] text-white">
+            {data.label}
+          </span>
+        </div>
+
+        {/* Inputs section */}
+        {data.inputs && data.inputs.length > 0 && (
+          <div className="px-3 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="text-[9px] text-white/40 uppercase tracking-wider mb-1">Inputs</div>
+            {data.inputs.map((input) => (
+              <div key={input.id} className="flex items-center gap-2 py-1 relative">
+                <Handle
+                  type="target"
+                  position={Position.Left}
+                  id={input.id}
+                  style={{
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    background: PORT_TYPE_COLORS[input.type] || '#374151',
+                    border: '1px solid #1F2937',
+                    left: '-5px',
+                    position: 'absolute',
+                  }}
+                />
+                <span className="text-[11px] text-white/80 ml-2">{input.label}</span>
+                <span
+                  className="text-[9px] ml-auto"
+                  style={{ color: PORT_TYPE_COLORS[input.type] || '#6B7280' }}
+                >
+                  {input.type}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Outputs section */}
+        {data.outputs && data.outputs.length > 0 && (
+          <div className="px-3 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="text-[9px] text-white/40 uppercase tracking-wider mb-1">Outputs</div>
+            {data.outputs.map((output) => (
+              <div key={output.id} className="flex items-center gap-2 py-1 relative">
+                <span
+                  className="text-[9px]"
+                  style={{ color: PORT_TYPE_COLORS[output.type] || '#6B7280' }}
+                >
+                  {output.type}
+                </span>
+                <span className="text-[11px] text-white/80 ml-auto mr-2">{output.label}</span>
+                <Handle
+                  type="source"
+                  position={Position.Right}
+                  id={output.id}
+                  style={{
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    background: PORT_TYPE_COLORS[output.type] || config.color,
+                    border: '1px solid #1F2937',
+                    right: '-5px',
+                    position: 'absolute',
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Status footer */}
+        <div className="px-3 py-2 text-[10px] text-white/50">
+          {getStatusText()}
+        </div>
+
+        <StatusIndicator />
+      </div>
+    );
+  }
+
+  // ============ STANDARD MODE (default) ============
+  return (
+    <div onClick={handleClick} className="relative" style={getNodeStyle()}>
+      <PlayButton />
+
+      {/* Input handles with labels */}
       {data.inputs && data.inputs.length > 0 && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2">
           {data.inputs.map((input, idx) => (
-            <Handle
-              key={input.id}
-              type="target"
-              position={Position.Left}
-              id={input.id}
-              style={{
-                width: '16px',
-                height: '16px',
-                borderRadius: '50%',
-                background: '#374151',
-                border: '2px solid #1F2937',
-                position: 'relative',
-                top: 'auto',
-                transform: 'none',
-                marginTop: idx > 0 ? '8px' : '0',
-              }}
-            />
+            <div key={input.id} className="flex items-center" style={{ marginTop: idx > 0 ? '8px' : '0' }}>
+              <Handle
+                type="target"
+                position={Position.Left}
+                id={input.id}
+                style={{
+                  width: '14px',
+                  height: '14px',
+                  borderRadius: '50%',
+                  background: PORT_TYPE_COLORS[input.type] || '#374151',
+                  border: '2px solid #1F2937',
+                  position: 'relative',
+                }}
+              />
+              <span
+                className="text-[9px] text-white/60 ml-1 whitespace-nowrap"
+                style={{ transform: 'translateX(8px)' }}
+              >
+                {input.label}
+              </span>
+            </div>
           ))}
         </div>
       )}
 
-      {/* Output handles */}
+      {/* Output handles with labels */}
       {data.outputs && data.outputs.length > 0 && (
         <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2">
           {data.outputs.map((output, idx) => (
-            <Handle
-              key={output.id}
-              type="source"
-              position={Position.Right}
-              id={output.id}
-              style={{
-                width: '16px',
-                height: '16px',
-                borderRadius: '50%',
-                background: config.color,
-                border: '2px solid #1F2937',
-                position: 'relative',
-                top: 'auto',
-                transform: 'none',
-                marginTop: idx > 0 ? '8px' : '0',
-              }}
-            />
+            <div key={output.id} className="flex items-center justify-end" style={{ marginTop: idx > 0 ? '8px' : '0' }}>
+              <span
+                className="text-[9px] text-white/60 mr-1 whitespace-nowrap"
+                style={{ transform: 'translateX(-8px)' }}
+              >
+                {output.label}
+              </span>
+              <Handle
+                type="source"
+                position={Position.Right}
+                id={output.id}
+                style={{
+                  width: '14px',
+                  height: '14px',
+                  borderRadius: '50%',
+                  background: PORT_TYPE_COLORS[output.type] || config.color,
+                  border: '2px solid #1F2937',
+                  position: 'relative',
+                }}
+              />
+            </div>
           ))}
         </div>
       )}
@@ -492,22 +720,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         {getStatusText()}
       </div>
 
-      {/* Running indicator */}
-      {status?.status === 'running' && (
-        <div className="absolute -top-1 -right-1">
-          <span className="w-3 h-3 rounded-full bg-yellow-400 animate-pulse block" />
-        </div>
-      )}
-      {status?.status === 'completed' && (
-        <div className="absolute -top-1 -right-1">
-          <span className="w-3 h-3 rounded-full bg-green-400 block" />
-        </div>
-      )}
-      {status?.status === 'error' && (
-        <div className="absolute -top-1 -right-1">
-          <span className="w-3 h-3 rounded-full bg-red-400 block" />
-        </div>
-      )}
+      <StatusIndicator />
     </div>
   );
 }
