@@ -190,9 +190,9 @@ export default function AvatarView({
   }, [renderer, modelUrl, animationUrl, pngConfig, vtubePort, state, backgroundColor, enableControls, showGrid, onMotionComplete]);
 
   return (
-    <div className={`avatar-view relative w-full h-full ${className}`}>
+    <div className={`avatar-view relative w-full h-full ${className}`} style={{ pointerEvents: 'auto' }}>
       {/* Avatar Renderer */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0" style={{ pointerEvents: 'auto' }}>
         {renderAvatar()}
       </div>
 
@@ -209,7 +209,7 @@ export default function AvatarView({
 
       {/* Debug Info (can be toggled) */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="absolute top-2 left-2 bg-black/50 backdrop-blur-sm rounded px-2 py-1 text-xs text-white/70">
+        <div className="absolute top-2 left-2 bg-black/50 backdrop-blur-sm rounded px-2 py-1 text-xs text-white/70 pointer-events-none">
           <div>Renderer: {renderer}</div>
           <div>Expression: {state.expression}</div>
           <div>Mouth: {(state.mouthOpen * 100).toFixed(0)}%</div>

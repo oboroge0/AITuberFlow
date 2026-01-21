@@ -478,7 +478,7 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onLoad }: Side
 
   return (
     <div
-      className="w-[280px] h-full flex flex-col overflow-hidden"
+      className="w-[200px] h-full flex flex-col overflow-hidden"
       style={{
         background: 'rgba(17, 24, 39, 0.95)',
         borderRadius: '16px',

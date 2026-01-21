@@ -109,10 +109,10 @@ Common events:
 
 ## Overlay System
 
-OBS-compatible overlays at `/overlay/`:
-- `/overlay/avatar/[workflowId]` - VRM avatar renderer
-- `/overlay/subtitle/[workflowId]` - Subtitle display
-- `/overlay/audio/[workflowId]` - Audio player (invisible)
+OBS-compatible overlay at `/overlay/[workflowId]`:
+- Unified overlay with avatar, subtitles, and audio playback
+- Transparent background for OBS Browser Source
+- URL parameters: model, animation, scale, x, y, subtitle, subPosition, subFontSize, volume, debug
 
 ## Commands
 

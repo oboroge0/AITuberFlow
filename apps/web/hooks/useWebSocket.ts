@@ -1,6 +1,7 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useWorkflowStore } from '@/stores/workflowStore';
+import { AvatarState } from '@/components/avatar';
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8001';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
@@ -9,6 +10,12 @@ export function useWebSocket(workflowId: string | null) {
   const socketRef = useRef<Socket | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { addLog, setNodeStatus, setExecuting } = useWorkflowStore();
+
+  // Avatar state for preview
+  const [avatarState, setAvatarState] = useState<AvatarState>({
+    expression: 'neutral',
+    mouthOpen: 0,
+  });
 
   useEffect(() => {
     if (!workflowId) return;
@@ -85,6 +92,12 @@ export function useWebSocket(workflowId: string | null) {
         }
         const audio = new Audio(audioUrl);
         audioRef.current = audio;
+
+        // Close mouth when audio ends
+        audio.onended = () => {
+          setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
+        };
+
         audio.play().catch((err) => {
           console.error('Failed to play audio:', err);
           addLog({
@@ -93,6 +106,30 @@ export function useWebSocket(workflowId: string | null) {
           });
         });
       }
+    });
+
+    // Handle avatar events
+    socket.on('avatar.expression', (data: { expression: string }) => {
+      setAvatarState((prev) => ({ ...prev, expression: data.expression }));
+    });
+
+    socket.on('avatar.mouth', (data: { value: number }) => {
+      setAvatarState((prev) => ({ ...prev, mouthOpen: data.value }));
+    });
+
+    socket.on('avatar.motion', (data: { motion?: string; motion_url?: string }) => {
+      const motionUrl = data.motion_url || data.motion;
+      if (motionUrl) {
+        setAvatarState((prev) => ({ ...prev, motion: motionUrl }));
+      }
+    });
+
+    socket.on('avatar.lookAt', (data: { x: number; y: number }) => {
+      setAvatarState((prev) => ({ ...prev, lookAt: data }));
+    });
+
+    socket.on('avatar.update', (data: Partial<AvatarState>) => {
+      setAvatarState((prev) => ({ ...prev, ...data }));
     });
 
     return () => {
@@ -113,5 +150,10 @@ export function useWebSocket(workflowId: string | null) {
     }
   }, []);
 
-  return { emit };
+  // Clear motion after it completes
+  const clearMotion = useCallback(() => {
+    setAvatarState((prev) => ({ ...prev, motion: undefined }));
+  }, []);
+
+  return { emit, avatarState, clearMotion };
 }

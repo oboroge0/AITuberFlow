@@ -144,7 +144,20 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sceneReady, setSceneReady] = useState(false);
+  // Track current prop values via refs for use in effects
+  const enableControlsRef = useRef(enableControls);
+  const autoRotateRef = useRef(autoRotate);
+
+  // Keep refs in sync with props
+  useEffect(() => {
+    enableControlsRef.current = enableControls;
+    autoRotateRef.current = autoRotate;
+
+    // Update existing controls if they exist
+    if (controlsRef.current) {
+      controlsRef.current.autoRotate = autoRotate;
+    }
+  }, [enableControls, autoRotate]);
 
   // Expose resetCamera to parent via ref
   useImperativeHandle(ref, () => ({
@@ -192,6 +205,9 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    // Ensure canvas receives pointer events
+    renderer.domElement.style.pointerEvents = 'auto';
+    renderer.domElement.style.touchAction = 'none';
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
@@ -420,60 +436,9 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
     playMotion();
   }, [motionUrl, onMotionComplete]);
 
-  // Handle controls toggle (separate from scene initialization)
+  // Handle grid toggle - runs when showGrid changes, checks if scene exists
   useEffect(() => {
-    if (!sceneReady || !cameraRef.current || !rendererRef.current) return;
-
-    const currentRenderer = rendererRef.current;
-    const currentCamera = cameraRef.current;
-
-    // Small delay to ensure DOM is ready
-    const initControls = () => {
-      if (!currentCamera || !currentRenderer) return;
-
-      if (enableControls) {
-        // Check if existing controls are for the current renderer
-        // If controls exist but point to a different domElement (stale from navigation), recreate
-        const needsRecreate = !controlsRef.current ||
-          (controlsRef.current as any).domElement !== currentRenderer.domElement;
-
-        if (needsRecreate) {
-          // Dispose old controls if they exist
-          if (controlsRef.current) {
-            controlsRef.current.dispose();
-            controlsRef.current = null;
-          }
-
-          const controls = new OrbitControls(currentCamera, currentRenderer.domElement);
-          controls.target.set(0, 1.3, 0);
-          controls.enableDamping = true;
-          controls.dampingFactor = 0.05;
-          controls.minDistance = 1;
-          controls.maxDistance = 10;
-          controls.maxPolarAngle = Math.PI * 0.9;
-          controls.autoRotate = autoRotate;
-          controls.autoRotateSpeed = 1.0;
-          controlsRef.current = controls;
-        } else {
-          controlsRef.current.autoRotate = autoRotate;
-        }
-      } else if (controlsRef.current) {
-        controlsRef.current.dispose();
-        controlsRef.current = null;
-      }
-    };
-
-    // Use requestAnimationFrame to ensure renderer.domElement is in DOM
-    const frameId = requestAnimationFrame(initControls);
-
-    return () => {
-      cancelAnimationFrame(frameId);
-    };
-  }, [sceneReady, enableControls, autoRotate]);
-
-  // Handle grid toggle (separate from scene initialization)
-  useEffect(() => {
-    if (!sceneReady || !sceneRef.current) return;
+    if (!sceneRef.current) return;
 
     if (showGrid) {
       if (!gridRef.current) {
@@ -486,21 +451,33 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
       gridRef.current.dispose();
       gridRef.current = null;
     }
-  }, [sceneReady, showGrid]);
+  }, [showGrid]);
 
   // Initialize scene and load model
   useEffect(() => {
     const result = initScene();
     if (!result) return;
 
-    const { scene } = result;
+    const { scene, camera, renderer } = result;
     loadVRM(modelUrl, scene, animationUrl);
 
     // Start animation loop
     animate();
 
-    // Mark scene as ready for controls/grid setup
-    setSceneReady(true);
+    // Create controls directly if enabled (using ref to avoid dependency)
+    if (enableControlsRef.current && camera && renderer) {
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.target.set(0, 1.3, 0);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.minDistance = 1;
+      controls.maxDistance = 10;
+      controls.maxPolarAngle = Math.PI * 0.9;
+      controls.autoRotate = autoRotateRef.current;
+      controls.autoRotateSpeed = 1.0;
+      controls.update();
+      controlsRef.current = controls;
+    }
 
     // Handle resize
     const handleResize = () => {
@@ -518,7 +495,6 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
 
     // Cleanup
     return () => {
-      setSceneReady(false);
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameRef.current);
 
@@ -576,19 +552,34 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
     };
   }, [modelUrl, animationUrl, initScene, loadVRM, animate]);
 
+  // Stop propagation to prevent parent components (like ReactFlow) from capturing events
+  const stopEvent = useCallback((e: React.SyntheticEvent) => {
+    e.stopPropagation();
+  }, []);
+
   return (
     <div
       ref={containerRef}
       className={`vrm-renderer relative ${className}`}
-      style={{ width: '100%', height: '100%', minHeight: '300px' }}
+      style={{ width: '100%', height: '100%', minHeight: '300px', pointerEvents: 'auto' }}
+      onMouseDown={stopEvent}
+      onMouseMove={stopEvent}
+      onMouseUp={stopEvent}
+      onPointerDown={stopEvent}
+      onPointerMove={stopEvent}
+      onPointerUp={stopEvent}
+      onWheel={stopEvent}
+      onTouchStart={stopEvent}
+      onTouchMove={stopEvent}
+      onTouchEnd={stopEvent}
     >
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 pointer-events-none">
           <div className="text-white text-sm">Loading VRM...</div>
         </div>
       )}
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-red-900/50">
+        <div className="absolute inset-0 flex items-center justify-center bg-red-900/50 pointer-events-none">
           <div className="text-white text-sm text-center p-4">
             <div className="text-red-300 mb-2">Error loading model</div>
             <div className="text-xs text-white/70">{error}</div>
