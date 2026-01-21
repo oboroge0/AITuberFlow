@@ -34,6 +34,7 @@ export default function EditorPage() {
   const workflowId = params.id as string;
 
   const [saving, setSaving] = useState(false);
+  const [showSaved, setShowSaved] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [previewKey] = useState(() => Date.now());
   const [editedName, setEditedName] = useState('');
@@ -147,6 +148,10 @@ export default function EditorPage() {
 
     if (response.error) {
       console.error('Auto-save failed:', response.error);
+    } else {
+      // Show "Saved" indicator briefly
+      setShowSaved(true);
+      setTimeout(() => setShowSaved(false), 2000);
     }
 
     savingRef.current = false;
@@ -383,9 +388,42 @@ export default function EditorPage() {
               </svg>
             </h1>
           )}
-          <p className="text-xs text-white/50 m-0">
-            Build your AI streamer visually
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-white/50 m-0">
+              Build your AI streamer visually
+            </p>
+            {/* Auto-save indicator */}
+            {saving ? (
+              <span className="text-xs flex items-center gap-1 text-emerald-400">
+                <svg
+                  className="animate-spin"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+                Saving...
+              </span>
+            ) : showSaved ? (
+              <span className="text-xs flex items-center gap-1 text-emerald-400">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Saved
+              </span>
+            ) : null}
+          </div>
         </div>
 
         {/* Open Overlay button */}
