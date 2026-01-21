@@ -195,6 +195,7 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
     // Camera - positioned to see upper body/face
     const camera = new THREE.PerspectiveCamera(30, width / height, 0.1, 100);
     camera.position.set(0, 1.4, 2.0);
+    camera.lookAt(0, 1.3, 0); // Look at character's upper body
     cameraRef.current = camera;
 
     // Renderer
@@ -243,8 +244,7 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
         throw new Error('Failed to load VRM from file');
       }
 
-      // Rotate model to face camera
-      vrm.scene.rotation.y = Math.PI;
+      // VRM models face -Z by default, camera is at +Z, so no rotation needed
       scene.add(vrm.scene);
       vrmRef.current = vrm;
 
