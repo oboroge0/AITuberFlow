@@ -25,7 +25,7 @@ export interface AvatarState {
 export interface AvatarViewProps {
   renderer: RendererType;
   modelUrl?: string;
-  animationUrl?: string; // URL to Mixamo FBX animation
+  animationUrl?: string; // URL to Mixamo FBX animation (idle/loop)
   pngConfig?: PNGAvatarConfig;
   vtubePort?: number;
   state: AvatarState;
@@ -35,6 +35,7 @@ export interface AvatarViewProps {
   backgroundColor?: string;
   enableControls?: boolean;
   showGrid?: boolean;
+  onMotionComplete?: () => void; // Called when one-shot motion finishes
 }
 
 export interface PNGAvatarConfig {
@@ -128,6 +129,7 @@ export default function AvatarView({
   backgroundColor = 'transparent',
   enableControls = false,
   showGrid = false,
+  onMotionComplete,
 }: AvatarViewProps) {
   const renderAvatar = useCallback(() => {
     switch (renderer) {
@@ -143,6 +145,7 @@ export default function AvatarView({
           <VRMRenderer
             modelUrl={modelUrl}
             animationUrl={animationUrl}
+            motionUrl={state.motion}
             expression={state.expression}
             mouthOpen={state.mouthOpen}
             lookAt={state.lookAt}
@@ -150,6 +153,7 @@ export default function AvatarView({
             enableControls={enableControls}
             showGrid={showGrid}
             idleAnimation={true}
+            onMotionComplete={onMotionComplete}
           />
         );
 
@@ -183,7 +187,7 @@ export default function AvatarView({
           </div>
         );
     }
-  }, [renderer, modelUrl, animationUrl, pngConfig, vtubePort, state, backgroundColor, enableControls, showGrid]);
+  }, [renderer, modelUrl, animationUrl, pngConfig, vtubePort, state, backgroundColor, enableControls, showGrid, onMotionComplete]);
 
   return (
     <div className={`avatar-view relative w-full h-full ${className}`}>

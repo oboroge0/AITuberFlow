@@ -2,16 +2,17 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useWorkflowStore } from '@/stores/workflowStore';
-import api, { VoicevoxSpeaker, AnimationInfo } from '@/lib/api';
+import api, { VoicevoxSpeaker, AnimationInfo, ModelInfo } from '@/lib/api';
 
 interface NodeField {
   key: string;
-  type: 'text' | 'number' | 'textarea' | 'select' | 'checkbox' | 'animation-file' | 'prompt-builder' | 'input-list';
+  type: 'text' | 'number' | 'textarea' | 'select' | 'checkbox' | 'animation-file' | 'model-file' | 'prompt-builder' | 'input-list';
   label: string;
   placeholder?: string;
   options?: { label: string; value: string | number }[];
   dynamic?: boolean; // For dynamically loaded options
   accept?: string; // For file inputs
+  showWhen?: { key: string; value: string | string[] }; // Conditional display
 }
 
 // Prompt section for structured prompt building
@@ -404,6 +405,50 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
     ],
   },
   // Avatar nodes
+  'avatar-configuration': {
+    label: 'Avatar Configuration',
+    fields: [
+      {
+        key: 'renderer',
+        type: 'select',
+        label: 'Renderer',
+        options: [
+          { label: 'VRM (Built-in)', value: 'vrm' },
+          { label: 'VTube Studio', value: 'vtube-studio' },
+          { label: 'PNG Images', value: 'png' },
+        ],
+      },
+      // VRM settings
+      { key: 'model_url', type: 'model-file', label: 'VRM Model', placeholder: 'Upload VRM model...', accept: '.vrm', showWhen: { key: 'renderer', value: 'vrm' } },
+      { key: 'idle_animation', type: 'animation-file', label: 'Idle Animation (FBX)', placeholder: 'Upload Mixamo FBX...', accept: '.fbx', showWhen: { key: 'renderer', value: 'vrm' } },
+      // VTube Studio settings
+      { key: 'vtube_port', type: 'number', label: 'VTube Studio Port', placeholder: '8001', showWhen: { key: 'renderer', value: 'vtube-studio' } },
+      // PNG settings
+      { key: 'png_config', type: 'textarea', label: 'PNG Configuration (JSON)', placeholder: '{"baseUrl": "/images/avatar/", "expressions": {"neutral": "neutral.png", "happy": "happy.png"}}', showWhen: { key: 'renderer', value: 'png' } },
+    ],
+  },
+  'motion-trigger': {
+    label: 'Motion Trigger',
+    fields: [
+      {
+        key: 'expression',
+        type: 'select',
+        label: 'Expression',
+        options: [
+          { label: 'None', value: '' },
+          { label: 'Neutral', value: 'neutral' },
+          { label: 'Happy', value: 'happy' },
+          { label: 'Sad', value: 'sad' },
+          { label: 'Angry', value: 'angry' },
+          { label: 'Surprised', value: 'surprised' },
+          { label: 'Relaxed', value: 'relaxed' },
+        ],
+      },
+      { key: 'intensity', type: 'number', label: 'Expression Intensity (0.0-1.0)', placeholder: '0.8' },
+      { key: 'motion_url', type: 'animation-file', label: 'Motion Animation (FBX)', placeholder: 'Upload Mixamo FBX...', accept: '.fbx' },
+      { key: 'emit_events', type: 'checkbox', label: 'Emit Avatar Events' },
+    ],
+  },
   'emotion-analyzer': {
     label: 'Emotion Analyzer',
     fields: [
@@ -495,6 +540,9 @@ export default function NodeSettings() {
   const [animations, setAnimations] = useState<AnimationInfo[]>([]);
   const [animationUploading, setAnimationUploading] = useState(false);
   const animationInputRef = useRef<HTMLInputElement>(null);
+  const [models, setModels] = useState<ModelInfo[]>([]);
+  const [modelUploading, setModelUploading] = useState(false);
+  const modelInputRef = useRef<HTMLInputElement>(null);
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
 
@@ -507,6 +555,18 @@ export default function NodeSettings() {
       }
     } catch (err) {
       console.error('Failed to fetch animations:', err);
+    }
+  }, []);
+
+  // Fetch models list
+  const fetchModels = useCallback(async () => {
+    try {
+      const response = await api.listModels();
+      if (response.data) {
+        setModels(response.data.models);
+      }
+    } catch (err) {
+      console.error('Failed to fetch models:', err);
     }
   }, []);
 
@@ -533,6 +593,30 @@ export default function NodeSettings() {
       setAnimationUploading(false);
     }
   }, [localConfig, selectedNode, updateNode, fetchAnimations]);
+
+  // Handle model file upload
+  const handleModelUpload = useCallback(async (file: File, fieldKey: string) => {
+    setModelUploading(true);
+    try {
+      const response = await api.uploadModel(file);
+      if (response.data) {
+        // Update the config with the new model URL
+        const newConfig = { ...localConfig, [fieldKey]: response.data.url };
+        setLocalConfig(newConfig);
+        if (selectedNode) {
+          updateNode(selectedNode.id, { config: newConfig });
+        }
+        // Refresh the models list
+        fetchModels();
+      } else if (response.error) {
+        alert(`Upload failed: ${response.error}`);
+      }
+    } catch (err) {
+      alert('Failed to upload model file');
+    } finally {
+      setModelUploading(false);
+    }
+  }, [localConfig, selectedNode, updateNode, fetchModels]);
 
   // Fetch VOICEVOX speakers when node is selected or host changes
   const fetchVoicevoxSpeakers = useCallback(async (host: string) => {
@@ -564,12 +648,17 @@ export default function NodeSettings() {
         fetchVoicevoxSpeakers(host);
       }
 
-      // Fetch animations if this is an avatar-display node
-      if (selectedNode.type === 'avatar-display') {
+      // Fetch animations if this is an avatar-related node with animation field
+      if (selectedNode.type === 'avatar-display' || selectedNode.type === 'avatar-configuration' || selectedNode.type === 'motion-trigger') {
         fetchAnimations();
       }
+
+      // Fetch models if this is an avatar-configuration node
+      if (selectedNode.type === 'avatar-configuration') {
+        fetchModels();
+      }
     }
-  }, [selectedNode, fetchVoicevoxSpeakers, fetchAnimations]);
+  }, [selectedNode, fetchVoicevoxSpeakers, fetchAnimations, fetchModels]);
 
   if (!selectedNode) {
     return null;
@@ -796,6 +885,76 @@ export default function NodeSettings() {
           </div>
         );
 
+      case 'model-file':
+        return (
+          <div className="space-y-2">
+            {/* Current value display */}
+            {value && (
+              <div className="flex items-center justify-between p-2 rounded bg-purple-500/10 border border-purple-500/30">
+                <span className="text-xs text-purple-400 truncate flex-1">
+                  {(value as string).split('/').pop()}
+                </span>
+                <button
+                  onClick={() => handleChange(field.key, '')}
+                  className="ml-2 text-red-400 hover:text-red-300 text-xs"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+
+            {/* Upload button */}
+            <div className="flex gap-2">
+              <input
+                type="file"
+                ref={modelInputRef}
+                accept={field.accept || '.vrm'}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleModelUpload(file, field.key);
+                  }
+                  e.target.value = '';
+                }}
+                className="hidden"
+              />
+              <button
+                onClick={() => modelInputRef.current?.click()}
+                disabled={modelUploading}
+                style={{
+                  ...inputStyle,
+                  cursor: modelUploading ? 'wait' : 'pointer',
+                  textAlign: 'center',
+                  background: modelUploading ? 'rgba(255,255,255,0.1)' : 'rgba(168, 85, 247, 0.2)',
+                  border: '1px solid rgba(168, 85, 247, 0.5)',
+                }}
+              >
+                {modelUploading ? 'Uploading...' : 'Upload VRM'}
+              </button>
+            </div>
+
+            {/* Existing models dropdown */}
+            {models.length > 0 && (
+              <select
+                value={value as string}
+                onChange={(e) => handleChange(field.key, e.target.value)}
+                style={inputStyle}
+              >
+                <option value="">Select existing model...</option>
+                {models.map((model) => (
+                  <option key={model.filename} value={model.url}>
+                    {model.filename}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            <div className="text-[10px] text-white/40">
+              Upload a VRM model file or select from existing uploads.
+            </div>
+          </div>
+        );
+
       case 'prompt-builder': {
         const sections = (value as PromptSection[]) || [];
 
@@ -986,12 +1145,24 @@ export default function NodeSettings() {
         </div>
 
         {/* Config Fields */}
-        {schema?.fields.map((field) => (
-          <div key={field.key} className="mb-3">
-            <label className="block text-[11px] text-white/60 mb-1">{field.label}</label>
-            {renderField(field)}
-          </div>
-        ))}
+        {schema?.fields.map((field) => {
+          // Check showWhen condition
+          if (field.showWhen) {
+            const conditionValue = localConfig[field.showWhen.key];
+            const expectedValues = Array.isArray(field.showWhen.value)
+              ? field.showWhen.value
+              : [field.showWhen.value];
+            if (!expectedValues.includes(conditionValue as string)) {
+              return null;
+            }
+          }
+          return (
+            <div key={field.key} className="mb-3">
+              <label className="block text-[11px] text-white/60 mb-1">{field.label}</label>
+              {renderField(field)}
+            </div>
+          );
+        })}
 
         {/* Delete Button */}
         <button

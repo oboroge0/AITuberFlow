@@ -9,7 +9,8 @@ import { loadMixamoAnimation } from './loadMixamoAnimation';
 
 export interface VRMRendererProps {
   modelUrl: string;
-  animationUrl?: string; // URL to Mixamo FBX animation file
+  animationUrl?: string; // URL to Mixamo FBX animation file (idle/loop)
+  motionUrl?: string; // URL to one-shot motion FBX file (plays once, returns to idle)
   expression?: string;
   mouthOpen?: number;
   lookAt?: { x: number; y: number };
@@ -19,6 +20,7 @@ export interface VRMRendererProps {
   autoRotate?: boolean;
   idleAnimation?: boolean;
   showGrid?: boolean;
+  onMotionComplete?: () => void; // Called when one-shot motion finishes
 }
 
 export interface VRMRendererRef {
@@ -112,6 +114,7 @@ const applyRelaxedPose = (vrm: VRM) => {
 const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRenderer({
   modelUrl,
   animationUrl,
+  motionUrl,
   expression = 'neutral',
   mouthOpen = 0,
   lookAt,
@@ -121,6 +124,7 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
   autoRotate = false,
   idleAnimation = true,
   showGrid = false,
+  onMotionComplete,
 }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const vrmRef = useRef<VRM | null>(null);
@@ -133,6 +137,10 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
   const gridRef = useRef<THREE.GridHelper | null>(null);
   const mixerRef = useRef<THREE.AnimationMixer | null>(null);
   const animationLoadedRef = useRef<boolean>(false);
+  const idleActionRef = useRef<THREE.AnimationAction | null>(null);
+  const motionActionRef = useRef<THREE.AnimationAction | null>(null);
+  const animationCacheRef = useRef<Map<string, THREE.AnimationClip>>(new Map());
+  const currentMotionUrlRef = useRef<string | undefined>(undefined);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -224,14 +232,18 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
       scene.add(vrm.scene);
       vrmRef.current = vrm;
 
+      // Create animation mixer
+      const mixer = new THREE.AnimationMixer(vrm.scene);
+      mixerRef.current = mixer;
+
       // Load Mixamo animation if URL is provided
       if (animUrl) {
         try {
           const clip = await loadMixamoAnimation(animUrl, vrm);
-          const mixer = new THREE.AnimationMixer(vrm.scene);
+          animationCacheRef.current.set(animUrl, clip);
           const action = mixer.clipAction(clip);
           action.play();
-          mixerRef.current = mixer;
+          idleActionRef.current = action;
           animationLoadedRef.current = true;
         } catch (animErr) {
           console.warn('Failed to load animation, falling back to static pose:', animErr);
@@ -337,29 +349,126 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
     vrmRef.current.lookAt.target = targetObject;
   }, [lookAt]);
 
+  // Handle one-shot motion playback
+  useEffect(() => {
+    // Skip if no motion URL or same as current
+    if (!motionUrl || motionUrl === currentMotionUrlRef.current) return;
+    if (!vrmRef.current || !mixerRef.current) return;
+
+    currentMotionUrlRef.current = motionUrl;
+    const vrm = vrmRef.current;
+    const mixer = mixerRef.current;
+
+    const playMotion = async () => {
+      try {
+        // Check cache first
+        let clip = animationCacheRef.current.get(motionUrl);
+        if (!clip) {
+          clip = await loadMixamoAnimation(motionUrl, vrm);
+          animationCacheRef.current.set(motionUrl, clip);
+        }
+
+        // Stop current motion if playing
+        if (motionActionRef.current) {
+          motionActionRef.current.stop();
+          motionActionRef.current = null;
+        }
+
+        // Fade out idle animation if present
+        if (idleActionRef.current) {
+          idleActionRef.current.fadeOut(0.2);
+        }
+
+        // Create and play the one-shot motion
+        const action = mixer.clipAction(clip);
+        action.setLoop(THREE.LoopOnce, 1);
+        action.clampWhenFinished = true;
+        action.reset();
+        action.fadeIn(0.2);
+        action.play();
+        motionActionRef.current = action;
+
+        // Listen for motion completion
+        const onFinished = (e: { action: THREE.AnimationAction }) => {
+          if (e.action === action) {
+            mixer.removeEventListener('finished', onFinished);
+            motionActionRef.current = null;
+            currentMotionUrlRef.current = undefined;
+
+            // Fade back to idle animation
+            if (idleActionRef.current) {
+              idleActionRef.current.reset();
+              idleActionRef.current.fadeIn(0.3);
+              idleActionRef.current.play();
+            } else if (!animationLoadedRef.current) {
+              // Reapply relaxed pose if no idle animation
+              applyRelaxedPose(vrm);
+            }
+
+            // Notify parent
+            onMotionComplete?.();
+          }
+        };
+        mixer.addEventListener('finished', onFinished);
+      } catch (err) {
+        console.error('Failed to load motion:', err);
+        currentMotionUrlRef.current = undefined;
+        onMotionComplete?.();
+      }
+    };
+
+    playMotion();
+  }, [motionUrl, onMotionComplete]);
+
   // Handle controls toggle (separate from scene initialization)
   useEffect(() => {
     if (!sceneReady || !cameraRef.current || !rendererRef.current) return;
 
-    if (enableControls) {
-      if (!controlsRef.current) {
-        const controls = new OrbitControls(cameraRef.current, rendererRef.current.domElement);
-        controls.target.set(0, 1.3, 0);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.minDistance = 1;
-        controls.maxDistance = 10;
-        controls.maxPolarAngle = Math.PI * 0.9;
-        controls.autoRotate = autoRotate;
-        controls.autoRotateSpeed = 1.0;
-        controlsRef.current = controls;
-      } else {
-        controlsRef.current.autoRotate = autoRotate;
+    const currentRenderer = rendererRef.current;
+    const currentCamera = cameraRef.current;
+
+    // Small delay to ensure DOM is ready
+    const initControls = () => {
+      if (!currentCamera || !currentRenderer) return;
+
+      if (enableControls) {
+        // Check if existing controls are for the current renderer
+        // If controls exist but point to a different domElement (stale from navigation), recreate
+        const needsRecreate = !controlsRef.current ||
+          (controlsRef.current as any).domElement !== currentRenderer.domElement;
+
+        if (needsRecreate) {
+          // Dispose old controls if they exist
+          if (controlsRef.current) {
+            controlsRef.current.dispose();
+            controlsRef.current = null;
+          }
+
+          const controls = new OrbitControls(currentCamera, currentRenderer.domElement);
+          controls.target.set(0, 1.3, 0);
+          controls.enableDamping = true;
+          controls.dampingFactor = 0.05;
+          controls.minDistance = 1;
+          controls.maxDistance = 10;
+          controls.maxPolarAngle = Math.PI * 0.9;
+          controls.autoRotate = autoRotate;
+          controls.autoRotateSpeed = 1.0;
+          controlsRef.current = controls;
+        } else {
+          controlsRef.current.autoRotate = autoRotate;
+        }
+      } else if (controlsRef.current) {
+        controlsRef.current.dispose();
+        controlsRef.current = null;
       }
-    } else if (controlsRef.current) {
-      controlsRef.current.dispose();
-      controlsRef.current = null;
-    }
+    };
+
+    // Use requestAnimationFrame to ensure renderer.domElement is in DOM
+    const frameId = requestAnimationFrame(initControls);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+    };
   }, [sceneReady, enableControls, autoRotate]);
 
   // Handle grid toggle (separate from scene initialization)
@@ -413,17 +522,36 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameRef.current);
 
+      // Dispose controls first (before renderer)
+      if (controlsRef.current) {
+        controlsRef.current.dispose();
+        controlsRef.current = null;
+      }
+
       // Stop and dispose animation mixer
       if (mixerRef.current) {
         mixerRef.current.stopAllAction();
         mixerRef.current = null;
       }
 
+      // Clear animation refs
+      idleActionRef.current = null;
+      motionActionRef.current = null;
+      currentMotionUrlRef.current = undefined;
+      animationLoadedRef.current = false;
+
+      // Remove renderer from DOM and dispose
       if (rendererRef.current && containerRef.current) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
+        try {
+          containerRef.current.removeChild(rendererRef.current.domElement);
+        } catch (e) {
+          // DOM element might already be removed
+        }
         rendererRef.current.dispose();
+        rendererRef.current = null;
       }
 
+      // Dispose VRM resources
       if (vrmRef.current) {
         vrmRef.current.scene.traverse((obj) => {
           if (obj instanceof THREE.Mesh) {
@@ -435,11 +563,16 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
             }
           }
         });
+        vrmRef.current = null;
       }
 
-      controlsRef.current?.dispose();
-      controlsRef.current = null;
-      gridRef.current = null;
+      // Clear remaining refs
+      sceneRef.current = null;
+      cameraRef.current = null;
+      if (gridRef.current) {
+        gridRef.current.dispose();
+        gridRef.current = null;
+      }
     };
   }, [modelUrl, animationUrl, initScene, loadVRM, animate]);
 

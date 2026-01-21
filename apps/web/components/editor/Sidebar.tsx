@@ -255,7 +255,7 @@ const nodeCategories = [
     color: '#E879F9',
     nodes: [
       {
-        id: 'avatar-controller',
+        id: 'avatar-configuration',
         label: 'Avatar',
         color: '#E879F9',
         bgColor: 'rgba(232, 121, 249, 0.1)',
@@ -284,6 +284,18 @@ const nodeCategories = [
           </svg>
         ),
         defaultConfig: { method: 'rule-based', language: 'ja', emit_events: true },
+      },
+      {
+        id: 'motion-trigger',
+        label: 'Motion',
+        color: '#C084FC',
+        bgColor: 'rgba(192, 132, 252, 0.1)',
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+        ),
+        defaultConfig: { expression: '', intensity: 0.8, motion_url: '', motion: '', emit_events: true },
       },
       {
         id: 'lip-sync',

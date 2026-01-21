@@ -322,7 +322,7 @@ const nodeTypeConfig: Record<string, NodeTypeConfig> = {
     descriptionJa: 'Style-Bert-VITS2でテキストを音声に変換するTTSノード。\n【使い方】textに読み上げテキストを接続。設定でモデルを選択。※API起動が必要',
     descriptionEn: 'TTS node using Style-Bert-VITS2.\n[Usage] Connect text to read. Select model in config. *Requires API running.',
   },
-  'avatar-controller': {
+  'avatar-configuration': {
     color: '#E879F9',
     bgColor: 'rgba(232, 121, 249, 0.1)',
     icon: (
@@ -331,9 +331,9 @@ const nodeTypeConfig: Record<string, NodeTypeConfig> = {
         <path d="M4 20v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/>
       </svg>
     ),
-    statusText: 'Avatar Controller',
-    descriptionJa: 'VRMアバターを制御するノード。\n【使い方】expression/motion/mouthに値を接続。オーバーレイでアバターが動作。',
-    descriptionEn: 'VRM avatar control node.\n[Usage] Connect values to expression/motion/mouth. Avatar animates on overlay.',
+    statusText: 'Avatar Configuration',
+    descriptionJa: 'VRMアバターの設定ノード。\n【使い方】モデルURL、アイドルアニメーションを設定。オーバーレイでアバターが表示。',
+    descriptionEn: 'VRM avatar configuration node.\n[Usage] Set model URL and idle animation. Avatar displays on overlay.',
   },
   'emotion-analyzer': {
     color: '#F472B6',
@@ -348,6 +348,18 @@ const nodeTypeConfig: Record<string, NodeTypeConfig> = {
     statusText: 'Emotion Analyzer',
     descriptionJa: 'テキストから感情を分析するノード。\n【使い方】textに分析するテキストを接続。emotion/intensityが出力。',
     descriptionEn: 'Emotion analysis node.\n[Usage] Connect text to analyze. Outputs emotion and intensity.',
+  },
+  'motion-trigger': {
+    color: '#C084FC',
+    bgColor: 'rgba(192, 132, 252, 0.1)',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <polygon points="5 3 19 12 5 21 5 3"/>
+      </svg>
+    ),
+    statusText: 'Motion Trigger',
+    descriptionJa: '表情やモーションを手動でトリガーするノード。\n【使い方】triggerに任意の入力を接続。設定で表情/モーションを指定。',
+    descriptionEn: 'Manually trigger expressions and motions.\n[Usage] Connect any input to trigger. Set expression/motion in config.',
   },
   'lip-sync': {
     color: '#FB7185',

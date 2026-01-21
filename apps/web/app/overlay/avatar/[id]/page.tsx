@@ -21,7 +21,7 @@
  *   - y: Vertical position offset (default: 0)
  */
 
-import React, { useEffect, useState, useRef, use } from 'react';
+import React, { useEffect, useState, useCallback, use } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { io, Socket } from 'socket.io-client';
 import { AvatarView, AvatarState } from '@/components/avatar';
@@ -65,6 +65,11 @@ export default function AvatarOverlayPage({ params }: OverlayPageProps) {
     mouthOpen: 0,
   });
 
+  // Clear motion state after motion completes to allow same motion to be triggered again
+  const handleMotionComplete = useCallback(() => {
+    setAvatarState((prev) => ({ ...prev, motion: undefined }));
+  }, []);
+
   // Load workflow config if no URL params provided
   useEffect(() => {
     if (paramModel) return; // Skip if model specified via URL
@@ -73,9 +78,9 @@ export default function AvatarOverlayPage({ params }: OverlayPageProps) {
       try {
         const response = await api.getWorkflow(workflowId);
         if (response.data) {
-          // Look for avatar-controller or legacy avatar-display node
+          // Look for avatar-configuration node (also support legacy names)
           const avatarNode = response.data.nodes.find((n) =>
-            n.type === 'avatar-controller' || n.type === 'avatar-display'
+            n.type === 'avatar-configuration' || n.type === 'avatar-controller' || n.type === 'avatar-display'
           );
 
           if (avatarNode?.config) {
@@ -119,8 +124,12 @@ export default function AvatarOverlayPage({ params }: OverlayPageProps) {
       setAvatarState((prev) => ({ ...prev, mouthOpen: data.value }));
     });
 
-    newSocket.on('avatar.motion', (data: { motion: string }) => {
-      setAvatarState((prev) => ({ ...prev, motion: data.motion }));
+    newSocket.on('avatar.motion', (data: { motion?: string; motion_url?: string }) => {
+      // Support both motion_url (new) and motion (legacy) for backward compatibility
+      const motionUrl = data.motion_url || data.motion;
+      if (motionUrl) {
+        setAvatarState((prev) => ({ ...prev, motion: motionUrl }));
+      }
     });
 
     newSocket.on('avatar.lookAt', (data: { x: number; y: number }) => {
@@ -128,7 +137,7 @@ export default function AvatarOverlayPage({ params }: OverlayPageProps) {
     });
 
     newSocket.on('avatar.update', (data: Partial<AvatarState> & { model_url?: string; idle_animation?: string }) => {
-      // Handle config updates from avatar-controller
+      // Handle config updates from avatar-configuration
       if (data.model_url) {
         setModelUrl(data.model_url);
       }
@@ -169,6 +178,7 @@ export default function AvatarOverlayPage({ params }: OverlayPageProps) {
         backgroundColor="transparent"
         enableControls={false}
         showGrid={false}
+        onMotionComplete={handleMotionComplete}
       />
     </div>
   );

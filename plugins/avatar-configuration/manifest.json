@@ -1,8 +1,8 @@
 {
-  "id": "avatar-controller",
-  "name": "Avatar Controller",
-  "version": "1.0.0",
-  "description": "Core avatar controller - receives expression, mouth, and motion inputs and emits avatar events",
+  "id": "avatar-configuration",
+  "name": "Avatar Configuration",
+  "version": "2.0.0",
+  "description": "Static avatar configuration - sets VRM model, idle animation, and renderer type",
   "author": {
     "name": "AITuberFlow",
     "url": "https://github.com/aituberflow"
@@ -10,33 +10,10 @@
   "license": "MIT",
   "category": "avatar",
   "node": {
-    "inputs": [
-      {
-        "id": "expression",
-        "type": "string",
-        "description": "Expression name (happy, sad, angry, surprised, relaxed, neutral)"
-      },
-      {
-        "id": "intensity",
-        "type": "number",
-        "description": "Expression intensity (0.0 - 1.0)"
-      },
-      {
-        "id": "motion",
-        "type": "string",
-        "description": "Motion/animation name to trigger"
-      }
-    ],
-    "outputs": [
-      {
-        "id": "status",
-        "type": "string",
-        "description": "Status of avatar update"
-      }
-    ],
+    "inputs": [],
+    "outputs": [],
     "events": {
-      "emits": ["avatar.expression", "avatar.mouth", "avatar.motion", "avatar.update"],
-      "listens": ["avatar.mouth"]
+      "emits": ["avatar.update"]
     }
   },
   "config": {

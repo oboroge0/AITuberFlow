@@ -82,7 +82,7 @@
     },
     {
       "id": "node-avatar",
-      "type": "avatar-controller",
+      "type": "avatar-configuration",
       "position": { "x": 1100, "y": 150 },
       "config": {
         "renderer": "vrm",

@@ -1,0 +1,92 @@
+{
+  "id": "motion-trigger",
+  "name": "Motion Trigger",
+  "version": "1.1.0",
+  "description": "Trigger avatar expressions and motions (connect to Avatar Controller)",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/aituberflow"
+  },
+  "license": "MIT",
+  "category": "avatar",
+  "node": {
+    "inputs": [
+      {
+        "id": "trigger",
+        "type": "any",
+        "description": "Any input to trigger the configured expression/motion"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "expression",
+        "type": "string",
+        "description": "The triggered expression name"
+      },
+      {
+        "id": "intensity",
+        "type": "number",
+        "description": "The expression intensity"
+      },
+      {
+        "id": "motion_url",
+        "type": "string",
+        "description": "URL/path to the motion FBX file"
+      },
+      {
+        "id": "motion",
+        "type": "string",
+        "description": "The triggered motion name (legacy)"
+      },
+      {
+        "id": "passthrough",
+        "type": "any",
+        "description": "Pass-through of the trigger input"
+      }
+    ],
+    "events": {
+      "emits": ["avatar.expression", "avatar.motion"]
+    }
+  },
+  "config": {
+    "expression": {
+      "type": "select",
+      "label": "Expression",
+      "description": "Expression to trigger when input is received",
+      "options": [
+        { "label": "None", "value": "" },
+        { "label": "Neutral", "value": "neutral" },
+        { "label": "Happy", "value": "happy" },
+        { "label": "Sad", "value": "sad" },
+        { "label": "Angry", "value": "angry" },
+        { "label": "Surprised", "value": "surprised" },
+        { "label": "Relaxed", "value": "relaxed" }
+      ],
+      "default": ""
+    },
+    "intensity": {
+      "type": "number",
+      "label": "Expression Intensity",
+      "description": "Intensity of the expression (0.0 - 1.0)",
+      "default": 0.8
+    },
+    "motion_url": {
+      "type": "string",
+      "label": "Motion URL/Path",
+      "description": "Path to Mixamo FBX animation file (e.g., /animations/wave.fbx)",
+      "default": ""
+    },
+    "motion": {
+      "type": "string",
+      "label": "Motion Name (Legacy)",
+      "description": "Motion/animation name to trigger (use motion_url instead)",
+      "default": ""
+    },
+    "emit_events": {
+      "type": "boolean",
+      "label": "Emit Avatar Events",
+      "description": "Emit avatar.expression and avatar.motion events via WebSocket",
+      "default": true
+    }
+  }
+}

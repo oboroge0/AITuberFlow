@@ -74,8 +74,9 @@ const nodeTypeColors: Record<string, string> = {
   'random': '#8B5CF6',
   'variable': '#14B8A6',
   // Avatar
-  'avatar-controller': '#E879F9',
+  'avatar-configuration': '#E879F9',
   'emotion-analyzer': '#F472B6',
+  'motion-trigger': '#C084FC',
   'lip-sync': '#FB7185',
   'subtitle-display': '#A855F7',
   'audio-player': '#8B5CF6',
@@ -782,8 +783,9 @@ function getNodeLabel(type: string): string {
     'random': 'Random',
     'variable': 'Variable',
     // Avatar
-    'avatar-controller': 'Avatar Controller',
+    'avatar-configuration': 'Avatar Config',
     'emotion-analyzer': 'Emotion Analyzer',
+    'motion-trigger': 'Motion Trigger',
     'lip-sync': 'Lip Sync',
     'subtitle-display': 'Subtitle Display',
     'audio-player': 'Audio Player',
@@ -822,8 +824,9 @@ function getNodeCategory(type: string): 'input' | 'process' | 'output' | 'contro
     'coeiroink-tts': 'output',
     'sbv2-tts': 'output',
     // Avatar
-    'avatar-controller': 'output',
+    'avatar-configuration': 'output',
     'emotion-analyzer': 'process',
+    'motion-trigger': 'process',
     'lip-sync': 'process',
     'subtitle-display': 'output',
     'audio-player': 'output',
@@ -899,13 +902,9 @@ function getNodeInputs(type: string, config?: Record<string, unknown>): PortDefi
     'random': [{ id: 'trigger', label: 'Trigger', type: 'any' }],
     'variable': [{ id: 'set', label: 'Set', type: 'any' }],
     // Avatar
-    'avatar-controller': [
-      { id: 'expression', label: 'Expression', type: 'string' },
-      { id: 'intensity', label: 'Intensity', type: 'number' },
-      { id: 'mouth', label: 'Mouth', type: 'number' },
-      { id: 'motion', label: 'Motion', type: 'string' },
-    ],
+    'avatar-configuration': [],
     'emotion-analyzer': [{ id: 'text', label: 'Text', type: 'string' }],
+    'motion-trigger': [{ id: 'trigger', label: 'Trigger', type: 'any' }],
     'lip-sync': [
       { id: 'audio', label: 'Audio', type: 'audio' },
     ],
@@ -974,11 +973,18 @@ function getNodeOutputs(type: string): PortDefinition[] {
     'random': [{ id: 'value', label: 'Value', type: 'number' }],
     'variable': [{ id: 'value', label: 'Value', type: 'any' }],
     // Avatar
-    'avatar-controller': [{ id: 'status', label: 'Status', type: 'string' }],
+    'avatar-configuration': [],
     'emotion-analyzer': [
       { id: 'expression', label: 'Expression', type: 'string' },
       { id: 'intensity', label: 'Intensity', type: 'number' },
       { id: 'text', label: 'Text', type: 'string' },
+    ],
+    'motion-trigger': [
+      { id: 'expression', label: 'Expression', type: 'string' },
+      { id: 'intensity', label: 'Intensity', type: 'number' },
+      { id: 'motion_url', label: 'Motion URL', type: 'string' },
+      { id: 'motion', label: 'Motion', type: 'string' },
+      { id: 'passthrough', label: 'Passthrough', type: 'any' },
     ],
     'lip-sync': [
       { id: 'mouth_values', label: 'Mouth', type: 'array' },
