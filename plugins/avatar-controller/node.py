@@ -1,11 +1,12 @@
 """
 Avatar Controller Node
 
-Core avatar controller that receives expression, mouth, and motion inputs
+Core avatar controller that receives expression and motion inputs
 and emits corresponding avatar events to the frontend.
 
 This node does NOT perform emotion analysis or lip sync calculation.
 Those are handled by separate dedicated nodes (emotion-analyzer, lip-sync).
+Lip sync is handled via avatar.mouth events from the lip-sync node.
 """
 
 from aituber_flow_sdk import BaseNode, NodeContext, Event
@@ -54,12 +55,10 @@ class AvatarControllerNode(BaseNode):
         Inputs:
             - expression: Expression name (happy, sad, angry, surprised, relaxed, neutral)
             - intensity: Expression intensity (0.0 - 1.0)
-            - mouth: Mouth open value (0.0 - 1.0)
             - motion: Motion/animation name to trigger
         """
         expression = inputs.get("expression")
         intensity = inputs.get("intensity", 0.5)
-        mouth = inputs.get("mouth")
         motion = inputs.get("motion")
 
         events_emitted = []
@@ -82,14 +81,6 @@ class AvatarControllerNode(BaseNode):
             await context.log(
                 f"Expression set: {expression} (intensity: {self.current_intensity:.2f})"
             )
-
-        # Handle direct mouth control (single value, not streaming)
-        if mouth is not None:
-            mouth_value = max(0.0, min(1.0, float(mouth)))
-            await context.emit_event(
-                Event(type="avatar.mouth", payload={"value": mouth_value})
-            )
-            events_emitted.append(f"mouth:{mouth_value:.2f}")
 
         # Handle motion trigger
         if motion:

@@ -22,11 +22,6 @@
         "description": "Expression intensity (0.0 - 1.0)"
       },
       {
-        "id": "mouth",
-        "type": "number",
-        "description": "Mouth open value (0.0 - 1.0)"
-      },
-      {
         "id": "motion",
         "type": "string",
         "description": "Motion/animation name to trigger"
