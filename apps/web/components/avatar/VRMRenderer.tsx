@@ -6,6 +6,7 @@ import { VRM, VRMLoaderPlugin, VRMExpressionPresetName, VRMHumanBoneName } from 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { loadMixamoAnimation } from './loadMixamoAnimation';
+import { DEFAULT_IDLE_ANIMATION } from '@/lib/constants';
 
 export interface VRMRendererProps {
   modelUrl: string;
@@ -49,71 +50,14 @@ const visemeMap: Record<string, VRMExpressionPresetName> = {
 // Expressions that significantly open the mouth (need special handling for lip sync)
 const mouthOpeningExpressions = new Set(['happy', 'surprised']);
 
-const applyRelaxedPose = (vrm: VRM) => {
-  const humanoid = vrm.humanoid;
-  if (!humanoid) return;
-
-  const rotate = (boneName: VRMHumanBoneName, x: number, y: number, z: number) => {
-    const bone =
-      humanoid.getNormalizedBoneNode(boneName) ?? humanoid.getRawBoneNode(boneName);
-    if (!bone) return;
-    bone.rotation.x += x;
-    bone.rotation.y += y;
-    bone.rotation.z += z;
-  };
-
-  // Subtle body posture - slight forward lean for natural stance
-  rotate('spine', 0.02, 0, 0);
-  rotate('upperChest', 0.03, 0, 0);
-  rotate('neck', 0.05, 0, 0.02); // Slight head tilt for natural look
-
-  // Relaxed shoulders - slightly lowered and forward
-  rotate('leftShoulder', 0.05, 0, -0.05);
-  rotate('rightShoulder', 0.05, 0, 0.05);
-
-  // Arms hanging naturally at sides with slight asymmetry
-  // Z rotation needs to be large (~1.0 rad) to bring arms down from T-pose
-  rotate('leftUpperArm', 0.2, 0.1, -1.0);
-  rotate('rightUpperArm', 0.15, -0.08, 1.05);
-
-  // Slight elbow bend - arms not stiff
-  rotate('leftLowerArm', 0.1, 0, -0.2);
-  rotate('rightLowerArm', 0.08, 0, 0.15);
-
-  // Relaxed wrists
-  rotate('leftHand', 0.1, 0.05, -0.08);
-  rotate('rightHand', 0.08, -0.03, 0.1);
-
-  // Fingers slightly curled (if available)
-  const fingerBones: VRMHumanBoneName[] = [
-    'leftThumbProximal', 'leftThumbIntermediate', 'leftThumbDistal',
-    'leftIndexProximal', 'leftIndexIntermediate', 'leftIndexDistal',
-    'leftMiddleProximal', 'leftMiddleIntermediate', 'leftMiddleDistal',
-    'leftRingProximal', 'leftRingIntermediate', 'leftRingDistal',
-    'leftLittleProximal', 'leftLittleIntermediate', 'leftLittleDistal',
-    'rightThumbProximal', 'rightThumbIntermediate', 'rightThumbDistal',
-    'rightIndexProximal', 'rightIndexIntermediate', 'rightIndexDistal',
-    'rightMiddleProximal', 'rightMiddleIntermediate', 'rightMiddleDistal',
-    'rightRingProximal', 'rightRingIntermediate', 'rightRingDistal',
-    'rightLittleProximal', 'rightLittleIntermediate', 'rightLittleDistal',
-  ];
-
-  fingerBones.forEach((boneName) => {
-    if (boneName.includes('Thumb')) {
-      rotate(boneName, 0.15, 0, 0);
-    } else if (boneName.includes('Proximal')) {
-      rotate(boneName, 0.25, 0, 0);
-    } else if (boneName.includes('Intermediate')) {
-      rotate(boneName, 0.2, 0, 0);
-    } else if (boneName.includes('Distal')) {
-      rotate(boneName, 0.15, 0, 0);
-    }
-  });
+// No-op: keep T-pose as default when no animation is loaded
+const applyRelaxedPose = (_vrm: VRM) => {
+  // Intentionally empty - T-pose is the default
 };
 
 const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRenderer({
   modelUrl,
-  animationUrl,
+  animationUrl = DEFAULT_IDLE_ANIMATION,
   motionUrl,
   expression = 'neutral',
   mouthOpen = 0,
@@ -390,18 +334,19 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
           motionActionRef.current = null;
         }
 
-        // Fade out idle animation if present
-        if (idleActionRef.current) {
-          idleActionRef.current.fadeOut(0.2);
-        }
-
         // Create and play the one-shot motion
         const action = mixer.clipAction(clip);
         action.setLoop(THREE.LoopOnce, 1);
         action.clampWhenFinished = true;
         action.reset();
-        action.fadeIn(0.2);
         action.play();
+
+        // Crossfade from idle to motion (avoids T-pose flash)
+        if (idleActionRef.current && idleActionRef.current.isRunning()) {
+          action.crossFadeFrom(idleActionRef.current, 0.2, true);
+        } else {
+          action.fadeIn(0.2);
+        }
         motionActionRef.current = action;
 
         // Listen for motion completion
@@ -411,13 +356,16 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
             motionActionRef.current = null;
             currentMotionUrlRef.current = undefined;
 
-            // Fade back to idle animation
+            // Crossfade: start idle BEFORE stopping motion to avoid T-pose flash
             if (idleActionRef.current) {
               idleActionRef.current.reset();
-              idleActionRef.current.fadeIn(0.3);
+              idleActionRef.current.setEffectiveWeight(1);
               idleActionRef.current.play();
-            } else if (!animationLoadedRef.current) {
-              // Reapply relaxed pose if no idle animation
+              // Use crossFadeFrom for smooth transition
+              idleActionRef.current.crossFadeFrom(action, 0.3, true);
+            } else {
+              // No idle - stop motion and apply relaxed pose
+              action.stop();
               applyRelaxedPose(vrm);
             }
 

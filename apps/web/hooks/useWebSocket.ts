@@ -155,5 +155,10 @@ export function useWebSocket(workflowId: string | null) {
     setAvatarState((prev) => ({ ...prev, motion: undefined }));
   }, []);
 
-  return { emit, avatarState, clearMotion };
+  // Update avatar state locally (for immediate feedback)
+  const updateAvatarState = useCallback((update: Partial<AvatarState>) => {
+    setAvatarState((prev) => ({ ...prev, ...update }));
+  }, []);
+
+  return { emit, avatarState, clearMotion, updateAvatarState };
 }

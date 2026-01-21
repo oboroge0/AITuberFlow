@@ -472,24 +472,29 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onIm
   const { addNode } = useWorkflowStore();
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Load from localStorage or default to empty (all collapsed)
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => {
-    if (typeof window === 'undefined') return new Set();
+  // Start with empty set to avoid hydration mismatch
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Load from localStorage after mount (client-side only)
+  useEffect(() => {
     const saved = localStorage.getItem(EXPANDED_CATEGORIES_KEY);
     if (saved) {
       try {
-        return new Set(JSON.parse(saved));
+        setExpandedCategories(new Set(JSON.parse(saved)));
       } catch {
-        return new Set();
+        // ignore parse errors
       }
     }
-    return new Set(); // Default: all collapsed
-  });
+    setIsHydrated(true);
+  }, []);
 
-  // Save to localStorage when expanded categories change
+  // Save to localStorage when expanded categories change (only after hydration)
   useEffect(() => {
-    localStorage.setItem(EXPANDED_CATEGORIES_KEY, JSON.stringify([...expandedCategories]));
-  }, [expandedCategories]);
+    if (isHydrated) {
+      localStorage.setItem(EXPANDED_CATEGORIES_KEY, JSON.stringify([...expandedCategories]));
+    }
+  }, [expandedCategories, isHydrated]);
 
   // Filter categories and nodes based on search query
   const filteredCategories = useMemo(() => {

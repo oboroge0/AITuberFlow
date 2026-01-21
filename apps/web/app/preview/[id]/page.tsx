@@ -6,6 +6,7 @@ import { io, Socket } from 'socket.io-client';
 import { AvatarView, AvatarState, RendererType } from '@/components/avatar';
 import api, { ModelInfo } from '@/lib/api';
 import { Workflow } from '@/lib/types';
+import { DEFAULT_MODEL_URL } from '@/lib/constants';
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8001';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
@@ -58,7 +59,7 @@ export default function PreviewPage({ params }: PreviewPageProps) {
   // Avatar config (from workflow settings or defaults)
   const [avatarConfig, setAvatarConfig] = useState<AvatarConfig>({
     renderer: 'vrm',
-    modelUrl: '/models/a1185aea_Flowchan.vrm',
+    modelUrl: DEFAULT_MODEL_URL,
   });
 
   // Load saved model URL from localStorage on mount

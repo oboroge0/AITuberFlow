@@ -7,10 +7,13 @@ import Canvas from '@/components/editor/Canvas';
 import Sidebar from '@/components/editor/Sidebar';
 import NodeSettings from '@/components/panels/NodeSettings';
 import LogPanel from '@/components/panels/LogPanel';
+import ExpressionPresets from '@/components/panels/ExpressionPresets';
+import MotionLibrary, { Motion } from '@/components/panels/MotionLibrary';
 import { AvatarView, RendererType } from '@/components/avatar';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import api from '@/lib/api';
+import { DEFAULT_MODEL_URL } from '@/lib/constants';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
@@ -38,6 +41,8 @@ export default function EditorPage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [previewKey] = useState(() => Date.now());
   const [editedName, setEditedName] = useState('');
+  const [showAvatarControls, setShowAvatarControls] = useState(false);
+  const [avatarControlTab, setAvatarControlTab] = useState<'expression' | 'motion'>('expression');
   const nameInputRef = useRef<HTMLInputElement>(null);
   const isInitialLoad = useRef(true);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -80,7 +85,25 @@ export default function EditorPage() {
   };
 
   // Connect WebSocket and get avatar state
-  const { avatarState, clearMotion } = useWebSocket(workflowId);
+  const { avatarState, clearMotion, emit, updateAvatarState } = useWebSocket(workflowId);
+
+  // Handle motion selection from library
+  const handleMotionSelect = useCallback((motion: Motion) => {
+    updateAvatarState({ motion: motion.url });
+    emit('avatar.motion', { motion_url: motion.url });
+  }, [emit, updateAvatarState]);
+
+  // Handle expression change from presets
+  const handleExpressionChange = useCallback((expression: string) => {
+    updateAvatarState({ expression });
+    emit('avatar.expression', { expression });
+  }, [emit, updateAvatarState]);
+
+  // Handle mouth change from presets
+  const handleMouthChange = useCallback((value: number) => {
+    updateAvatarState({ mouthOpen: value });
+    emit('avatar.mouth', { value });
+  }, [emit, updateAvatarState]);
 
   // Extract avatar config from workflow nodes
   const avatarConfig = useMemo(() => {
@@ -89,11 +112,15 @@ export default function EditorPage() {
     );
 
     return {
+      hasAvatarNode: !!avatarNode,
       renderer: (avatarNode?.config?.renderer || 'vrm') as RendererType,
-      modelUrl: avatarNode?.config?.model_url || '/models/a1185aea_Flowchan.vrm',
+      modelUrl: avatarNode?.config?.model_url || DEFAULT_MODEL_URL,
       animationUrl: avatarNode?.config?.idle_animation,
     };
   }, [nodes]);
+
+  // Show preview only when avatar node exists and renderer is VRM
+  const showPreview = avatarConfig.hasAvatarNode && avatarConfig.renderer === 'vrm';
 
   // Load workflow on mount
   useEffect(() => {
@@ -426,6 +453,26 @@ export default function EditorPage() {
           </div>
         </div>
 
+        {/* Avatar Controls toggle - only show when preview is available */}
+        {showPreview && (
+        <button
+          onClick={() => setShowAvatarControls(!showAvatarControls)}
+          className={`px-4 py-2 rounded-lg border transition-all flex items-center gap-2 text-sm ${
+            showAvatarControls
+              ? 'bg-pink-500/30 border-pink-500/50 text-pink-300'
+              : 'bg-pink-500/20 border-pink-500/50 text-pink-300 hover:bg-pink-500/30'
+          }`}
+          title="Toggle Avatar Controls"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+            <line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
+          </svg>
+          Controls
+        </button>
+        )}
+
         {/* Open Overlay button */}
         <button
           onClick={() => window.open(`/overlay/${workflowId}`, '_blank')}
@@ -441,7 +488,8 @@ export default function EditorPage() {
         </button>
       </div>
 
-      {/* Preview Panel - OUTSIDE ReactFlowProvider to avoid event conflicts */}
+      {/* Preview Panel - Avatar Only (shown only when avatar node exists and VRM is selected) */}
+      {showPreview && (
       <div
         className="absolute top-20 right-5 z-20 w-[280px] overflow-hidden flex flex-col"
         style={{
@@ -482,11 +530,97 @@ export default function EditorPage() {
           />
         </div>
         {/* Status bar */}
-        <div className="px-3 py-1.5 border-t border-white/10 text-xs text-white/40 flex justify-between">
+        <div className="px-3 py-1.5 border-t border-white/10 text-xs text-white/40 flex justify-between relative z-10 bg-gray-900/95">
           <span>{avatarConfig.renderer.toUpperCase()}</span>
           <span>Mouth: {(avatarState.mouthOpen * 100).toFixed(0)}%</span>
         </div>
       </div>
+      )}
+
+      {/* Avatar Controls Panel - Left side, toggleable */}
+      {showPreview && showAvatarControls && (
+        <div
+          className="absolute z-20 overflow-hidden flex flex-col"
+          style={{
+            top: '80px',
+            left: '285px',
+            width: '260px',
+            height: 'calc(100% - 180px)',
+            background: 'rgba(17, 24, 39, 0.95)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255,255,255,0.1)',
+          }}
+        >
+          {/* Tab Headers */}
+          <div className="flex border-b border-white/10">
+            <button
+              onClick={() => setAvatarControlTab('expression')}
+              className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+                avatarControlTab === 'expression'
+                  ? 'text-pink-400 border-b-2 border-pink-400 bg-pink-400/5'
+                  : 'text-white/50 hover:text-white/70 hover:bg-white/5'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-1.5">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                  <line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
+                </svg>
+                Expression
+              </div>
+            </button>
+            <button
+              onClick={() => setAvatarControlTab('motion')}
+              className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+                avatarControlTab === 'motion'
+                  ? 'text-purple-400 border-b-2 border-purple-400 bg-purple-400/5'
+                  : 'text-white/50 hover:text-white/70 hover:bg-white/5'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-1.5">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Motion
+              </div>
+            </button>
+            {/* Close button */}
+            <button
+              onClick={() => setShowAvatarControls(false)}
+              className="px-2 py-2 text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors"
+              title="Close"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          {/* Tab Content */}
+          <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+            {avatarControlTab === 'expression' && (
+              <div className="flex-1 overflow-y-auto">
+                <ExpressionPresets
+                  currentExpression={avatarState.expression}
+                  currentMouthOpen={avatarState.mouthOpen}
+                  onExpressionChange={handleExpressionChange}
+                  onMouthChange={handleMouthChange}
+                />
+              </div>
+            )}
+
+            {avatarControlTab === 'motion' && (
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <MotionLibrary
+                  onSelect={handleMotionSelect}
+                  selectedUrl={avatarState.motion}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <ReactFlowProvider>
         {/* Canvas - Full screen, panels overlay on top */}
@@ -508,7 +642,7 @@ export default function EditorPage() {
         {/* Log Panel at bottom */}
         <div
           className="absolute bottom-5 z-10"
-          style={{ left: '285px', right: '320px' }}
+          style={{ left: '285px', right: showPreview ? '320px' : '20px' }}
         >
           <LogPanel />
         </div>
