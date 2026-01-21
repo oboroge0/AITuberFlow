@@ -240,6 +240,70 @@ export default function EditorPage() {
     }
   };
 
+  // Export workflow as JSON file
+  const handleExport = () => {
+    const data = getWorkflowData();
+    const exportData = {
+      version: '1.0',
+      exportedAt: new Date().toISOString(),
+      workflow: {
+        name: data.name,
+        nodes: data.nodes,
+        connections: data.connections,
+        character: data.character,
+      },
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${data.name || 'workflow'}-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    addLog({ level: 'success', message: 'Workflow exported successfully' });
+  };
+
+  // Import workflow from JSON file
+  const handleImport = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const importData = JSON.parse(text);
+
+        // Validate import data structure
+        const workflow = importData.workflow || importData;
+        if (!workflow.nodes || !Array.isArray(workflow.nodes)) {
+          throw new Error('Invalid workflow file: missing nodes');
+        }
+
+        // Load the imported workflow
+        loadWorkflow({
+          id: workflowId,
+          name: workflow.name || 'Imported Workflow',
+          nodes: workflow.nodes,
+          connections: workflow.connections || [],
+          character: workflow.character || { name: 'AI Assistant', personality: 'Friendly and helpful' },
+        });
+
+        addLog({ level: 'success', message: `Imported workflow: ${workflow.name || 'Imported Workflow'}` });
+      } catch (err) {
+        console.error('Import failed:', err);
+        addLog({ level: 'error', message: `Import failed: ${err instanceof Error ? err.message : 'Unknown error'}` });
+      }
+    };
+    input.click();
+  };
+
   return (
     <div
       className="h-screen w-screen relative overflow-hidden"
@@ -398,6 +462,8 @@ export default function EditorPage() {
             isRunning={isExecuting}
             onToggleRun={handleToggleRun}
             onSave={handleSave}
+            onExport={handleExport}
+            onImport={handleImport}
           />
         </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useWorkflowStore } from '@/stores/workflowStore';
 
 const EXPANDED_CATEGORIES_KEY = 'aituberflow-sidebar-expanded';
@@ -440,11 +440,13 @@ interface SidebarProps {
   isRunning: boolean;
   onToggleRun: () => void;
   onSave?: () => void;
-  onLoad?: () => void;
+  onExport?: () => void;
+  onImport?: () => void;
 }
 
-export default function Sidebar({ isRunning, onToggleRun, onSave, onLoad }: SidebarProps) {
+export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onImport }: SidebarProps) {
   const { addNode } = useWorkflowStore();
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Load from localStorage or default to empty (all collapsed)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => {
@@ -464,6 +466,23 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onLoad }: Side
   useEffect(() => {
     localStorage.setItem(EXPANDED_CATEGORIES_KEY, JSON.stringify([...expandedCategories]));
   }, [expandedCategories]);
+
+  // Filter categories and nodes based on search query
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery.trim()) return nodeCategories;
+
+    const query = searchQuery.toLowerCase();
+    return nodeCategories
+      .map((category) => ({
+        ...category,
+        nodes: category.nodes.filter(
+          (node) =>
+            node.label.toLowerCase().includes(query) ||
+            node.id.toLowerCase().includes(query)
+        ),
+      }))
+      .filter((category) => category.nodes.length > 0);
+  }, [searchQuery]);
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories((prev) => {
@@ -551,13 +570,48 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onLoad }: Side
 
       {/* Add Node - Categorized (Scrollable) */}
       <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-        <div className="px-4 pt-4 pb-2">
+        <div className="px-4 pt-4 pb-2 space-y-2">
           <h3 className="text-xs text-white/50 uppercase tracking-wider m-0">
             Nodes (Drag to Canvas)
           </h3>
+          {/* Search Input */}
+          <div className="relative">
+            <svg
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/40"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              type="text"
+              placeholder="Search nodes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 text-xs bg-white/5 border border-white/10 rounded-md text-white placeholder:text-white/30 focus:outline-none focus:border-emerald-500/50"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
-          {nodeCategories.map((category) => (
+          {filteredCategories.length === 0 ? (
+            <div className="text-center py-4 text-white/40 text-xs">
+              No nodes found
+            </div>
+          ) : filteredCategories.map((category) => (
             <div key={category.id} className="border border-white/10 rounded-lg overflow-hidden">
               {/* Category Header */}
               <button
@@ -582,8 +636,8 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onLoad }: Side
                 </svg>
               </button>
 
-              {/* Category Nodes */}
-              {expandedCategories.has(category.id) && (
+              {/* Category Nodes - auto-expand when searching */}
+              {(searchQuery.trim() || expandedCategories.has(category.id)) && (
                 <div className="p-2 grid grid-cols-2 gap-1.5">
                   {category.nodes.map((nodeType) => (
                     <button
@@ -609,10 +663,10 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onLoad }: Side
       </div>
 
       {/* Footer Actions */}
-      <div className="p-4 border-t border-white/10 flex gap-2">
+      <div className="p-4 border-t border-white/10 space-y-2">
         <button
           onClick={onSave}
-          className="flex-1 py-2 rounded-md border border-white/20 bg-transparent text-white/70 text-xs cursor-pointer flex items-center justify-center gap-1 transition-colors hover:bg-white/5"
+          className="w-full py-2 rounded-md border border-white/20 bg-transparent text-white/70 text-xs cursor-pointer flex items-center justify-center gap-1 transition-colors hover:bg-white/5"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
@@ -620,16 +674,30 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onLoad }: Side
           </svg>
           Save
         </button>
-        <button
-          onClick={onLoad}
-          className="flex-1 py-2 rounded-md border border-white/20 bg-transparent text-white/70 text-xs cursor-pointer flex items-center justify-center gap-1 transition-colors hover:bg-white/5"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-          Load
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={onExport}
+            className="flex-1 py-2 rounded-md border border-white/20 bg-transparent text-white/70 text-xs cursor-pointer flex items-center justify-center gap-1 transition-colors hover:bg-white/5"
+            title="Export workflow as JSON"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Export
+          </button>
+          <button
+            onClick={onImport}
+            className="flex-1 py-2 rounded-md border border-white/20 bg-transparent text-white/70 text-xs cursor-pointer flex items-center justify-center gap-1 transition-colors hover:bg-white/5"
+            title="Import workflow from JSON"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Import
+          </button>
+        </div>
       </div>
     </div>
   );
