@@ -55,6 +55,9 @@ htmlcov/
 *.pem
 nul
 
+# Generated audio files
+audio_output/
+
 # Claude
 .claude/
 
