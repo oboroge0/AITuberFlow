@@ -1,0 +1,91 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "donation-alert",
+  "name": "Donation Alert",
+  "version": "1.0.0",
+  "description": "Display visual and audio alerts for donations (Super Chat, Bits, etc.)",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "output",
+  "node": {
+    "inputs": [
+      {
+        "id": "trigger",
+        "type": "any",
+        "description": "Trigger to show the alert"
+      },
+      {
+        "id": "amount",
+        "type": "number",
+        "description": "Donation amount"
+      },
+      {
+        "id": "currency",
+        "type": "string",
+        "description": "Currency code (USD, JPY, etc.)"
+      },
+      {
+        "id": "author",
+        "type": "string",
+        "description": "Donor name"
+      },
+      {
+        "id": "message",
+        "type": "string",
+        "description": "Donation message"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "displayed",
+        "type": "boolean",
+        "description": "True when alert is displayed"
+      }
+    ],
+    "events": {
+      "emits": ["donation.alert"],
+      "listens": []
+    }
+  },
+  "config": {
+    "alertSound": {
+      "type": "string",
+      "label": "Alert Sound URL",
+      "description": "URL to the alert sound file (leave empty for no sound)",
+      "default": ""
+    },
+    "displayDuration": {
+      "type": "number",
+      "label": "Display Duration (ms)",
+      "description": "How long to show the alert",
+      "default": 5000,
+      "min": 1000,
+      "max": 30000
+    },
+    "minAmount": {
+      "type": "number",
+      "label": "Minimum Amount",
+      "description": "Minimum donation amount to trigger alert (0 = all)",
+      "default": 0
+    },
+    "template": {
+      "type": "string",
+      "label": "Message Template",
+      "description": "Template for the alert message. Use {author}, {amount}, {currency}, {message}",
+      "default": "{author} donated {amount} {currency}!"
+    },
+    "style": {
+      "type": "select",
+      "label": "Alert Style",
+      "description": "Visual style of the alert",
+      "options": ["default", "minimal", "fancy"],
+      "default": "default"
+    }
+  },
+  "dependencies": {
+    "python": []
+  }
+}

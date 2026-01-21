@@ -51,6 +51,7 @@ const nodeTypeColors: Record<string, string> = {
   // Input
   'youtube-chat': '#FF0000',
   'twitch-chat': '#9146FF',
+  'discord-chat': '#5865F2',
   'manual-input': '#22C55E',
   'timer': '#06B6D4',
   // LLM
@@ -64,6 +65,7 @@ const nodeTypeColors: Record<string, string> = {
   'sbv2-tts': '#9C27B0',
   // Output
   'console-output': '#A855F7',
+  'donation-alert': '#F59E0B',
   // Control
   'switch': '#F97316',
   'delay': '#F97316',
@@ -762,6 +764,7 @@ function getNodeLabel(type: string): string {
     'manual-input': 'Manual Input',
     'youtube-chat': 'YouTube Chat',
     'twitch-chat': 'Twitch Chat',
+    'discord-chat': 'Discord Chat',
     'timer': 'Timer',
     // LLM
     'openai-llm': 'ChatGPT',
@@ -773,6 +776,7 @@ function getNodeLabel(type: string): string {
     'delay': 'Delay',
     // Output
     'console-output': 'Console Output',
+    'donation-alert': 'Donation Alert',
     'voicevox-tts': 'VOICEVOX',
     'coeiroink-tts': 'COEIROINK',
     'sbv2-tts': 'Style-Bert-VITS2',
@@ -804,6 +808,7 @@ function getNodeCategory(type: string): 'input' | 'process' | 'output' | 'contro
     'manual-input': 'input',
     'youtube-chat': 'input',
     'twitch-chat': 'input',
+    'discord-chat': 'input',
     'timer': 'input',
     // Process
     'openai-llm': 'process',
@@ -820,6 +825,7 @@ function getNodeCategory(type: string): 'input' | 'process' | 'output' | 'contro
     'variable': 'control',
     // Output
     'console-output': 'output',
+    'donation-alert': 'output',
     'voicevox-tts': 'output',
     'coeiroink-tts': 'output',
     'sbv2-tts': 'output',
@@ -878,6 +884,7 @@ function getNodeInputs(type: string, config?: Record<string, unknown>): PortDefi
     'manual-input': [],
     'youtube-chat': [],
     'twitch-chat': [],
+    'discord-chat': [],
     'timer': [],
     // LLM
     'openai-llm': [{ id: 'prompt', label: 'Prompt', type: 'string' }],
@@ -892,6 +899,13 @@ function getNodeInputs(type: string, config?: Record<string, unknown>): PortDefi
     'delay': [{ id: 'input', label: 'Input', type: 'any' }],
     // Output
     'console-output': [{ id: 'text', label: 'Text', type: 'string' }],
+    'donation-alert': [
+      { id: 'trigger', label: 'Trigger', type: 'any' },
+      { id: 'amount', label: 'Amount', type: 'number' },
+      { id: 'currency', label: 'Currency', type: 'string' },
+      { id: 'author', label: 'Author', type: 'string' },
+      { id: 'message', label: 'Message', type: 'string' },
+    ],
     'voicevox-tts': [{ id: 'text', label: 'Text', type: 'string' }],
     'coeiroink-tts': [{ id: 'text', label: 'Text', type: 'string' }],
     'sbv2-tts': [{ id: 'text', label: 'Text', type: 'string' }],
@@ -943,6 +957,11 @@ function getNodeOutputs(type: string): PortDefinition[] {
       { id: 'author', label: 'Author', type: 'string' },
       { id: 'message', label: 'Full Data', type: 'object' },
     ],
+    'discord-chat': [
+      { id: 'text', label: 'Text', type: 'string' },
+      { id: 'author', label: 'Author', type: 'string' },
+      { id: 'message', label: 'Full Data', type: 'object' },
+    ],
     'timer': [
       { id: 'tick', label: 'Tick', type: 'number' },
       { id: 'timestamp', label: 'Timestamp', type: 'string' },
@@ -960,6 +979,7 @@ function getNodeOutputs(type: string): PortDefinition[] {
     'delay': [{ id: 'output', label: 'Output', type: 'any' }],
     // Output
     'console-output': [],
+    'donation-alert': [{ id: 'displayed', label: 'Displayed', type: 'boolean' }],
     'voicevox-tts': [{ id: 'audio', label: 'Audio', type: 'audio' }],
     'coeiroink-tts': [{ id: 'audio', label: 'Audio', type: 'audio' }],
     'sbv2-tts': [{ id: 'audio', label: 'Audio', type: 'audio' }],

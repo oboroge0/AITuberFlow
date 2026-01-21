@@ -133,6 +133,18 @@ const nodeCategories = [
         defaultConfig: { channel: '' },
       },
       {
+        id: 'discord-chat',
+        label: 'Discord',
+        color: '#5865F2',
+        bgColor: 'rgba(88, 101, 242, 0.1)',
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        ),
+        defaultConfig: { botToken: '', channelIds: '', filterBots: true, mentionOnly: false },
+      },
+      {
         id: 'timer',
         label: 'Timer',
         color: '#06B6D4',
@@ -353,6 +365,18 @@ const nodeCategories = [
           </svg>
         ),
         defaultConfig: { wait_for_completion: true, volume: 1.0, output_device: 'browser' },
+      },
+      {
+        id: 'donation-alert',
+        label: 'Donation',
+        color: '#F59E0B',
+        bgColor: 'rgba(245, 158, 11, 0.1)',
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        ),
+        defaultConfig: { alertSound: '', displayDuration: 5000, minAmount: 0, template: '{author} donated {amount} {currency}!', style: 'default' },
       },
       {
         id: 'console-output',

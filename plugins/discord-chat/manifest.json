@@ -1,0 +1,67 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "discord-chat",
+  "name": "Discord Chat",
+  "version": "1.0.0",
+  "description": "Receive messages from Discord channels. Supports text messages, replies, and mentions.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "input",
+  "node": {
+    "inputs": [],
+    "outputs": [
+      {
+        "id": "message",
+        "type": "Message",
+        "description": "The full message object"
+      },
+      {
+        "id": "author",
+        "type": "string",
+        "description": "Message author name"
+      },
+      {
+        "id": "text",
+        "type": "string",
+        "description": "Message text content"
+      }
+    ],
+    "events": {
+      "emits": ["message.received", "message.mention"],
+      "listens": []
+    }
+  },
+  "config": {
+    "botToken": {
+      "type": "string",
+      "label": "Bot Token",
+      "description": "Your Discord bot token",
+      "required": true,
+      "secret": true
+    },
+    "channelIds": {
+      "type": "string",
+      "label": "Channel IDs",
+      "description": "Comma-separated list of channel IDs to listen to (leave empty for all)",
+      "required": false
+    },
+    "filterBots": {
+      "type": "boolean",
+      "label": "Filter Bot Messages",
+      "description": "Ignore messages from other bots",
+      "default": true
+    },
+    "mentionOnly": {
+      "type": "boolean",
+      "label": "Mention Only",
+      "description": "Only respond to messages that mention the bot",
+      "default": false
+    }
+  },
+  "dependencies": {
+    "python": ["discord.py>=2.3.0"]
+  }
+}

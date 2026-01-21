@@ -60,6 +60,17 @@ interface SubtitleData {
   duration?: number;
 }
 
+interface DonationAlertData {
+  text: string;
+  author: string;
+  amount: number;
+  currency: string;
+  message?: string;
+  sound?: string;
+  duration?: number;
+  style?: 'default' | 'minimal' | 'fancy';
+}
+
 interface AvatarConfig {
   renderer: RendererType;
   modelUrl?: string;
@@ -110,7 +121,11 @@ export default function OverlayPage({ params }: OverlayPageProps) {
   const [subtitle, setSubtitle] = useState<SubtitleData | null>(null);
   const [subtitleVisible, setSubtitleVisible] = useState(false);
 
+  const [donationAlert, setDonationAlert] = useState<DonationAlertData | null>(null);
+  const [donationAlertVisible, setDonationAlertVisible] = useState(false);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const donationAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Force remount on navigation
   const [mountKey] = useState(() => Date.now());
@@ -268,6 +283,35 @@ export default function OverlayPage({ params }: OverlayPageProps) {
       }
     });
 
+    // Donation alert events
+    socket.on('donation.alert', (data: DonationAlertData) => {
+      setDonationAlert(data);
+      setDonationAlertVisible(true);
+
+      // Play alert sound if provided
+      if (data.sound) {
+        const soundUrl = data.sound.startsWith('http')
+          ? data.sound
+          : `${API_BASE}${data.sound}`;
+
+        if (donationAudioRef.current) {
+          donationAudioRef.current.pause();
+        }
+
+        const audio = new Audio(soundUrl);
+        audio.volume = volume;
+        donationAudioRef.current = audio;
+        audio.play().catch(console.error);
+      }
+
+      // Hide after duration
+      const duration = data.duration || 5000;
+      setTimeout(() => {
+        setDonationAlertVisible(false);
+        setTimeout(() => setDonationAlert(null), 500);
+      }, duration);
+    });
+
     // Execution events
     socket.on('execution.stopped', () => {
       setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
@@ -284,6 +328,10 @@ export default function OverlayPage({ params }: OverlayPageProps) {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
+      }
+      if (donationAudioRef.current) {
+        donationAudioRef.current.pause();
+        donationAudioRef.current = null;
       }
     };
   }, [workflowId, volume]);
@@ -351,6 +399,65 @@ export default function OverlayPage({ params }: OverlayPageProps) {
             }}
           >
             {subtitle.text}
+          </div>
+        </div>
+      )}
+
+      {/* Donation Alert Layer */}
+      {donationAlert && (
+        <div
+          className={`absolute top-1/4 left-1/2 -translate-x-1/2 transition-all duration-500 ${
+            donationAlertVisible
+              ? 'opacity-100 scale-100'
+              : 'opacity-0 scale-95'
+          }`}
+        >
+          <div
+            className={`px-8 py-6 rounded-2xl text-center ${
+              donationAlert.style === 'minimal'
+                ? 'bg-black/80'
+                : donationAlert.style === 'fancy'
+                ? 'bg-gradient-to-br from-yellow-500/90 via-orange-500/90 to-red-500/90'
+                : 'bg-gradient-to-br from-purple-600/90 to-pink-600/90'
+            }`}
+            style={{
+              boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+              minWidth: '300px',
+            }}
+          >
+            {/* Icon */}
+            <div className="text-5xl mb-3">
+              {donationAlert.style === 'fancy' ? '🎉' : '💰'}
+            </div>
+
+            {/* Amount */}
+            <div
+              className="text-4xl font-bold text-white mb-2"
+              style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}
+            >
+              {donationAlert.amount} {donationAlert.currency}
+            </div>
+
+            {/* Author */}
+            <div
+              className="text-xl text-white/90 mb-2"
+              style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}
+            >
+              {donationAlert.author}
+            </div>
+
+            {/* Message */}
+            {donationAlert.message && (
+              <div
+                className="text-lg text-white/80 mt-3 italic"
+                style={{
+                  maxWidth: '400px',
+                  wordWrap: 'break-word',
+                }}
+              >
+                &ldquo;{donationAlert.message}&rdquo;
+              </div>
+            )}
           </div>
         </div>
       )}
