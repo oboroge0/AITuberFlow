@@ -127,10 +127,14 @@ export default function EditorPage() {
     }
   };
 
+  // Track saving state with ref to avoid circular dependencies
+  const savingRef = useRef(false);
+
   // Auto-save when workflow changes (debounced)
   const performAutoSave = useCallback(async () => {
-    if (saving || workflowId === 'new') return;
+    if (savingRef.current || workflowId === 'new') return;
 
+    savingRef.current = true;
     setSaving(true);
     const data = getWorkflowData();
 
@@ -145,8 +149,9 @@ export default function EditorPage() {
       console.error('Auto-save failed:', response.error);
     }
 
+    savingRef.current = false;
     setSaving(false);
-  }, [workflowId, saving, getWorkflowData]);
+  }, [workflowId, getWorkflowData]);
 
   // Watch for changes and trigger auto-save
   useEffect(() => {
@@ -169,7 +174,8 @@ export default function EditorPage() {
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [nodes, connections, workflowName, character, performAutoSave]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, connections, workflowName, character]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -381,6 +387,11 @@ export default function EditorPage() {
       </div>
 
       <ReactFlowProvider>
+        {/* Canvas - Full screen, panels overlay on top */}
+        <div className="absolute inset-0">
+          <Canvas onSave={handleSave} onRunWorkflow={handleStart} />
+        </div>
+
         {/* Left Sidebar - Node Palette */}
         <div className="absolute top-20 left-5 bottom-5 z-10">
           <Sidebar
@@ -390,15 +401,10 @@ export default function EditorPage() {
           />
         </div>
 
-        {/* Canvas */}
-        <div className="absolute inset-0 pl-[225px] pr-[300px] pb-[170px] pt-[70px]">
-          <Canvas onSave={handleSave} onRunWorkflow={handleStart} />
-        </div>
-
         {/* Log Panel at bottom */}
         <div
           className="absolute bottom-5 z-10"
-          style={{ left: '225px', right: '320px' }}
+          style={{ left: '285px', right: '320px' }}
         >
           <LogPanel />
         </div>

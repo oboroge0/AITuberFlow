@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWorkflowStore } from '@/stores/workflowStore';
+
+const EXPANDED_CATEGORIES_KEY = 'aituberflow-sidebar-expanded';
 
 // Node categories with their nodes
 const nodeCategories = [
@@ -443,9 +445,25 @@ interface SidebarProps {
 
 export default function Sidebar({ isRunning, onToggleRun, onSave, onLoad }: SidebarProps) {
   const { addNode } = useWorkflowStore();
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(['input', 'llm', 'tts', 'avatar', 'output'])
-  );
+
+  // Load from localStorage or default to empty (all collapsed)
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set();
+    const saved = localStorage.getItem(EXPANDED_CATEGORIES_KEY);
+    if (saved) {
+      try {
+        return new Set(JSON.parse(saved));
+      } catch {
+        return new Set();
+      }
+    }
+    return new Set(); // Default: all collapsed
+  });
+
+  // Save to localStorage when expanded categories change
+  useEffect(() => {
+    localStorage.setItem(EXPANDED_CATEGORIES_KEY, JSON.stringify([...expandedCategories]));
+  }, [expandedCategories]);
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories((prev) => {
@@ -478,7 +496,7 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onLoad }: Side
 
   return (
     <div
-      className="w-[200px] h-full flex flex-col overflow-hidden"
+      className="w-[260px] h-full flex flex-col overflow-hidden"
       style={{
         background: 'rgba(17, 24, 39, 0.95)',
         borderRadius: '16px',
