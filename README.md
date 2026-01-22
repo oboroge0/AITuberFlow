@@ -1,223 +1,273 @@
 # AITuberFlow
 
-**ノーコードでAITuberを作成できるビジュアルワークフローエディタ**
+**Visual workflow editor for creating AI VTubers without coding**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org/)
 
----
-
-## 概要
-
-AITuberFlowは、AIを活用したバーチャル配信者（AITuber）のパイプラインを視覚的に構築できるツールです。ノードをドラッグ＆ドロップで配置し、接続するだけで、コードを書かずにAIキャラクターを作成できます。
-
-### 主な特徴
-
-- **ビジュアルエディタ** - 直感的なドラッグ＆ドロップ操作
-- **プラグインシステム** - 機能を自由に拡張可能
-- **リアルタイム実行** - WebSocketによるライブログ表示
-- **複数LLM対応** - OpenAI, Anthropic Claude, Google Gemini, Ollama
-- **複数TTS対応** - VOICEVOX, COEIROINK, Style-Bert-VITS2
-- **制御フロー** - Start, End, Loop, ForEachノードで複雑なフローを構築
+[日本語版 README](README.ja.md)
 
 ---
 
-## スクリーンショット
+## Overview
 
-![ワークフローエディタ](docs/images/image.png)
-*ノードを接続してワークフローを構築*
+AITuberFlow is a visual tool for building AI-powered virtual streamer (AITuber/VTuber) pipelines. Simply drag, drop, and connect nodes to create AI characters without writing code.
 
----
+### Key Features
 
-## 機能
-
-### 制御フローノード
-| ノード | 説明 |
-|--------|------|
-| **Start** | ワークフローの開始点 |
-| **End** | ワークフローの終了点 |
-| **Loop** | 指定回数の繰り返し処理 |
-| **ForEach** | リスト内の各アイテムに対して処理 |
-
-### 入力ノード
-| ノード | 説明 |
-|--------|------|
-| **Manual Input** | テキストを手動入力 |
-| **YouTube Chat** | YouTubeライブのチャットを取得 |
-| **Twitch Chat** | Twitchチャットを取得 |
-| **Timer** | 定期的にトリガーを発火 |
-
-### LLMノード
-| ノード | 説明 |
-|--------|------|
-| **ChatGPT** | OpenAI GPTモデル (GPT-4o, GPT-5等) |
-| **Claude** | Anthropic Claudeモデル |
-| **Gemini** | Google Geminiモデル |
-| **Ollama** | ローカルLLM (Ollama経由) |
-
-### TTSノード（音声合成）
-| ノード | 説明 |
-|--------|------|
-| **VOICEVOX** | 無料の日本語音声合成 |
-| **COEIROINK** | 高品質な日本語音声合成 |
-| **Style-Bert-VITS2** | 感情豊かな音声合成 |
-
-### ユーティリティノード
-| ノード | 説明 |
-|--------|------|
-| **HTTP Request** | 外部APIを呼び出し |
-| **Text Transform** | テキストを加工（大文字/小文字/トリム等） |
-| **Random** | ランダムな数値や選択を生成 |
-| **Variable** | 変数の保存と取得 |
-| **Switch** | 条件分岐 |
-| **Delay** | 遅延処理 |
-
-### 出力ノード
-| ノード | 説明 |
-|--------|------|
-| **Console Output** | ログに出力 |
+- **Visual Editor** - Intuitive drag-and-drop interface
+- **Plugin System** - Extensible architecture for custom nodes
+- **Real-time Execution** - Live logs via WebSocket
+- **Multiple LLM Support** - OpenAI, Anthropic Claude, Google Gemini, Ollama
+- **Multiple TTS Support** - VOICEVOX, COEIROINK, Style-Bert-VITS2
+- **Control Flow** - Start, End, Loop, ForEach, Switch nodes for complex workflows
+- **Avatar Support** - VRM model display with lip-sync and expressions
+- **OBS Integration** - Scene switching and source control
+- **Streaming Overlay** - OBS Browser Source compatible overlay
 
 ---
 
-## セットアップ
+## Screenshot
 
-### 必要な環境
+![Workflow Editor](docs/images/image.png)
+*Connect nodes to build your workflow*
 
-- **Node.js** 18以上
-- **Python** 3.11以上
-- **VOICEVOX** （音声合成を使用する場合）
+---
 
-### 1. バックエンドのセットアップ
+## Features
 
-#### uv を使用する場合（推奨）
+### Control Flow Nodes
+| Node | Description |
+|------|-------------|
+| **Start** | Workflow entry point |
+| **End** | Workflow termination point |
+| **Loop** | Repeat processing a specified number of times |
+| **ForEach** | Process each item in a list |
+| **Switch** | Conditional branching |
+| **Delay** | Add delay between operations |
 
-[uv](https://docs.astral.sh/uv/) は高速なPythonパッケージマネージャーです。
+### Input Nodes
+| Node | Description |
+|------|-------------|
+| **Manual Input** | Enter text manually |
+| **YouTube Chat** | Fetch YouTube Live chat messages |
+| **Twitch Chat** | Fetch Twitch chat messages |
+| **Discord Chat** | Fetch Discord channel messages |
+| **Timer** | Trigger at regular intervals |
+
+### LLM Nodes
+| Node | Description |
+|------|-------------|
+| **ChatGPT** | OpenAI GPT models (GPT-4o, GPT-5, etc.) |
+| **Claude** | Anthropic Claude models |
+| **Gemini** | Google Gemini models |
+| **Ollama** | Local LLMs via Ollama |
+
+### TTS Nodes (Text-to-Speech)
+| Node | Description |
+|------|-------------|
+| **VOICEVOX** | Free Japanese voice synthesis |
+| **COEIROINK** | High-quality Japanese voice synthesis |
+| **Style-Bert-VITS2** | Expressive voice synthesis |
+
+### Avatar Nodes
+| Node | Description |
+|------|-------------|
+| **Avatar Configuration** | Configure VRM model and settings |
+| **Motion Trigger** | Trigger avatar animations |
+| **Lip Sync** | Synchronize mouth movement with audio |
+| **Emotion Analyzer** | Analyze text and set expressions |
+
+### Utility Nodes
+| Node | Description |
+|------|-------------|
+| **HTTP Request** | Call external APIs |
+| **Text Transform** | Transform text (uppercase/lowercase/trim, etc.) |
+| **Random** | Generate random numbers or selections |
+| **Variable** | Store and retrieve variables |
+| **Data Formatter** | Format and transform data |
+
+### Output Nodes
+| Node | Description |
+|------|-------------|
+| **Console Output** | Output to logs |
+| **Audio Player** | Play synthesized audio |
+| **Subtitle Display** | Display subtitles on overlay |
+
+### OBS Integration Nodes
+| Node | Description |
+|------|-------------|
+| **OBS Scene Switch** | Switch OBS scenes |
+| **OBS Source Toggle** | Show/hide OBS sources |
+
+> **Note:** OBS integration requires optional dependency installation. See [Optional Dependencies](#optional-dependencies).
+
+---
+
+## Setup
+
+### Requirements
+
+- **Node.js** 18 or higher
+- **Python** 3.11 or higher
+- **VOICEVOX** (optional, for voice synthesis)
+
+### 1. Backend Setup
+
+#### Using uv (Recommended)
+
+[uv](https://docs.astral.sh/uv/) is a fast Python package manager.
 
 ```bash
 cd apps/server
 
-# 依存関係のインストールと仮想環境の作成を一括で実行
+# Install dependencies and create virtual environment
 uv sync
 
-# 環境設定ファイルをコピー
+# Copy environment config
 cp .env.example .env
 
-# サーバーを起動
+# Start the server
 uv run python main.py
 ```
 
-#### pip を使用する場合
+#### Using pip
 
 ```bash
 cd apps/server
 
-# 仮想環境を作成
+# Create virtual environment
 python -m venv .venv
 
-# 仮想環境を有効化
+# Activate virtual environment
 # Windows:
 .venv\Scripts\activate
 # macOS/Linux:
 source .venv/bin/activate
 
-# 依存関係をインストール
+# Install dependencies
 pip install -r requirements.txt
 
-# 環境設定ファイルをコピー
+# Copy environment config
 cp .env.example .env
 
-# サーバーを起動
+# Start the server
 python main.py
 ```
 
-バックエンドは `http://localhost:8001` で起動します。
+The backend will start at `http://localhost:8001`.
 
-### 2. フロントエンドのセットアップ
+### 2. Frontend Setup
 
 ```bash
 cd apps/web
 
-# 依存関係をインストール
+# Install dependencies
 npm install
 
-# 環境設定ファイルをコピー
+# Copy environment config
 cp .env.example .env.local
 
-# 開発サーバーを起動
+# Start development server
 npm run dev
 ```
 
-フロントエンドは `http://localhost:3000` で起動します。
+The frontend will start at `http://localhost:3000`.
 
-### 3. VOICEVOX（オプション）
+### 3. VOICEVOX (Optional)
 
-音声合成を使用する場合は、[VOICEVOX](https://voicevox.hiroshiba.jp/)をインストールして起動してください。
+For voice synthesis, install and start [VOICEVOX](https://voicevox.hiroshiba.jp/).
 
-デフォルトでは `http://localhost:50021` に接続します。
+By default, it connects to `http://localhost:50021`.
+
+### Optional Dependencies
+
+#### OBS Integration
+
+OBS integration uses `obsws-python` which has a GPL-2.0 license. It's provided as an optional dependency:
+
+```bash
+cd apps/server
+
+# Using uv
+uv pip install obsws-python
+
+# Using pip
+pip install obsws-python
+```
 
 ---
 
-## 使い方
+## Usage
 
-### 基本的な流れ
+### Basic Workflow
 
-1. ブラウザで `http://localhost:3000` を開く
-2. 「New Workflow」をクリックして新しいワークフローを作成
-3. サイドバーからノードをキャンバスにドラッグ
-4. ノード間を接続（出力ポートから入力ポートへドラッグ）
-5. ノードをクリックして設定を変更
-6. 「Run Workflow」で実行
+1. Open `http://localhost:3000` in your browser
+2. Click "New Workflow" to create a new workflow
+3. Drag nodes from the sidebar to the canvas
+4. Connect nodes (drag from output port to input port)
+5. Click a node to configure its settings
+6. Click "Run Workflow" to execute
 
-### エディタの機能
+### Editor Controls
 
-| 操作 | 説明 |
-|------|------|
-| **ドラッグ＆ドロップ** | サイドバーからノードを追加 |
-| **接続線のドラッグ** | 接続線の端をドラッグして別のノードに繋ぎ替え |
-| **右クリック** | コンテキストメニューを表示 |
-| **Ctrl+Z** | 元に戻す（Undo） |
-| **Ctrl+Y** | やり直し（Redo） |
-| **Ctrl+C/V** | コピー＆ペースト |
-| **Ctrl+S** | ワークフローを保存 |
-| **Delete** | 選択したノードを削除 |
+| Action | Description |
+|--------|-------------|
+| **Drag & Drop** | Add nodes from sidebar |
+| **Connect** | Drag from output to input ports |
+| **Right Click** | Show context menu |
+| **Ctrl+Z** | Undo |
+| **Ctrl+Y** | Redo |
+| **Ctrl+C/V** | Copy & Paste |
+| **Ctrl+S** | Save workflow |
+| **Delete** | Delete selected nodes |
 
-### Startノードについて
+### Start Node Behavior
 
-- **Startノード**を配置すると、そこから接続されたノードのみが実行されます
-- Startノードに接続されていないノードは点線で表示され、実行されません
-- Startノードがない場合は、すべてのノードが実行されます（後方互換性）
+- When a **Start node** is placed, only connected nodes will be executed
+- Nodes not connected to Start are shown with dashed borders and won't execute
+- Without a Start node, all nodes execute (backward compatibility)
 
-### サンプルワークフロー：AIチャットボット
+### Example: AI Chatbot
 
 ```
-[Manual Input] → [LLM] → [TTS] → [Console Output]
+[Manual Input] → [LLM] → [TTS] → [Audio Player]
 ```
 
-1. **Manual Input**: テキストを入力
-2. **LLM**: OpenAI APIキーとシステムプロンプトを設定
-3. **TTS**: VOICEVOXのスピーカーを選択
-4. **Console Output**: 結果を確認
+1. **Manual Input**: Enter text
+2. **LLM**: Configure OpenAI API key and system prompt
+3. **TTS**: Select VOICEVOX speaker
+4. **Audio Player**: Plays the generated audio
 
-実行すると、入力テキストに対してAIが応答し、音声で読み上げます。
+When executed, the AI responds to input and reads it aloud.
+
+### Streaming Overlay
+
+Access the OBS-compatible overlay at:
+```
+http://localhost:3000/overlay/{workflow-id}
+```
+
+Configure as a Browser Source in OBS with transparent background.
 
 ---
 
-## プロジェクト構成
+## Project Structure
 
 ```
 AITuberFlow/
 ├── apps/
-│   ├── web/           # Next.js フロントエンド
-│   └── server/        # FastAPI バックエンド
+│   ├── web/           # Next.js frontend
+│   └── server/        # FastAPI backend
 ├── packages/
-│   └── sdk/           # プラグインSDK
-├── plugins/           # 公式プラグイン
-│   ├── start/         # 制御フロー
+│   └── sdk/           # Plugin SDK
+├── plugins/           # Official plugins
+│   ├── start/         # Control flow
 │   ├── end/
 │   ├── loop/
 │   ├── foreach/
-│   ├── manual-input/  # 入力
+│   ├── manual-input/  # Input
 │   ├── youtube-chat/
 │   ├── twitch-chat/
 │   ├── timer/
@@ -228,120 +278,125 @@ AITuberFlow/
 │   ├── voicevox-tts/  # TTS
 │   ├── coeiroink-tts/
 │   ├── sbv2-tts/
-│   ├── console-output/ # 出力
-│   ├── http-request/   # ユーティリティ
+│   ├── avatar-configuration/  # Avatar
+│   ├── motion-trigger/
+│   ├── lip-sync/
+│   ├── emotion-analyzer/
+│   ├── obs-scene-switch/  # OBS
+│   ├── obs-source-toggle/
+│   ├── console-output/    # Output
+│   ├── audio-player/
+│   ├── subtitle-display/
+│   ├── http-request/      # Utility
 │   ├── text-transform/
 │   ├── random/
 │   ├── variable/
 │   ├── switch/
 │   └── delay/
-├── templates/         # ワークフローテンプレート
-└── docs/              # ドキュメント
+├── templates/         # Workflow templates
+└── docs/              # Documentation
 ```
 
 ---
 
-## プラグイン開発
+## Plugin Development
 
-独自のノードを作成できます。
+Create your own custom nodes:
 
 ```python
 from aituber_flow_sdk import BaseNode, NodeContext, Event
 
 class MyCustomNode(BaseNode):
     async def setup(self, config: dict, context: NodeContext) -> None:
-        """初期化処理"""
+        """Initialization"""
         self.my_setting = config.get("mySetting", "default")
 
     async def execute(self, inputs: dict, context: NodeContext) -> dict:
-        """メイン処理"""
+        """Main processing"""
         input_text = inputs.get("text", "")
 
-        # ログを出力
-        await context.log(f"処理中: {input_text}")
+        # Log output
+        await context.log(f"Processing: {input_text}")
 
-        # 結果を返す
-        return {"output": f"処理結果: {input_text}"}
+        # Return result
+        return {"output": f"Result: {input_text}"}
 
     async def teardown(self) -> None:
-        """終了処理"""
+        """Cleanup"""
         pass
 ```
 
-詳細は `packages/sdk/README.md` を参照してください。
+See `packages/sdk/README.md` for details.
 
 ---
 
-## API ドキュメント
+## API Documentation
 
-バックエンド起動後、`http://localhost:8001/docs` でSwagger UIを確認できます。
+After starting the backend, access Swagger UI at `http://localhost:8001/docs`.
 
-### 主要なエンドポイント
+### Main Endpoints
 
-| メソッド | パス | 説明 |
-|----------|------|------|
-| GET | `/api/workflows` | ワークフロー一覧 |
-| POST | `/api/workflows` | ワークフロー作成 |
-| GET | `/api/workflows/{id}` | ワークフロー取得 |
-| PUT | `/api/workflows/{id}` | ワークフロー更新 |
-| DELETE | `/api/workflows/{id}` | ワークフロー削除 |
-| POST | `/api/workflows/{id}/start` | ワークフロー実行 |
-| POST | `/api/workflows/{id}/stop` | ワークフロー停止 |
-
----
-
-## トラブルシューティング
-
-### バックエンドに接続できない
-
-- サーバーが起動しているか確認（`http://localhost:8001/health`）
-- ファイアウォールの設定を確認
-
-### VOICEVOXに接続できない
-
-- VOICEVOXが起動しているか確認
-- TTSノードのホスト設定を確認（デフォルト: `http://localhost:50021`）
-
-### 音声が再生されない
-
-- ブラウザの自動再生ポリシーにより、最初の再生がブロックされる場合があります
-- ページをクリックしてからワークフローを実行してください
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/workflows` | List workflows |
+| POST | `/api/workflows` | Create workflow |
+| GET | `/api/workflows/{id}` | Get workflow |
+| PUT | `/api/workflows/{id}` | Update workflow |
+| DELETE | `/api/workflows/{id}` | Delete workflow |
+| POST | `/api/workflows/{id}/start` | Start workflow execution |
+| POST | `/api/workflows/{id}/stop` | Stop workflow execution |
 
 ---
 
-## 今後の予定
+## Troubleshooting
 
-- [x] ~~より多くのLLMプロバイダー対応（Claude, Gemini等）~~ ✅ 実装済み
-- [x] ~~制御フローノード（Start, End, Loop, ForEach）~~ ✅ 実装済み
-- [ ] 画像生成ノード
-- [ ] OBS連携
-- [ ] キャラクター状態管理（感情、記憶）
-- [ ] ワークフローのインポート/エクスポート
-- [ ] VRMモデル表示・リップシンク
+### Cannot connect to backend
 
----
+- Check if server is running (`http://localhost:8001/health`)
+- Check firewall settings
 
-## コントリビューション
+### Cannot connect to VOICEVOX
 
-プルリクエストを歓迎します！
+- Ensure VOICEVOX is running
+- Check TTS node host setting (default: `http://localhost:50021`)
 
-1. このリポジトリをフォーク
-2. 機能ブランチを作成 (`git checkout -b feature/amazing-feature`)
-3. 変更をコミット (`git commit -m 'Add amazing feature'`)
-4. ブランチをプッシュ (`git push origin feature/amazing-feature`)
-5. プルリクエストを作成
+### Audio not playing
 
----
+- Browser autoplay policy may block initial playback
+- Click anywhere on the page before running the workflow
 
-## ライセンス
+### OBS nodes not working
 
-MIT License - 詳細は [LICENSE](LICENSE) を参照してください。
+- Ensure `obsws-python` is installed (see [Optional Dependencies](#optional-dependencies))
+- Enable WebSocket server in OBS (Tools → WebSocket Server Settings)
+- Check host, port, and password settings
 
 ---
 
-## 謝辞
+## Contributing
 
-- [React Flow](https://reactflow.dev/) - ノードエディタライブラリ
-- [VOICEVOX](https://voicevox.hiroshiba.jp/) - 無料の音声合成エンジン
-- [FastAPI](https://fastapi.tiangolo.com/) - Python Webフレームワーク
-- [Next.js](https://nextjs.org/) - React フレームワーク
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+1. Fork this repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## License
+
+MIT License - See [LICENSE](LICENSE) for details.
+
+> **Note:** OBS integration uses `obsws-python` which is licensed under GPL-2.0. This dependency is optional and not included in the core package. If you install it, please be aware of GPL-2.0 requirements.
+
+---
+
+## Acknowledgments
+
+- [React Flow](https://reactflow.dev/) - Node editor library
+- [VOICEVOX](https://voicevox.hiroshiba.jp/) - Free voice synthesis engine
+- [FastAPI](https://fastapi.tiangolo.com/) - Python web framework
+- [Next.js](https://nextjs.org/) - React framework
+- [@pixiv/three-vrm](https://github.com/pixiv/three-vrm) - VRM model rendering

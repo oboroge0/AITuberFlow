@@ -28,6 +28,14 @@ dependencies = [
     { name = "uvicorn", extra = ["standard"] },
 ]
 
+[package.optional-dependencies]
+all = [
+    { name = "obsws-python" },
+]
+obs = [
+    { name = "obsws-python" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "pytest" },
@@ -39,6 +47,8 @@ requires-dist = [
     { name = "aiosqlite", specifier = ">=0.19.0" },
     { name = "fastapi", specifier = ">=0.109.0" },
     { name = "httpx", specifier = ">=0.26.0" },
+    { name = "obsws-python", marker = "extra == 'all'", specifier = ">=1.7.0" },
+    { name = "obsws-python", marker = "extra == 'obs'", specifier = ">=1.7.0" },
     { name = "openai", specifier = ">=1.10.0" },
     { name = "pydantic", specifier = ">=2.5.3" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
@@ -47,6 +57,7 @@ requires-dist = [
     { name = "sqlalchemy", specifier = ">=2.0.25" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.27.0" },
 ]
+provides-extras = ["obs", "all"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -369,6 +380,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/85/15/d6eb3b770f6a0d332675141ab3962fd4a7c270ede3515d9f3583e1d28276/jiter-0.12.0-graalpy312-graalpy250_312_native-macosx_11_0_arm64.whl", hash = "sha256:89163163c0934854a668ed783a2546a0617f71706a2551a4a0666d91ab365d6b", size = 304233, upload-time = "2025-11-09T20:49:18.734Z" },
     { url = "https://files.pythonhosted.org/packages/8c/3e/e7e06743294eea2cf02ced6aa0ff2ad237367394e37a0e2b4a1108c67a36/jiter-0.12.0-graalpy312-graalpy250_312_native-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d96b264ab7d34bbb2312dedc47ce07cd53f06835eacbc16dde3761f47c3a9e7f", size = 338537, upload-time = "2025-11-09T20:49:20.317Z" },
     { url = "https://files.pythonhosted.org/packages/2f/9c/6753e6522b8d0ef07d3a3d239426669e984fb0eba15a315cdbc1253904e4/jiter-0.12.0-graalpy312-graalpy250_312_native-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c24e864cb30ab82311c6425655b0cdab0a98c5d973b065c66a3f020740c2324c", size = 346110, upload-time = "2025-11-09T20:49:21.817Z" },
+]
+
+[[package]]
+name = "obsws-python"
+version = "1.8.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "websocket-client" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d6/2f/624af34a5b0f09fbf858bf6743521a8626d712671ac49573e625ad1c97d3/obsws_python-1.8.0.tar.gz", hash = "sha256:e082894f80deb0836861fdc3c222e497308c8f66328da6075baba5b456a20971", size = 28727, upload-time = "2025-07-01T08:24:11.652Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/97/4b/537f3d372f065b2aeeac3812228066eb70f47436adf88aaacc94eb5fd4e1/obsws_python-1.8.0-py3-none-any.whl", hash = "sha256:537bde416e149b6f59e0b2f31761d4a40329feafec171bde6fc1346ab8516e28", size = 30819, upload-time = "2025-07-01T08:24:10.086Z" },
 ]
 
 [[package]]
@@ -912,6 +935,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/bd/95/615e72cd27b85b61eec764a5ca51bd94d40b5adea5ff47567d9ebc4d275a/watchfiles-1.1.1-pp311-pypy311_pp73-macosx_11_0_arm64.whl", hash = "sha256:89eef07eee5e9d1fda06e38822ad167a044153457e6fd997f8a858ab7564a336", size = 396117, upload-time = "2025-10-14T15:06:11.28Z" },
     { url = "https://files.pythonhosted.org/packages/c9/81/e7fe958ce8a7fb5c73cc9fb07f5aeaf755e6aa72498c57d760af760c91f8/watchfiles-1.1.1-pp311-pypy311_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ce19e06cbda693e9e7686358af9cd6f5d61312ab8b00488bc36f5aabbaf77e24", size = 450493, upload-time = "2025-10-14T15:06:12.321Z" },
     { url = "https://files.pythonhosted.org/packages/6e/d4/ed38dd3b1767193de971e694aa544356e63353c33a85d948166b5ff58b9e/watchfiles-1.1.1-pp311-pypy311_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3e6f39af2eab0118338902798b5aa6664f46ff66bc0280de76fca67a7f262a49", size = 457546, upload-time = "2025-10-14T15:06:13.372Z" },
+]
+
+[[package]]
+name = "websocket-client"
+version = "1.9.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2c/41/aa4bf9664e4cda14c3b39865b12251e8e7d239f4cd0e3cc1b6c2ccde25c1/websocket_client-1.9.0.tar.gz", hash = "sha256:9e813624b6eb619999a97dc7958469217c3176312b3a16a4bd1bc7e08a46ec98", size = 70576, upload-time = "2025-10-07T21:16:36.495Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/34/db/b10e48aa8fff7407e67470363eac595018441cf32d5e1001567a7aeba5d2/websocket_client-1.9.0-py3-none-any.whl", hash = "sha256:af248a825037ef591efbf6ed20cc5faa03d3b47b9e5a2230a529eeee1c1fc3ef", size = 82616, upload-time = "2025-10-07T21:16:34.951Z" },
 ]
 
 [[package]]

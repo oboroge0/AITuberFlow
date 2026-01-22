@@ -10,10 +10,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import socketio
+from dotenv import load_dotenv
 
 from db.database import init_db
 from routers import workflows, plugins, integrations, templates
 from engine.executor import WorkflowExecutor
+
+# Load environment variables
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -22,10 +26,28 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# CORS configuration
+# Default origins for development; override with CORS_ORIGINS env var for production
+DEFAULT_CORS_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+]
+
+def get_cors_origins() -> list:
+    """Get CORS origins from environment or use defaults."""
+    cors_env = os.getenv("CORS_ORIGINS", "")
+    if cors_env:
+        return [origin.strip() for origin in cors_env.split(",") if origin.strip()]
+    return DEFAULT_CORS_ORIGINS
+
+CORS_ORIGINS = get_cors_origins()
+
 # Socket.IO setup
 sio = socketio.AsyncServer(
     async_mode="asgi",
-    cors_allowed_origins="*",
+    cors_allowed_origins=CORS_ORIGINS,
 )
 
 # Global executor instance (shared with workflows router)
@@ -59,7 +81,7 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify allowed origins
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

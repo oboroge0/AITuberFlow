@@ -14,8 +14,15 @@ dependencies = [
     "httpx>=0.26.0",
     "openai>=1.10.0",
     "python-dotenv>=1.0.0",
-    "python-multipart>=0.0.6",  # Required for file uploads
-    "obsws-python>=1.7.0",  # OBS WebSocket control
+    "python-multipart>=0.0.6",
+]
+
+[project.optional-dependencies]
+obs = [
+    "obsws-python>=1.7.0",  # OBS WebSocket control (GPL-2.0 license)
+]
+all = [
+    "obsws-python>=1.7.0",
 ]
 
 [dependency-groups]

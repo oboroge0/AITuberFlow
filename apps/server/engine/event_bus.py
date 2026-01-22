@@ -68,21 +68,24 @@ class EventFilter:
             condition = self.condition
 
             # Replace event.field with actual values
+            # Note: bool must be checked before int (bool is subclass of int)
             for key, value in event.payload.items():
-                if isinstance(value, str):
+                if isinstance(value, bool):
+                    condition = condition.replace(f'event.{key}', str(value))
+                elif isinstance(value, str):
                     condition = condition.replace(f'event.{key}', f'"{value}"')
                 elif isinstance(value, (int, float)):
                     condition = condition.replace(f'event.{key}', str(value))
-                elif isinstance(value, bool):
-                    condition = condition.replace(f'event.{key}', str(value).lower())
 
             # Evaluate simple expressions
             # Support: ==, !=, >, <, >=, <=, and, or, not
             condition = condition.replace('&&', ' and ').replace('||', ' or ')
             condition = condition.replace('===', '==').replace('!==', '!=')
+            # Support JavaScript-style true/false
+            condition = condition.replace('true', 'True').replace('false', 'False')
 
             # Safe eval with restricted builtins
-            result = eval(condition, {"__builtins__": {}}, {})
+            result = eval(condition, {"__builtins__": {}}, {"True": True, "False": False})
             return bool(result)
 
         except Exception as e:
