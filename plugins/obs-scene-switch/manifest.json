@@ -1,0 +1,74 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "obs-scene-switch",
+  "name": "OBS Scene Switch",
+  "version": "1.0.0",
+  "description": "Switch OBS scenes via WebSocket. Requires OBS Studio 28+ with WebSocket server enabled.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "output",
+  "node": {
+    "inputs": [
+      {
+        "id": "trigger",
+        "type": "any",
+        "description": "Trigger to switch scene"
+      },
+      {
+        "id": "scene_name",
+        "type": "string",
+        "description": "Scene name (overrides config if provided)"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "success",
+        "type": "boolean",
+        "description": "Whether the scene switch was successful"
+      },
+      {
+        "id": "current_scene",
+        "type": "string",
+        "description": "Current scene name after switch"
+      },
+      {
+        "id": "scenes",
+        "type": "array",
+        "description": "List of available scene names"
+      }
+    ],
+    "events": {
+      "emits": [],
+      "listens": []
+    }
+  },
+  "config": {
+    "host": {
+      "type": "string",
+      "label": "Host",
+      "description": "OBS WebSocket server host",
+      "default": "localhost"
+    },
+    "port": {
+      "type": "number",
+      "label": "Port",
+      "description": "OBS WebSocket server port",
+      "default": 4455
+    },
+    "password": {
+      "type": "string",
+      "label": "Password",
+      "description": "OBS WebSocket server password (leave empty if not set)",
+      "default": ""
+    },
+    "scene_name": {
+      "type": "string",
+      "label": "Scene Name",
+      "description": "Target scene name to switch to",
+      "default": ""
+    }
+  }
+}

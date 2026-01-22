@@ -452,6 +452,39 @@ const nodeCategories = [
       },
     ],
   },
+  {
+    id: 'obs',
+    label: 'OBS',
+    color: '#302E31',
+    nodes: [
+      {
+        id: 'obs-scene-switch',
+        label: 'Scene',
+        color: '#302E31',
+        bgColor: 'rgba(48, 46, 49, 0.3)',
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+        ),
+        defaultConfig: { host: 'localhost', port: 4455, password: '', scene_name: '' },
+      },
+      {
+        id: 'obs-source-toggle',
+        label: 'Source',
+        color: '#302E31',
+        bgColor: 'rgba(48, 46, 49, 0.3)',
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        ),
+        defaultConfig: { host: 'localhost', port: 4455, password: '', scene_name: '', source_name: '', action: 'toggle' },
+      },
+    ],
+  },
 ];
 
 // Flatten for exports

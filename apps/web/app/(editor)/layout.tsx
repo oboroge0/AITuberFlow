@@ -1,19 +1,18 @@
 import type { Metadata } from 'next';
-import './globals.css';
+import './editor.css';
 
 export const metadata: Metadata = {
-  title: 'AITuberFlow',
+  title: 'AITuberFlow - Visual Workflow Editor',
   description: 'Build AI-powered virtual streamers with a visual workflow editor',
 };
 
 /**
- * Root Layout
+ * Editor Layout
  *
- * Minimal root layout. Route-specific layouts handle their own styling:
- * - (editor)/layout.tsx - Editor pages
- * - (overlay)/layout.tsx - Streaming overlays
+ * Layout for the workflow editor and preview pages.
+ * Includes editor-specific styles (dark theme, React Flow, etc.)
  */
-export default function RootLayout({
+export default function EditorLayout({
   children,
 }: {
   children: React.ReactNode;

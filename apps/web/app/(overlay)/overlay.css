@@ -1,0 +1,46 @@
+/**
+ * Overlay-specific CSS for OBS Browser Source
+ *
+ * Optimized for streaming:
+ * - Fully transparent background
+ * - Minimal styles for performance
+ * - No unnecessary visual elements
+ */
+
+/* Reset and transparent background */
+html,
+body {
+  background: transparent !important;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+/* Basic box sizing */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Disable text selection in overlay */
+* {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Hide scrollbars */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ensure full viewport usage */
+#__next {
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+}

@@ -1,129 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/**
+ * Global CSS - Minimal shared styles
+ *
+ * Route-specific styles are in:
+ * - (editor)/editor.css - Editor interface styles
+ * - (overlay)/overlay.css - Streaming overlay styles
+ */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --editor-bg: #0F172A;
-  --editor-bg-light: #1E293B;
-  --panel-bg: rgba(17, 24, 39, 0.95);
-  --accent: #10B981;
-  --accent-blue: #3B82F6;
-}
-
-* {
+/* Minimal reset */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-}
-
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: var(--editor-bg);
-  color: white;
-  overflow: hidden;
-}
-
-/* React Flow customizations */
-.react-flow__node {
-  border-radius: 12px;
-}
-
-.react-flow__edge-path {
-  stroke-width: 3;
-}
-
-.react-flow__handle {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 2px solid #1F2937;
-}
-
-.react-flow__handle:hover {
-  /* No transform to prevent movement */
-}
-
-.react-flow__controls {
-  background-color: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-}
-
-.react-flow__controls-button {
-  background-color: transparent;
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.react-flow__controls-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.react-flow__controls-button svg {
-  fill: white;
-}
-
-.react-flow__minimap {
-  background-color: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-}
-
-.react-flow__background {
-  background: transparent !important;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* Form element focus states */
-select:focus,
-input:focus,
-textarea:focus {
-  border-color: rgba(16, 185, 129, 0.5) !important;
-  outline: none;
-}
-
-/* Button hover states */
-button:hover {
-  opacity: 0.9;
-}
-
-/* Line clamp utility */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Workflow node hover */
-.workflow-node:hover {
-  cursor: grab;
-}
-
-.workflow-node:active {
-  cursor: grabbing;
-}
-
-/* Port hover effect */
-.port:hover {
-  transform: scale(1.3);
 }

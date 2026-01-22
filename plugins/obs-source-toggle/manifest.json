@@ -1,0 +1,91 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "obs-source-toggle",
+  "name": "OBS Source Toggle",
+  "version": "1.0.0",
+  "description": "Show or hide OBS sources via WebSocket. Requires OBS Studio 28+ with WebSocket server enabled.",
+  "author": {
+    "name": "AITuberFlow Team",
+    "url": "https://github.com/aituber-flow"
+  },
+  "license": "MIT",
+  "category": "output",
+  "node": {
+    "inputs": [
+      {
+        "id": "trigger",
+        "type": "any",
+        "description": "Trigger to toggle source visibility"
+      },
+      {
+        "id": "visible",
+        "type": "boolean",
+        "description": "Set visibility (true=show, false=hide). If not provided, toggles current state."
+      }
+    ],
+    "outputs": [
+      {
+        "id": "success",
+        "type": "boolean",
+        "description": "Whether the operation was successful"
+      },
+      {
+        "id": "visible",
+        "type": "boolean",
+        "description": "Current visibility state after operation"
+      },
+      {
+        "id": "source_name",
+        "type": "string",
+        "description": "Name of the affected source"
+      }
+    ],
+    "events": {
+      "emits": [],
+      "listens": []
+    }
+  },
+  "config": {
+    "host": {
+      "type": "string",
+      "label": "Host",
+      "description": "OBS WebSocket server host",
+      "default": "localhost"
+    },
+    "port": {
+      "type": "number",
+      "label": "Port",
+      "description": "OBS WebSocket server port",
+      "default": 4455
+    },
+    "password": {
+      "type": "string",
+      "label": "Password",
+      "description": "OBS WebSocket server password (leave empty if not set)",
+      "default": ""
+    },
+    "scene_name": {
+      "type": "string",
+      "label": "Scene Name",
+      "description": "Scene containing the source (leave empty for current scene)",
+      "default": ""
+    },
+    "source_name": {
+      "type": "string",
+      "label": "Source Name",
+      "description": "Name of the source to toggle",
+      "default": ""
+    },
+    "action": {
+      "type": "select",
+      "label": "Action",
+      "description": "What to do with the source",
+      "default": "toggle",
+      "options": [
+        {"label": "Toggle", "value": "toggle"},
+        {"label": "Show", "value": "show"},
+        {"label": "Hide", "value": "hide"}
+      ]
+    }
+  }
+}

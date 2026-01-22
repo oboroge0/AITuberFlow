@@ -402,6 +402,32 @@ const nodeTypeConfig: Record<string, NodeTypeConfig> = {
     descriptionJa: 'オーバーレイで音声を再生するノード。\n【使い方】audioに音声データを接続。オーバーレイ画面で音声が再生されます。',
     descriptionEn: 'Audio playback node.\n[Usage] Connect audio data. Audio plays on overlay screen.',
   },
+  'obs-scene-switch': {
+    color: '#302E31',
+    bgColor: 'rgba(48, 46, 49, 0.3)',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+    ),
+    statusText: 'OBS Scene Switch',
+    descriptionJa: 'OBSのシーンを切り替えるノード。\n【使い方】triggerに接続して実行。設定でシーン名を指定。※OBS WebSocket有効化が必要',
+    descriptionEn: 'OBS scene switch node.\n[Usage] Connect trigger to execute. Set scene name in config. *Requires OBS WebSocket enabled.',
+  },
+  'obs-source-toggle': {
+    color: '#302E31',
+    bgColor: 'rgba(48, 46, 49, 0.3)',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+    ),
+    statusText: 'OBS Source Toggle',
+    descriptionJa: 'OBSソースの表示/非表示を切り替えるノード。\n【使い方】triggerに接続。設定でソース名とアクションを指定。※OBS WebSocket有効化が必要',
+    descriptionEn: 'OBS source toggle node.\n[Usage] Connect trigger. Set source name and action in config. *Requires OBS WebSocket enabled.',
+  },
 };
 
 // Default config for unknown node types
