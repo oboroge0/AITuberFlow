@@ -3,144 +3,251 @@
 ## Project Overview
 
 AITuberFlow is a visual workflow editor for creating AI VTuber streaming setups. Users connect nodes in a graph to build pipelines that handle:
-- Chat input (YouTube, Twitch)
+- Chat input (YouTube, Twitch, Discord)
 - LLM responses (OpenAI, Anthropic, Google, Ollama)
 - Text-to-Speech (VOICEVOX, COEIROINK, Style-Bert-VITS2)
 - Avatar control (VRM models, expressions, lip sync)
 - Audio playback and subtitle display
+- OBS integration (scene switching, source control)
 
 ## Architecture
 
 ```
 AITuberFlow/
 ├── apps/
-│   ├── server/          # Python FastAPI backend
-│   │   ├── engine/      # Workflow execution engine
-│   │   ├── routers/     # API endpoints
-│   │   └── main.py      # Server entry point
-│   └── web/             # Next.js frontend
-│       ├── app/         # Pages (editor, overlay)
-│       ├── components/  # React components
-│       └── stores/      # Zustand state management
+│   ├── server/          # Python FastAPI backend (see apps/server/CLAUDE.md)
+│   └── web/             # Next.js frontend (see apps/web/CLAUDE.md)
 ├── packages/
 │   └── sdk/             # Python SDK for node development
-│       └── aituber_flow_sdk/
-├── plugins/             # Node plugins (each in own directory)
-│   ├── {node-name}/
-│   │   ├── manifest.json
-│   │   └── node.py
-└── templates/           # Workflow templates (JSON)
+├── plugins/             # Node plugins (see plugins/CLAUDE.md)
+├── templates/           # Workflow templates (JSON)
+└── docs/                # Documentation
 ```
+
+## Quick Start
+
+```bash
+# Backend (Terminal 1)
+cd apps/server
+uv sync
+cp .env.example .env
+uv run python main.py
+
+# Frontend (Terminal 2)
+cd apps/web
+npm install
+npm run dev
+```
+
+Access the editor at `http://localhost:3000/editor/{workflow-id}`
+
+## Available Plugins (33 nodes)
+
+### Input Nodes
+- `youtube-chat` - YouTube Live chat listener
+- `twitch-chat` - Twitch chat listener
+- `discord-chat` - Discord bot integration
+- `timer` - Periodic trigger
+- `manual-input` - Manual text input
+
+### LLM Nodes
+- `openai-llm` - OpenAI GPT models
+- `anthropic-llm` - Anthropic Claude models
+- `google-llm` - Google Gemini models
+- `ollama-llm` - Local Ollama models
+
+### TTS Nodes
+- `voicevox-tts` - VOICEVOX synthesis
+- `coeiroink-tts` - COEIROINK synthesis
+- `sbv2-tts` - Style-Bert-VITS2 synthesis
+
+### Avatar Nodes
+- `avatar-configuration` - Avatar settings
+- `lip-sync` - Audio lip sync
+- `emotion-analyzer` - Text to emotion
+- `motion-trigger` - Animation trigger
+
+### Control Nodes
+- `start` / `end` - Flow markers
+- `switch` - Conditional branching
+- `loop` / `foreach` - Iteration
+- `delay` - Timed delay
+
+### Process Nodes
+- `text-transform` - Text manipulation
+- `data-formatter` - Data formatting
+- `http-request` - HTTP API calls
+- `random` - Random selection
+- `variable` - Variable storage
+
+### Output Nodes
+- `audio-player` - Audio playback
+- `subtitle-display` - Subtitle overlay
+- `console-output` - Debug logging
+- `donation-alert` - Donation display
+
+### OBS Nodes
+- `obs-scene-switch` - Scene switching
+- `obs-source-toggle` - Source visibility
 
 ## Node Development
 
-### Plugin Structure
+See `plugins/CLAUDE.md` for detailed plugin development guide.
 
-Each node is a plugin in `plugins/{node-name}/`:
-- `manifest.json` - Node metadata, inputs, outputs, config schema
-- `node.py` - Python implementation extending `BaseNode`
+### Quick Plugin Structure
 
-### BaseNode Methods
-
-```python
-class MyNode(BaseNode):
-    async def setup(self, config: dict, context: NodeContext) -> None:
-        """Called once when workflow starts"""
-        pass
-
-    async def execute(self, inputs: dict, context: NodeContext) -> dict:
-        """Called each time the node runs, returns outputs"""
-        return {"output_id": value}
-
-    async def on_event(self, event: Event, context: NodeContext) -> Optional[dict]:
-        """Handle WebSocket events (optional)"""
-        return None
-
-    async def teardown(self) -> None:
-        """Called when workflow stops"""
-        pass
+```
+plugins/{node-name}/
+├── manifest.json    # Metadata, inputs, outputs, config
+└── node.py          # Python implementation
 ```
 
-### NodeContext API
+### BaseNode Template
 
 ```python
-await context.log(message, level="info")  # Log to frontend
-await context.emit_event(Event(type="event.name", payload={}))  # WebSocket event
-context.create_task(coroutine)  # Background task
-context.cancel_background_tasks()  # Cancel all tasks
+from aituber_flow_sdk import BaseNode, NodeContext
+
+class MyNode(BaseNode):
+    async def setup(self, config: dict, context: NodeContext) -> None:
+        """Initialize node with config"""
+        self.setting = config.get("setting", "default")
+
+    async def execute(self, inputs: dict, context: NodeContext) -> dict:
+        """Process inputs and return outputs"""
+        return {"output": result}
+
+    async def teardown(self) -> None:
+        """Cleanup resources"""
+        pass
 ```
 
 ### Frontend Registration
 
-When adding a new node, update:
-1. `apps/web/components/editor/Sidebar.tsx` - Node palette
-2. `apps/web/components/editor/Canvas.tsx` - Node metadata (colors, labels, inputs/outputs)
-3. `apps/web/components/editor/CustomNode.tsx` - Node appearance (icon, colors)
-
-## Node Categories
-
-- `input` - Data sources (chat, timer, manual input)
-- `output` - Endpoints (console, subtitle, audio player)
-- `process` - Data transformation (LLM, text transform, emotion analyzer)
-- `avatar` - Avatar control (avatar-controller, lip-sync)
-- `control` - Flow control (switch, delay, loop)
-- `llm` - LLM providers
-- `tts` - Text-to-Speech engines
+When adding a new node, update these files:
+1. `apps/web/components/editor/Sidebar.tsx` - Add to node palette
+2. `apps/web/components/editor/Canvas.tsx` - Define metadata (nodeTypeMap)
+3. `apps/web/components/editor/CustomNode.tsx` - Add icon and colors
 
 ## Event System
 
-Events enable real-time communication between nodes and frontend:
+Real-time communication between nodes and frontend:
 
 ```python
-# Emit from node
 await context.emit_event(Event(
     type="avatar.expression",
     payload={"expression": "happy", "intensity": 0.8}
 ))
 ```
 
-Common events:
-- `avatar.expression` - Change avatar expression
-- `avatar.mouth` - Lip sync mouth value (0.0-1.0)
-- `avatar.motion` - Trigger animation
-- `audio.play` - Play audio file
-- `audio.stop` - Stop audio playback
-- `subtitle` - Display subtitle text
+### Common Events
+| Event | Description | Payload |
+|-------|-------------|---------|
+| `avatar.expression` | Change expression | `{expression, intensity}` |
+| `avatar.mouth` | Lip sync value | `{value: 0.0-1.0}` |
+| `avatar.motion` | Trigger animation | `{motion, loop}` |
+| `audio.play` | Play audio | `{url, volume}` |
+| `audio.stop` | Stop playback | `{}` |
+| `subtitle` | Show subtitle | `{text, duration}` |
+
+## API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/workflows` | List workflows |
+| `POST /api/workflows` | Create workflow |
+| `GET /api/workflows/{id}` | Get workflow |
+| `PUT /api/workflows/{id}` | Update workflow |
+| `DELETE /api/workflows/{id}` | Delete workflow |
+| `GET /api/plugins` | List available plugins |
+| `GET /api/templates` | List templates |
+| `POST /api/integrations/voicevox/speakers` | Get VOICEVOX speakers |
+
+WebSocket: `ws://localhost:8001/ws/socket.io`
 
 ## Overlay System
 
 OBS-compatible overlay at `/overlay/[workflowId]`:
-- Unified overlay with avatar, subtitles, and audio playback
-- Transparent background for OBS Browser Source
-- URL parameters: model, animation, scale, x, y, subtitle, subPosition, subFontSize, volume, debug
+- Transparent background for browser source
+- URL parameters: `model`, `animation`, `scale`, `x`, `y`, `subtitle`, `subPosition`, `subFontSize`, `volume`, `debug`
+
+Example: `http://localhost:3000/overlay/abc123?subtitle=true&subPosition=bottom`
+
+## Repository Guidelines
+
+### Branch Naming
+- `feature/add-xxx` - New features
+- `fix/issue-description` - Bug fixes
+- `docs/update-xxx` - Documentation
+- `plugin/node-name` - New plugins
+
+### Commit Messages
+```
+type: short description
+
+type: feat | fix | docs | plugin | refactor | test | chore
+```
+
+Examples:
+```
+feat: add Discord chat integration node
+fix: resolve audio playback timing issue
+plugin: add image-generation node
+```
+
+### Pull Request Process
+1. Create feature branch from main
+2. Make changes following coding standards
+3. Test locally
+4. Create PR with clear description
+5. Address review feedback
+6. Squash merge when approved
+
+## Environment Configuration
+
+### Backend (.env)
+```bash
+DATABASE_URL=sqlite:///./aituber_flow.db
+PORT=8001
+DEBUG=true
+SECRET_KEY=your-secret-key
+CORS_ORIGINS=http://localhost:3000
+```
+
+### External Services
+- **VOICEVOX**: Run locally on port 50021
+- **OBS WebSocket**: Enable in OBS settings (port 4455)
+- **LLM APIs**: Set API keys in node config
+
+## Development Tips
+
+1. **Single Responsibility**: Each node does one thing well
+2. **Events for Real-time**: Use events for time-sensitive data (lip sync, expressions)
+3. **Outputs for Data Flow**: Use outputs for data flowing to next node
+4. **Pass-through Outputs**: Include input data in outputs when downstream nodes need it
+5. **Async/Await**: All node methods are async
+6. **Error Handling**: Log errors with `await context.log(message, level="error")`
+7. **Type Safety**: Match manifest types with Python implementations
+
+## Testing
+
+```bash
+# Backend
+cd apps/server
+uv run pytest -v
+
+# Frontend
+cd apps/web
+npm test
+```
 
 ## Commands
 
 Use `/create-node` to scaffold a new node plugin with all required files.
 
-## Development Tips
+## Related Documentation
 
-1. **Single Responsibility**: Each node should do one thing well
-2. **Events for Real-time**: Use events for time-sensitive data (lip sync, expressions)
-3. **Outputs for Data Flow**: Use outputs for data that flows to next node
-4. **Pass-through Outputs**: Include input data in outputs when downstream nodes need it
-5. **Async/Await**: All node methods are async - use `await` properly
-6. **Type Safety**: Match manifest types with Python/TypeScript implementations
-
-## Running the Project
-
-```bash
-# Backend (from apps/server)
-uv run uvicorn main:app --reload --port 8000
-
-# Frontend (from apps/web)
-bun dev
-```
-
-## Testing Workflows
-
-1. Open editor at `http://localhost:3000/editor/{workflow-id}`
-2. Add nodes from sidebar
-3. Connect nodes by dragging between ports
-4. Configure nodes in the right panel
-5. Click play button to run from a node
+- `apps/server/CLAUDE.md` - Backend development details
+- `apps/web/CLAUDE.md` - Frontend development details
+- `plugins/CLAUDE.md` - Plugin development guide
+- `CONTRIBUTING.md` - Contribution guidelines
+- `docs/getting-started.md` - User guide
