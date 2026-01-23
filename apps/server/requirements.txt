@@ -5,7 +5,7 @@ pydantic==2.5.3
 python-socketio==5.11.0
 aiosqlite==0.19.0
 httpx==0.26.0
-openai==1.10.0
+openai==2.15.0
 python-dotenv==1.0.0
 
 # Additional LLM providers
