@@ -17,9 +17,5 @@ export default function EditorLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning>{children}</body>
-    </html>
-  );
+  return <>{children}</>;
 }

@@ -19,11 +19,5 @@ export default function OverlayLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <html lang="en" style={{ background: 'transparent' }}>
-      <body style={{ background: 'transparent' }}>
-        {children}
-      </body>
-    </html>
-  );
+  return <>{children}</>;
 }
