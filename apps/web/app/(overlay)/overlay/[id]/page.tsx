@@ -75,6 +75,9 @@ interface AvatarConfig {
   renderer: RendererType;
   modelUrl?: string;
   animationUrl?: string;
+  vtubePort?: number;
+  vtubeMouthParam?: string;
+  vtubeExpressionMap?: Record<string, string>;
 }
 
 interface OverlayPageProps {
@@ -111,6 +114,7 @@ export default function OverlayPage({ params }: OverlayPageProps) {
     renderer: 'vrm',
     modelUrl: paramModel || undefined,
     animationUrl: paramAnimation || undefined,
+    vtubePort: 8001,
   });
 
   const [avatarState, setAvatarState] = useState<AvatarState>({
@@ -148,10 +152,25 @@ export default function OverlayPage({ params }: OverlayPageProps) {
           );
 
           if (avatarNode?.config) {
+            // Parse VTube Studio expression map if it's a string
+            let expressionMap: Record<string, string> | undefined;
+            if (avatarNode.config.vtube_expression_map) {
+              try {
+                expressionMap = typeof avatarNode.config.vtube_expression_map === 'string'
+                  ? JSON.parse(avatarNode.config.vtube_expression_map)
+                  : avatarNode.config.vtube_expression_map;
+              } catch {
+                console.warn('Failed to parse vtube_expression_map');
+              }
+            }
+
             setAvatarConfig({
               renderer: avatarNode.config.renderer || 'vrm',
               modelUrl: avatarNode.config.model_url,
               animationUrl: avatarNode.config.idle_animation,
+              vtubePort: avatarNode.config.vtube_port || 8001,
+              vtubeMouthParam: avatarNode.config.vtube_mouth_param,
+              vtubeExpressionMap: expressionMap,
             });
           }
         }
@@ -201,12 +220,34 @@ export default function OverlayPage({ params }: OverlayPageProps) {
       setAvatarState((prev) => ({ ...prev, lookAt: data }));
     });
 
-    socket.on('avatar.update', (data: Partial<AvatarState> & { model_url?: string; idle_animation?: string; renderer?: RendererType }) => {
-      if (data.renderer || data.model_url || data.idle_animation) {
+    socket.on('avatar.update', (data: Partial<AvatarState> & {
+      model_url?: string;
+      idle_animation?: string;
+      renderer?: RendererType;
+      vtube_port?: number;
+      vtube_mouth_param?: string;
+      vtube_expression_map?: string | Record<string, string>;
+    }) => {
+      if (data.renderer || data.model_url || data.idle_animation || data.vtube_port) {
+        // Parse VTube Studio expression map if it's a string
+        let expressionMap: Record<string, string> | undefined;
+        if (data.vtube_expression_map) {
+          try {
+            expressionMap = typeof data.vtube_expression_map === 'string'
+              ? JSON.parse(data.vtube_expression_map)
+              : data.vtube_expression_map;
+          } catch {
+            console.warn('Failed to parse vtube_expression_map');
+          }
+        }
+
         setAvatarConfig((prev) => ({
           renderer: data.renderer || prev.renderer,
           modelUrl: data.model_url || prev.modelUrl,
           animationUrl: data.idle_animation || prev.animationUrl,
+          vtubePort: data.vtube_port || prev.vtubePort,
+          vtubeMouthParam: data.vtube_mouth_param || prev.vtubeMouthParam,
+          vtubeExpressionMap: expressionMap || prev.vtubeExpressionMap,
         }));
       }
       setAvatarState((prev) => ({ ...prev, ...data }));
@@ -361,6 +402,9 @@ export default function OverlayPage({ params }: OverlayPageProps) {
           renderer={avatarConfig.renderer}
           modelUrl={getFullUrl(avatarConfig.modelUrl)}
           animationUrl={getFullUrl(avatarConfig.animationUrl)}
+          vtubePort={avatarConfig.vtubePort}
+          vtubeMouthParam={avatarConfig.vtubeMouthParam}
+          vtubeExpressionMap={avatarConfig.vtubeExpressionMap}
           state={avatarState}
           showSubtitles={false}
           backgroundColor="transparent"

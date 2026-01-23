@@ -25,7 +25,7 @@ import CustomNode, { type CustomNodeData } from './CustomNode';
 import FieldSelectorNode from './FieldSelectorNode';
 import ContextMenu, { type ContextMenuItem } from './ContextMenu';
 import DataPreviewPopup from './DataPreviewPopup';
-import { nodeTypes as sidebarNodeTypes } from './Sidebar';
+import { nodeTypes as sidebarNodeTypes, type SidebarNodeType } from './Sidebar';
 import { type PortType, type PortDefinition } from '@/lib/portTypes';
 import { useUIPreferencesStore, type NodeDisplayMode } from '@/stores/uiPreferencesStore';
 import { type PromptSection } from '@/components/panels/NodeSettings';

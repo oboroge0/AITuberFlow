@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from engine.event_bus import EventBus, Event, EventFilter
+from integrations.vtube_studio import vts_client
 
 logger = logging.getLogger(__name__)
 
@@ -146,6 +147,8 @@ class WorkflowExecutor:
         self._queue_processors: Dict[str, asyncio.Task] = {}
         # Background tasks tied to workflow lifetime (e.g., lip sync emitters)
         self._background_tasks: Dict[str, Set[asyncio.Task]] = {}
+        # VTube Studio mode tracking per workflow
+        self._vts_workflows: Set[str] = set()
 
     def set_log_callback(self, workflow_id: str, callback):
         """Set the log callback for a workflow."""
@@ -158,6 +161,68 @@ class WorkflowExecutor:
     def set_status_callback(self, workflow_id: str, callback):
         """Set the status callback for node execution status updates."""
         self._status_callbacks[workflow_id] = callback
+
+    async def _setup_vts_if_needed(self, workflow_id: str, workflow_data: Dict[str, Any]):
+        """Check for VTube Studio mode and connect if needed."""
+        nodes = workflow_data.get("nodes", [])
+
+        # Find avatar-configuration node
+        avatar_config = None
+        for node in nodes:
+            if node.get("type") == "avatar-configuration":
+                avatar_config = node.get("config", {})
+                break
+
+        if not avatar_config:
+            return
+
+        # Check if VTube Studio mode
+        renderer = avatar_config.get("renderer", "vrm")
+        if renderer != "vtube-studio":
+            return
+
+        # Get VTS settings
+        port = avatar_config.get("vtube_port", 8001)
+        mouth_param = avatar_config.get("vtube_mouth_param", "MouthOpen")
+
+        # Parse expression map
+        expression_map = {}
+        raw_map = avatar_config.get("vtube_expression_map", "")
+        if raw_map:
+            try:
+                import json
+                if isinstance(raw_map, str):
+                    expression_map = json.loads(raw_map)
+                elif isinstance(raw_map, dict):
+                    expression_map = raw_map
+            except Exception as e:
+                logger.warning(f"Failed to parse VTS expression map: {e}")
+
+        # Configure and connect VTS client
+        vts_client.configure(
+            port=port,
+            mouth_param=mouth_param,
+            expression_map=expression_map if expression_map else None
+        )
+
+        logger.info(f"Workflow {workflow_id} uses VTube Studio mode, connecting...")
+        success = await vts_client.connect()
+
+        if success:
+            self._vts_workflows.add(workflow_id)
+            logger.info(f"VTube Studio connected for workflow {workflow_id}")
+        else:
+            logger.warning(f"Failed to connect to VTube Studio for workflow {workflow_id}")
+
+    async def _disconnect_vts_if_needed(self, workflow_id: str):
+        """Disconnect VTS if this was a VTS workflow."""
+        if workflow_id in self._vts_workflows:
+            self._vts_workflows.discard(workflow_id)
+
+            # Only disconnect if no other workflows are using VTS
+            if not self._vts_workflows:
+                await vts_client.disconnect()
+                logger.info("VTube Studio disconnected (no active VTS workflows)")
 
     def _create_node_context(self, workflow_id: str, node_id: str, character: Dict[str, Any]) -> NodeContext:
         """Create a NodeContext for a node."""
@@ -321,6 +386,9 @@ class WorkflowExecutor:
         # Create event queue
         self._event_queues[workflow_id] = EventQueue(max_size=100)
 
+        # Check for VTube Studio mode
+        await self._setup_vts_if_needed(workflow_id, workflow_data)
+
         # Subscribe to events and forward to callback
         event_callback = self._event_callbacks.get(workflow_id)
         if event_callback:
@@ -330,6 +398,16 @@ class WorkflowExecutor:
                    event.type.startswith("avatar.") or \
                    event.type == "subtitle":
                     await event_callback(event)
+
+                # Also send to VTube Studio if in VTS mode
+                if workflow_id in self._vts_workflows and vts_client.is_connected:
+                    if event.type == "avatar.mouth":
+                        value = event.payload.get("value", 0.0)
+                        await vts_client.set_mouth_open(value)
+                    elif event.type == "avatar.expression":
+                        expression = event.payload.get("expression", "")
+                        if expression:
+                            await vts_client.trigger_expression(expression)
 
             event_bus.subscribe("audio.*", forward_event)
             event_bus.subscribe("avatar.*", forward_event)
@@ -385,6 +463,9 @@ class WorkflowExecutor:
         # Clean up background tasks registry
         if workflow_id in self._background_tasks:
             del self._background_tasks[workflow_id]
+
+        # Disconnect VTube Studio if needed
+        await self._disconnect_vts_if_needed(workflow_id)
 
         # Update status
         self._running_workflows[workflow_id]["status"] = "stopped"

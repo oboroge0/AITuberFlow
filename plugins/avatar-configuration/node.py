@@ -21,6 +21,8 @@ class AvatarConfigurationNode(BaseNode):
         model_url = config.get("model_url", "/models/avatar.vrm")
         idle_animation = config.get("idle_animation", "")
         vtube_port = config.get("vtube_port", 8001)
+        vtube_mouth_param = config.get("vtube_mouth_param", "MouthOpen")
+        vtube_expression_map = config.get("vtube_expression_map", "{}")
         png_config = config.get("png_config", "{}")
 
         await context.log(
@@ -36,6 +38,8 @@ class AvatarConfigurationNode(BaseNode):
                     "model_url": model_url,
                     "idle_animation": idle_animation,
                     "vtube_port": vtube_port,
+                    "vtube_mouth_param": vtube_mouth_param,
+                    "vtube_expression_map": vtube_expression_map,
                     "png_config": png_config,
                 },
             )
