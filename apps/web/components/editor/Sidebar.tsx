@@ -508,7 +508,7 @@ const nodeCategories: NodeCategory[] = [
 const nodeTypes: SidebarNodeType[] = nodeCategories.flatMap((cat) => cat.nodes);
 
 // Export for use in Canvas
-export { nodeTypes, type SidebarNodeType };
+export { nodeTypes };
 
 interface SidebarProps {
   isRunning: boolean;
