@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question / 質問
+    url: https://github.com/oboroge0/AITuberFlow/discussions
+    about: Ask questions in Discussions / Discussionsで質問する
+  - name: Documentation / ドキュメント
+    url: https://github.com/oboroge0/AITuberFlow/tree/main/docs
+    about: Read the documentation / ドキュメントを読む

@@ -1,0 +1,15 @@
+# Default owner
+* @oboroge0
+
+# Frontend
+/apps/web/ @oboroge0
+
+# Backend
+/apps/server/ @oboroge0
+
+# Plugins
+/plugins/ @oboroge0
+
+# Documentation
+/docs/ @oboroge0
+*.md @oboroge0
