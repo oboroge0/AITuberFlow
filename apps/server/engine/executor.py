@@ -382,6 +382,10 @@ class WorkflowExecutor:
         if workflow_id in self._event_queues:
             del self._event_queues[workflow_id]
 
+        # Clean up background tasks registry
+        if workflow_id in self._background_tasks:
+            del self._background_tasks[workflow_id]
+
         # Update status
         self._running_workflows[workflow_id]["status"] = "stopped"
         del self._running_workflows[workflow_id]
