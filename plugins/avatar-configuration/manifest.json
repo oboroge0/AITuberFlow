@@ -40,6 +40,18 @@
       "description": "Port for VTube Studio API connection",
       "default": 8001
     },
+    "vtube_mouth_param": {
+      "type": "string",
+      "label": "VTS Mouth Parameter",
+      "description": "VTube Studio parameter ID for mouth control (e.g., MouthOpen, MouthOpenY)",
+      "default": "MouthOpen"
+    },
+    "vtube_expression_map": {
+      "type": "textarea",
+      "label": "VTS Expression Hotkey Map (JSON)",
+      "description": "Map expressions to VTube Studio hotkey IDs. Format: {\"happy\": \"HotkeyID\", ...}",
+      "default": "{\"happy\": \"Happy\", \"sad\": \"Sad\", \"angry\": \"Angry\", \"surprised\": \"Surprised\", \"relaxed\": \"Relaxed\", \"neutral\": \"Neutral\"}"
+    },
     "png_config": {
       "type": "textarea",
       "label": "PNG Configuration (JSON)",

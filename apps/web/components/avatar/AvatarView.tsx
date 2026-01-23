@@ -13,6 +13,16 @@ const VRMRenderer = dynamic(() => import('./VRMRenderer'), {
   ),
 });
 
+// Dynamically import VTubeStudioBridge to avoid SSR issues with WebSocket
+const VTubeStudioBridge = dynamic(() => import('./VTubeStudioBridge'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-black/50">
+      <div className="text-white text-sm">Connecting to VTube Studio...</div>
+    </div>
+  ),
+});
+
 export type RendererType = 'vrm' | 'vtube-studio' | 'png';
 
 export interface AvatarState {
@@ -28,6 +38,8 @@ export interface AvatarViewProps {
   animationUrl?: string; // URL to Mixamo FBX animation (idle/loop)
   pngConfig?: PNGAvatarConfig;
   vtubePort?: number;
+  vtubeMouthParam?: string; // VTube Studio mouth parameter ID
+  vtubeExpressionMap?: Record<string, string>; // Expression to VTS hotkey mapping
   state: AvatarState;
   className?: string;
   showSubtitles?: boolean;
@@ -73,48 +85,7 @@ function PNGRenderer({
   );
 }
 
-// VTube Studio Connector Placeholder
-function VTubeStudioRenderer({
-  port,
-  state,
-  className = '',
-}: {
-  port: number;
-  state: AvatarState;
-  className?: string;
-}) {
-  const [connected, setConnected] = useState(false);
-  const [status, setStatus] = useState('Connecting...');
-
-  useEffect(() => {
-    // VTube Studio connection would be implemented here
-    // For now, show a placeholder
-    setStatus(`VTube Studio on port ${port}`);
-
-    // TODO: Implement actual VTube Studio API connection
-    // const ws = new WebSocket(`ws://localhost:${port}`);
-
-    return () => {
-      // Cleanup WebSocket connection
-    };
-  }, [port]);
-
-  return (
-    <div className={`vtube-studio-renderer flex flex-col items-center justify-center h-full ${className}`}>
-      <div className="text-white/50 text-center">
-        <div className="text-4xl mb-4">🎭</div>
-        <div className="text-sm mb-2">{status}</div>
-        <div className="text-xs text-white/30">
-          {connected ? 'Connected' : 'VTube Studio integration'}
-        </div>
-        <div className="mt-4 text-xs text-white/50">
-          <div>Expression: {state.expression}</div>
-          <div>Mouth: {(state.mouthOpen * 100).toFixed(0)}%</div>
-        </div>
-      </div>
-    </div>
-  );
-}
+// VTube Studio uses the dynamically imported VTubeStudioBridge component
 
 export default function AvatarView({
   renderer,
@@ -122,6 +93,8 @@ export default function AvatarView({
   animationUrl,
   pngConfig,
   vtubePort = 8001,
+  vtubeMouthParam,
+  vtubeExpressionMap,
   state,
   className = '',
   showSubtitles = false,
@@ -159,9 +132,12 @@ export default function AvatarView({
 
       case 'vtube-studio':
         return (
-          <VTubeStudioRenderer
+          <VTubeStudioBridge
             port={vtubePort}
             state={state}
+            mouthParamId={vtubeMouthParam}
+            expressionHotkeyMap={vtubeExpressionMap}
+            showStatus={true}
           />
         );
 
@@ -187,7 +163,7 @@ export default function AvatarView({
           </div>
         );
     }
-  }, [renderer, modelUrl, animationUrl, pngConfig, vtubePort, state, backgroundColor, enableControls, showGrid, onMotionComplete]);
+  }, [renderer, modelUrl, animationUrl, pngConfig, vtubePort, vtubeMouthParam, vtubeExpressionMap, state, backgroundColor, enableControls, showGrid, onMotionComplete]);
 
   return (
     <div className={`avatar-view relative w-full h-full ${className}`} style={{ pointerEvents: 'auto' }}>
