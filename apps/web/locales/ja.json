@@ -1,0 +1,138 @@
+{
+  "home": {
+    "title": "AITuber Flow",
+    "subtitle": "ビジュアルワークフローエディタ",
+    "newWorkflow": "新規作成",
+    "import": "インポート",
+    "loading": "読み込み中...",
+    "retry": "再試行",
+    "serverError": "バックエンドサーバー (http://localhost:8001) が起動していることを確認してください",
+    "templates": "テンプレート",
+    "templatesDesc": "プリセットのワークフローですぐに始められます",
+    "yourWorkflows": "ワークフロー一覧",
+    "noWorkflows": "ワークフローがありません",
+    "noWorkflowsDesc": "新規作成するか、上のテンプレートから始めましょう",
+    "createFirst": "最初のワークフローを作成",
+    "nodes": "ノード",
+    "connections": "接続",
+    "delete": "削除",
+    "duplicate": "複製",
+    "export": "エクスポート",
+    "deleteConfirm": "このワークフローを削除しますか？"
+  },
+  "editor": {
+    "save": "保存",
+    "saved": "保存済み",
+    "saving": "保存中...",
+    "run": "実行",
+    "stop": "停止",
+    "running": "実行中",
+    "back": "戻る",
+    "undo": "元に戻す",
+    "redo": "やり直す"
+  },
+  "sidebar": {
+    "search": "ノードを検索...",
+    "input": "入力",
+    "llm": "LLM",
+    "tts": "音声合成",
+    "output": "出力",
+    "control": "制御",
+    "utility": "ユーティリティ"
+  },
+  "settings": {
+    "nodeSettings": "ノード設定",
+    "selectNode": "ノードを選択して編集",
+    "deleteNode": "ノードを削除"
+  },
+  "logs": {
+    "title": "実行ログ",
+    "clear": "クリア",
+    "empty": "ログがありません。ワークフローを実行するとここに表示されます。"
+  },
+  "character": {
+    "title": "キャラクター",
+    "name": "名前",
+    "personality": "性格"
+  },
+  "node": {
+    "start": "開始",
+    "end": "終了",
+    "manualInput": "手動入力",
+    "consoleOutput": "コンソール出力",
+    "openaiLlm": "OpenAI LLM",
+    "anthropicLlm": "Claude LLM",
+    "googleLlm": "Gemini LLM",
+    "ollamaLlm": "Ollama LLM",
+    "voicevoxTts": "VOICEVOX",
+    "coeiroinkTts": "COEIROINK",
+    "sbv2Tts": "Style-Bert-VITS2",
+    "youtubeChat": "YouTubeチャット",
+    "twitchChat": "Twitchチャット",
+    "switch": "条件分岐",
+    "delay": "遅延",
+    "loop": "ループ",
+    "foreach": "繰り返し",
+    "httpRequest": "HTTPリクエスト",
+    "textTransform": "テキスト変換",
+    "random": "ランダム",
+    "timer": "タイマー",
+    "variable": "変数"
+  },
+  "nodeDescription": {
+    "start": "ワークフローの開始点。\n【使い方】このノードから処理が始まります。次のノードに接続してください。",
+    "end": "ワークフローの終了点。\n【使い方】処理の最後に配置。入力を受けて処理を完了します。",
+    "loop": "指定回数だけ処理を繰り返すループノード。\n【使い方】設定で繰り返し回数を指定。body出力に繰り返す処理を接続。",
+    "foreach": "配列の各要素に対して処理を繰り返すノード。\n【使い方】array入力に配列を接続。itemには現在の要素が出力されます。",
+    "youtube-chat": "YouTubeライブのコメントを取得する入力ノード。\n【使い方】設定でVideo IDを入力。コメントが来るとmessageとauthorを出力。",
+    "twitch-chat": "Twitchのチャットメッセージを取得する入力ノード。\n【使い方】設定でチャンネル名を入力。チャットが来るとmessageとauthorを出力。",
+    "manual-input": "手動でテキストを入力するノード。\n【使い方】実行時にテキストを入力。テスト・デバッグに便利。",
+    "openai-llm": "OpenAI APIでテキスト生成するLLMノード。\n【使い方】promptに質問を接続。設定でモデルとシステムプロンプトを指定。",
+    "voicevox-tts": "VOICEVOXでテキストを音声に変換するTTSノード。\n【使い方】textに読み上げテキストを接続。設定で話者を選択。※VOICEVOX起動が必要",
+    "console-output": "データをコンソールに出力するデバッグ用ノード。\n【使い方】任意のデータを接続。画面下部のコンソールに出力されます。",
+    "switch": "条件に基づいて処理を分岐させるノード。\n【使い方】valueに判定値を接続。設定で条件を指定し、true/falseに分岐。",
+    "delay": "指定時間だけ処理を遅延させるノード。\n【使い方】入力を接続し、設定で遅延時間(ms)を指定。タイミング調整に使用。",
+    "http-request": "外部APIにHTTPリクエストを送信するノード。\n【使い方】設定でURL・メソッド・ヘッダーを指定。レスポンスがresponseに出力。",
+    "text-transform": "テキストをテンプレートで変換するノード。\n【使い方】textに入力を接続。設定でテンプレートを指定。{{text}}で入力を参照。",
+    "random": "ランダムな値を生成するノード。\n【使い方】設定で範囲や選択肢を指定。毎回異なる値がvalueに出力。",
+    "timer": "一定間隔で自動トリガーするタイマーノード。\n【使い方】設定で間隔(ms)を指定。定期実行したい処理に接続。",
+    "variable": "データを保存・取得する変数ノード。\n【使い方】設定で変数名を指定。setで保存、getで取得。ワークフロー内で値を共有。",
+    "anthropic-llm": "Anthropic APIでテキスト生成するLLMノード。\n【使い方】promptに質問を接続。設定でモデルとシステムプロンプトを指定。",
+    "google-llm": "Google AI APIでテキスト生成するLLMノード。\n【使い方】promptに質問を接続。設定でモデルとシステムプロンプトを指定。",
+    "ollama-llm": "ローカルOllamaでテキスト生成するLLMノード。\n【使い方】promptに質問を接続。設定でモデルを指定。※Ollama起動が必要",
+    "coeiroink-tts": "COEIROINKでテキストを音声に変換するTTSノード。\n【使い方】textに読み上げテキストを接続。設定で話者を選択。※COEIROINK起動が必要",
+    "sbv2-tts": "Style-Bert-VITS2でテキストを音声に変換するTTSノード。\n【使い方】textに読み上げテキストを接続。設定でモデルを選択。※API起動が必要",
+    "avatar-configuration": "VRMアバターの設定ノード。\n【使い方】モデルURL、アイドルアニメーションを設定。オーバーレイでアバターが表示。",
+    "emotion-analyzer": "テキストから感情を分析するノード。\n【使い方】textに分析するテキストを接続。emotion/intensityが出力。",
+    "motion-trigger": "表情やモーションを手動でトリガーするノード。\n【使い方】triggerに任意の入力を接続。設定で表情/モーションを指定。",
+    "lip-sync": "音声から口パクデータを生成するノード。\n【使い方】audioに音声を接続。mouth値がリアルタイムで出力。",
+    "subtitle-display": "オーバーレイに字幕を表示するノード。\n【使い方】textに表示テキストを接続。オーバーレイ画面に字幕が表示されます。",
+    "audio-player": "オーバーレイで音声を再生するノード。\n【使い方】audioに音声データを接続。オーバーレイ画面で音声が再生されます。",
+    "obs-scene-switch": "OBSのシーンを切り替えるノード。\n【使い方】triggerに接続して実行。設定でシーン名を指定。※OBS WebSocket有効化が必要",
+    "obs-source-toggle": "OBSソースの表示/非表示を切り替えるノード。\n【使い方】triggerに接続。設定でソース名とアクションを指定。※OBS WebSocket有効化が必要",
+    "default": "カスタムノード"
+  },
+  "status": {
+    "processing": "処理中...",
+    "completed": "完了",
+    "error": "エラーが発生しました",
+    "ready": "準備完了"
+  },
+  "error": {
+    "invalidJson": "無効なJSONファイルです",
+    "loadTemplateFailed": "テンプレートの読み込みに失敗しました"
+  },
+  "defaults": {
+    "workflowName": "新規ワークフロー",
+    "assistantName": "AIアシスタント",
+    "assistantPersonality": "親切でフレンドリー"
+  },
+  "tooltip": {
+    "duplicate": "複製",
+    "export": "エクスポート",
+    "delete": "削除",
+    "runFromNode": "このノードから実行",
+    "switchToJapanese": "日本語に切替",
+    "switchToEnglish": "英語に切替"
+  }
+}
