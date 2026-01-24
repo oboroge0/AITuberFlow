@@ -13,15 +13,8 @@ const VRMRenderer = dynamic(() => import('./VRMRenderer'), {
   ),
 });
 
-// Dynamically import VTubeStudioBridge to avoid SSR issues with WebSocket
-const VTubeStudioBridge = dynamic(() => import('./VTubeStudioBridge'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-black/50">
-      <div className="text-white text-sm">Connecting to VTube Studio...</div>
-    </div>
-  ),
-});
+// Note: VTubeStudioBridge is no longer used here.
+// VTube Studio is now controlled directly by the backend.
 
 export type RendererType = 'vrm' | 'vtube-studio' | 'png';
 
@@ -131,14 +124,18 @@ export default function AvatarView({
         );
 
       case 'vtube-studio':
+        // VTube Studio is controlled by the backend, not the frontend
         return (
-          <VTubeStudioBridge
-            port={vtubePort}
-            state={state}
-            mouthParamId={vtubeMouthParam}
-            expressionHotkeyMap={vtubeExpressionMap}
-            showStatus={true}
-          />
+          <div className="vtube-studio-placeholder flex flex-col items-center justify-center h-full text-white/50">
+            <div className="text-4xl mb-4">🎭</div>
+            <div className="text-sm mb-2">VTube Studio</div>
+            <div className="text-xs text-green-400">Backend Connected</div>
+            <div className="mt-4 text-xs text-white/30 text-center max-w-xs">
+              Avatar is rendered in VTube Studio.
+              <br />
+              Lip sync and expressions are sent from the server.
+            </div>
+          </div>
         );
 
       case 'png':

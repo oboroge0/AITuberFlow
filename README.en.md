@@ -118,7 +118,7 @@ AITuberFlow is a visual tool for building AI-powered virtual streamer (AITuber/V
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/AITuberFlow.git
+git clone https://github.com/oboroge0/AITuberFlow.git
 cd AITuberFlow
 
 # Install dependencies

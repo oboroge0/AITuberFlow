@@ -48,7 +48,7 @@ AITuberFlowは、AIを活用したバーチャル配信者（AITuber）のパイ
 
 ```bash
 # リポジトリをクローン
-git clone https://github.com/yourusername/AITuberFlow.git
+git clone https://github.com/oboroge0/AITuberFlow.git
 cd AITuberFlow
 
 # 依存関係をインストール

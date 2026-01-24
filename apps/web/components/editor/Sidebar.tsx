@@ -5,8 +5,25 @@ import { useWorkflowStore } from '@/stores/workflowStore';
 
 const EXPANDED_CATEGORIES_KEY = 'aituberflow-sidebar-expanded';
 
+// Node type definition
+export interface SidebarNodeType {
+  id: string;
+  label: string;
+  color: string;
+  bgColor: string;
+  icon: React.ReactNode;
+  defaultConfig: Record<string, unknown>;
+}
+
+interface NodeCategory {
+  id: string;
+  label: string;
+  color: string;
+  nodes: SidebarNodeType[];
+}
+
 // Node categories with their nodes
-const nodeCategories = [
+const nodeCategories: NodeCategory[] = [
   {
     id: 'control',
     label: 'Control Flow',
@@ -488,7 +505,7 @@ const nodeCategories = [
 ];
 
 // Flatten for exports
-const nodeTypes = nodeCategories.flatMap((cat) => cat.nodes);
+const nodeTypes: SidebarNodeType[] = nodeCategories.flatMap((cat) => cat.nodes);
 
 // Export for use in Canvas
 export { nodeTypes };
