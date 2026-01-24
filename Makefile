@@ -1,19 +1,23 @@
-.PHONY: help install dev test lint clean
+.PHONY: help install dev dev-frontend dev-backend test lint clean
 
 help:
 	@echo "Available commands:"
 	@echo "  make install  - Install all dependencies"
-	@echo "  make dev      - Start development servers"
+	@echo "  make dev      - Start development servers (frontend + backend)"
 	@echo "  make test     - Run tests"
 	@echo "  make lint     - Run linters"
 	@echo "  make clean    - Clean build artifacts"
 
 install:
-	cd apps/web && npm install
+	bun install
+	cd apps/web && bun install
 	cd apps/server && uv sync
 
+dev:
+	bun run dev
+
 dev-frontend:
-	cd apps/web && npm run dev
+	cd apps/web && bun run dev
 
 dev-backend:
 	cd apps/server && uv run python main.py

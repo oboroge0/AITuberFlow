@@ -1,0 +1,15 @@
+{
+  "name": "aituber-flow",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -k -n web,api -c cyan,magenta \"bun run dev:web\" \"bun run dev:api\"",
+    "dev:web": "cd apps/web && bun run dev",
+    "dev:api": "cd apps/server && uv run python main.py",
+    "install:all": "cd apps/web && bun install && cd ../server && uv sync",
+    "lint": "cd apps/web && bun run lint",
+    "build": "cd apps/web && bun run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
