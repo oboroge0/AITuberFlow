@@ -9,15 +9,15 @@ help:
 	@echo "  make clean    - Clean build artifacts"
 
 install:
-	bun install
-	cd apps/web && bun install
+	npm install
+	cd apps/web && npm install
 	cd apps/server && uv sync
 
 dev:
-	bun run dev
+	npm run dev
 
 dev-frontend:
-	cd apps/web && bun run dev
+	cd apps/web && npm run dev
 
 dev-backend:
 	cd apps/server && uv run python main.py

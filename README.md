@@ -39,7 +39,7 @@ AITuberFlowは、AIを活用したバーチャル配信者（AITuber）のパイ
 
 ### 必要な環境
 
-- **Node.js** 22以上（または **Bun**）
+- **Node.js** 22以上
 - **Python** 3.11以上
 - **uv** （推奨）[インストール方法](https://docs.astral.sh/uv/)
 - **VOICEVOX** （音声合成を使用する場合）
@@ -293,15 +293,13 @@ python main.py
 cd apps/web
 
 # 依存関係をインストール
-bun install
-# または: npm install
+npm install
 
 # 環境設定ファイルをコピー
 cp .env.example .env.local
 
 # 開発サーバーを起動
-bun run dev
-# または: npm run dev
+npm run dev
 ```
 
 フロントエンドは `http://localhost:3000` で起動します。

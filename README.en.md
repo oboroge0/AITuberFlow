@@ -109,7 +109,7 @@ AITuberFlow is a visual tool for building AI-powered virtual streamer (AITuber/V
 
 ### Requirements
 
-- **Node.js** 22 or higher (or **Bun**)
+- **Node.js** 22 or higher
 - **Python** 3.11 or higher
 - **uv** (recommended) [Installation](https://docs.astral.sh/uv/)
 - **VOICEVOX** (optional, for voice synthesis)
