@@ -5,6 +5,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org/)
+[![GitHub stars](https://img.shields.io/github/stars/oboroge0/AITuberFlow?style=social)](https://github.com/oboroge0/AITuberFlow)
+[![GitHub issues](https://img.shields.io/github/issues/oboroge0/AITuberFlow)](https://github.com/oboroge0/AITuberFlow/issues)
 
 [English](README.en.md)
 
@@ -25,6 +27,19 @@ AITuberFlowは、AIを活用したバーチャル配信者（AITuber）のパイ
 - **アバター対応** - VRMモデル表示、リップシンク、表情制御
 - **OBS連携** - シーン切り替え、ソース制御
 - **配信オーバーレイ** - OBS Browser Source対応のオーバーレイ
+
+---
+
+## 🚧 開発状況
+
+> **⚡ 急ピッチで開発中！**
+>
+> 「みんなに早く使ってほしい！」という想いで爆速開発しています。
+> 粗削りな部分もありますが、日々改善中です。
+>
+> - 🐛 バグを見つけたら → [Issue](https://github.com/oboroge0/AITuberFlow/issues)へ
+> - 💡 こんな機能ほしい！→ [Discussions](https://github.com/oboroge0/AITuberFlow/discussions)へ
+> - ⭐ 応援してくれる方 → Starお願いします！
 
 ---
 
@@ -429,3 +444,9 @@ MIT License - 詳細は [LICENSE](LICENSE) を参照してください。
 - [FastAPI](https://fastapi.tiangolo.com/) - Python Webフレームワーク
 - [Next.js](https://nextjs.org/) - React フレームワーク
 - [@pixiv/three-vrm](https://github.com/pixiv/three-vrm) - VRMモデルレンダリング
+
+---
+
+## ⭐ Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=oboroge0/AITuberFlow&type=Date)](https://star-history.com/#oboroge0/AITuberFlow&Date)

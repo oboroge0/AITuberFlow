@@ -5,6 +5,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org/)
+[![GitHub stars](https://img.shields.io/github/stars/oboroge0/AITuberFlow?style=social)](https://github.com/oboroge0/AITuberFlow)
+[![GitHub issues](https://img.shields.io/github/issues/oboroge0/AITuberFlow)](https://github.com/oboroge0/AITuberFlow/issues)
 
 [日本語](README.md)
 
@@ -25,6 +27,19 @@ AITuberFlow is a visual tool for building AI-powered virtual streamer (AITuber/V
 - **Avatar Support** - VRM model display with lip-sync and expressions
 - **OBS Integration** - Scene switching and source control
 - **Streaming Overlay** - OBS Browser Source compatible overlay
+
+---
+
+## 🚧 Development Status
+
+> **⚡ Rapidly Evolving!**
+>
+> We're building fast to get this into your hands as soon as possible.
+> Some rough edges exist, but we're improving every day.
+>
+> - 🐛 Found a bug? → Open an [Issue](https://github.com/oboroge0/AITuberFlow/issues)
+> - 💡 Have an idea? → Join [Discussions](https://github.com/oboroge0/AITuberFlow/discussions)
+> - ⭐ Like this project? → Give us a Star!
 
 ---
 
@@ -431,3 +446,9 @@ MIT License - See [LICENSE](LICENSE) for details.
 - [FastAPI](https://fastapi.tiangolo.com/) - Python web framework
 - [Next.js](https://nextjs.org/) - React framework
 - [@pixiv/three-vrm](https://github.com/pixiv/three-vrm) - VRM model rendering
+
+---
+
+## ⭐ Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=oboroge0/AITuberFlow&type=Date)](https://star-history.com/#oboroge0/AITuberFlow&Date)
