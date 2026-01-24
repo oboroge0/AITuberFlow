@@ -71,6 +71,8 @@ export default function VTubeStudioBridge({
   const wsRef = useRef<WebSocket | null>(null);
   const requestIdRef = useRef(0);
   const pendingRequestsRef = useRef<Map<string, (response: VTSResponse) => void>>(new Map());
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
 
   const [connected, setConnected] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
@@ -221,13 +223,21 @@ export default function VTubeStudioBridge({
 
       ws.onclose = () => {
         console.log('[VTS] Disconnected');
+        if (!mountedRef.current) return;
+
         setConnected(false);
         setAuthenticated(false);
         setStatus('Disconnected');
         onConnectionChange?.(false, false);
 
+        // Clear any existing reconnect timeout
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+        }
+
         // Attempt reconnect after 3 seconds
-        setTimeout(() => {
+        reconnectTimeoutRef.current = setTimeout(() => {
+          if (!mountedRef.current) return;
           if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED) {
             connect();
           }
@@ -284,9 +294,15 @@ export default function VTubeStudioBridge({
 
   // Connect on mount
   useEffect(() => {
+    mountedRef.current = true;
     connect();
 
     return () => {
+      mountedRef.current = false;
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
