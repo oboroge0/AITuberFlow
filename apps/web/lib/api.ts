@@ -275,11 +275,13 @@ export interface ModelUploadResult {
   size: number;
 }
 
-export interface ModelInfo {
-  filename: string;
-  url: string;
-  size: number;
-}
+// Check if we're in demo mode
+const isDemoMode = typeof window !== 'undefined'
+  ? (process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || window.location.hostname === 'app.aituber-flow.dev')
+  : process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
-export const api = new ApiClient(API_BASE);
+// Export the appropriate API client
+import { demoApi } from './demoApi';
+
+export const api = isDemoMode ? demoApi : new ApiClient(API_BASE);
 export default api;

@@ -6,6 +6,11 @@ import { AvatarState } from '@/components/avatar';
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8001';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
+// Check if we're in demo mode
+const isDemoMode = typeof window !== 'undefined'
+  ? (process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || window.location.hostname === 'app.aituber-flow.dev')
+  : process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+
 export function useWebSocket(workflowId: string | null) {
   const socketRef = useRef<Socket | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -19,6 +24,12 @@ export function useWebSocket(workflowId: string | null) {
 
   useEffect(() => {
     if (!workflowId) return;
+
+    // Skip WebSocket connection in demo mode
+    if (isDemoMode) {
+      console.log('[Demo Mode] WebSocket connection skipped');
+      return;
+    }
 
     // Connect to WebSocket server
     const socket = io(WS_URL, {
