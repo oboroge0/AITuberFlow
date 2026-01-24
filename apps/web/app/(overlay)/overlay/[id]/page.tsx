@@ -228,7 +228,7 @@ export default function OverlayPage({ params }: OverlayPageProps) {
       vtube_mouth_param?: string;
       vtube_expression_map?: string | Record<string, string>;
     }) => {
-      if (data.renderer || data.model_url || data.idle_animation || data.vtube_port) {
+      if (data.renderer || data.model_url || data.idle_animation || data.vtube_port || data.vtube_mouth_param || data.vtube_expression_map) {
         // Parse VTube Studio expression map if it's a string
         let expressionMap: Record<string, string> | undefined;
         if (data.vtube_expression_map) {
