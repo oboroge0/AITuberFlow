@@ -1,11 +1,17 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Locale, translations, TranslationKey } from '@/lib/i18n';
+import {
+  Locale,
+  translations,
+  getTranslation,
+  getNodeDescription,
+} from '@/lib/i18n';
 
 interface LocaleState {
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  t: (key: TranslationKey) => string;
+  t: (key: string) => string;
+  getNodeDesc: (nodeType: string) => string;
 }
 
 export const useLocaleStore = create<LocaleState>()(
@@ -15,7 +21,11 @@ export const useLocaleStore = create<LocaleState>()(
       setLocale: (locale) => set({ locale }),
       t: (key) => {
         const locale = get().locale;
-        return translations[locale][key] || translations.en[key] || key;
+        return getTranslation(locale, key);
+      },
+      getNodeDesc: (nodeType) => {
+        const locale = get().locale;
+        return getNodeDescription(locale, nodeType);
       },
     }),
     {
@@ -26,6 +36,6 @@ export const useLocaleStore = create<LocaleState>()(
 
 // Hook for easy access to translation function
 export function useTranslation() {
-  const { t, locale, setLocale } = useLocaleStore();
-  return { t, locale, setLocale };
+  const { t, locale, setLocale, getNodeDesc } = useLocaleStore();
+  return { t, locale, setLocale, getNodeDesc };
 }

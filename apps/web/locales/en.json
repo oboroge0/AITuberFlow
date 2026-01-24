@@ -1,0 +1,138 @@
+{
+  "home": {
+    "title": "AITuber Flow",
+    "subtitle": "Visual Workflow Editor",
+    "newWorkflow": "New Workflow",
+    "import": "Import",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "serverError": "Make sure the backend server is running at http://localhost:8001",
+    "templates": "Templates",
+    "templatesDesc": "Start quickly with a pre-built workflow",
+    "yourWorkflows": "Your Workflows",
+    "noWorkflows": "No workflows yet",
+    "noWorkflowsDesc": "Create your first workflow or start from a template above",
+    "createFirst": "Create Your First Workflow",
+    "nodes": "nodes",
+    "connections": "connections",
+    "delete": "Delete",
+    "duplicate": "Duplicate",
+    "export": "Export",
+    "deleteConfirm": "Delete this workflow?"
+  },
+  "editor": {
+    "save": "Save",
+    "saved": "Saved",
+    "saving": "Saving...",
+    "run": "Run",
+    "stop": "Stop",
+    "running": "Running",
+    "back": "Back",
+    "undo": "Undo",
+    "redo": "Redo"
+  },
+  "sidebar": {
+    "search": "Search nodes...",
+    "input": "Input",
+    "llm": "LLM",
+    "tts": "TTS",
+    "output": "Output",
+    "control": "Control",
+    "utility": "Utility"
+  },
+  "settings": {
+    "nodeSettings": "Node Settings",
+    "selectNode": "Select a node to edit",
+    "deleteNode": "Delete Node"
+  },
+  "logs": {
+    "title": "Execution Log",
+    "clear": "Clear",
+    "empty": "No logs yet. Run the workflow to see execution logs."
+  },
+  "character": {
+    "title": "Character",
+    "name": "Name",
+    "personality": "Personality"
+  },
+  "node": {
+    "start": "Start",
+    "end": "End",
+    "manualInput": "Manual Input",
+    "consoleOutput": "Console Output",
+    "openaiLlm": "OpenAI LLM",
+    "anthropicLlm": "Claude LLM",
+    "googleLlm": "Gemini LLM",
+    "ollamaLlm": "Ollama LLM",
+    "voicevoxTts": "VOICEVOX TTS",
+    "coeiroinkTts": "COEIROINK TTS",
+    "sbv2Tts": "Style-Bert-VITS2",
+    "youtubeChat": "YouTube Chat",
+    "twitchChat": "Twitch Chat",
+    "switch": "Switch",
+    "delay": "Delay",
+    "loop": "Loop",
+    "foreach": "ForEach",
+    "httpRequest": "HTTP Request",
+    "textTransform": "Text Transform",
+    "random": "Random",
+    "timer": "Timer",
+    "variable": "Variable"
+  },
+  "nodeDescription": {
+    "start": "Workflow entry point.\n[Usage] Processing starts from here. Connect to the next node.",
+    "end": "Workflow exit point.\n[Usage] Place at the end of processing. Receives input and completes the workflow.",
+    "loop": "Loop node that repeats processing.\n[Usage] Set the repeat count in config. Connect nodes to repeat to the body output.",
+    "foreach": "Node that iterates over each element in an array.\n[Usage] Connect array to input. Current element is output to item.",
+    "youtube-chat": "Input node for YouTube Live comments.\n[Usage] Set Video ID in config. Outputs message and author when comments arrive.",
+    "twitch-chat": "Input node for Twitch chat.\n[Usage] Set channel name in config. Outputs message and author when chats arrive.",
+    "manual-input": "Manual text input node.\n[Usage] Enter text at runtime. Useful for testing and debugging.",
+    "openai-llm": "LLM node using OpenAI API.\n[Usage] Connect prompt input. Set model and system prompt in config.",
+    "voicevox-tts": "TTS node using VOICEVOX.\n[Usage] Connect text to read. Select speaker in config. *Requires VOICEVOX running.",
+    "console-output": "Debug node for console output.\n[Usage] Connect any data. Output appears in the console at the bottom.",
+    "switch": "Conditional branching node.\n[Usage] Connect value to check. Set conditions in config. Branches to true/false.",
+    "delay": "Delay node.\n[Usage] Connect input. Set delay time (ms) in config. Used for timing adjustments.",
+    "http-request": "HTTP request node.\n[Usage] Set URL, method, headers in config. Response is output to response.",
+    "text-transform": "Text transformation node.\n[Usage] Connect input to text. Set template in config. Use {{text}} to reference input.",
+    "random": "Random value generator.\n[Usage] Set range or options in config. Different value output to value each time.",
+    "timer": "Auto-trigger timer node.\n[Usage] Set interval (ms) in config. Connect to processes for periodic execution.",
+    "variable": "Variable storage node.\n[Usage] Set variable name in config. Use set to save, get to retrieve. Share values in workflow.",
+    "anthropic-llm": "LLM node using Anthropic API.\n[Usage] Connect prompt input. Set model and system prompt in config.",
+    "google-llm": "LLM node using Google AI API.\n[Usage] Connect prompt input. Set model and system prompt in config.",
+    "ollama-llm": "LLM node using local Ollama.\n[Usage] Connect prompt input. Set model in config. *Requires Ollama running.",
+    "coeiroink-tts": "TTS node using COEIROINK.\n[Usage] Connect text to read. Select speaker in config. *Requires COEIROINK running.",
+    "sbv2-tts": "TTS node using Style-Bert-VITS2.\n[Usage] Connect text to read. Select model in config. *Requires API running.",
+    "avatar-configuration": "VRM avatar configuration node.\n[Usage] Set model URL and idle animation. Avatar displays on overlay.",
+    "emotion-analyzer": "Emotion analysis node.\n[Usage] Connect text to analyze. Outputs emotion and intensity.",
+    "motion-trigger": "Manually trigger expressions and motions.\n[Usage] Connect any input to trigger. Set expression/motion in config.",
+    "lip-sync": "Lip-sync generation node.\n[Usage] Connect audio input. Mouth values output in real-time.",
+    "subtitle-display": "Subtitle display node.\n[Usage] Connect text to display. Subtitles appear on overlay screen.",
+    "audio-player": "Audio playback node.\n[Usage] Connect audio data. Audio plays on overlay screen.",
+    "obs-scene-switch": "OBS scene switch node.\n[Usage] Connect trigger to execute. Set scene name in config. *Requires OBS WebSocket enabled.",
+    "obs-source-toggle": "OBS source toggle node.\n[Usage] Connect trigger. Set source name and action in config. *Requires OBS WebSocket enabled.",
+    "default": "Custom node"
+  },
+  "status": {
+    "processing": "Processing...",
+    "completed": "Completed",
+    "error": "Error occurred",
+    "ready": "Ready"
+  },
+  "error": {
+    "invalidJson": "Invalid JSON file",
+    "loadTemplateFailed": "Failed to load template"
+  },
+  "defaults": {
+    "workflowName": "New Workflow",
+    "assistantName": "AI Assistant",
+    "assistantPersonality": "Friendly and helpful"
+  },
+  "tooltip": {
+    "duplicate": "Duplicate",
+    "export": "Export",
+    "delete": "Delete",
+    "runFromNode": "Run from this node",
+    "switchToJapanese": "Switch to Japanese",
+    "switchToEnglish": "Switch to English"
+  }
+}
