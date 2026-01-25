@@ -348,6 +348,42 @@
       "emitRealtime": "Emit Realtime Events",
       "frameRate": "Frame Rate"
     },
+    "avatarDisplay": {
+      "label": "Avatar Display"
+    },
+    "audioPlayer": {
+      "label": "Audio Player",
+      "waitForCompletion": "Wait for Completion",
+      "volume": "Volume",
+      "outputDevice": "Output Device"
+    },
+    "subtitleDisplay": {
+      "label": "Subtitle Display",
+      "style": "Style",
+      "position": "Position",
+      "fontSize": "Font Size",
+      "fontColor": "Font Color",
+      "backgroundColor": "Background Color",
+      "showSpeaker": "Show Speaker",
+      "animation": "Animation",
+      "duration": "Duration"
+    },
+    "obsSceneSwitch": {
+      "label": "OBS Scene Switch",
+      "host": "Host",
+      "port": "Port",
+      "password": "Password",
+      "sceneName": "Scene Name"
+    },
+    "obsSourceToggle": {
+      "label": "OBS Source Toggle",
+      "host": "Host",
+      "port": "Port",
+      "password": "Password",
+      "sceneName": "Scene Name",
+      "sourceName": "Source Name",
+      "action": "Action"
+    },
     "common": {
       "enabled": "Enabled",
       "loadingSpeakers": "Loading speakers...",

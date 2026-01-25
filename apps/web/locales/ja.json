@@ -348,6 +348,42 @@
       "emitRealtime": "リアルタイムイベントを送信",
       "frameRate": "フレームレート"
     },
+    "avatarDisplay": {
+      "label": "アバター表示"
+    },
+    "audioPlayer": {
+      "label": "音声プレイヤー",
+      "waitForCompletion": "完了まで待機",
+      "volume": "音量",
+      "outputDevice": "出力デバイス"
+    },
+    "subtitleDisplay": {
+      "label": "字幕表示",
+      "style": "スタイル",
+      "position": "位置",
+      "fontSize": "フォントサイズ",
+      "fontColor": "フォント色",
+      "backgroundColor": "背景色",
+      "showSpeaker": "話者を表示",
+      "animation": "アニメーション",
+      "duration": "表示時間"
+    },
+    "obsSceneSwitch": {
+      "label": "OBSシーン切替",
+      "host": "ホスト",
+      "port": "ポート",
+      "password": "パスワード",
+      "sceneName": "シーン名"
+    },
+    "obsSourceToggle": {
+      "label": "OBSソース切替",
+      "host": "ホスト",
+      "port": "ポート",
+      "password": "パスワード",
+      "sceneName": "シーン名",
+      "sourceName": "ソース名",
+      "action": "アクション"
+    },
     "common": {
       "enabled": "有効",
       "loadingSpeakers": "話者を読み込み中...",

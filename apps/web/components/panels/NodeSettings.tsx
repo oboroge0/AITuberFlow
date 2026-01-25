@@ -1616,6 +1616,11 @@ export default function NodeSettings() {
       'motion-trigger': 'nodeConfig.motionTrigger.label',
       'emotion-analyzer': 'nodeConfig.emotionAnalyzer.label',
       'lip-sync': 'nodeConfig.lipSync.label',
+      'avatar-display': 'nodeConfig.avatarDisplay.label',
+      'audio-player': 'nodeConfig.audioPlayer.label',
+      'subtitle-display': 'nodeConfig.subtitleDisplay.label',
+      'obs-scene-switch': 'nodeConfig.obsSceneSwitch.label',
+      'obs-source-toggle': 'nodeConfig.obsSourceToggle.label',
     };
     const key = keyMap[nodeType];
     return key ? t(key) : schema?.label || nodeType;
