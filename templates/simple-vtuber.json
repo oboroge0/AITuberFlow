@@ -1,7 +1,9 @@
 {
   "id": "template-simple-vtuber",
   "name": "Simple VTuber",
+  "name_ja": "シンプルVTuber",
   "description": "Basic VTuber workflow: Input -> LLM -> TTS -> Avatar with emotion and lip sync",
+  "description_ja": "基本的なVTuberワークフロー：入力 → LLM → TTS → 感情とリップシンク付きアバター",
   "nodes": [
     {
       "id": "node-input",

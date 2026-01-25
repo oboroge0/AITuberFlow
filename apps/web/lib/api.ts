@@ -203,7 +203,9 @@ class ApiClient {
 export interface TemplateSummary {
   id: string;
   name: string;
+  name_ja?: string;
   description: string;
+  description_ja?: string;
   nodeCount: number;
   connectionCount: number;
 }
@@ -224,7 +226,9 @@ export interface WorkflowExport {
 export interface Template {
   id: string;
   name: string;
+  name_ja?: string;
   description: string;
+  description_ja?: string;
   nodes: any[];
   connections: any[];
   character: {

@@ -1,7 +1,9 @@
 {
   "id": "template-basic-chat",
   "name": "Basic Chat Response",
+  "name_ja": "基本チャット応答",
   "description": "A simple workflow that takes input, generates a response using OpenAI, and outputs to the console.",
+  "description_ja": "入力を受け取り、OpenAIで応答を生成してコンソールに出力するシンプルなワークフロー。",
   "nodes": [
     {
       "id": "node-1",

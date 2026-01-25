@@ -268,7 +268,10 @@ export default function HomePage() {
                 </h2>
                 <p className="text-gray-400 text-sm mb-4">{t('home.templatesDesc')}</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {templates.map((template) => (
+                  {templates.map((template) => {
+                    const templateName = locale === 'ja' && template.name_ja ? template.name_ja : template.name;
+                    const templateDesc = locale === 'ja' && template.description_ja ? template.description_ja : template.description;
+                    return (
                     <button
                       key={template.id}
                       onClick={() => createFromTemplate(template.id)}
@@ -277,7 +280,7 @@ export default function HomePage() {
                     >
                       <div className="flex items-start justify-between">
                         <h3 className="text-lg font-semibold text-white group-hover:text-[#10B981] transition-colors">
-                          {template.name}
+                          {templateName}
                         </h3>
                         <svg
                           className="text-gray-500 group-hover:text-[#10B981] transition-colors mt-1"
@@ -287,7 +290,7 @@ export default function HomePage() {
                         </svg>
                       </div>
                       <p className="text-gray-400 text-sm mt-1 line-clamp-2">
-                        {template.description}
+                        {templateDesc}
                       </p>
                       <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
@@ -304,7 +307,8 @@ export default function HomePage() {
                         </span>
                       </div>
                     </button>
-                  ))}
+                  );
+                  })}
                 </div>
               </section>
             )}

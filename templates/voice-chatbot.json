@@ -1,7 +1,9 @@
 {
   "id": "template-voice-chatbot",
   "name": "Voice Chat Bot",
+  "name_ja": "音声チャットボット",
   "description": "A chatbot that responds with voice using VOICEVOX. Input -> LLM -> TTS -> Audio playback.",
+  "description_ja": "VOICEVOXを使って音声で応答するチャットボット。入力 → LLM → TTS → 音声再生。",
   "nodes": [
     {
       "id": "node-input",
