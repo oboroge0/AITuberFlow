@@ -10,8 +10,8 @@
       "type": "manual-input",
       "position": { "x": 100, "y": 200 },
       "config": {
-        "placeholder": "Enter your message...",
-        "inputText": "Hello! How are you today?"
+        "placeholder": "メッセージを入力...",
+        "inputText": "こんにちは！調子はどう？"
       }
     },
     {
@@ -21,7 +21,7 @@
       "config": {
         "apiKey": "",
         "model": "gpt-4o-mini",
-        "systemPrompt": "You are a friendly and helpful AI assistant. Keep your responses concise and engaging.",
+        "systemPrompt": "あなたは親切で役立つAIアシスタントです。簡潔で魅力的な返答をしてください。",
         "temperature": 0.7,
         "maxTokens": 256
       }
@@ -31,7 +31,7 @@
       "type": "console-output",
       "position": { "x": 700, "y": 200 },
       "config": {
-        "prefix": "[AI Response]",
+        "prefix": "[AI応答]",
         "logLevel": "info"
       }
     }
@@ -49,7 +49,7 @@
     }
   ],
   "character": {
-    "name": "AI Assistant",
-    "personality": "Friendly, helpful, and concise"
+    "name": "AIアシスタント",
+    "personality": "親切でフレンドリー"
   }
 }

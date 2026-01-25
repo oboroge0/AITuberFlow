@@ -134,5 +134,271 @@
     "runFromNode": "このノードから実行",
     "switchToJapanese": "日本語に切替",
     "switchToEnglish": "英語に切替"
+  },
+  "nodeConfig": {
+    "nodeType": "ノードタイプ",
+    "deleteNode": "ノードを削除",
+    "start": {
+      "label": "開始",
+      "autoStart": "自動開始",
+      "autoStartPlaceholder": "ワークフロー実行時に自動で開始"
+    },
+    "end": {
+      "label": "終了",
+      "message": "完了メッセージ"
+    },
+    "loop": {
+      "label": "ループ",
+      "mode": "ループモード",
+      "modeCount": "回数指定",
+      "modeWhile": "条件付き",
+      "modeInfinite": "無限",
+      "count": "繰り返し回数",
+      "condition": "条件式（While用）",
+      "maxIterations": "最大繰り返し数（安全用）"
+    },
+    "foreach": {
+      "label": "繰り返し",
+      "separator": "区切り文字"
+    },
+    "youtubeChat": {
+      "label": "YouTubeチャット",
+      "videoId": "動画ID",
+      "apiKey": "APIキー"
+    },
+    "twitchChat": {
+      "label": "Twitchチャット",
+      "channel": "チャンネル名"
+    },
+    "openaiLlm": {
+      "label": "ChatGPT (OpenAI)",
+      "apiKey": "APIキー",
+      "model": "モデル",
+      "systemPrompt": "システムプロンプト",
+      "systemPromptPlaceholder": "キャラクター設定を入力...",
+      "promptBuilder": "プロンプトビルダー",
+      "temperature": "温度"
+    },
+    "anthropicLlm": {
+      "label": "Claude (Anthropic)",
+      "apiKey": "APIキー",
+      "model": "モデル",
+      "systemPrompt": "システムプロンプト",
+      "maxTokens": "最大トークン数",
+      "temperature": "温度"
+    },
+    "googleLlm": {
+      "label": "Gemini (Google)",
+      "apiKey": "APIキー",
+      "model": "モデル",
+      "systemPrompt": "システムプロンプト",
+      "maxTokens": "最大トークン数",
+      "temperature": "温度"
+    },
+    "ollamaLlm": {
+      "label": "LLM (Ollama)",
+      "host": "Ollamaホスト",
+      "model": "モデル",
+      "systemPrompt": "システムプロンプト",
+      "temperature": "温度",
+      "contextLength": "コンテキスト長"
+    },
+    "voicevoxTts": {
+      "label": "TTS (VOICEVOX)",
+      "host": "VOICEVOXホスト",
+      "speaker": "話者",
+      "speed": "速度"
+    },
+    "coeiroinkTts": {
+      "label": "TTS (COEIROINK)",
+      "host": "COEIROINKホスト",
+      "speakerUuid": "話者UUID",
+      "styleId": "スタイルID",
+      "speed": "速度",
+      "pitch": "ピッチ"
+    },
+    "sbv2Tts": {
+      "label": "TTS (Style-Bert-VITS2)",
+      "host": "SBV2ホスト",
+      "modelName": "モデル名",
+      "speakerId": "話者ID",
+      "style": "スタイル",
+      "styleWeight": "スタイル強度",
+      "speed": "速度"
+    },
+    "manualInput": {
+      "label": "手動入力",
+      "text": "テキスト",
+      "textPlaceholder": "送信するテキストを入力..."
+    },
+    "consoleOutput": {
+      "label": "コンソール出力",
+      "prefix": "プレフィックス"
+    },
+    "switch": {
+      "label": "条件分岐",
+      "mode": "モード",
+      "modeTruthy": "真偽判定",
+      "modeEquals": "一致",
+      "modeContains": "含む",
+      "compareValue": "比較値"
+    },
+    "delay": {
+      "label": "遅延",
+      "delayMs": "遅延時間（ミリ秒）",
+      "randomize": "ランダム化",
+      "randomMin": "最小値（ミリ秒）",
+      "randomMax": "最大値（ミリ秒）"
+    },
+    "httpRequest": {
+      "label": "HTTPリクエスト",
+      "url": "URL",
+      "method": "メソッド",
+      "headers": "ヘッダー（JSON）",
+      "timeout": "タイムアウト（ミリ秒）"
+    },
+    "textTransform": {
+      "label": "テキスト変換",
+      "operation": "操作",
+      "opTemplate": "テンプレート",
+      "opUppercase": "大文字",
+      "opLowercase": "小文字",
+      "opTrim": "トリム",
+      "opReplace": "置換",
+      "opPrefix": "接頭辞",
+      "opSuffix": "接尾辞",
+      "opSplitFirst": "最初を分割",
+      "opSplitLast": "最後を分割",
+      "opLength": "文字数",
+      "template": "テンプレート",
+      "templateInputs": "テンプレート入力",
+      "find": "検索文字列",
+      "replaceWith": "置換文字列",
+      "delimiter": "区切り文字"
+    },
+    "random": {
+      "label": "ランダム",
+      "mode": "モード",
+      "modeNumber": "数値",
+      "modeChoice": "選択",
+      "modeBoolean": "真偽",
+      "min": "最小値",
+      "max": "最大値",
+      "choices": "選択肢（カンマ区切り）",
+      "trueProbability": "真の確率（%）"
+    },
+    "timer": {
+      "label": "タイマー",
+      "intervalMs": "間隔（ミリ秒）",
+      "maxTicks": "最大回数（0=無制限）",
+      "immediate": "即時実行"
+    },
+    "variable": {
+      "label": "変数",
+      "name": "変数名",
+      "defaultValue": "デフォルト値",
+      "valueType": "値の型",
+      "typeString": "文字列",
+      "typeNumber": "数値",
+      "typeBoolean": "真偽値",
+      "typeJson": "JSON"
+    },
+    "avatarConfiguration": {
+      "label": "アバター設定",
+      "renderer": "レンダラー",
+      "rendererVrm": "VRM（内蔵）",
+      "rendererVtubeStudio": "VTube Studio",
+      "rendererPng": "PNG画像",
+      "modelUrl": "VRMモデル",
+      "idleAnimation": "アイドルアニメーション（FBX）",
+      "vtubePort": "VTube Studioポート",
+      "pngConfig": "PNG表情マッピング"
+    },
+    "motionTrigger": {
+      "label": "モーショントリガー",
+      "expression": "表情ID",
+      "intensity": "表情の強度（0.0〜1.0）",
+      "motionUrl": "モーションアニメーション（FBX）",
+      "emitEvents": "アバターイベントを送信"
+    },
+    "emotionAnalyzer": {
+      "label": "感情分析",
+      "method": "分析方法",
+      "methodLlm": "LLMベース（推奨）",
+      "methodRuleBased": "ルールベース（キーワード）",
+      "expressions": "利用可能な表情",
+      "llmProvider": "LLMプロバイダー",
+      "llmApiKey": "LLM APIキー",
+      "llmModel": "LLMモデル",
+      "language": "言語",
+      "langJa": "日本語",
+      "langEn": "英語",
+      "langAuto": "自動検出",
+      "customMappings": "カスタムキーワードマッピング（JSON）",
+      "emitEvents": "アバターイベントを送信"
+    },
+    "lipSync": {
+      "label": "リップシンク",
+      "method": "リップシンク方式",
+      "methodVolume": "音量ベース（シンプル）",
+      "methodEnvelope": "エンベロープ追従",
+      "sensitivity": "感度（1.0〜10.0）",
+      "smoothing": "スムージング（0.0〜0.9）",
+      "threshold": "しきい値（0.0〜0.2）",
+      "emitRealtime": "リアルタイムイベントを送信",
+      "frameRate": "フレームレート"
+    },
+    "avatarDisplay": {
+      "label": "アバター表示"
+    },
+    "audioPlayer": {
+      "label": "音声プレイヤー",
+      "waitForCompletion": "完了まで待機",
+      "volume": "音量",
+      "outputDevice": "出力デバイス"
+    },
+    "subtitleDisplay": {
+      "label": "字幕表示",
+      "style": "スタイル",
+      "position": "位置",
+      "fontSize": "フォントサイズ",
+      "fontColor": "フォント色",
+      "backgroundColor": "背景色",
+      "showSpeaker": "話者を表示",
+      "animation": "アニメーション",
+      "duration": "表示時間"
+    },
+    "obsSceneSwitch": {
+      "label": "OBSシーン切替",
+      "host": "ホスト",
+      "port": "ポート",
+      "password": "パスワード",
+      "sceneName": "シーン名"
+    },
+    "obsSourceToggle": {
+      "label": "OBSソース切替",
+      "host": "ホスト",
+      "port": "ポート",
+      "password": "パスワード",
+      "sceneName": "シーン名",
+      "sourceName": "ソース名",
+      "action": "アクション"
+    },
+    "common": {
+      "enabled": "有効",
+      "loadingSpeakers": "話者を読み込み中...",
+      "retry": "再試行",
+      "selectSpeaker": "話者を選択...",
+      "uploadFbx": "FBXをアップロード",
+      "uploading": "アップロード中...",
+      "selectExisting": "既存のアニメーションを選択...",
+      "uploadVrm": "VRMをアップロード",
+      "selectExistingModel": "既存のモデルを選択...",
+      "clear": "クリア",
+      "add": "追加",
+      "done": "完了",
+      "edit": "編集",
+      "loadDefaults": "デフォルトを読み込む"
+    }
   }
 }

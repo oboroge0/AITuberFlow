@@ -10,8 +10,8 @@
       "type": "manual-input",
       "position": { "x": 100, "y": 250 },
       "config": {
-        "placeholder": "Enter message or connect chat node...",
-        "inputText": "Hello everyone!"
+        "placeholder": "メッセージを入力またはチャットノードを接続...",
+        "inputText": "みんなこんにちは！"
       }
     },
     {
@@ -21,7 +21,7 @@
       "config": {
         "apiKey": "",
         "model": "gpt-4o-mini",
-        "systemPrompt": "You are an interactive virtual streamer. Respond to viewer messages naturally and engagingly. Keep responses under 150 characters. Show emotions like happiness, surprise, or gratitude when appropriate.",
+        "systemPrompt": "あなたは視聴者と交流するバーチャルストリーマーです。視聴者のメッセージに自然で魅力的に応答してください。返答は150文字以内で、嬉しさ、驚き、感謝などの感情を適切に表現してください。",
         "temperature": 0.8,
         "maxTokens": 200
       }
@@ -143,6 +143,6 @@
   ],
   "character": {
     "name": "AI VTuber",
-    "personality": "Interactive virtual streamer for live streaming"
+    "personality": "ライブ配信で視聴者と交流するバーチャルストリーマー"
   }
 }

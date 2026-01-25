@@ -10,8 +10,8 @@
       "type": "manual-input",
       "position": { "x": 100, "y": 250 },
       "config": {
-        "placeholder": "Enter your message...",
-        "inputText": "Hello! How are you today?"
+        "placeholder": "メッセージを入力...",
+        "inputText": "こんにちは！今日の調子はどう？"
       }
     },
     {
@@ -21,7 +21,7 @@
       "config": {
         "apiKey": "",
         "model": "gpt-4o-mini",
-        "systemPrompt": "You are a cheerful virtual streamer named Sakura. You speak in a friendly, energetic way. Keep responses under 100 characters. Express emotions clearly in your text.",
+        "systemPrompt": "あなたは「さくら」という名前の明るいバーチャルストリーマーです。フレンドリーで元気な話し方をします。返答は100文字以内で、感情を豊かに表現してください。",
         "temperature": 0.8,
         "maxTokens": 128
       }
@@ -141,7 +141,7 @@
     }
   ],
   "character": {
-    "name": "Sakura",
-    "personality": "Cheerful and energetic virtual streamer"
+    "name": "さくら",
+    "personality": "明るく元気なバーチャルストリーマー"
   }
 }
