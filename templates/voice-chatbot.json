@@ -10,8 +10,8 @@
       "type": "manual-input",
       "position": { "x": 100, "y": 200 },
       "config": {
-        "placeholder": "Enter your message...",
-        "inputText": "Tell me a short joke!"
+        "placeholder": "メッセージを入力...",
+        "inputText": "短いジョークを教えて！"
       }
     },
     {
@@ -21,7 +21,7 @@
       "config": {
         "apiKey": "",
         "model": "gpt-4o-mini",
-        "systemPrompt": "You are a friendly virtual streamer. Keep your responses short (under 100 characters) and fun!",
+        "systemPrompt": "あなたは親しみやすいバーチャルストリーマーです。返答は100文字以内で楽しくしてください！",
         "temperature": 0.8,
         "maxTokens": 128
       }
@@ -79,7 +79,7 @@
     }
   ],
   "character": {
-    "name": "AI Vtuber",
-    "personality": "Cheerful and entertaining virtual streamer"
+    "name": "AI VTuber",
+    "personality": "明るく楽しいバーチャルストリーマー"
   }
 }

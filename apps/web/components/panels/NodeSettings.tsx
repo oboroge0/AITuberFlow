@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useWorkflowStore } from '@/stores/workflowStore';
+import { useTranslation } from '@/stores/localeStore';
 import api, { VoicevoxSpeaker, AnimationInfo, ModelInfo } from '@/lib/api';
 
 interface NodeField {
@@ -929,6 +930,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
 
 export default function NodeSettings() {
   const { selectedNodeId, nodes, updateNode, removeNode } = useWorkflowStore();
+  const { t } = useTranslation();
   const [localConfig, setLocalConfig] = useState<Record<string, unknown>>({});
   const [voicevoxSpeakers, setVoicevoxSpeakers] = useState<VoicevoxSpeaker[]>([]);
   const [voicevoxLoading, setVoicevoxLoading] = useState(false);
@@ -1585,10 +1587,44 @@ export default function NodeSettings() {
     }
   };
 
+  // Helper to get translated label for a node type
+  const getNodeLabel = (nodeType: string): string => {
+    const keyMap: Record<string, string> = {
+      'start': 'nodeConfig.start.label',
+      'end': 'nodeConfig.end.label',
+      'loop': 'nodeConfig.loop.label',
+      'foreach': 'nodeConfig.foreach.label',
+      'youtube-chat': 'nodeConfig.youtubeChat.label',
+      'twitch-chat': 'nodeConfig.twitchChat.label',
+      'openai-llm': 'nodeConfig.openaiLlm.label',
+      'anthropic-llm': 'nodeConfig.anthropicLlm.label',
+      'google-llm': 'nodeConfig.googleLlm.label',
+      'ollama-llm': 'nodeConfig.ollamaLlm.label',
+      'voicevox-tts': 'nodeConfig.voicevoxTts.label',
+      'coeiroink-tts': 'nodeConfig.coeiroinkTts.label',
+      'sbv2-tts': 'nodeConfig.sbv2Tts.label',
+      'manual-input': 'nodeConfig.manualInput.label',
+      'console-output': 'nodeConfig.consoleOutput.label',
+      'switch': 'nodeConfig.switch.label',
+      'delay': 'nodeConfig.delay.label',
+      'http-request': 'nodeConfig.httpRequest.label',
+      'text-transform': 'nodeConfig.textTransform.label',
+      'random': 'nodeConfig.random.label',
+      'timer': 'nodeConfig.timer.label',
+      'variable': 'nodeConfig.variable.label',
+      'avatar-configuration': 'nodeConfig.avatarConfiguration.label',
+      'motion-trigger': 'nodeConfig.motionTrigger.label',
+      'emotion-analyzer': 'nodeConfig.emotionAnalyzer.label',
+      'lip-sync': 'nodeConfig.lipSync.label',
+    };
+    const key = keyMap[nodeType];
+    return key ? t(key) : schema?.label || nodeType;
+  };
+
   return (
     <div className="p-4 flex-1 overflow-auto">
       <h3 className="text-xs text-white/50 uppercase tracking-wider mb-3 m-0">
-        Node Settings
+        {t('settings.nodeSettings')}
       </h3>
       <div
         className="p-3 rounded-lg"
@@ -1596,8 +1632,8 @@ export default function NodeSettings() {
       >
         {/* Node Type */}
         <div className="mb-3">
-          <label className="block text-[11px] text-white/60 mb-1">Node Type</label>
-          <div className="text-white font-medium text-sm">{schema?.label || selectedNode.type}</div>
+          <label className="block text-[11px] text-white/60 mb-1">{t('nodeConfig.nodeType')}</label>
+          <div className="text-white font-medium text-sm">{getNodeLabel(selectedNode.type)}</div>
         </div>
 
         {/* Config Fields */}
@@ -1625,7 +1661,7 @@ export default function NodeSettings() {
           onClick={handleDelete}
           className="w-full mt-2 py-2 rounded-md border border-red-500/50 bg-red-500/10 text-red-400 text-xs cursor-pointer transition-colors hover:bg-red-500/20"
         >
-          Delete Node
+          {t('nodeConfig.deleteNode')}
         </button>
       </div>
     </div>

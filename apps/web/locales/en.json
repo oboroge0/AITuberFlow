@@ -134,5 +134,235 @@
     "runFromNode": "Run from this node",
     "switchToJapanese": "Switch to Japanese",
     "switchToEnglish": "Switch to English"
+  },
+  "nodeConfig": {
+    "nodeType": "Node Type",
+    "deleteNode": "Delete Node",
+    "start": {
+      "label": "Start",
+      "autoStart": "Auto Start",
+      "autoStartPlaceholder": "Start automatically when workflow runs"
+    },
+    "end": {
+      "label": "End",
+      "message": "Completion Message"
+    },
+    "loop": {
+      "label": "Loop",
+      "mode": "Loop Mode",
+      "modeCount": "Count",
+      "modeWhile": "While Condition",
+      "modeInfinite": "Infinite",
+      "count": "Loop Count",
+      "condition": "Condition (for While)",
+      "maxIterations": "Max Iterations (safety)"
+    },
+    "foreach": {
+      "label": "ForEach",
+      "separator": "Separator"
+    },
+    "youtubeChat": {
+      "label": "YouTube Chat",
+      "videoId": "Video ID",
+      "apiKey": "API Key"
+    },
+    "twitchChat": {
+      "label": "Twitch Chat",
+      "channel": "Channel"
+    },
+    "openaiLlm": {
+      "label": "ChatGPT (OpenAI)",
+      "apiKey": "API Key",
+      "model": "Model",
+      "systemPrompt": "System Prompt",
+      "systemPromptPlaceholder": "Enter character settings...",
+      "promptBuilder": "Prompt Builder",
+      "temperature": "Temperature"
+    },
+    "anthropicLlm": {
+      "label": "Claude (Anthropic)",
+      "apiKey": "API Key",
+      "model": "Model",
+      "systemPrompt": "System Prompt",
+      "maxTokens": "Max Tokens",
+      "temperature": "Temperature"
+    },
+    "googleLlm": {
+      "label": "Gemini (Google)",
+      "apiKey": "API Key",
+      "model": "Model",
+      "systemPrompt": "System Prompt",
+      "maxTokens": "Max Tokens",
+      "temperature": "Temperature"
+    },
+    "ollamaLlm": {
+      "label": "LLM (Ollama)",
+      "host": "Ollama Host",
+      "model": "Model",
+      "systemPrompt": "System Prompt",
+      "temperature": "Temperature",
+      "contextLength": "Context Length"
+    },
+    "voicevoxTts": {
+      "label": "TTS (VOICEVOX)",
+      "host": "VOICEVOX Host",
+      "speaker": "Speaker",
+      "speed": "Speed"
+    },
+    "coeiroinkTts": {
+      "label": "TTS (COEIROINK)",
+      "host": "COEIROINK Host",
+      "speakerUuid": "Speaker UUID",
+      "styleId": "Style ID",
+      "speed": "Speed",
+      "pitch": "Pitch"
+    },
+    "sbv2Tts": {
+      "label": "TTS (Style-Bert-VITS2)",
+      "host": "SBV2 Host",
+      "modelName": "Model Name",
+      "speakerId": "Speaker ID",
+      "style": "Style",
+      "styleWeight": "Style Weight",
+      "speed": "Speed"
+    },
+    "manualInput": {
+      "label": "Manual Input",
+      "text": "Text",
+      "textPlaceholder": "Enter text to send..."
+    },
+    "consoleOutput": {
+      "label": "Console Output",
+      "prefix": "Prefix"
+    },
+    "switch": {
+      "label": "Switch",
+      "mode": "Mode",
+      "modeTruthy": "Truthy/Falsy",
+      "modeEquals": "Equals",
+      "modeContains": "Contains",
+      "compareValue": "Compare Value"
+    },
+    "delay": {
+      "label": "Delay",
+      "delayMs": "Delay (ms)",
+      "randomize": "Randomize",
+      "randomMin": "Random Min (ms)",
+      "randomMax": "Random Max (ms)"
+    },
+    "httpRequest": {
+      "label": "HTTP Request",
+      "url": "URL",
+      "method": "Method",
+      "headers": "Headers (JSON)",
+      "timeout": "Timeout (ms)"
+    },
+    "textTransform": {
+      "label": "Text Transform",
+      "operation": "Operation",
+      "opTemplate": "Template",
+      "opUppercase": "Uppercase",
+      "opLowercase": "Lowercase",
+      "opTrim": "Trim",
+      "opReplace": "Replace",
+      "opPrefix": "Prefix",
+      "opSuffix": "Suffix",
+      "opSplitFirst": "Split First",
+      "opSplitLast": "Split Last",
+      "opLength": "Length",
+      "template": "Template",
+      "templateInputs": "Template Inputs",
+      "find": "Find (for Replace)",
+      "replaceWith": "Replace With",
+      "delimiter": "Delimiter (for Split)"
+    },
+    "random": {
+      "label": "Random",
+      "mode": "Mode",
+      "modeNumber": "Number",
+      "modeChoice": "Choice",
+      "modeBoolean": "Boolean",
+      "min": "Min (for Number)",
+      "max": "Max (for Number)",
+      "choices": "Choices (comma separated)",
+      "trueProbability": "True Probability % (for Boolean)"
+    },
+    "timer": {
+      "label": "Timer",
+      "intervalMs": "Interval (ms)",
+      "maxTicks": "Max Ticks (0=unlimited)",
+      "immediate": "Fire Immediately"
+    },
+    "variable": {
+      "label": "Variable",
+      "name": "Variable Name",
+      "defaultValue": "Default Value",
+      "valueType": "Value Type",
+      "typeString": "String",
+      "typeNumber": "Number",
+      "typeBoolean": "Boolean",
+      "typeJson": "JSON"
+    },
+    "avatarConfiguration": {
+      "label": "Avatar Configuration",
+      "renderer": "Renderer",
+      "rendererVrm": "VRM (Built-in)",
+      "rendererVtubeStudio": "VTube Studio",
+      "rendererPng": "PNG Images",
+      "modelUrl": "VRM Model",
+      "idleAnimation": "Idle Animation (FBX)",
+      "vtubePort": "VTube Studio Port",
+      "pngConfig": "PNG Expression Mappings"
+    },
+    "motionTrigger": {
+      "label": "Motion Trigger",
+      "expression": "Expression ID",
+      "intensity": "Expression Intensity (0.0-1.0)",
+      "motionUrl": "Motion Animation (FBX)",
+      "emitEvents": "Emit Avatar Events"
+    },
+    "emotionAnalyzer": {
+      "label": "Emotion Analyzer",
+      "method": "Analysis Method",
+      "methodLlm": "LLM-based (Recommended)",
+      "methodRuleBased": "Rule-based (Keywords)",
+      "expressions": "Available Expressions",
+      "llmProvider": "LLM Provider",
+      "llmApiKey": "LLM API Key",
+      "llmModel": "LLM Model",
+      "language": "Language",
+      "langJa": "Japanese",
+      "langEn": "English",
+      "langAuto": "Auto-detect",
+      "customMappings": "Custom Keyword Mappings (JSON)",
+      "emitEvents": "Emit Avatar Events"
+    },
+    "lipSync": {
+      "label": "Lip Sync",
+      "method": "Lip Sync Method",
+      "methodVolume": "Volume-based (Simple)",
+      "methodEnvelope": "Envelope Following",
+      "sensitivity": "Sensitivity (1.0-10.0)",
+      "smoothing": "Smoothing (0.0-0.9)",
+      "threshold": "Threshold (0.0-0.2)",
+      "emitRealtime": "Emit Realtime Events",
+      "frameRate": "Frame Rate"
+    },
+    "common": {
+      "enabled": "Enabled",
+      "loadingSpeakers": "Loading speakers...",
+      "retry": "Retry",
+      "selectSpeaker": "Select a speaker...",
+      "uploadFbx": "Upload FBX",
+      "uploading": "Uploading...",
+      "selectExisting": "Select existing animation...",
+      "uploadVrm": "Upload VRM",
+      "selectExistingModel": "Select existing model...",
+      "clear": "Clear",
+      "add": "Add",
+      "done": "Done",
+      "edit": "Edit",
+      "loadDefaults": "Load Defaults"
+    }
   }
 }
