@@ -2,9 +2,11 @@
 
 **ノーコードでAITuberを作成できるビジュアルワークフローエディタ**
 
+[![CI](https://github.com/oboroge0/AITuberFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/oboroge0/AITuberFlow/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://docs.docker.com/)
 [![GitHub stars](https://img.shields.io/github/stars/oboroge0/AITuberFlow?style=social)](https://github.com/oboroge0/AITuberFlow)
 [![GitHub issues](https://img.shields.io/github/issues/oboroge0/AITuberFlow)](https://github.com/oboroge0/AITuberFlow/issues)
 
@@ -84,6 +86,23 @@ make dev-frontend
 # バックエンドのみ
 make dev-backend
 ```
+
+### Docker で起動する場合
+
+```bash
+# Docker Compose で一発起動
+docker compose up --build
+
+# バックグラウンドで起動
+docker compose up -d
+
+# 停止
+docker compose down
+```
+
+Docker環境では:
+- フロントエンド: `http://localhost:3000`
+- バックエンド: `http://localhost:8000`
 
 ---
 
@@ -376,7 +395,9 @@ class MyCustomNode(BaseNode):
 
 ## API ドキュメント
 
-バックエンド起動後、`http://localhost:8001/docs` でSwagger UIを確認できます。
+バックエンド起動後、`http://localhost:8000/docs` でSwagger UIを確認できます。
+
+詳細なAPIリファレンスは [docs/api-reference.md](docs/api-reference.md) を参照してください。
 
 ### 主要なエンドポイント
 

@@ -1,13 +1,13 @@
-from typing import Dict, Any, Optional, List, Set
+import asyncio
+import importlib.util
+import logging
+import sys
 from dataclasses import dataclass
 from datetime import datetime
-import asyncio
-import logging
-import importlib.util
-import sys
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Set
 
-from engine.event_bus import EventBus, Event, EventFilter
+from engine.event_bus import Event, EventBus, EventFilter
 from integrations.vtube_studio import vts_client
 
 logger = logging.getLogger(__name__)

@@ -1,0 +1,65 @@
+# AITuberFlow Docker Compose Configuration
+#
+# Usage:
+#   Development: docker compose up --build
+#   Production:  docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Environment variables can be set in .env file at the project root
+
+services:
+  # Backend API Server
+  backend:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile
+    container_name: aituberflow-backend
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./data/aituber_flow.db
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+    volumes:
+      # Persist database
+      - backend-data:/app/data
+      # Mount plugins directory for development
+      - ./plugins:/app/plugins:ro
+      # Mount templates directory
+      - ./templates:/app/templates:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Frontend Web Application
+  frontend:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    container_name: aituberflow-frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://backend:8000}
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  backend-data:
+    name: aituberflow-backend-data
+
+networks:
+  default:
+    name: aituberflow-network

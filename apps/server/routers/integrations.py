@@ -2,15 +2,14 @@
 Integrations router for external service APIs (VOICEVOX, etc.)
 """
 
-from fastapi import APIRouter, HTTPException, Query, UploadFile, File
-from fastapi.responses import FileResponse
-from typing import List, Optional
-from pathlib import Path
-import httpx
 import logging
-import os
 import shutil
 import uuid
+from pathlib import Path
+
+import httpx
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi.responses import FileResponse
 
 logger = logging.getLogger(__name__)
 
@@ -367,96 +366,5 @@ async def serve_animation(filename: str):
     )
 
 
-# VRM Model file endpoints
-ALLOWED_MODEL_EXTENSIONS = {".vrm"}
-
-
-@router.post("/models/upload")
-async def upload_model(file: UploadFile = File(...)):
-    """
-    Upload a VRM model file.
-    Returns the URL path to access the uploaded file.
-    """
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="No filename provided")
-
-    # Check file extension
-    ext = Path(file.filename).suffix.lower()
-    if ext not in ALLOWED_MODEL_EXTENSIONS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"File type not allowed. Allowed types: {', '.join(ALLOWED_MODEL_EXTENSIONS)}"
-        )
-
-    # Generate unique filename to avoid conflicts
-    unique_id = str(uuid.uuid4())[:8]
-    safe_filename = f"{unique_id}_{Path(file.filename).stem}{ext}"
-    file_path = UPLOAD_DIR / safe_filename
-
-    try:
-        # Save file
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        # Return the URL path (relative to public folder)
-        url_path = f"/models/{safe_filename}"
-
-        logger.info(f"Uploaded model: {safe_filename}")
-
-        return {
-            "success": True,
-            "filename": safe_filename,
-            "url": url_path,
-            "size": file_path.stat().st_size
-        }
-
-    except Exception as e:
-        logger.error(f"Error uploading model: {e}")
-        if file_path.exists():
-            file_path.unlink()
-        raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
-
-
-@router.get("/models")
-async def list_models():
-    """
-    List all uploaded VRM models.
-    """
-    try:
-        models = []
-        for file_path in UPLOAD_DIR.iterdir():
-            if file_path.is_file() and file_path.suffix.lower() in ALLOWED_MODEL_EXTENSIONS:
-                models.append({
-                    "filename": file_path.name,
-                    "url": f"/models/{file_path.name}",
-                    "size": file_path.stat().st_size,
-                })
-
-        return {"models": models}
-
-    except Exception as e:
-        logger.error(f"Error listing models: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to list models: {str(e)}")
-
-
-@router.delete("/models/{filename}")
-async def delete_model(filename: str):
-    """
-    Delete an uploaded VRM model.
-    """
-    if ".." in filename or "/" in filename or "\\" in filename:
-        raise HTTPException(status_code=400, detail="Invalid filename")
-
-    file_path = UPLOAD_DIR / filename
-
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found")
-
-    try:
-        file_path.unlink()
-        logger.info(f"Deleted model: {filename}")
-        return {"success": True, "message": f"Deleted {filename}"}
-
-    except Exception as e:
-        logger.error(f"Error deleting model: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
+# NOTE: Model upload/list/delete endpoints are defined above (lines 120-211)
+# Supporting both VRM and image files via ALLOWED_EXTENSIONS

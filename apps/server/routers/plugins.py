@@ -1,8 +1,8 @@
-from fastapi import APIRouter, HTTPException
-from typing import List, Dict, Any
-import os
 import json
 from pathlib import Path
+from typing import Any, Dict, List
+
+from fastapi import APIRouter, HTTPException
 
 router = APIRouter(prefix="/api/plugins", tags=["plugins"])
 

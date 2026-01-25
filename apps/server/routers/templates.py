@@ -6,8 +6,9 @@ Provides endpoints for listing and loading workflow templates.
 
 import json
 from pathlib import Path
-from fastapi import APIRouter, HTTPException
 from typing import List
+
+from fastapi import APIRouter, HTTPException
 
 router = APIRouter(prefix="/api/templates", tags=["templates"])
 
@@ -42,7 +43,7 @@ async def list_templates():
                 "nodeCount": len(template.get("nodes", [])),
                 "connectionCount": len(template.get("connections", [])),
             })
-        except Exception as e:
+        except Exception:
             # Skip invalid templates
             continue
 
