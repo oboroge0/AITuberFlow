@@ -1626,6 +1626,57 @@ export default function NodeSettings() {
     return key ? t(key) : schema?.label || nodeType;
   };
 
+  // Helper to get translated label for a field
+  const getFieldLabel = (nodeType: string, fieldKey: string, fallbackLabel: string): string => {
+    // Map node types to translation key prefixes
+    const nodeKeyMap: Record<string, string> = {
+      'start': 'start',
+      'end': 'end',
+      'loop': 'loop',
+      'foreach': 'foreach',
+      'youtube-chat': 'youtubeChat',
+      'twitch-chat': 'twitchChat',
+      'openai-llm': 'openaiLlm',
+      'anthropic-llm': 'anthropicLlm',
+      'google-llm': 'googleLlm',
+      'ollama-llm': 'ollamaLlm',
+      'voicevox-tts': 'voicevoxTts',
+      'coeiroink-tts': 'coeiroinkTts',
+      'sbv2-tts': 'sbv2Tts',
+      'manual-input': 'manualInput',
+      'console-output': 'consoleOutput',
+      'switch': 'switch',
+      'delay': 'delay',
+      'http-request': 'httpRequest',
+      'text-transform': 'textTransform',
+      'random': 'random',
+      'timer': 'timer',
+      'variable': 'variable',
+      'avatar-configuration': 'avatarConfiguration',
+      'motion-trigger': 'motionTrigger',
+      'emotion-analyzer': 'emotionAnalyzer',
+      'lip-sync': 'lipSync',
+      'avatar-display': 'avatarDisplay',
+      'audio-player': 'audioPlayer',
+      'subtitle-display': 'subtitleDisplay',
+      'obs-scene-switch': 'obsSceneSwitch',
+      'obs-source-toggle': 'obsSourceToggle',
+    };
+
+    // Convert snake_case field key to camelCase
+    const toCamelCase = (str: string) => str.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+
+    const nodePrefix = nodeKeyMap[nodeType];
+    if (!nodePrefix) return fallbackLabel;
+
+    const fieldKeyCamel = toCamelCase(fieldKey);
+    const translationKey = `nodeConfig.${nodePrefix}.${fieldKeyCamel}`;
+    const translated = t(translationKey);
+
+    // If translation returns the key itself, fall back to the original label
+    return translated !== translationKey ? translated : fallbackLabel;
+  };
+
   return (
     <div className="p-4 flex-1 overflow-auto">
       <h3 className="text-xs text-white/50 uppercase tracking-wider mb-3 m-0">
@@ -1655,7 +1706,9 @@ export default function NodeSettings() {
           }
           return (
             <div key={field.key} className="mb-3">
-              <label className="block text-[11px] text-white/60 mb-1">{field.label}</label>
+              <label className="block text-[11px] text-white/60 mb-1">
+                {getFieldLabel(selectedNode.type, field.key, field.label)}
+              </label>
               {renderField(field)}
             </div>
           );
