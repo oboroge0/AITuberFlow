@@ -1,7 +1,9 @@
 {
   "id": "template-text-processor",
   "name": "Text Processing Pipeline",
+  "name_ja": "テキスト処理パイプライン",
   "description": "Demonstrates text transformation with multiple processing steps.",
+  "description_ja": "複数の処理ステップによるテキスト変換を示すサンプル。",
   "nodes": [
     {
       "id": "node-input",

@@ -1,7 +1,9 @@
 {
   "id": "template-youtube-vtuber",
   "name": "YouTube VTuber",
+  "name_ja": "YouTube VTuber",
   "description": "VTuber workflow for YouTube Live streaming. Responds to live chat messages with voice and avatar.",
+  "description_ja": "YouTubeライブ配信用VTuberワークフロー。チャットメッセージに音声とアバターで応答。",
   "nodes": [
     {
       "id": "node-chat",

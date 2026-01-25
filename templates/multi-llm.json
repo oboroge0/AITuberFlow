@@ -1,7 +1,9 @@
 {
   "id": "template-multi-llm",
   "name": "Multi-LLM Comparison",
+  "name_ja": "複数LLM比較",
   "description": "Send the same prompt to multiple LLM providers and compare responses.",
+  "description_ja": "同じプロンプトを複数のLLMプロバイダーに送信し、応答を比較。",
   "nodes": [
     {
       "id": "node-input",

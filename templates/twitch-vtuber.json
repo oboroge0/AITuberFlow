@@ -1,7 +1,9 @@
 {
   "id": "template-twitch-vtuber",
   "name": "Twitch VTuber",
+  "name_ja": "Twitch VTuber",
   "description": "VTuber workflow for Twitch streaming. Responds to chat messages with voice and avatar.",
+  "description_ja": "Twitch配信用VTuberワークフロー。チャットメッセージに音声とアバターで応答。",
   "nodes": [
     {
       "id": "node-chat",

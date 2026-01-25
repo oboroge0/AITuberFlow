@@ -1,7 +1,9 @@
 {
   "id": "template-loop-counter",
   "name": "Loop Counter Example",
+  "name_ja": "ループカウンターサンプル",
   "description": "Demonstrates how to use the Loop node to repeat an action multiple times.",
+  "description_ja": "Loopノードを使って処理を複数回繰り返す方法を示すサンプル。",
   "nodes": [
     {
       "id": "node-start",

@@ -1,7 +1,9 @@
 {
   "id": "template-http-api",
   "name": "HTTP API Example",
+  "name_ja": "HTTP APIサンプル",
   "description": "Demonstrates making HTTP requests to external APIs.",
+  "description_ja": "外部APIへのHTTPリクエストを実行するサンプル。",
   "nodes": [
     {
       "id": "node-http",

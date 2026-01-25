@@ -1,7 +1,9 @@
 {
   "id": "template-vtube-studio-vtuber",
   "name": "VTube Studio VTuber",
+  "name_ja": "VTube Studio VTuber",
   "description": "VTuber workflow using VTube Studio for avatar control: Input -> LLM -> TTS -> VTube Studio (lip sync & expressions)",
+  "description_ja": "VTube Studioでアバター制御するVTuberワークフロー：入力 → LLM → TTS → VTube Studio（リップシンク＆表情）",
   "nodes": [
     {
       "id": "node-input",

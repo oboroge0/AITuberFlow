@@ -36,7 +36,9 @@ async def list_templates():
             templates.append({
                 "id": template.get("id", template_file.stem),
                 "name": template.get("name", template_file.stem),
+                "name_ja": template.get("name_ja", template.get("name", template_file.stem)),
                 "description": template.get("description", ""),
+                "description_ja": template.get("description_ja", template.get("description", "")),
                 "nodeCount": len(template.get("nodes", [])),
                 "connectionCount": len(template.get("connections", [])),
             })
