@@ -6,7 +6,7 @@ import api, { VoicevoxSpeaker, AnimationInfo, ModelInfo } from '@/lib/api';
 
 interface NodeField {
   key: string;
-  type: 'text' | 'number' | 'textarea' | 'select' | 'checkbox' | 'animation-file' | 'model-file' | 'prompt-builder' | 'input-list' | 'expression-list' | 'password';
+  type: 'text' | 'number' | 'textarea' | 'select' | 'checkbox' | 'animation-file' | 'model-file' | 'prompt-builder' | 'input-list' | 'expression-list' | 'password' | 'png-expression-map';
   label: string;
   placeholder?: string;
   options?: { label: string; value: string | number }[];
@@ -288,6 +288,207 @@ function ExpressionListField({ value, onChange }: ExpressionListFieldProps) {
       {/* Info text */}
       <div className="text-[9px] text-white/40 pt-1">
         Expressions define emotions the LLM can detect. The ID must match your avatar&apos;s expression/image names.
+      </div>
+    </div>
+  );
+}
+
+// PNG Expression mapping type
+interface PngExpressionMapping {
+  id: string;
+  filename: string;
+}
+
+interface PngConfig {
+  baseUrl: string;
+  expressions: Record<string, string>;
+}
+
+// Separate component for PNG expression map field
+interface PngExpressionMapFieldProps {
+  value: PngConfig;
+  onChange: (newValue: PngConfig) => void;
+  onUploadImage: (file: File) => Promise<string | null>;
+  availableImages: string[];
+}
+
+function PngExpressionMapField({ value, onChange, onUploadImage, availableImages }: PngExpressionMapFieldProps) {
+  const [newMapping, setNewMapping] = useState<PngExpressionMapping>({ id: '', filename: '' });
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const config: PngConfig = value || { baseUrl: '/images/avatar/', expressions: {} };
+  const mappings = Object.entries(config.expressions || {}).map(([id, filename]) => ({ id, filename }));
+
+  const updateBaseUrl = (baseUrl: string) => {
+    onChange({ ...config, baseUrl });
+  };
+
+  const addMapping = () => {
+    const trimmedId = newMapping.id.trim().toLowerCase().replace(/\s+/g, '-');
+    const trimmedFilename = newMapping.filename.trim();
+
+    if (!trimmedId || !trimmedFilename) return;
+    if (config.expressions[trimmedId]) return;
+
+    onChange({
+      ...config,
+      expressions: { ...config.expressions, [trimmedId]: trimmedFilename }
+    });
+    setNewMapping({ id: '', filename: '' });
+  };
+
+  const removeMapping = (id: string) => {
+    const newExpressions = { ...config.expressions };
+    delete newExpressions[id];
+    onChange({ ...config, expressions: newExpressions });
+  };
+
+  const updateMapping = (oldId: string, newId: string, filename: string) => {
+    const newExpressions = { ...config.expressions };
+    if (oldId !== newId) {
+      delete newExpressions[oldId];
+    }
+    newExpressions[newId] = filename;
+    onChange({ ...config, expressions: newExpressions });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const url = await onUploadImage(file);
+      if (url) {
+        const filename = url.split('/').pop() || file.name;
+        setNewMapping({ ...newMapping, filename });
+      }
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const loadDefaultMappings = () => {
+    onChange({
+      ...config,
+      expressions: {
+        neutral: 'neutral.png',
+        happy: 'happy.png',
+        sad: 'sad.png',
+        angry: 'angry.png',
+        surprised: 'surprised.png',
+        relaxed: 'relaxed.png',
+      }
+    });
+  };
+
+  const inputStyle = {
+    padding: '6px 8px',
+    borderRadius: '4px',
+    border: '1px solid rgba(255,255,255,0.2)',
+    background: 'rgba(0,0,0,0.3)',
+    color: '#fff',
+    fontSize: '11px',
+    outline: 'none',
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Base URL */}
+      <div>
+        <label className="block text-[10px] text-white/50 mb-1">Base URL (画像フォルダ)</label>
+        <input
+          type="text"
+          value={config.baseUrl}
+          onChange={(e) => updateBaseUrl(e.target.value)}
+          placeholder="/images/avatar/"
+          style={{ ...inputStyle, width: '100%' }}
+        />
+      </div>
+
+      {/* Load defaults button when empty */}
+      {mappings.length === 0 && (
+        <button
+          onClick={loadDefaultMappings}
+          className="w-full py-2 rounded-md border border-purple-500/50 bg-purple-500/10 text-purple-400 text-[11px] cursor-pointer transition-colors hover:bg-purple-500/20"
+        >
+          Load Default Mappings (6)
+        </button>
+      )}
+
+      {/* Expression mappings */}
+      <div className="space-y-2 max-h-[250px] overflow-y-auto">
+        {mappings.map(({ id, filename }) => (
+          <div
+            key={id}
+            className="flex items-center gap-2 p-2 rounded-md border border-white/10 bg-black/20"
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-purple-400 font-mono">{id}</span>
+                <span className="text-white/30">→</span>
+                <span className="text-xs text-white/70 truncate">{filename}</span>
+              </div>
+            </div>
+            <button
+              onClick={() => removeMapping(id)}
+              className="px-2 py-1 rounded text-[10px] bg-red-500/20 text-red-400 hover:bg-red-500/30 shrink-0"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Add new mapping */}
+      <div className="border-t border-white/10 pt-3">
+        <div className="text-[10px] text-white/50 mb-2">Add Expression Mapping</div>
+        <div className="flex gap-2 mb-2">
+          <input
+            type="text"
+            value={newMapping.id}
+            onChange={(e) => setNewMapping({ ...newMapping, id: e.target.value })}
+            placeholder="Expression ID (e.g., smug)"
+            style={{ ...inputStyle, flex: 1 }}
+          />
+        </div>
+        <div className="flex gap-2 mb-2">
+          <input
+            type="text"
+            value={newMapping.filename}
+            onChange={(e) => setNewMapping({ ...newMapping, filename: e.target.value })}
+            placeholder="Image filename (e.g., smug.png)"
+            style={{ ...inputStyle, flex: 1 }}
+          />
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept="image/*"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="px-2 py-1 rounded-md border border-purple-500/50 bg-purple-500/10 text-purple-400 text-[10px] cursor-pointer hover:bg-purple-500/20 disabled:opacity-50 shrink-0"
+          >
+            {uploading ? '...' : 'Upload'}
+          </button>
+        </div>
+        <button
+          onClick={addMapping}
+          disabled={!newMapping.id.trim() || !newMapping.filename.trim()}
+          className="w-full py-2 rounded-md border border-blue-500/50 bg-blue-500/10 text-blue-400 text-[11px] cursor-pointer hover:bg-blue-500/20 disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          + Add Mapping
+        </button>
+      </div>
+
+      {/* Preview info */}
+      <div className="text-[9px] text-white/40 pt-1">
+        Map expression IDs to image files. Full path: {config.baseUrl}[filename]
       </div>
     </div>
   );
@@ -617,7 +818,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
       // VTube Studio settings
       { key: 'vtube_port', type: 'number', label: 'VTube Studio Port', placeholder: '8001', showWhen: { key: 'renderer', value: 'vtube-studio' } },
       // PNG settings
-      { key: 'png_config', type: 'textarea', label: 'PNG Configuration (JSON)', placeholder: '{"baseUrl": "/images/avatar/", "expressions": {"neutral": "neutral.png", "happy": "happy.png"}}', showWhen: { key: 'renderer', value: 'png' } },
+      { key: 'png_config', type: 'png-expression-map', label: 'PNG Expression Mappings', showWhen: { key: 'renderer', value: 'png' } },
     ],
   },
   'motion-trigger': {
@@ -702,10 +903,10 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
           { label: 'PNG Images', value: 'png' },
         ],
       },
-      { key: 'model_url', type: 'text', label: 'Model URL/Path', placeholder: '/models/avatar.vrm' },
-      { key: 'animation_url', type: 'animation-file', label: 'Idle Animation (FBX)', placeholder: 'Upload Mixamo FBX...', accept: '.fbx' },
-      { key: 'vtube_port', type: 'number', label: 'VTube Studio Port', placeholder: '8001' },
-      { key: 'png_config', type: 'textarea', label: 'PNG Configuration (JSON)', placeholder: '{"baseUrl": "/images/avatar.png", "expressions": {}}' },
+      { key: 'model_url', type: 'model-file', label: 'VRM Model', placeholder: 'Upload VRM model...', accept: '.vrm', showWhen: { key: 'renderer', value: 'vrm' } },
+      { key: 'animation_url', type: 'animation-file', label: 'Idle Animation (FBX)', placeholder: 'Upload Mixamo FBX...', accept: '.fbx', showWhen: { key: 'renderer', value: 'vrm' } },
+      { key: 'vtube_port', type: 'number', label: 'VTube Studio Port', placeholder: '8001', showWhen: { key: 'renderer', value: 'vtube-studio' } },
+      { key: 'png_config', type: 'png-expression-map', label: 'PNG Expression Mappings', showWhen: { key: 'renderer', value: 'png' } },
       { key: 'auto_emotion', type: 'checkbox', label: 'Auto Emotion Detection' },
       { key: 'auto_lipsync', type: 'checkbox', label: 'Auto Lip Sync' },
       { key: 'show_subtitle', type: 'checkbox', label: 'Show Subtitle' },
@@ -738,6 +939,7 @@ export default function NodeSettings() {
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [modelUploading, setModelUploading] = useState(false);
   const modelInputRef = useRef<HTMLInputElement>(null);
+  const [avatarImages, setAvatarImages] = useState<string[]>([]);
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
 
@@ -812,6 +1014,21 @@ export default function NodeSettings() {
       setModelUploading(false);
     }
   }, [localConfig, selectedNode, updateNode, fetchModels]);
+
+  // Handle avatar image upload (for PNG mode)
+  const handleAvatarImageUpload = useCallback(async (file: File): Promise<string | null> => {
+    try {
+      const response = await api.uploadModel(file); // Reuse model upload endpoint for images
+      if (response.data) {
+        return response.data.url;
+      } else if (response.error) {
+        alert(`Upload failed: ${response.error}`);
+      }
+    } catch (err) {
+      alert('Failed to upload image');
+    }
+    return null;
+  }, []);
 
   // Fetch VOICEVOX speakers when node is selected or host changes
   const fetchVoicevoxSpeakers = useCallback(async (host: string) => {
@@ -1337,6 +1554,31 @@ export default function NodeSettings() {
             style={inputStyle}
           />
         );
+
+      case 'png-expression-map': {
+        // Parse existing JSON config or use default
+        let pngConfig: PngConfig;
+        if (typeof value === 'string') {
+          try {
+            pngConfig = JSON.parse(value);
+          } catch {
+            pngConfig = { baseUrl: '/images/avatar/', expressions: {} };
+          }
+        } else if (value && typeof value === 'object') {
+          pngConfig = value as PngConfig;
+        } else {
+          pngConfig = { baseUrl: '/images/avatar/', expressions: {} };
+        }
+
+        return (
+          <PngExpressionMapField
+            value={pngConfig}
+            onChange={(newValue) => handleChange(field.key, newValue)}
+            onUploadImage={handleAvatarImageUpload}
+            availableImages={avatarImages}
+          />
+        );
+      }
 
       default:
         return null;
