@@ -50,18 +50,9 @@
   },
   "config": {
     "expression": {
-      "type": "select",
-      "label": "Expression",
-      "description": "Expression to trigger when input is received",
-      "options": [
-        { "label": "None", "value": "" },
-        { "label": "Neutral", "value": "neutral" },
-        { "label": "Happy", "value": "happy" },
-        { "label": "Sad", "value": "sad" },
-        { "label": "Angry", "value": "angry" },
-        { "label": "Surprised", "value": "surprised" },
-        { "label": "Relaxed", "value": "relaxed" }
-      ],
+      "type": "string",
+      "label": "Expression ID",
+      "description": "Expression ID to trigger (e.g., happy, sad, smug). Must match your avatar's expression names.",
       "default": ""
     },
     "intensity": {

@@ -6,7 +6,7 @@ import api, { VoicevoxSpeaker, AnimationInfo, ModelInfo } from '@/lib/api';
 
 interface NodeField {
   key: string;
-  type: 'text' | 'number' | 'textarea' | 'select' | 'checkbox' | 'animation-file' | 'model-file' | 'prompt-builder' | 'input-list';
+  type: 'text' | 'number' | 'textarea' | 'select' | 'checkbox' | 'animation-file' | 'model-file' | 'prompt-builder' | 'input-list' | 'expression-list' | 'password';
   label: string;
   placeholder?: string;
   options?: { label: string; value: string | number }[];
@@ -95,6 +95,199 @@ function InputListField({ value, onChange, placeholder }: InputListFieldProps) {
       {/* Help text */}
       <div className="text-[9px] text-white/40">
         Add input names to create ports. Use {`{{name}}`} in template.
+      </div>
+    </div>
+  );
+}
+
+// Expression type for emotion analyzer
+export interface Expression {
+  id: string;
+  label: string;
+  description: string;
+  keywords_ja?: string[];
+  keywords_en?: string[];
+}
+
+// Default expressions for emotion analyzer
+const DEFAULT_EXPRESSIONS: Expression[] = [
+  { id: 'neutral', label: 'Neutral', description: 'Default calm state, no strong emotion', keywords_ja: [], keywords_en: [] },
+  { id: 'happy', label: 'Happy', description: 'Joy, excitement, gratitude, amusement, laughter', keywords_ja: ['嬉しい', '楽しい', '笑', 'www', '草'], keywords_en: ['happy', 'joy', 'lol', 'haha', 'yay'] },
+  { id: 'sad', label: 'Sad', description: 'Sadness, disappointment, loneliness, regret', keywords_ja: ['悲しい', '辛い', '泣'], keywords_en: ['sad', 'sorry', 'cry'] },
+  { id: 'angry', label: 'Angry', description: 'Anger, frustration, irritation, annoyance', keywords_ja: ['怒', 'むかつく', 'イライラ'], keywords_en: ['angry', 'mad', 'hate'] },
+  { id: 'surprised', label: 'Surprised', description: 'Surprise, shock, amazement, disbelief', keywords_ja: ['驚', 'びっくり', 'すごい', 'やばい'], keywords_en: ['wow', 'omg', 'surprised'] },
+  { id: 'relaxed', label: 'Relaxed', description: 'Calm, peaceful, comfortable, relieved', keywords_ja: ['落ち着', 'リラックス', '癒し'], keywords_en: ['calm', 'relax', 'chill'] },
+];
+
+// Separate component for expression-list field
+interface ExpressionListFieldProps {
+  value: Expression[];
+  onChange: (newValue: Expression[]) => void;
+}
+
+function ExpressionListField({ value, onChange }: ExpressionListFieldProps) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [newExpr, setNewExpr] = useState<Partial<Expression>>({ id: '', label: '', description: '' });
+  const expressions = value || [];
+
+  const loadDefaults = () => {
+    onChange(DEFAULT_EXPRESSIONS);
+  };
+
+  const addExpression = () => {
+    const trimmedId = newExpr.id?.trim().toLowerCase().replace(/\s+/g, '-') || '';
+    const trimmedLabel = newExpr.label?.trim() || '';
+    const trimmedDesc = newExpr.description?.trim() || '';
+
+    if (!trimmedId || !trimmedLabel) return;
+    if (expressions.some(e => e.id === trimmedId)) return;
+
+    const newExpression: Expression = {
+      id: trimmedId,
+      label: trimmedLabel,
+      description: trimmedDesc,
+      keywords_ja: [],
+      keywords_en: [],
+    };
+
+    onChange([...expressions, newExpression]);
+    setNewExpr({ id: '', label: '', description: '' });
+  };
+
+  const removeExpression = (id: string) => {
+    onChange(expressions.filter(e => e.id !== id));
+  };
+
+  const updateExpression = (id: string, updates: Partial<Expression>) => {
+    onChange(expressions.map(e => e.id === id ? { ...e, ...updates } : e));
+  };
+
+  const inputStyle = {
+    padding: '6px 8px',
+    borderRadius: '4px',
+    border: '1px solid rgba(255,255,255,0.2)',
+    background: 'rgba(0,0,0,0.3)',
+    color: '#fff',
+    fontSize: '11px',
+    outline: 'none',
+  };
+
+  return (
+    <div className="space-y-2">
+      {/* Load defaults button when empty */}
+      {expressions.length === 0 && (
+        <button
+          onClick={loadDefaults}
+          className="w-full py-2 rounded-md border border-emerald-500/50 bg-emerald-500/10 text-emerald-400 text-[11px] cursor-pointer transition-colors hover:bg-emerald-500/20"
+        >
+          Load Default Expressions (6)
+        </button>
+      )}
+
+      {/* Existing expressions */}
+      <div className="space-y-2 max-h-[300px] overflow-y-auto">
+        {expressions.map((expr) => (
+          <div
+            key={expr.id}
+            className="p-2 rounded-md border border-white/10 bg-black/20"
+          >
+            {editingId === expr.id ? (
+              // Edit mode
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={expr.label}
+                    onChange={(e) => updateExpression(expr.id, { label: e.target.value })}
+                    placeholder="Label"
+                    style={{ ...inputStyle, flex: 1 }}
+                  />
+                  <button
+                    onClick={() => setEditingId(null)}
+                    className="px-2 py-1 rounded text-[10px] bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
+                  >
+                    Done
+                  </button>
+                </div>
+                <textarea
+                  value={expr.description}
+                  onChange={(e) => updateExpression(expr.id, { description: e.target.value })}
+                  placeholder="Description for LLM (e.g., 'Self-satisfied, proud, confident')"
+                  rows={2}
+                  style={{ ...inputStyle, width: '100%', resize: 'vertical' }}
+                />
+                <div className="text-[9px] text-white/40">
+                  ID: {expr.id} (cannot be changed)
+                </div>
+              </div>
+            ) : (
+              // View mode
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-white font-medium">{expr.label}</div>
+                  <div className="text-[10px] text-white/50">ID: {expr.id}</div>
+                  <div className="text-[10px] text-white/40 truncate">{expr.description}</div>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <button
+                    onClick={() => setEditingId(expr.id)}
+                    className="px-2 py-1 rounded text-[10px] bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => removeExpression(expr.id)}
+                    className="px-2 py-1 rounded text-[10px] bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Add new expression */}
+      <div className="border-t border-white/10 pt-2 mt-2">
+        <div className="text-[10px] text-white/50 mb-2">Add New Expression</div>
+        <div className="flex gap-2 mb-2">
+          <input
+            type="text"
+            value={newExpr.id || ''}
+            onChange={(e) => setNewExpr({ ...newExpr, id: e.target.value })}
+            placeholder="ID (e.g., smug)"
+            style={{ ...inputStyle, flex: 1 }}
+          />
+          <input
+            type="text"
+            value={newExpr.label || ''}
+            onChange={(e) => setNewExpr({ ...newExpr, label: e.target.value })}
+            placeholder="Label"
+            style={{ ...inputStyle, flex: 1 }}
+          />
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newExpr.description || ''}
+            onChange={(e) => setNewExpr({ ...newExpr, description: e.target.value })}
+            placeholder="Description for LLM analysis"
+            style={{ ...inputStyle, flex: 1 }}
+          />
+          <button
+            onClick={addExpression}
+            disabled={!newExpr.id?.trim() || !newExpr.label?.trim()}
+            className="px-3 py-1 rounded-md border border-blue-500/50 bg-blue-500/10 text-blue-400 text-[11px] cursor-pointer hover:bg-blue-500/20 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            Add
+          </button>
+        </div>
+      </div>
+
+      {/* Info text */}
+      <div className="text-[9px] text-white/40 pt-1">
+        Expressions define emotions the LLM can detect. The ID must match your avatar&apos;s expression/image names.
       </div>
     </div>
   );
@@ -430,20 +623,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
   'motion-trigger': {
     label: 'Motion Trigger',
     fields: [
-      {
-        key: 'expression',
-        type: 'select',
-        label: 'Expression',
-        options: [
-          { label: 'None', value: '' },
-          { label: 'Neutral', value: 'neutral' },
-          { label: 'Happy', value: 'happy' },
-          { label: 'Sad', value: 'sad' },
-          { label: 'Angry', value: 'angry' },
-          { label: 'Surprised', value: 'surprised' },
-          { label: 'Relaxed', value: 'relaxed' },
-        ],
-      },
+      { key: 'expression', type: 'text', label: 'Expression ID', placeholder: 'happy, sad, smug, etc.' },
       { key: 'intensity', type: 'number', label: 'Expression Intensity (0.0-1.0)', placeholder: '0.8' },
       { key: 'motion_url', type: 'animation-file', label: 'Motion Animation (FBX)', placeholder: 'Upload Mixamo FBX...', accept: '.fbx' },
       { key: 'emit_events', type: 'checkbox', label: 'Emit Avatar Events' },
@@ -457,10 +637,24 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         type: 'select',
         label: 'Analysis Method',
         options: [
+          { label: 'LLM-based (Recommended)', value: 'llm' },
           { label: 'Rule-based (Keywords)', value: 'rule-based' },
-          { label: 'LLM-based', value: 'llm' },
         ],
       },
+      { key: 'expressions', type: 'expression-list', label: 'Available Expressions' },
+      {
+        key: 'llm_provider',
+        type: 'select',
+        label: 'LLM Provider',
+        options: [
+          { label: 'OpenAI', value: 'openai' },
+          { label: 'Anthropic', value: 'anthropic' },
+          { label: 'Google', value: 'google' },
+        ],
+        showWhen: { key: 'method', value: 'llm' },
+      },
+      { key: 'llm_api_key', type: 'password', label: 'LLM API Key', placeholder: 'sk-...', showWhen: { key: 'method', value: 'llm' } },
+      { key: 'llm_model', type: 'text', label: 'LLM Model', placeholder: 'gpt-4o-mini', showWhen: { key: 'method', value: 'llm' } },
       {
         key: 'language',
         type: 'select',
@@ -470,8 +664,9 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
           { label: 'English', value: 'en' },
           { label: 'Auto-detect', value: 'auto' },
         ],
+        showWhen: { key: 'method', value: 'rule-based' },
       },
-      { key: 'custom_mappings', type: 'textarea', label: 'Custom Emotion Mappings (JSON)', placeholder: '{"happy": ["keyword1", "keyword2"]}' },
+      { key: 'custom_mappings', type: 'textarea', label: 'Custom Keyword Mappings (JSON)', placeholder: '{"happy": ["keyword1", "keyword2"]}', showWhen: { key: 'method', value: 'rule-based' } },
       { key: 'emit_events', type: 'checkbox', label: 'Emit Avatar Events' },
     ],
   },
@@ -1121,6 +1316,25 @@ export default function NodeSettings() {
             value={(value as string[]) || []}
             onChange={(newValue) => handleChange(field.key, newValue)}
             placeholder={field.placeholder}
+          />
+        );
+
+      case 'expression-list':
+        return (
+          <ExpressionListField
+            value={(value as Expression[]) || []}
+            onChange={(newValue) => handleChange(field.key, newValue)}
+          />
+        );
+
+      case 'password':
+        return (
+          <input
+            type="password"
+            value={value as string}
+            onChange={(e) => handleChange(field.key, e.target.value)}
+            placeholder={field.placeholder}
+            style={inputStyle}
           />
         );
 

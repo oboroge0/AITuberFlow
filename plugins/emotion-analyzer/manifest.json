@@ -1,8 +1,8 @@
 {
   "id": "emotion-analyzer",
   "name": "Emotion Analyzer",
-  "version": "1.0.0",
-  "description": "Analyzes text to detect emotions for avatar expression control",
+  "version": "2.0.0",
+  "description": "Analyzes text to detect emotions for avatar expression control with customizable expressions",
   "author": {
     "name": "AITuberFlow",
     "url": "https://github.com/aituberflow"
@@ -21,7 +21,7 @@
       {
         "id": "expression",
         "type": "string",
-        "description": "Detected expression (happy, sad, angry, surprised, neutral)"
+        "description": "Detected expression ID (e.g., happy, sad, smug)"
       },
       {
         "id": "intensity",
@@ -44,27 +44,61 @@
       "label": "Analysis Method",
       "description": "Method to use for emotion detection",
       "options": [
-        { "label": "Rule-based (Keywords)", "value": "rule-based" },
-        { "label": "LLM-based", "value": "llm" }
+        { "label": "LLM-based (Recommended)", "value": "llm" },
+        { "label": "Rule-based (Keywords)", "value": "rule-based" }
       ],
-      "default": "rule-based"
+      "default": "llm"
+    },
+    "expressions": {
+      "type": "expression-list",
+      "label": "Available Expressions",
+      "description": "Define custom expressions with descriptions for LLM analysis",
+      "default": []
     },
     "language": {
       "type": "select",
       "label": "Language",
-      "description": "Language for keyword matching",
+      "description": "Language for keyword matching (rule-based only)",
       "options": [
         { "label": "Japanese", "value": "ja" },
         { "label": "English", "value": "en" },
         { "label": "Auto-detect", "value": "auto" }
       ],
-      "default": "ja"
+      "default": "ja",
+      "showWhen": { "key": "method", "value": "rule-based" }
     },
     "custom_mappings": {
       "type": "textarea",
       "label": "Custom Emotion Mappings (JSON)",
       "description": "Custom keyword to expression mappings",
-      "default": "{}"
+      "default": "{}",
+      "showWhen": { "key": "method", "value": "rule-based" }
+    },
+    "llm_provider": {
+      "type": "select",
+      "label": "LLM Provider",
+      "description": "Provider for LLM-based analysis",
+      "options": [
+        { "label": "OpenAI", "value": "openai" },
+        { "label": "Anthropic", "value": "anthropic" },
+        { "label": "Google", "value": "google" }
+      ],
+      "default": "openai",
+      "showWhen": { "key": "method", "value": "llm" }
+    },
+    "llm_api_key": {
+      "type": "password",
+      "label": "LLM API Key",
+      "description": "API key for the selected LLM provider",
+      "default": "",
+      "showWhen": { "key": "method", "value": "llm" }
+    },
+    "llm_model": {
+      "type": "string",
+      "label": "LLM Model",
+      "description": "Model to use for emotion analysis",
+      "default": "gpt-4o-mini",
+      "showWhen": { "key": "method", "value": "llm" }
     },
     "emit_events": {
       "type": "boolean",
