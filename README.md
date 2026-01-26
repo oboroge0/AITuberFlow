@@ -1,6 +1,10 @@
-# AITuberFlow
+<p align="center">
+  <img src="docs/images/logo.png" alt="AITuberFlow" width="600">
+</p>
 
-**ノーコードでAITuberを作成できるビジュアルワークフローエディタ**
+<p align="center">
+  <strong>ノーコードでAITuberを作成できるビジュアルワークフローエディタ</strong>
+</p>
 
 [![CI](https://github.com/oboroge0/AITuberFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/oboroge0/AITuberFlow/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)

@@ -1,6 +1,10 @@
-# AITuberFlow
+<p align="center">
+  <img src="docs/images/logo.png" alt="AITuberFlow" width="600">
+</p>
 
-**Visual workflow editor for creating AI VTubers without coding**
+<p align="center">
+  <strong>Visual workflow editor for creating AI VTubers without coding</strong>
+</p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
