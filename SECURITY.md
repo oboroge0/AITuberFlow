@@ -1,56 +1,60 @@
-# Security Policy
+# セキュリティポリシー
 
-## Reporting a Vulnerability
+[English](SECURITY.en.md)
 
-If you discover a security vulnerability in AITuberFlow, please report it responsibly.
+## 脆弱性の報告
 
-### How to Report
+AITuberFlowでセキュリティの脆弱性を発見した場合は、責任ある形で報告してください。
 
-1. **Do NOT** open a public issue for security vulnerabilities
-2. Send details to the maintainers via private message or email
-3. Include:
-   - Description of the vulnerability
-   - Steps to reproduce
-   - Potential impact
-   - Suggested fix (if any)
+### 報告方法
 
-### What to Expect
+1. セキュリティの脆弱性について公開Issueを**開かないでください**
+2. プライベートメッセージまたはメールでメンテナーに詳細を送信してください
+3. 以下を含めてください：
+   - 脆弱性の説明
+   - 再現手順
+   - 潜在的な影響
+   - 提案される修正（あれば）
 
-- Acknowledgment within 48 hours
-- Status update within 7 days
-- Credit in the security advisory (if desired)
+### 対応について
 
-## Supported Versions
+- 48時間以内に確認
+- 7日以内にステータス更新
+- セキュリティアドバイザリーでのクレジット（希望する場合）
 
-| Version | Supported |
-|---------|-----------|
-| 0.1.x   | Yes       |
+## サポートされているバージョン
 
-## Security Best Practices for Users
+| バージョン | サポート状況 |
+|-----------|-------------|
+| 1.x       | ✅ サポート中 |
+| 0.x       | ❌ サポート終了 |
 
-### API Keys
+## ユーザー向けセキュリティベストプラクティス
 
-- Never commit API keys to version control
-- Use environment variables (`.env` files)
-- Keep `.env` files in `.gitignore`
+### APIキー
 
-### Network Configuration
+- APIキーをバージョン管理にコミットしない
+- 環境変数（`.env`ファイル）を使用
+- `.env`ファイルを`.gitignore`に含める
+- ワークフローのエクスポート時にはAPIキーが自動的に除外されます
 
-- Run behind a reverse proxy in production
-- Use HTTPS for all external connections
-- Restrict CORS origins to trusted domains
+### ネットワーク設定
 
-### OBS Integration
+- 本番環境ではリバースプロキシの背後で実行
+- すべての外部接続にHTTPSを使用
+- CORS設定を信頼できるドメインに制限
 
-- Use strong passwords for OBS WebSocket
-- Limit network access to localhost when possible
+### OBS連携
 
-## Known Security Considerations
+- OBS WebSocketに強力なパスワードを使用
+- 可能な場合はlocalhostへのネットワークアクセスを制限
 
-### Local Development
+## 既知のセキュリティに関する考慮事項
 
-This project is designed primarily for local development and personal streaming setups. Additional security hardening is recommended for any public-facing deployment.
+### ローカル開発
 
-### Plugin System
+このプロジェクトは主にローカル開発と個人の配信セットアップ向けに設計されています。公開デプロイには追加のセキュリティ強化が推奨されます。
 
-Plugins execute Python code. Only install plugins from trusted sources.
+### プラグインシステム
+
+プラグインはPythonコードを実行します。信頼できるソースからのプラグインのみをインストールしてください。

@@ -1,32 +1,34 @@
-# Code of Conduct
+# 行動規範
 
-## Our Commitment
+[English](CODE_OF_CONDUCT.en.md)
 
-We are committed to providing a welcoming and inclusive environment for all contributors, regardless of background, identity, or experience level.
+## 私たちの約束
 
-## Expected Behavior
+背景、アイデンティティ、経験レベルに関係なく、すべての貢献者にとって歓迎的で包括的な環境を提供することに取り組んでいます。
 
-- Be respectful and considerate in all interactions
-- Welcome newcomers and help them get started
-- Accept constructive feedback gracefully
-- Focus on what is best for the community and project
-- Show empathy towards other community members
+## 期待される行動
 
-## Unacceptable Behavior
+- すべてのやり取りにおいて敬意を持ち、思いやりを持つ
+- 新しい参加者を歓迎し、始めるのを手助けする
+- 建設的なフィードバックを gracefully に受け入れる
+- コミュニティとプロジェクトにとって最善なことに焦点を当てる
+- 他のコミュニティメンバーに共感を示す
 
-- Harassment, discrimination, or personal attacks
-- Trolling or deliberately inflammatory comments
-- Publishing others' private information without consent
-- Any conduct that would be considered inappropriate in a professional setting
+## 容認されない行動
 
-## Enforcement
+- ハラスメント、差別、または個人攻撃
+- トローリングや意図的に挑発的なコメント
+- 同意なしに他人の個人情報を公開すること
+- プロフェッショナルな環境で不適切とみなされる行為
 
-Project maintainers may remove, edit, or reject comments, commits, code, issues, and other contributions that violate this Code of Conduct. Repeated violations may result in temporary or permanent bans from the project.
+## 執行
 
-## Reporting
+プロジェクトメンテナーは、この行動規範に違反するコメント、コミット、コード、Issue、その他の貢献を削除、編集、または拒否することができます。繰り返しの違反は、プロジェクトからの一時的または永久的な禁止につながる可能性があります。
 
-If you experience or witness unacceptable behavior, please report it by opening an issue or contacting the maintainers directly.
+## 報告
 
-## Scope
+容認されない行動を経験または目撃した場合は、Issueを開くか、メンテナーに直接連絡して報告してください。
 
-This Code of Conduct applies to all project spaces, including the repository, issues, pull requests, and any community discussions.
+## 範囲
+
+この行動規範は、リポジトリ、Issue、プルリクエスト、およびコミュニティディスカッションを含むすべてのプロジェクトスペースに適用されます。

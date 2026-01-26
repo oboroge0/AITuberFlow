@@ -1,81 +1,89 @@
-# Contributing to AITuberFlow
+# AITuberFlow への貢献
 
-Thank you for your interest in contributing to AITuberFlow! This document provides guidelines and instructions for contributing.
+AITuberFlowへの貢献に興味を持っていただきありがとうございます！このドキュメントでは、貢献のガイドラインと手順を説明します。
 
-[日本語版](CONTRIBUTING.ja.md)
+[English](CONTRIBUTING.en.md)
 
-## Table of Contents
+## 目次
 
-- [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [Development Setup](#development-setup)
-- [Making Changes](#making-changes)
-- [Pull Request Process](#pull-request-process)
-- [Plugin Development](#plugin-development)
-- [Coding Standards](#coding-standards)
-- [Testing](#testing)
-- [Documentation](#documentation)
+- [行動規範](#行動規範)
+- [はじめに](#はじめに)
+- [開発環境のセットアップ](#開発環境のセットアップ)
+- [変更の作成](#変更の作成)
+- [プルリクエストの手順](#プルリクエストの手順)
+- [プラグイン開発](#プラグイン開発)
+- [コーディング規約](#コーディング規約)
+- [テスト](#テスト)
+- [ドキュメント](#ドキュメント)
 
-## Code of Conduct
+## 行動規範
 
-This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+このプロジェクトは[行動規範](CODE_OF_CONDUCT.md)に従います。参加することで、この規範を遵守することが期待されます。
 
-## Getting Started
+## はじめに
 
-### Types of Contributions
+### 貢献の種類
 
-We welcome the following types of contributions:
+以下の種類の貢献を歓迎します：
 
-- **Bug fixes** - Fix issues in existing code
-- **New plugins** - Add new nodes to extend functionality
-- **Documentation** - Improve or translate documentation
-- **Feature enhancements** - Add new features to existing code
-- **Tests** - Add or improve test coverage
+- **バグ修正** - 既存コードの問題を修正
+- **新しいプラグイン** - 機能を拡張する新しいノードの追加
+- **ドキュメント** - ドキュメントの改善や翻訳
+- **機能強化** - 既存コードへの新機能追加
+- **テスト** - テストカバレッジの追加や改善
 
-### Issues
+### Issue
 
-- Check existing issues before creating a new one
-- Use issue templates when available
-- Provide clear reproduction steps for bugs
-- Include relevant environment information
+- 新しいIssueを作成する前に既存のIssueを確認してください
+- 利用可能な場合はIssueテンプレートを使用してください
+- バグの場合は明確な再現手順を提供してください
+- 関連する環境情報を含めてください
 
-## Development Setup
+## 開発環境のセットアップ
 
-### Prerequisites
+### 前提条件
 
-- Node.js 18+
-- Python 3.11+
+- Node.js 22以上
+- Python 3.11以上
 - Git
 
-### Setting Up the Development Environment
+### 開発環境の構築
 
-1. **Fork and clone the repository**
+#### 最も簡単な方法: GitHub Codespaces
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/oboroge0/AITuberFlow)
+
+ワンクリックで開発環境を構築できます。
+
+#### ローカル環境
+
+1. **リポジトリをフォークしてクローン**
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/AITuberFlow.git
 cd AITuberFlow
 ```
 
-2. **Set up the backend**
+2. **バックエンドのセットアップ**
 
 ```bash
 cd apps/server
 
-# Using uv (recommended)
+# uvを使用（推奨）
 uv sync
 uv pip install -e ../../packages/sdk
 
-# Or using pip
+# またはpipを使用
 python -m venv .venv
-source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+source .venv/bin/activate  # Windowsの場合: .venv\Scripts\activate
 pip install -r requirements.txt
 pip install -e ../../packages/sdk
 
-# Copy environment config
+# 環境設定をコピー
 cp .env.example .env
 ```
 
-3. **Set up the frontend**
+3. **フロントエンドのセットアップ**
 
 ```bash
 cd apps/web
@@ -83,87 +91,85 @@ npm install
 cp .env.example .env.local
 ```
 
-4. **Start development servers**
+4. **開発サーバーを起動**
 
 ```bash
-# Terminal 1: Backend
+# ターミナル1: バックエンド
 cd apps/server
-uv run python main.py  # or python main.py with venv activated
+uv run python main.py  # またはvenvを有効化してpython main.py
 
-# Terminal 2: Frontend
+# ターミナル2: フロントエンド
 cd apps/web
 npm run dev
 ```
 
-## Making Changes
+## 変更の作成
 
-### Branch Naming
+### ブランチ命名規則
 
-Use descriptive branch names:
+わかりやすいブランチ名を使用してください：
 
-- `feature/add-twitter-integration` - New features
-- `fix/audio-playback-issue` - Bug fixes
-- `docs/update-readme` - Documentation changes
-- `plugin/image-generation` - New plugins
+- `feature/twitter連携追加` - 新機能
+- `fix/音声再生問題` - バグ修正
+- `docs/readme更新` - ドキュメント変更
+- `plugin/画像生成` - 新しいプラグイン
 
-### Commit Messages
+### コミットメッセージ
 
-Write clear, concise commit messages:
+明確で簡潔なコミットメッセージを日本語で書いてください：
 
 ```
-type: short description
+type: 簡潔な説明
 
-Longer description if needed.
-Explain the "why" not just the "what".
+必要に応じて詳細な説明。
+「何を」だけでなく「なぜ」を説明。
 ```
 
-Types:
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `plugin`: New or updated plugin
-- `refactor`: Code refactoring
-- `test`: Adding or updating tests
-- `chore`: Maintenance tasks
+タイプ：
+- `feat`: 新機能
+- `fix`: バグ修正
+- `docs`: ドキュメント変更
+- `plugin`: 新規または更新されたプラグイン
+- `refactor`: コードリファクタリング
+- `test`: テストの追加や更新
+- `chore`: メンテナンスタスク
 
-Examples:
+例：
 ```
-feat: add Discord chat integration node
+feat: Discord チャット連携ノードを追加
 
-fix: resolve audio playback timing issue on Safari
+fix: Safari での音声再生タイミング問題を解決
 
-docs: add Japanese translation for CONTRIBUTING.md
-
-plugin: add image-generation node using DALL-E
+docs: プラグイン開発ガイドを更新
 ```
 
-## Pull Request Process
+## プルリクエストの手順
 
-1. **Ensure your changes are ready**
-   - Code follows project coding standards
-   - Tests pass locally
-   - Documentation is updated if needed
+1. **変更の準備が整っていることを確認**
+   - コードがプロジェクトのコーディング規約に従っている
+   - ローカルでテストが通過する
+   - 必要に応じてドキュメントが更新されている
 
-2. **Create a Pull Request**
-   - Use a clear, descriptive title
-   - Reference related issues (`Fixes #123`)
-   - Provide a summary of changes
-   - Include screenshots for UI changes
+2. **プルリクエストを作成**
+   - 明確でわかりやすいタイトルを使用
+   - 関連するIssueを参照（`Fixes #123`）
+   - 変更の概要を提供
+   - UI変更の場合はスクリーンショットを含める
 
-3. **PR Review**
-   - Maintainers will review your PR
-   - Address any requested changes
-   - Be patient and responsive
+3. **PRレビュー**
+   - メンテナーがPRをレビューします
+   - 要求された変更に対応してください
+   - 忍耐強く、レスポンシブに
 
-4. **Merge**
-   - PRs are merged after approval
-   - Squash merge is preferred for clean history
+4. **マージ**
+   - 承認後にPRがマージされます
+   - クリーンな履歴のためにスカッシュマージが推奨されます
 
-## Plugin Development
+## プラグイン開発
 
-### Creating a New Plugin
+### 新しいプラグインの作成
 
-1. Create a new directory in `plugins/`:
+1. `plugins/`に新しいディレクトリを作成：
 
 ```
 plugins/my-plugin/
@@ -171,41 +177,41 @@ plugins/my-plugin/
 └── node.py
 ```
 
-2. Define the manifest (`manifest.json`):
+2. マニフェストを定義（`manifest.json`）：
 
 ```json
 {
   "id": "my-plugin",
-  "name": "My Plugin",
+  "name": "マイプラグイン",
   "version": "1.0.0",
-  "description": "Description of what the plugin does",
+  "description": "プラグインの説明",
   "category": "utility",
   "inputs": [
     {
       "id": "text",
-      "name": "Text Input",
+      "name": "テキスト入力",
       "type": "string"
     }
   ],
   "outputs": [
     {
       "id": "result",
-      "name": "Result",
+      "name": "結果",
       "type": "string"
     }
   ],
   "config": [
     {
       "id": "setting",
-      "name": "Setting",
+      "name": "設定",
       "type": "string",
-      "default": "default value"
+      "default": "デフォルト値"
     }
   ]
 }
 ```
 
-3. Implement the node (`node.py`):
+3. ノードを実装（`node.py`）：
 
 ```python
 from aituber_flow_sdk import BaseNode, NodeContext
@@ -216,53 +222,53 @@ class MyPluginNode(BaseNode):
 
     async def execute(self, inputs: dict, context: NodeContext) -> dict:
         text = inputs.get("text", "")
-        result = f"Processed: {text}"
+        result = f"処理結果: {text}"
         return {"result": result}
 
     async def teardown(self) -> None:
         pass
 ```
 
-4. Register in frontend (update `Sidebar.tsx` and `Canvas.tsx`)
+4. フロントエンドに登録（`Sidebar.tsx`と`Canvas.tsx`を更新）
 
-### Plugin Guidelines
+### プラグインガイドライン
 
-- One responsibility per plugin
-- Handle errors gracefully
-- Log meaningful messages
-- Clean up resources in `teardown()`
-- Document configuration options
+- 1つのプラグインに1つの責任
+- エラーを適切に処理
+- 意味のあるログメッセージを出力
+- `teardown()`でリソースをクリーンアップ
+- 設定オプションをドキュメント化
 
-## Coding Standards
+## コーディング規約
 
-### Python (Backend & Plugins)
+### Python（バックエンド & プラグイン）
 
-- Follow PEP 8 style guidelines
-- Use type hints where possible
-- Use async/await for I/O operations
-- Document public functions with docstrings
+- PEP 8スタイルガイドラインに従う
+- 可能な限り型ヒントを使用
+- I/O操作にはasync/awaitを使用
+- パブリック関数にはdocstringでドキュメント化
 
 ```python
 async def process_message(text: str, config: dict) -> dict:
     """
-    Process an incoming message.
+    受信メッセージを処理する。
 
     Args:
-        text: The input text to process
-        config: Configuration dictionary
+        text: 処理する入力テキスト
+        config: 設定辞書
 
     Returns:
-        Dictionary containing processed result
+        処理結果を含む辞書
     """
     pass
 ```
 
-### TypeScript (Frontend)
+### TypeScript（フロントエンド）
 
-- Use TypeScript strict mode
-- Define interfaces for data structures
-- Use meaningful variable names
-- Follow React best practices
+- TypeScript strictモードを使用
+- データ構造にインターフェースを定義
+- 意味のある変数名を使用
+- Reactのベストプラクティスに従う
 
 ```typescript
 interface NodeConfig {
@@ -272,62 +278,65 @@ interface NodeConfig {
 }
 
 const processNode = (config: NodeConfig): void => {
-  // Implementation
+  // 実装
 };
 ```
 
-## Testing
+## テスト
 
-### Running Tests
+### テストの実行
 
 ```bash
-# Backend tests
+# バックエンドテスト
 cd apps/server
 uv run pytest -v
 
-# Frontend tests (when available)
+# フロントエンドテスト（利用可能な場合）
 cd apps/web
 npm test
 ```
 
-### Writing Tests
+### テストの書き方
 
-- Test edge cases and error conditions
-- Use descriptive test names
-- Mock external services
+- エッジケースとエラー条件をテスト
+- わかりやすいテスト名を使用
+- 外部サービスをモック
 
 ```python
 @pytest.mark.asyncio
 async def test_node_handles_empty_input():
     node = MyPluginNode()
     result = await node.execute({"text": ""}, mock_context)
-    assert result["result"] == "Processed: "
+    assert result["result"] == "処理結果: "
 ```
 
-## Documentation
+## ドキュメント
 
-### When to Update Documentation
+### ドキュメントを更新するタイミング
 
-- Adding new features
-- Changing existing behavior
-- Adding new plugins
-- Modifying API endpoints
+- 新機能の追加時
+- 既存の動作の変更時
+- 新しいプラグインの追加時
+- APIエンドポイントの変更時
 
-### Documentation Locations
+### ドキュメントの場所
 
-- `README.md` / `README.ja.md` - Project overview
-- `docs/` - Detailed documentation
-- `packages/sdk/README.md` - SDK documentation
-- Code comments - Implementation details
+| ファイル | 日本語 | 英語 |
+|---------|-------|------|
+| README | `README.md` | `README.en.md` |
+| はじめに | `docs/getting-started.ja.md` | `docs/getting-started.md` |
+| アーキテクチャ | `docs/architecture.ja.md` | `docs/architecture.md` |
+| APIリファレンス | `docs/api-reference.ja.md` | `docs/api-reference.md` |
+| SDK | `packages/sdk/README.md` | - |
 
 ---
 
-## Questions?
+## 質問がありますか？
 
-If you have questions about contributing:
+貢献について質問がある場合：
 
-1. Check existing documentation
-2. Search closed issues
-3. Open a new issue with the "question" label
+1. 既存のドキュメントを確認
+2. クローズされたIssueを検索
+3. 「question」ラベルを付けて新しいIssueを開く
 
-Thank you for contributing to AITuberFlow!
+AITuberFlowへの貢献ありがとうございます！
