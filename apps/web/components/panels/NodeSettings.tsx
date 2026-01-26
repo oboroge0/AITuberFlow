@@ -549,7 +549,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
   'openai-llm': {
     label: 'ChatGPT (OpenAI)',
     fields: [
-      { key: 'apiKey', type: 'text', label: 'API Key', placeholder: 'sk-...' },
+      { key: 'apiKey', type: 'password', label: 'API Key', placeholder: 'sk-...' },
       {
         key: 'model',
         type: 'select',
@@ -581,7 +581,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
   'anthropic-llm': {
     label: 'Claude (Anthropic)',
     fields: [
-      { key: 'apiKey', type: 'text', label: 'API Key', placeholder: 'sk-ant-...' },
+      { key: 'apiKey', type: 'password', label: 'API Key', placeholder: 'sk-ant-...' },
       {
         key: 'model',
         type: 'select',
@@ -604,7 +604,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
   'google-llm': {
     label: 'Gemini (Google)',
     fields: [
-      { key: 'apiKey', type: 'text', label: 'API Key', placeholder: 'AI...' },
+      { key: 'apiKey', type: 'password', label: 'API Key', placeholder: 'AI...' },
       {
         key: 'model',
         type: 'select',
@@ -647,6 +647,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         options: [],
       },
       { key: 'speedScale', type: 'number', label: 'Speed', placeholder: '1.0' },
+      { key: 'demoMode', type: 'checkbox', label: 'Demo Mode' },
     ],
   },
   'coeiroink-tts': {
@@ -657,6 +658,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
       { key: 'styleId', type: 'number', label: 'Style ID', placeholder: '0' },
       { key: 'speedScale', type: 'number', label: 'Speed', placeholder: '1.0' },
       { key: 'pitchScale', type: 'number', label: 'Pitch', placeholder: '1.0' },
+      { key: 'demoMode', type: 'checkbox', label: 'Demo Mode' },
     ],
   },
   'sbv2-tts': {
@@ -668,6 +670,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
       { key: 'style', type: 'text', label: 'Style', placeholder: 'Neutral, Happy, Sad...' },
       { key: 'styleWeight', type: 'number', label: 'Style Weight', placeholder: '1.0' },
       { key: 'length', type: 'number', label: 'Speed', placeholder: '1.0' },
+      { key: 'demoMode', type: 'checkbox', label: 'Demo Mode' },
     ],
   },
   'manual-input': {

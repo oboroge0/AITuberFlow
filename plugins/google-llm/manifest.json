@@ -42,7 +42,11 @@
       "label": "Model",
       "description": "Gemini model to use",
       "default": "gemini-1.5-flash",
-      "options": ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"]
+      "options": [
+        "gemini-1.5-pro",
+        "gemini-1.5-flash",
+        "gemini-pro"
+      ]
     },
     "systemPrompt": {
       "type": "textarea",

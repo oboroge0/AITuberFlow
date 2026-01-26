@@ -12,7 +12,7 @@ sdk_path = Path(__file__).parent.parent.parent / "packages" / "sdk"
 if str(sdk_path) not in sys.path:
     sys.path.insert(0, str(sdk_path))
 
-from aituber_flow_sdk import BaseNode, NodeContext, Event
+from aituber_flow_sdk import BaseNode, NodeContext, Event, ErrorCode, get_error_message
 
 try:
     import openai
@@ -27,6 +27,9 @@ class OpenAILLMNode(BaseNode):
     Generates text responses using OpenAI's chat completion API.
     """
 
+    # Demo mode response
+    DEMO_RESPONSE = "これはデモモードの応答です。実際のLLMを使用するにはAPIキーを設定してください。"
+
     def __init__(self):
         self.client = None
         self.api_key = None
@@ -39,7 +42,8 @@ class OpenAILLMNode(BaseNode):
     async def setup(self, config: dict, context: NodeContext) -> None:
         """Initialize the OpenAI client."""
         if openai is None:
-            await context.log("OpenAI package not installed. Run: pip install openai", "error")
+            error_msg = get_error_message(ErrorCode.PACKAGE_NOT_INSTALLED, package="openai")
+            await context.log(error_msg, "error")
             return
 
         self.api_key = config.get("apiKey")
@@ -50,7 +54,8 @@ class OpenAILLMNode(BaseNode):
         self.prompt_sections = config.get("promptSections")  # Structured prompt config
 
         if not self.api_key:
-            await context.log("OpenAI API key not configured", "warning")
+            # Auto demo mode when API key is not set
+            await context.log("[デモモード] OpenAI APIキー未設定 - 定型文応答を返します", "warning")
         else:
             self.client = openai.AsyncOpenAI(api_key=self.api_key)
             await context.log(f"OpenAI client initialized (model: {self.model})")
@@ -87,9 +92,10 @@ class OpenAILLMNode(BaseNode):
 
     async def execute(self, inputs: dict, context: NodeContext) -> dict:
         """Generate a response from the model."""
+        # Auto demo mode when client is not initialized (no API key)
         if not self.client:
-            await context.log("OpenAI client not initialized", "error")
-            return {"response": "Error: OpenAI client not initialized"}
+            await context.log("[デモモード] 定型文応答を返します", "info")
+            return {"response": self.DEMO_RESPONSE}
 
         # Build prompt from sections or use simple prompt input
         if self.prompt_sections:
@@ -134,15 +140,18 @@ class OpenAILLMNode(BaseNode):
             return {"response": result}
 
         except openai.APIConnectionError:
-            await context.log("Failed to connect to OpenAI API", "error")
+            error_msg = get_error_message(ErrorCode.LLM_CONNECTION_FAILED, provider="OpenAI")
+            await context.log(error_msg, "error")
             return {"response": "Error: Connection failed"}
 
         except openai.RateLimitError:
-            await context.log("OpenAI API rate limit exceeded", "error")
+            error_msg = get_error_message(ErrorCode.LLM_RATE_LIMIT, provider="OpenAI")
+            await context.log(error_msg, "error")
             return {"response": "Error: Rate limit exceeded"}
 
         except openai.APIStatusError as e:
-            await context.log(f"OpenAI API error: {e.message}", "error")
+            error_msg = get_error_message(ErrorCode.LLM_API_ERROR, provider="OpenAI", error=e.message)
+            await context.log(error_msg, "error")
             return {"response": f"Error: {e.message}"}
 
         except Exception as e:

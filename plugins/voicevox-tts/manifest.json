@@ -84,6 +84,14 @@
       "label": "Output Directory",
       "description": "Directory to save audio files (optional)",
       "default": ""
+    },
+    "demoMode": {
+      "type": "boolean",
+      "label": "Demo Mode",
+      "label_ja": "デモモード",
+      "description": "Skip TTS when VOICEVOX is unavailable",
+      "description_ja": "VOICEVOX未接続時にスキップ",
+      "default": false
     }
   },
   "dependencies": {

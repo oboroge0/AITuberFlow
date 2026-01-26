@@ -41,6 +41,8 @@ class CoeiroinkTTSNode(BaseNode):
         self.speed_scale = 1.0
         self.volume_scale = 1.0
         self.pitch_scale = 1.0
+        self.demo_mode = False
+        self.connection_available = True
 
     async def setup(self, config: dict, context: NodeContext) -> None:
         """Initialize with configuration."""
@@ -50,12 +52,34 @@ class CoeiroinkTTSNode(BaseNode):
         self.speed_scale = config.get("speedScale", 1.0)
         self.volume_scale = config.get("volumeScale", 1.0)
         self.pitch_scale = config.get("pitchScale", 1.0)
+        self.demo_mode = config.get("demoMode", False)
 
         # Ensure audio directory exists
         AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 
         if not self.speaker_uuid:
             await context.log("Speaker UUID not configured", "warning")
+
+        # Test connection
+        if aiohttp:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(f"{self.host}/v1/speakers", timeout=aiohttp.ClientTimeout(total=5)) as response:
+                        if response.status == 200:
+                            self.connection_available = True
+                            await context.log(f"COEIROINK connected: {self.host}")
+                        else:
+                            self.connection_available = False
+                            if self.demo_mode:
+                                await context.log(f"[デモモード] COEIROINK接続テスト失敗 - スキップします", "warning")
+                            else:
+                                await context.log("COEIROINK connection test failed", "warning")
+            except Exception as e:
+                self.connection_available = False
+                if self.demo_mode:
+                    await context.log(f"[デモモード] COEIROINKに接続できません ({self.host}) - スキップします", "warning")
+                else:
+                    await context.log(f"Cannot connect to COEIROINK: {str(e)}", "warning")
         else:
             await context.log(f"COEIROINK configured: {self.host}")
 
@@ -65,15 +89,21 @@ class CoeiroinkTTSNode(BaseNode):
 
         if not text:
             await context.log("No text provided", "warning")
-            return {"audio": ""}
+            return {"audio": "", "filename": "", "duration": 0}
+
+        # Demo mode: skip TTS if connection is unavailable
+        if self.demo_mode and not self.connection_available:
+            preview = text[:30] + "..." if len(text) > 30 else text
+            await context.log(f"[デモモード] TTS スキップ: {preview}", "info")
+            return {"audio": "", "filename": "", "duration": 0}
 
         if not self.speaker_uuid:
             await context.log("Speaker UUID not configured", "error")
-            return {"audio": ""}
+            return {"audio": "", "filename": "", "duration": 0}
 
         if aiohttp is None:
             await context.log("aiohttp not installed", "error")
-            return {"audio": ""}
+            return {"audio": "", "filename": "", "duration": 0}
 
         try:
             await context.log(f"Generating speech: {text[:50]}...")

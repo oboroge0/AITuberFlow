@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import uuid4
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from db.database import WorkflowDB, get_db
@@ -31,6 +31,22 @@ def set_socketio(sio_instance):
     """Set the Socket.IO server for execution events."""
     global socketio
     socketio = sio_instance
+
+
+def strip_api_keys(nodes: List[dict]) -> List[dict]:
+    """Strip sensitive API keys from node configurations."""
+    sensitive_keys = ["apiKey", "api_key", "password", "secret", "token", "apiSecret"]
+    result = []
+    for node in nodes:
+        node_copy = node.copy()
+        if "config" in node_copy and isinstance(node_copy["config"], dict):
+            config_copy = node_copy["config"].copy()
+            for key in sensitive_keys:
+                if key in config_copy:
+                    config_copy[key] = ""
+            node_copy["config"] = config_copy
+        result.append(node_copy)
+    return result
 
 
 def workflow_to_response(db_workflow: WorkflowDB) -> dict:
@@ -153,16 +169,28 @@ async def duplicate_workflow(workflow_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/{workflow_id}/export", response_model=dict)
-async def export_workflow(workflow_id: str, db: Session = Depends(get_db)):
-    """Export a workflow as JSON."""
+async def export_workflow(
+    workflow_id: str,
+    exclude_api_keys: bool = Query(True, description="Exclude API keys from export for security"),
+    db: Session = Depends(get_db)
+):
+    """Export a workflow as JSON.
+
+    By default, API keys are excluded for security reasons.
+    Set exclude_api_keys=false to include them (use with caution).
+    """
     db_workflow = db.query(WorkflowDB).filter(WorkflowDB.id == workflow_id).first()
     if not db_workflow:
         raise HTTPException(status_code=404, detail="Workflow not found")
 
+    nodes = db_workflow.nodes
+    if exclude_api_keys:
+        nodes = strip_api_keys(nodes)
+
     return {
         "name": db_workflow.name,
         "description": db_workflow.description,
-        "nodes": db_workflow.nodes,
+        "nodes": nodes,
         "connections": db_workflow.connections,
         "character": db_workflow.character,
         "exportedAt": datetime.utcnow().isoformat(),
@@ -173,16 +201,24 @@ async def export_workflow(workflow_id: str, db: Session = Depends(get_db)):
 @router.post("/import", response_model=dict)
 async def import_workflow(data: dict = Body(...), db: Session = Depends(get_db)):
     """Import a workflow from JSON."""
+    import json as json_module
+
     workflow_id = str(uuid4())
 
+    # Extract data from request
+    nodes = data.get("nodes", [])
+    connections = data.get("connections", [])
+    character = data.get("character", {"name": "AI Assistant", "personality": "Friendly"})
+
+    # Create workflow with JSON columns set directly to ensure proper persistence
     db_workflow = WorkflowDB(
         id=workflow_id,
         name=data.get("name", "Imported Workflow"),
         description=data.get("description"),
+        nodes_json=json_module.dumps(nodes),
+        connections_json=json_module.dumps(connections),
+        character_json=json_module.dumps(character),
     )
-    db_workflow.nodes = data.get("nodes", [])
-    db_workflow.connections = data.get("connections", [])
-    db_workflow.character = data.get("character", {"name": "AI Assistant", "personality": "Friendly"})
 
     db.add(db_workflow)
     db.commit()

@@ -83,6 +83,14 @@
       "default": 1.0,
       "min": 0.5,
       "max": 2.0
+    },
+    "demoMode": {
+      "type": "boolean",
+      "label": "Demo Mode",
+      "label_ja": "デモモード",
+      "description": "Skip TTS when COEIROINK is unavailable",
+      "description_ja": "COEIROINK未接続時にスキップ",
+      "default": false
     }
   }
 }

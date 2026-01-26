@@ -27,6 +27,9 @@ class AnthropicLLMNode(BaseNode):
     Generates text responses using Claude models.
     """
 
+    # Demo mode response
+    DEMO_RESPONSE = "これはデモモードの応答です。実際のLLMを使用するにはAPIキーを設定してください。"
+
     def __init__(self):
         self.api_key = ""
         self.model = "claude-3-haiku-20240307"
@@ -44,7 +47,8 @@ class AnthropicLLMNode(BaseNode):
         self.temperature = config.get("temperature", 0.7)
 
         if not self.api_key:
-            await context.log("API key not configured", "warning")
+            # Auto demo mode when API key is not set
+            await context.log("[デモモード] Anthropic APIキー未設定 - 定型文応答を返します", "warning")
         else:
             await context.log(f"Claude configured: {self.model}")
 
@@ -56,9 +60,10 @@ class AnthropicLLMNode(BaseNode):
             await context.log("No prompt provided", "warning")
             return {"response": ""}
 
+        # Auto demo mode when API key is not set
         if not self.api_key:
-            await context.log("Anthropic API key not configured", "error")
-            return {"response": "Error: API key not configured"}
+            await context.log("[デモモード] 定型文応答を返します", "info")
+            return {"response": self.DEMO_RESPONSE}
 
         if anthropic is None:
             await context.log("anthropic package not installed", "error")

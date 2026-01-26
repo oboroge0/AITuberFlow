@@ -121,15 +121,29 @@ export default function HomePage() {
 
     try {
       const text = await file.text();
-      const data = JSON.parse(text) as WorkflowExport;
-      const response = await api.importWorkflow(data);
+      const importData = JSON.parse(text) as { workflow?: WorkflowExport } | WorkflowExport;
+      const workflow = 'workflow' in importData ? importData.workflow : importData;
+
+      if (!workflow || !Array.isArray(workflow.nodes)) {
+        throw new Error('Invalid workflow file');
+      }
+
+      const importPayload: WorkflowExport = {
+        name: workflow.name || 'Imported Workflow',
+        description: workflow.description,
+        nodes: workflow.nodes,
+        connections: workflow.connections || [],
+        character: workflow.character || { name: 'AI Assistant', personality: 'Friendly and helpful' },
+      };
+
+      const response = await api.importWorkflow(importPayload);
       if (response.data) {
-        setWorkflows([response.data, ...workflows]);
+        router.push(`/editor/${response.data.id}`);
       } else if (response.error) {
         setError(response.error);
       }
-    } catch {
-      setError('Invalid JSON file');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Invalid JSON file');
     }
 
     if (fileInputRef.current) {

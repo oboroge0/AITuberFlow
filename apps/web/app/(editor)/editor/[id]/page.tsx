@@ -273,16 +273,24 @@ export default function EditorPage() {
   };
 
   // Export workflow as JSON file
-  const handleExport = () => {
-    const data = getWorkflowData();
+  const handleExport = async () => {
+    // Use API endpoint which strips API keys by default for security
+    const response = await api.exportWorkflow(workflowId, { excludeApiKeys: true });
+
+    if (response.error) {
+      addLog({ level: 'error', message: `Export failed: ${response.error}` });
+      return;
+    }
+
     const exportData = {
-      version: '1.0',
-      exportedAt: new Date().toISOString(),
+      version: response.data?.version || '1.0',
+      exportedAt: response.data?.exportedAt || new Date().toISOString(),
       workflow: {
-        name: data.name,
-        nodes: data.nodes,
-        connections: data.connections,
-        character: data.character,
+        name: response.data?.name,
+        description: response.data?.description,
+        nodes: response.data?.nodes,
+        connections: response.data?.connections,
+        character: response.data?.character,
       },
     };
 
@@ -290,16 +298,16 @@ export default function EditorPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${data.name || 'workflow'}-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `${exportData.workflow.name || 'workflow'}-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    addLog({ level: 'success', message: 'Workflow exported successfully' });
+    addLog({ level: 'success', message: 'Workflow exported (API keys excluded for security)' });
   };
 
-  // Import workflow from JSON file
+  // Import workflow from JSON file - creates a new workflow
   const handleImport = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -312,22 +320,46 @@ export default function EditorPage() {
         const text = await file.text();
         const importData = JSON.parse(text);
 
-        // Validate import data structure
+        // Extract workflow data - handle both wrapped and flat formats
+        // Wrapped: { version, workflow: { name, nodes, ... } }
+        // Flat: { name, nodes, ... }
         const workflow = importData.workflow || importData;
+
+        // Validate import data structure
         if (!workflow.nodes || !Array.isArray(workflow.nodes)) {
-          throw new Error('Invalid workflow file: missing nodes');
+          throw new Error('Invalid workflow file: missing or invalid nodes array');
         }
 
-        // Load the imported workflow
-        loadWorkflow({
-          id: workflowId,
-          name: workflow.name || 'Imported Workflow',
+        if (workflow.nodes.length === 0) {
+          addLog({ level: 'warning', message: 'Warning: Importing workflow with no nodes' });
+        }
+
+        // Prepare import data
+        const importPayload = {
+          name: workflow.name ? `${workflow.name} (Imported)` : 'Imported Workflow',
+          description: workflow.description || '',
           nodes: workflow.nodes,
           connections: workflow.connections || [],
           character: workflow.character || { name: 'AI Assistant', personality: 'Friendly and helpful' },
-        });
+        };
 
-        addLog({ level: 'success', message: `Imported workflow: ${workflow.name || 'Imported Workflow'}` });
+        // Create a new workflow via API
+        const response = await api.importWorkflow(importPayload);
+
+        if (response.error) {
+          throw new Error(response.error);
+        }
+
+        if (!response.data?.id) {
+          throw new Error('Import succeeded but no workflow ID returned');
+        }
+
+        addLog({ level: 'success', message: `Imported as new workflow: ${response.data.name}` });
+
+        // Navigate to the new workflow immediately
+        // Use window.location.href instead of router.push() to force a full page reload
+        // This ensures the new workflow data is properly loaded
+        window.location.href = `/editor/${response.data.id}`;
       } catch (err) {
         console.error('Import failed:', err);
         addLog({ level: 'error', message: `Import failed: ${err instanceof Error ? err.message : 'Unknown error'}` });

@@ -26,7 +26,9 @@
       }
     ],
     "events": {
-      "emits": ["response.generated"],
+      "emits": [
+        "response.generated"
+      ],
       "listens": []
     }
   },
@@ -43,9 +45,18 @@
       "description": "The GPT model to use",
       "default": "gpt-4o-mini",
       "options": [
-        {"label": "GPT-4o Mini", "value": "gpt-4o-mini"},
-        {"label": "GPT-4o", "value": "gpt-4o"},
-        {"label": "GPT-4 Turbo", "value": "gpt-4-turbo"}
+        {
+          "label": "GPT-4o Mini",
+          "value": "gpt-4o-mini"
+        },
+        {
+          "label": "GPT-4o",
+          "value": "gpt-4o"
+        },
+        {
+          "label": "GPT-4 Turbo",
+          "value": "gpt-4-turbo"
+        }
       ]
     },
     "systemPrompt": {
@@ -72,6 +83,8 @@
     }
   },
   "dependencies": {
-    "python": ["openai>=1.0.0"]
+    "python": [
+      "openai>=1.0.0"
+    ]
   }
 }

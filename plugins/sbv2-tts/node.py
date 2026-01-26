@@ -43,6 +43,8 @@ class SBV2TTSNode(BaseNode):
         self.style_weight = 1.0
         self.length = 1.0
         self.sdp_ratio = 0.2
+        self.demo_mode = False
+        self.connection_available = True
 
     async def setup(self, config: dict, context: NodeContext) -> None:
         """Initialize with configuration."""
@@ -53,11 +55,33 @@ class SBV2TTSNode(BaseNode):
         self.style_weight = config.get("styleWeight", 1.0)
         self.length = config.get("length", 1.0)
         self.sdp_ratio = config.get("sdpRatio", 0.2)
+        self.demo_mode = config.get("demoMode", False)
 
         # Ensure audio directory exists
         AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 
-        await context.log(f"Style-Bert-VITS2 configured: {self.host}")
+        # Test connection
+        if aiohttp:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(f"{self.host}/models/info", timeout=aiohttp.ClientTimeout(total=5)) as response:
+                        if response.status == 200:
+                            self.connection_available = True
+                            await context.log(f"Style-Bert-VITS2 connected: {self.host}")
+                        else:
+                            self.connection_available = False
+                            if self.demo_mode:
+                                await context.log(f"[デモモード] Style-Bert-VITS2接続テスト失敗 - スキップします", "warning")
+                            else:
+                                await context.log("Style-Bert-VITS2 connection test failed", "warning")
+            except Exception as e:
+                self.connection_available = False
+                if self.demo_mode:
+                    await context.log(f"[デモモード] Style-Bert-VITS2に接続できません ({self.host}) - スキップします", "warning")
+                else:
+                    await context.log(f"Cannot connect to Style-Bert-VITS2: {str(e)}", "warning")
+        else:
+            await context.log(f"Style-Bert-VITS2 configured: {self.host}")
 
     async def execute(self, inputs: dict, context: NodeContext) -> dict:
         """Convert text to speech."""
@@ -65,7 +89,13 @@ class SBV2TTSNode(BaseNode):
 
         if not text:
             await context.log("No text provided", "warning")
-            return {"audio": ""}
+            return {"audio": "", "filename": "", "duration": 0}
+
+        # Demo mode: skip TTS if connection is unavailable
+        if self.demo_mode and not self.connection_available:
+            preview = text[:30] + "..." if len(text) > 30 else text
+            await context.log(f"[デモモード] TTS スキップ: {preview}", "info")
+            return {"audio": "", "filename": "", "duration": 0}
 
         if aiohttp is None:
             # Fallback to urllib

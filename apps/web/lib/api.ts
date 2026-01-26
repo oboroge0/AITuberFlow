@@ -69,8 +69,13 @@ class ApiClient {
     });
   }
 
-  async exportWorkflow(id: string): Promise<ApiResponse<WorkflowExport>> {
-    return this.request<WorkflowExport>(`/api/workflows/${id}/export`);
+  async exportWorkflow(
+    id: string,
+    options: { excludeApiKeys?: boolean } = { excludeApiKeys: true }
+  ): Promise<ApiResponse<WorkflowExport>> {
+    const params = new URLSearchParams();
+    params.set('exclude_api_keys', String(options.excludeApiKeys ?? true));
+    return this.request<WorkflowExport>(`/api/workflows/${id}/export?${params.toString()}`);
   }
 
   async importWorkflow(data: WorkflowExport): Promise<ApiResponse<Workflow>> {

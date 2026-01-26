@@ -14,6 +14,11 @@ from .types import (
     CharacterState,
     StreamContext,
 )
+from .errors import (
+    ErrorCode,
+    get_error_message,
+    format_error_with_action,
+)
 
 __version__ = "0.1.0"
 __all__ = [
@@ -26,4 +31,7 @@ __all__ = [
     "Message",
     "CharacterState",
     "StreamContext",
+    "ErrorCode",
+    "get_error_message",
+    "format_error_with_action",
 ]

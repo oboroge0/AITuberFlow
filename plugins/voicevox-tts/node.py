@@ -16,7 +16,7 @@ sdk_path = Path(__file__).parent.parent.parent / "packages" / "sdk"
 if str(sdk_path) not in sys.path:
     sys.path.insert(0, str(sdk_path))
 
-from aituber_flow_sdk import BaseNode, NodeContext, Event
+from aituber_flow_sdk import BaseNode, NodeContext, Event, ErrorCode, get_error_message
 
 try:
     import httpx
@@ -43,11 +43,14 @@ class VoicevoxTTSNode(BaseNode):
         self.volume_scale = 1.0
         self.output_dir = ""
         self.client: Optional[httpx.AsyncClient] = None
+        self.demo_mode = False
+        self.connection_available = True
 
     async def setup(self, config: dict, context: NodeContext) -> None:
         """Initialize the VOICEVOX client."""
         if httpx is None:
-            await context.log("httpx package not installed", "error")
+            error_msg = get_error_message(ErrorCode.PACKAGE_NOT_INSTALLED, package="httpx")
+            await context.log(error_msg, "error")
             return
 
         self.host = config.get("host", "http://localhost:50021").rstrip("/")
@@ -57,6 +60,7 @@ class VoicevoxTTSNode(BaseNode):
         self.volume_scale = float(config.get("volumeScale", 1.0))
         self.output_dir = str(AUDIO_DIR)
 
+        self.demo_mode = config.get("demoMode", False)
         self.client = httpx.AsyncClient(timeout=60.0)
 
         AUDIO_DIR.mkdir(parents=True, exist_ok=True)
@@ -71,10 +75,24 @@ class VoicevoxTTSNode(BaseNode):
                 speakers = response.json()
                 speaker_name = self._get_speaker_name(speakers, self.speaker)
                 await context.log(f"VOICEVOX connected (speaker: {speaker_name})")
+                self.connection_available = True
             else:
-                await context.log("VOICEVOX connection test failed", "warning")
+                self.connection_available = False
+                if self.demo_mode:
+                    await context.log(f"[デモモード] VOICEVOX接続テスト失敗 - スキップします", "warning")
+                else:
+                    await context.log("VOICEVOX connection test failed", "warning")
         except Exception as e:
-            await context.log(f"Cannot connect to VOICEVOX at {self.host}: {str(e)}", "error")
+            self.connection_available = False
+            if self.demo_mode:
+                await context.log(f"[デモモード] VOICEVOXに接続できません ({self.host}) - スキップします", "warning")
+            else:
+                error_msg = get_error_message(
+                    ErrorCode.TTS_CONNECTION_FAILED,
+                    service="VOICEVOX",
+                    host=self.host
+                )
+                await context.log(error_msg, "error")
 
     def _get_speaker_name(self, speakers: list, speaker_id: int) -> str:
         """Get speaker name from speaker ID."""
@@ -89,11 +107,17 @@ class VoicevoxTTSNode(BaseNode):
         text = inputs.get("text", "")
         if not text:
             await context.log("No text provided for TTS", "warning")
-            return {"audioUrl": "", "duration": 0}
+            return {"audio": "", "audioUrl": "", "filename": "", "duration": 0}
+
+        # Demo mode: skip TTS if connection is unavailable
+        if self.demo_mode and not self.connection_available:
+            preview = text[:30] + "..." if len(text) > 30 else text
+            await context.log(f"[デモモード] TTS スキップ: {preview}", "info")
+            return {"audio": "", "audioUrl": "", "filename": "", "duration": 0}
 
         if not self.client:
             await context.log("VOICEVOX client not initialized", "error")
-            return {"audioUrl": "", "duration": 0}
+            return {"audio": "", "audioUrl": "", "filename": "", "duration": 0}
 
         try:
             await context.log(f"Generating speech: {text[:30]}...")
@@ -147,11 +171,21 @@ class VoicevoxTTSNode(BaseNode):
             return {"audio": audio_path, "audioUrl": audio_path, "filename": filename, "duration": duration}
 
         except httpx.ConnectError:
-            await context.log(f"Cannot connect to VOICEVOX at {self.host}", "error")
-            return {"audioUrl": "", "duration": 0}
+            error_msg = get_error_message(
+                ErrorCode.TTS_CONNECTION_FAILED,
+                service="VOICEVOX",
+                host=self.host
+            )
+            await context.log(error_msg, "error")
+            return {"audio": "", "audioUrl": "", "filename": "", "duration": 0}
         except Exception as e:
-            await context.log(f"TTS error: {str(e)}", "error")
-            return {"audioUrl": "", "duration": 0}
+            error_msg = get_error_message(
+                ErrorCode.TTS_SYNTHESIS_FAILED,
+                service="VOICEVOX",
+                error=str(e)
+            )
+            await context.log(error_msg, "error")
+            return {"audio": "", "audioUrl": "", "filename": "", "duration": 0}
 
     def _get_wav_duration(self, file_path: str) -> float:
         """Get duration of a WAV file in seconds."""

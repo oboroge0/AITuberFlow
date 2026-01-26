@@ -28,12 +28,16 @@ class OllamaLLMNode(BaseNode):
     Generates text responses using local Ollama server.
     """
 
+    # Demo mode response
+    DEMO_RESPONSE = "これはデモモードの応答です。実際のLLMを使用するにはOllamaを起動してください。"
+
     def __init__(self):
         self.host = "http://localhost:11434"
         self.model = "llama3.2"
         self.system_prompt = "You are a helpful assistant."
         self.temperature = 0.7
         self.context_length = 4096
+        self.connection_available = True
 
     async def setup(self, config: dict, context: NodeContext) -> None:
         """Initialize with configuration."""
@@ -43,7 +47,22 @@ class OllamaLLMNode(BaseNode):
         self.temperature = config.get("temperature", 0.7)
         self.context_length = config.get("contextLength", 4096)
 
-        await context.log(f"Ollama configured: {self.model} at {self.host}")
+        # Test connection - auto demo mode if unavailable
+        if aiohttp:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(f"{self.host.rstrip('/')}/api/tags", timeout=aiohttp.ClientTimeout(total=5)) as response:
+                        if response.status == 200:
+                            self.connection_available = True
+                            await context.log(f"Ollama connected: {self.model} at {self.host}")
+                        else:
+                            self.connection_available = False
+                            await context.log(f"[デモモード] Ollama接続テスト失敗 - 定型文応答を返します", "warning")
+            except Exception as e:
+                self.connection_available = False
+                await context.log(f"[デモモード] Ollamaに接続できません ({self.host}) - 定型文応答を返します", "warning")
+        else:
+            await context.log(f"Ollama configured: {self.model} at {self.host}")
 
     async def execute(self, inputs: dict, context: NodeContext) -> dict:
         """Generate a response using Ollama."""
@@ -52,6 +71,11 @@ class OllamaLLMNode(BaseNode):
         if not prompt:
             await context.log("No prompt provided", "warning")
             return {"response": ""}
+
+        # Auto demo mode: return placeholder response if connection is unavailable
+        if not self.connection_available:
+            await context.log("[デモモード] 定型文応答を返します", "info")
+            return {"response": self.DEMO_RESPONSE}
 
         if aiohttp is None:
             # Fallback to urllib

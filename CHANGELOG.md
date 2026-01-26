@@ -1,85 +1,118 @@
-# Changelog
+# 変更履歴
 
-All notable changes to this project will be documented in this file.
+このプロジェクトの主な変更点はこのファイルに記録されます。
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
+[セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
+
+## [1.1.0] - 2026-01-27
+
+### 追加
+
+#### 開発環境
+- **devcontainer対応** - GitHub Codespaces / VS Code Dev Containersでワンクリック開発環境構築
+  - Python 3.11 + Node.js 20 自動セットアップ
+  - uv, bun パッケージマネージャー自動インストール
+  - 推奨VS Code拡張機能の自動インストール
+
+#### デモモード
+- **LLM自動デモモード** - APIキー未設定時に自動で定型文応答を返す
+  - OpenAI, Anthropic, Google, Ollama 全LLMノード対応
+  - 外部サービスなしでワークフローの動作確認が可能
+- **TTSデモモード** - 設定パネルからDemo Modeを有効化可能
+  - VOICEVOX, COEIROINK, Style-Bert-VITS2 対応
+  - TTS未接続時にスキップしてワークフロー継続
+
+#### ワークフロー管理
+- **インポート/エクスポート機能** - ワークフローをJSONファイルとして保存・共有
+  - エクスポート時にAPIキーを自動除外（セキュリティ対策）
+  - インポート時に新規ワークフローとして作成、自動で開く
+
+### 改善
+
+#### エラーメッセージ
+- **多言語エラーメッセージ** - 日本語/英語で対処法付きエラー表示
+  - TTS接続エラー、LLM APIキー未設定など主要エラーに対応
+  - `packages/sdk/aituber_flow_sdk/errors.py` にエラーコード集約
+
+---
 
 ## [1.0.0] - 2026-01-26
 
-### Added
+### 追加
 
-#### Core Features
-- **Visual Workflow Editor** - Drag-and-drop node-based workflow builder
-- **Real-time Execution** - WebSocket-powered live workflow execution with logs
-- **Plugin System** - Extensible node architecture with 32+ official plugins
-- **Workflow Templates** - Pre-built templates for common use cases
-- **Multi-language Support** - Japanese and English UI
+#### コア機能
+- **ビジュアルワークフローエディタ** - ドラッグ&ドロップでノードベースのワークフロー構築
+- **リアルタイム実行** - WebSocket通信によるライブワークフロー実行とログ表示
+- **プラグインシステム** - 拡張可能なノードアーキテクチャ（32以上の公式プラグイン）
+- **ワークフローテンプレート** - 一般的なユースケース向けのプリセット
+- **多言語対応** - 日本語・英語UI
 
-#### Node Categories
-- **Control Flow**: Start, End, Loop, ForEach, Switch, Delay
-- **Input**: Manual Input, YouTube Chat, Twitch Chat, Discord Chat, Timer
+#### ノードカテゴリ
+- **制御フロー**: Start, End, Loop, ForEach, Switch, Delay
+- **入力**: Manual Input, YouTube Chat, Twitch Chat, Discord Chat, Timer
 - **LLM**: OpenAI GPT, Anthropic Claude, Google Gemini, Ollama
 - **TTS**: VOICEVOX, COEIROINK, Style-Bert-VITS2
-- **Avatar**: Avatar Configuration, Motion Trigger, Lip Sync, Emotion Analyzer
-- **Output**: Console Output, Audio Player, Subtitle Display
-- **OBS Integration**: Scene Switch, Source Toggle
-- **Utility**: HTTP Request, Text Transform, Random, Variable, Data Formatter
+- **アバター**: Avatar Configuration, Motion Trigger, Lip Sync, Emotion Analyzer
+- **出力**: Console Output, Audio Player, Subtitle Display
+- **OBS連携**: Scene Switch, Source Toggle
+- **ユーティリティ**: HTTP Request, Text Transform, Random, Variable, Data Formatter
 
-#### Avatar System
-- VRM model loading and rendering
-- Expression control (happy, sad, angry, surprised, neutral)
-- Real-time lip sync with audio
-- Animation support (Mixamo FBX)
-- PNG expression mapping for 2D avatars
+#### アバターシステム
+- VRMモデルの読み込みとレンダリング
+- 表情制御（happy, sad, angry, surprised, neutral）
+- 音声に同期したリアルタイムリップシンク
+- アニメーション対応（Mixamo FBX）
+- 2Dアバター向けPNG表情マッピング
 
-#### Streaming Features
-- OBS-compatible transparent overlay (`/overlay/{workflow-id}`)
-- Browser Source ready with customizable parameters
-- Real-time subtitle display
-- Audio playback synchronization
+#### 配信機能
+- OBS互換の透過オーバーレイ（`/overlay/{workflow-id}`）
+- カスタマイズ可能なパラメータ付きブラウザソース
+- リアルタイム字幕表示
+- 音声再生同期
 
-#### Infrastructure
-- **Docker Support** - Multi-stage Dockerfiles for backend and frontend
-- **Docker Compose** - Full-stack deployment configuration
-- **CI/CD Pipeline** - GitHub Actions with lint, type check, and tests
-- **Test Suite** - 91 unit tests covering core modules
+#### インフラ
+- **Docker対応** - バックエンド・フロントエンド用マルチステージDockerfile
+- **Docker Compose** - フルスタックデプロイ設定
+- **CI/CDパイプライン** - GitHub Actionsによるlint、型チェック、テスト
+- **テストスイート** - コアモジュールをカバーする91のユニットテスト
 
-#### Documentation
-- Architecture documentation with Mermaid diagrams
-- Comprehensive API reference (REST + WebSocket)
-- Getting started guide with Docker instructions
-- Plugin development guide
+#### ドキュメント
+- Mermaid図付きアーキテクチャドキュメント
+- 包括的なAPIリファレンス（REST + WebSocket）
+- Docker手順付きの入門ガイド
+- プラグイン開発ガイド
 
-### Technical Details
+### 技術詳細
 
-#### Backend (FastAPI + Python 3.11)
-- Async workflow execution engine
-- Event-driven architecture with EventBus
-- Socket.IO for real-time communication
-- SQLite database with SQLAlchemy ORM
-- Plugin hot-loading from `plugins/` directory
+#### バックエンド（FastAPI + Python 3.11）
+- 非同期ワークフロー実行エンジン
+- EventBusによるイベント駆動アーキテクチャ
+- Socket.IOによるリアルタイム通信
+- SQLAlchemy ORMによるSQLiteデータベース
+- `plugins/`ディレクトリからのプラグインホットローディング
 
-#### Frontend (Next.js 16 + React 18)
-- @xyflow/react for node editor
-- Zustand for state management
-- Three.js + @pixiv/three-vrm for 3D avatar rendering
-- Tailwind CSS for styling
-- TypeScript throughout
+#### フロントエンド（Next.js 16 + React 18）
+- @xyflow/reactによるノードエディタ
+- Zustandによる状態管理
+- Three.js + @pixiv/three-vrmによる3Dアバターレンダリング
+- Tailwind CSSによるスタイリング
+- 全体をTypeScriptで記述
 
 #### SDK
-- `aituber_flow_sdk` Python package for plugin development
-- BaseNode class with lifecycle methods (setup, execute, on_event, teardown)
-- NodeContext for logging and event emission
+- プラグイン開発用 `aituber_flow_sdk` Pythonパッケージ
+- ライフサイクルメソッド付きBaseNodeクラス（setup, execute, on_event, teardown）
+- ログ出力とイベント発行用NodeContext
 
 ---
 
 ## [0.1.0] - 2026-01-19
 
-### Added
-- Initial development release
-- Basic workflow editor functionality
-- Core plugin implementations
+### 追加
+- 初期開発リリース
+- 基本的なワークフローエディタ機能
+- コアプラグインの実装
 
+[1.1.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.1.0
 [1.0.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.0.0
 [0.1.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v0.1.0
