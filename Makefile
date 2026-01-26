@@ -22,6 +22,9 @@ dev-frontend:
 dev-backend:
 	cd apps/server && uv run python main.py
 
+test:
+	cd apps/server && uv run pytest ../../tests/ -v --tb=short
+
 lint:
 	cd apps/web && npm run lint || true
 	cd apps/server && uv run ruff check . || true

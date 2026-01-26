@@ -144,3 +144,42 @@ bun dev
 3. Connect nodes by dragging between ports
 4. Configure nodes in the right panel
 5. Click play button to run from a node
+
+## Git / GitHub ルール
+
+### コミットメッセージ
+
+- **日本語で書くこと**
+- Conventional Commits形式を使用: `<type>: <説明>`
+- タイプ: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
+
+例:
+```
+feat: YouTube チャット入力ノードを追加
+fix: リップシンクのタイミング問題を修正
+docs: プラグイン開発ガイドを更新
+```
+
+### プルリクエスト
+
+- **タイトルと説明は日本語で書くこと**
+- 概要セクションで変更内容を箇条書きで説明
+- テスト計画を含める
+
+### CHANGELOG.md
+
+- **日本語で書くこと**
+- 日付を変更する前に、必ず現在の日付を確認すること（`date` コマンド等）
+- フォーマット: `## [バージョン] - YYYY-MM-DD`
+- Keep a Changelog 形式に従う
+
+### ドキュメント
+
+| ファイル | 日本語 | 英語 |
+|---------|-------|------|
+| README | `README.md` | `README.en.md` |
+| はじめに | `docs/getting-started.ja.md` | `docs/getting-started.md` |
+| アーキテクチャ | `docs/architecture.ja.md` | `docs/architecture.md` |
+| APIリファレンス | `docs/api-reference.ja.md` | `docs/api-reference.md` |
+
+- 変更時は両言語を同期して更新すること
