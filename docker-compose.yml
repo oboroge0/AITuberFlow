@@ -16,6 +16,7 @@ services:
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     environment:
+      - PORT=8000
       - DATABASE_URL=sqlite:///./data/aituber_flow.db
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
     volumes:
