@@ -70,6 +70,72 @@ cp .env.example .env.local
 
 ## Running the Application
 
+You can run AITuberFlow either using Docker (recommended for quick setup) or manually with local development tools.
+
+### Option A: Using Docker (Recommended)
+
+Docker provides the easiest way to get started without installing Python or Node.js locally.
+
+#### Prerequisites for Docker
+
+- **Docker** 20.10 or higher
+- **Docker Compose** v2.0 or higher
+
+#### Quick Start with Docker
+
+```bash
+# From project root
+docker compose up --build
+```
+
+This will:
+- Build both backend and frontend images
+- Start the backend at `http://localhost:8000`
+- Start the frontend at `http://localhost:3000`
+- Create a persistent volume for the SQLite database
+
+#### Docker Environment Variables
+
+Create a `.env` file in the project root to customize settings:
+
+```bash
+# Backend settings
+BACKEND_PORT=8000
+CORS_ORIGINS=http://localhost:3000
+
+# Frontend settings
+FRONTEND_PORT=3000
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+#### Production Deployment
+
+For production environments:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+#### Useful Docker Commands
+
+```bash
+# View logs
+docker compose logs -f
+
+# Stop services
+docker compose down
+
+# Rebuild after code changes
+docker compose up --build
+
+# Remove all data (including database)
+docker compose down -v
+```
+
+### Option B: Manual Setup
+
+If you prefer to run the application without Docker:
+
 ### Start the Backend Server
 
 ```bash
@@ -146,6 +212,22 @@ Create a basic workflow that takes input and generates an AI response:
 
 ## Troubleshooting
 
+### Docker issues
+
+**Container fails to start:**
+- Check if ports 8000 or 3000 are already in use: `lsof -i :8000` or `lsof -i :3000`
+- View container logs: `docker compose logs backend` or `docker compose logs frontend`
+- Try rebuilding: `docker compose build --no-cache`
+
+**Frontend can't connect to backend:**
+- Ensure both containers are on the same network: `docker network ls`
+- Check if backend is healthy: `docker compose ps`
+- Verify CORS settings in `.env`
+
+**Database persistence:**
+- Data is stored in a Docker volume named `aituberflow-backend-data`
+- To reset: `docker compose down -v` (this deletes all data)
+
 ### Backend won't start
 
 - If using uv: Run `uv sync` to ensure dependencies are installed
@@ -172,6 +254,6 @@ Create a basic workflow that takes input and generates an AI response:
 
 ## Next Steps
 
-- Explore the [API Reference](./api-reference.md)
-- Learn about [Plugin Development](./plugin-development.md)
-- Check out the [SPEC.md](../SPEC.md) for full technical details
+- Read the [Architecture Overview](./architecture.md) to understand how AITuberFlow works
+- Explore the [API Reference](./api-reference.md) for REST and WebSocket documentation
+- Check out the [CLAUDE.md](../CLAUDE.md) for development guidelines

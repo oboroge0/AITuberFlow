@@ -4,17 +4,18 @@ AITuberFlow Backend Server
 FastAPI application with WebSocket support for real-time communication.
 """
 
-import os
 import logging
+import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+
 import socketio
 from dotenv import load_dotenv
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from db.database import init_db
-from routers import workflows, plugins, integrations, templates
 from engine.executor import WorkflowExecutor
+from routers import integrations, plugins, templates, workflows
 
 # Load environment variables
 load_dotenv()
@@ -74,7 +75,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="AITuberFlow API",
     description="Backend API for AITuberFlow visual workflow editor",
-    version="0.1.0",
+    version="1.0.0",
     lifespan=lifespan,
 )
 
@@ -264,7 +265,7 @@ async def node_input(sid, data):
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy", "version": "0.1.0"}
+    return {"status": "healthy", "version": app.version}
 
 
 # Root endpoint
@@ -273,7 +274,7 @@ async def root():
     """Root endpoint."""
     return {
         "name": "AITuberFlow API",
-        "version": "0.1.0",
+        "version": app.version,
         "docs": "/docs",
     }
 

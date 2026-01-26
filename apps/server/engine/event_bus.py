@@ -4,12 +4,12 @@ Event Bus for AITuberFlow
 Manages event routing between nodes with support for event filtering.
 """
 
-from typing import Dict, List, Callable, Any, Optional
-from dataclasses import dataclass, field
-from datetime import datetime
 import asyncio
 import logging
 import re
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +56,8 @@ class EventFilter:
             return True
 
         try:
-            # Create evaluation context
-            context = {
+            # Create evaluation context (reserved for future use)
+            _context = {
                 'event': event.payload,
                 'type': event.type,
                 'source': event.source_node_id,

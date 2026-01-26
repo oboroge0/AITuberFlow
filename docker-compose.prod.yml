@@ -1,0 +1,25 @@
+# AITuberFlow Production Docker Compose Override
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# This file extends the base docker-compose.yml with production settings
+
+services:
+  backend:
+    restart: always
+    environment:
+      - LOG_LEVEL=warning
+    # Note: deploy.resources only works with Docker Swarm mode or Compose v2.4+
+    # For local development, these limits are applied; reservations are ignored
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  frontend:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256M

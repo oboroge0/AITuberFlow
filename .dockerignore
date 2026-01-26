@@ -1,0 +1,65 @@
+# AITuberFlow Docker Ignore File
+# Common patterns to exclude from Docker builds
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# CI/CD
+.github/
+
+# Development files
+.env
+.env.*
+!.env.example
+
+# Test files
+tests/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Node.js (root level)
+node_modules/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Playwright
+.playwright-mcp/
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.docker/

@@ -1,93 +1,85 @@
 # Changelog
 
-All notable changes to AITuberFlow will be documented in this file.
+All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0] - 2025-01-23
+## [1.0.0] - 2026-01-26
 
 ### Added
 
 #### Core Features
-- Visual workflow editor with drag-and-drop interface
-- Real-time execution with WebSocket-based live logs
-- Auto-save functionality with status indicator
-- Node search, export, and import functionality
-- Workflow templates for common use cases
-- Node display modes (simple/standard/detailed)
+- **Visual Workflow Editor** - Drag-and-drop node-based workflow builder
+- **Real-time Execution** - WebSocket-powered live workflow execution with logs
+- **Plugin System** - Extensible node architecture with 32+ official plugins
+- **Workflow Templates** - Pre-built templates for common use cases
+- **Multi-language Support** - Japanese and English UI
 
-#### Control Flow Nodes
-- Start node - workflow entry point
-- End node - workflow termination
-- Loop node - repeat processing
-- ForEach node - iterate over lists
-- Switch node - conditional branching
-- Delay node - add delays between operations
-
-#### Input Nodes
-- Manual Input - text entry
-- YouTube Chat - fetch live chat messages
-- Twitch Chat - fetch chat messages
-- Discord Chat - fetch channel messages
-- Timer - periodic triggers
-- Donation Alert - donation notifications
-
-#### LLM Nodes
-- OpenAI (ChatGPT) - GPT-4o, GPT-5 support
-- Anthropic (Claude) - Claude models
-- Google (Gemini) - Gemini models
-- Ollama - local LLM support
-
-#### TTS Nodes
-- VOICEVOX - Japanese voice synthesis
-- COEIROINK - high-quality Japanese TTS
-- Style-Bert-VITS2 - expressive voice synthesis
+#### Node Categories
+- **Control Flow**: Start, End, Loop, ForEach, Switch, Delay
+- **Input**: Manual Input, YouTube Chat, Twitch Chat, Discord Chat, Timer
+- **LLM**: OpenAI GPT, Anthropic Claude, Google Gemini, Ollama
+- **TTS**: VOICEVOX, COEIROINK, Style-Bert-VITS2
+- **Avatar**: Avatar Configuration, Motion Trigger, Lip Sync, Emotion Analyzer
+- **Output**: Console Output, Audio Player, Subtitle Display
+- **OBS Integration**: Scene Switch, Source Toggle
+- **Utility**: HTTP Request, Text Transform, Random, Variable, Data Formatter
 
 #### Avatar System
-- VRM model support with @pixiv/three-vrm
-- Avatar configuration node
-- Motion trigger node with Mixamo animation support
-- Lip sync node for audio synchronization
-- Emotion analyzer for automatic expression changes
-- Avatar controls panel with expression/motion presets
-
-#### OBS Integration
-- OBS Scene Switch - change scenes via WebSocket
-- OBS Source Toggle - show/hide sources
-
-#### Utility Nodes
-- HTTP Request - external API calls
-- Text Transform - text manipulation
-- Random - random number/selection generation
-- Variable - store and retrieve values
-- Data Formatter - data transformation
-- Field Selector - extract fields from data
-
-#### Output Nodes
-- Console Output - logging
-- Audio Player - play synthesized audio
-- Subtitle Display - show subtitles on overlay
+- VRM model loading and rendering
+- Expression control (happy, sad, angry, surprised, neutral)
+- Real-time lip sync with audio
+- Animation support (Mixamo FBX)
+- PNG expression mapping for 2D avatars
 
 #### Streaming Features
-- OBS-compatible overlay system
-- Transparent background for browser sources
-- Real-time avatar display with expressions
+- OBS-compatible transparent overlay (`/overlay/{workflow-id}`)
+- Browser Source ready with customizable parameters
+- Real-time subtitle display
+- Audio playback synchronization
 
-### Security
-- CORS configuration via environment variables
-- Optional OBS integration (GPL-2.0 licensed dependency)
+#### Infrastructure
+- **Docker Support** - Multi-stage Dockerfiles for backend and frontend
+- **Docker Compose** - Full-stack deployment configuration
+- **CI/CD Pipeline** - GitHub Actions with lint, type check, and tests
+- **Test Suite** - 91 unit tests covering core modules
 
-### Documentation
-- English and Japanese README
-- Plugin development guide (SDK)
-- API documentation via Swagger UI
-- Contributing guidelines
-- Security policy
+#### Documentation
+- Architecture documentation with Mermaid diagrams
+- Comprehensive API reference (REST + WebSocket)
+- Getting started guide with Docker instructions
+- Plugin development guide
 
-## [Unreleased]
+### Technical Details
 
-### Planned
-- Image generation nodes
-- Additional streaming platform integrations
-- Docker deployment support
+#### Backend (FastAPI + Python 3.11)
+- Async workflow execution engine
+- Event-driven architecture with EventBus
+- Socket.IO for real-time communication
+- SQLite database with SQLAlchemy ORM
+- Plugin hot-loading from `plugins/` directory
+
+#### Frontend (Next.js 16 + React 18)
+- @xyflow/react for node editor
+- Zustand for state management
+- Three.js + @pixiv/three-vrm for 3D avatar rendering
+- Tailwind CSS for styling
+- TypeScript throughout
+
+#### SDK
+- `aituber_flow_sdk` Python package for plugin development
+- BaseNode class with lifecycle methods (setup, execute, on_event, teardown)
+- NodeContext for logging and event emission
+
+---
+
+## [0.1.0] - 2026-01-19
+
+### Added
+- Initial development release
+- Basic workflow editor functionality
+- Core plugin implementations
+
+[1.0.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.0.0
+[0.1.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v0.1.0

@@ -8,9 +8,9 @@ Authentication tokens are cached to file for persistent sessions.
 import asyncio
 import json
 import logging
-from pathlib import Path
-from typing import Optional, Callable, Awaitable
 from datetime import datetime
+from pathlib import Path
+from typing import Optional
 
 import websockets
 from websockets.client import WebSocketClientProtocol
@@ -155,7 +155,7 @@ class VTubeStudioClient:
                 }
             )
             return True
-        except Exception as e:
+        except Exception:
             # Silently fail for high-frequency parameter updates
             return False
 
@@ -176,7 +176,7 @@ class VTubeStudioClient:
             return False
 
         try:
-            response = await self._send_request(
+            _response = await self._send_request(
                 "HotkeyTriggerRequest",
                 {"hotkeyID": hotkey_id}
             )
