@@ -5,6 +5,21 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
 [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.2] - 2026-01-27
+
+### 改善
+
+#### README刷新
+- **ロゴ追加** - プロジェクトロゴを中央配置で表示
+- **ダウンロードボタン** - Latest Releaseへの目立つリンクを追加
+- **すぐ使うボタン** - GitHub Codespacesへのワンクリックリンク
+- **技術スタックセクション** - 使用技術をバッジでビジュアル化
+  - フロントエンド: Next.js, React, TypeScript, Tailwind CSS
+  - バックエンド: FastAPI, Python, SQLite, Socket.IO
+  - その他: Three.js, Docker
+
+---
+
 ## [1.1.1] - 2026-01-27
 
 ### 修正
@@ -138,6 +153,7 @@
 - 基本的なワークフローエディタ機能
 - コアプラグインの実装
 
+[1.1.2]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.1.2
 [1.1.1]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.1.1
 [1.1.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.1.0
 [1.0.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.0.0
