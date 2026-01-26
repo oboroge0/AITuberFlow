@@ -5,6 +5,31 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
 [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.1] - 2026-01-27
+
+### 修正
+
+- **ズームコントロール位置** - 左サイドバーと重ならないように位置を修正
+- **TypeScriptビルドエラー** - ワークフローインポート機能の型エラーを修正
+
+### 改善
+
+#### ドキュメント整理
+- **日本語を基準に整理** - 全ドキュメントで日本語版を基準ファイルに変更
+  - `CONTRIBUTING.md` (日本語) / `CONTRIBUTING.en.md` (英語)
+  - `CODE_OF_CONDUCT.md` (日本語) / `CODE_OF_CONDUCT.en.md` (英語)
+  - `SECURITY.md` (日本語) / `SECURITY.en.md` (英語)
+- **v1.1.0機能のドキュメント化** - README、はじめにガイドを更新
+  - GitHub Codespaces セクション追加
+  - デモモードの説明追加
+  - インポート/エクスポート機能の説明追加
+- **古い情報の更新**
+  - Node.js バージョン要件: 18 → 22
+  - サポートバージョン: 0.1.x → 1.x
+- **スクリーンショット更新**
+
+---
+
 ## [1.1.0] - 2026-01-27
 
 ### 追加
@@ -113,6 +138,7 @@
 - 基本的なワークフローエディタ機能
 - コアプラグインの実装
 
+[1.1.1]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.1.1
 [1.1.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.1.0
 [1.0.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.0.0
 [0.1.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v0.1.0
