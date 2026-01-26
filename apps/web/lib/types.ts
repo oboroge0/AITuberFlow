@@ -165,7 +165,7 @@ export interface AvatarLookAtEvent {
   y: number;
 }
 
-export interface AvatarUpdateEvent extends Partial<AvatarState> {}
+export type AvatarUpdateEvent = Partial<AvatarState>;
 
 // API response types
 export interface ApiResponse<T> {
