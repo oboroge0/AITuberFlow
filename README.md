@@ -6,15 +6,21 @@
   <strong>ノーコードでAITuberを作成できるビジュアルワークフローエディタ</strong>
 </p>
 
-[![CI](https://github.com/oboroge0/AITuberFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/oboroge0/AITuberFlow/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
-[![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://docs.docker.com/)
-[![GitHub stars](https://img.shields.io/github/stars/oboroge0/AITuberFlow?style=social)](https://github.com/oboroge0/AITuberFlow)
-[![GitHub issues](https://img.shields.io/github/issues/oboroge0/AITuberFlow)](https://github.com/oboroge0/AITuberFlow/issues)
+<p align="center">
+  <a href="https://github.com/oboroge0/AITuberFlow/releases/latest"><img src="https://img.shields.io/badge/%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89-Latest%20Release-ff6b6b?style=for-the-badge&logo=github" alt="Download"></a>
+  <a href="https://codespaces.new/oboroge0/AITuberFlow"><img src="https://img.shields.io/badge/%E3%81%99%E3%81%90%E4%BD%BF%E3%81%86-Codespaces-24292e?style=for-the-badge&logo=github" alt="Open in Codespaces"></a>
+</p>
 
-[English](README.en.md)
+<p align="center">
+  <a href="https://github.com/oboroge0/AITuberFlow/actions/workflows/ci.yml"><img src="https://github.com/oboroge0/AITuberFlow/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
+  <a href="https://github.com/oboroge0/AITuberFlow"><img src="https://img.shields.io/github/stars/oboroge0/AITuberFlow?style=social" alt="GitHub stars"></a>
+  <a href="https://github.com/oboroge0/AITuberFlow/issues"><img src="https://img.shields.io/github/issues/oboroge0/AITuberFlow" alt="GitHub issues"></a>
+</p>
+
+<p align="center">
+  <a href="README.en.md">English</a>
+</p>
 
 ---
 
@@ -56,6 +62,27 @@ AITuberFlowは、AIを活用したバーチャル配信者（AITuber）のパイ
 
 ![ワークフローエディタ](docs/images/image.png)
 *ノードを接続してワークフローを構築*
+
+---
+
+## 技術スタック
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js">
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React">
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
+</p>
+<p align="center">
+  <img src="https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/SQLite-3-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite">
+  <img src="https://img.shields.io/badge/Socket.IO-4-010101?style=for-the-badge&logo=socket.io&logoColor=white" alt="Socket.IO">
+</p>
+<p align="center">
+  <img src="https://img.shields.io/badge/Three.js-r170-000000?style=for-the-badge&logo=three.js&logoColor=white" alt="Three.js">
+  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
+</p>
 
 ---
 
