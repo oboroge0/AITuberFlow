@@ -27,6 +27,9 @@ AITuberFlow is a visual tool for building AI-powered virtual streamer (AITuber/V
 - **Avatar Support** - VRM model display with lip-sync and expressions
 - **OBS Integration** - Scene switching and source control
 - **Streaming Overlay** - OBS Browser Source compatible overlay
+- **Demo Mode** - Test workflows without API keys
+- **Workflow Sharing** - Import/export with automatic API key exclusion
+- **GitHub Codespaces** - One-click cloud development environment
 
 ---
 
@@ -122,7 +125,13 @@ AITuberFlow is a visual tool for building AI-powered virtual streamer (AITuber/V
 
 ## Quick Start
 
-### Requirements
+### Get Started with GitHub Codespaces (Easiest)
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/oboroge0/AITuberFlow)
+
+Set up a development environment in your browser with one click. No local setup required!
+
+### Requirements (Local Development)
 
 - **Node.js** 22 or higher
 - **Python** 3.11 or higher
@@ -268,6 +277,20 @@ pip install obsws-python
 | **Ctrl+C/V** | Copy & Paste |
 | **Ctrl+S** | Save workflow |
 | **Delete** | Delete selected nodes |
+
+### Demo Mode
+
+Test workflows without external services (LLM APIs, TTS engines).
+
+- **LLM Nodes**: Automatically return demo responses when API key is not set
+- **TTS Nodes**: Enable "Demo Mode" in settings to skip when TTS is unavailable
+
+### Workflow Sharing (Import/Export)
+
+Share workflows as JSON files using the sidebar buttons.
+
+- **Export**: API keys are automatically excluded for security
+- **Import**: Creates a new workflow and opens it automatically
 
 ### Start Node Behavior
 

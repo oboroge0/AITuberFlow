@@ -1,12 +1,29 @@
 # Getting Started with AITuberFlow
 
-This guide will help you set up and run AITuberFlow on your local machine.
+This guide will help you set up and run AITuberFlow.
 
-## Prerequisites
+## Easiest Way: GitHub Codespaces
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/oboroge0/AITuberFlow)
+
+GitHub Codespaces lets you set up a development environment in your browser with one click.
+
+1. Click the badge above
+2. Wait for Codespace to start (1-2 minutes)
+3. Run `make dev` in the terminal
+4. Open ports 3000 and 8001
+
+No local setup required!
+
+---
+
+## Local Setup
+
+### Prerequisites
 
 Before you begin, make sure you have the following installed:
 
-- **Node.js** 18 or higher
+- **Node.js** 22 or higher
 - **Python** 3.11 or higher
 - **npm** (comes with Node.js)
 - **[uv](https://docs.astral.sh/uv/)** (recommended) or pip
@@ -16,8 +33,8 @@ Before you begin, make sure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-repo/aituber-flow.git
-cd aituber-flow
+git clone https://github.com/oboroge0/AITuberFlow.git
+cd AITuberFlow
 ```
 
 ### 2. Set Up the Backend (using uv - Recommended)
@@ -146,7 +163,7 @@ uv run python main.py
 python main.py
 ```
 
-The server will start at `http://localhost:8000`. You can access the API documentation at `http://localhost:8000/docs`.
+The server will start at `http://localhost:8001`. You can access the API documentation at `http://localhost:8001/docs`.
 
 ### Start the Frontend Development Server
 
@@ -210,6 +227,33 @@ Create a basic workflow that takes input and generates an AI response:
 
 5. Save and run the workflow!
 
+## Demo Mode
+
+You can test workflows without external services using Demo Mode:
+
+### LLM Nodes (Automatic)
+- When no API key is configured, LLM nodes automatically return demo responses
+- Useful for testing workflow logic without API costs
+
+### TTS Nodes (Manual)
+- Enable "Demo Mode" in TTS node settings
+- When TTS service is unavailable, the node is skipped
+- Workflow continues without errors
+
+## Workflow Sharing (Import/Export)
+
+Share workflows with others using the sidebar buttons:
+
+### Export
+- Click "Export" to download the workflow as JSON
+- API keys are automatically excluded for security
+- Safe to share publicly
+
+### Import
+- Click "Import" and select a workflow JSON file
+- Creates a new workflow (doesn't overwrite existing)
+- Opens the imported workflow automatically
+
 ## Troubleshooting
 
 ### Docker issues
@@ -237,12 +281,12 @@ Create a basic workflow that takes input and generates an AI response:
 ### Frontend won't start
 
 - Make sure all npm packages are installed: `npm install`
-- Check Node.js version: `node --version` (should be 18+)
+- Check Node.js version: `node --version` (should be 22+)
 - Try deleting `node_modules` and reinstalling
 
 ### Can't connect to backend
 
-- Make sure the backend is running on port 8000
+- Make sure the backend is running on port 8001 (local) or 8000 (Docker)
 - Check `apps/web/.env.local` has the correct API URL
 - Look for CORS errors in the browser console
 
