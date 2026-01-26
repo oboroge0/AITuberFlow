@@ -444,7 +444,7 @@ After starting the backend, access Swagger UI at `http://localhost:8001/docs`.
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome! Please see [CONTRIBUTING.en.md](CONTRIBUTING.en.md) for guidelines.
 
 1. Fork this repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
