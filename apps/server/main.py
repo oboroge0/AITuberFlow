@@ -265,7 +265,7 @@ async def node_input(sid, data):
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy", "version": "0.1.0"}
+    return {"status": "healthy", "version": app.version}
 
 
 # Root endpoint
@@ -274,7 +274,7 @@ async def root():
     """Root endpoint."""
     return {
         "name": "AITuberFlow API",
-        "version": "0.1.0",
+        "version": app.version,
         "docs": "/docs",
     }
 

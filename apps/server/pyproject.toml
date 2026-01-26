@@ -58,4 +58,6 @@ disable_error_code = ["assignment", "union-attr", "valid-type", "misc", "var-ann
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["../../tests"]
+# Note: testpaths is relative to where pytest is invoked from
+# When running from apps/server: pytest ../../tests/
+# When running from project root: pytest tests/

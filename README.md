@@ -395,7 +395,9 @@ class MyCustomNode(BaseNode):
 
 ## API ドキュメント
 
-バックエンド起動後、`http://localhost:8000/docs` でSwagger UIを確認できます。
+バックエンド起動後、Swagger UIを確認できます：
+- ローカル開発時: `http://localhost:8001/docs`
+- Docker使用時: `http://localhost:8000/docs`
 
 詳細なAPIリファレンスは [docs/api-reference.md](docs/api-reference.md) を参照してください。
 
@@ -417,7 +419,9 @@ class MyCustomNode(BaseNode):
 
 ### バックエンドに接続できない
 
-- サーバーが起動しているか確認（`http://localhost:8001/health`）
+- サーバーが起動しているか確認
+  - ローカル開発時: `http://localhost:8001/health`
+  - Docker使用時: `http://localhost:8000/health`
 - ファイアウォールの設定を確認
 
 ### VOICEVOXに接続できない

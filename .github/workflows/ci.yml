@@ -80,15 +80,9 @@ jobs:
         working-directory: apps/server
         run: uv sync
 
-      - name: Run tests
-        working-directory: apps/server
-        run: uv run pytest ../../tests/ -v --tb=short
-
       - name: Run tests with coverage
         working-directory: apps/server
-        run: |
-          uv add pytest-cov --dev
-          uv run pytest ../../tests/ --cov=. --cov-report=xml --cov-report=term-missing
+        run: uv run pytest ../../tests/ -v --tb=short --cov=. --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

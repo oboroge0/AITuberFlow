@@ -60,13 +60,21 @@ def client():
     """Create test client with database override."""
     Base.metadata.create_all(bind=engine)
     app.dependency_overrides[get_db] = override_get_db
+
+    # Save original state
+    old_executor = workflows.executor
+    old_socketio = workflows.socketio
+
     workflows.executor = mock_executor
     workflows.socketio = None
 
     with TestClient(app) as c:
         yield c
 
+    # Restore original state
     app.dependency_overrides.clear()
+    workflows.executor = old_executor
+    workflows.socketio = old_socketio
 
 
 @pytest.fixture(autouse=True)

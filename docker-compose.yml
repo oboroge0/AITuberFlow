@@ -40,12 +40,11 @@ services:
       context: ./apps/web
       dockerfile: Dockerfile
       args:
+        # NEXT_PUBLIC_* vars are inlined at build time, not runtime
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     container_name: aituberflow-frontend
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://backend:8000}
     depends_on:
       backend:
         condition: service_healthy
