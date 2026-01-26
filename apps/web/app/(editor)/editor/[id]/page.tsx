@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ReactFlowProvider } from '@xyflow/react';
+import { ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import Canvas from '@/components/editor/Canvas';
 import Sidebar from '@/components/editor/Sidebar';
 import NodeSettings from '@/components/panels/NodeSettings';
@@ -16,6 +16,46 @@ import api from '@/lib/api';
 import { DEFAULT_MODEL_URL } from '@/lib/constants';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+
+// Zoom Controls component using ReactFlow's zoom API
+function ZoomControls() {
+  const { zoomIn, zoomOut, fitView } = useReactFlow();
+
+  return (
+    <div className="flex flex-col gap-0.5 bg-gray-800/95 rounded-lg border border-white/20 shadow-lg overflow-hidden">
+      <button
+        onClick={() => zoomIn()}
+        className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
+        title="Zoom In"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
+      <div className="h-px bg-white/10" />
+      <button
+        onClick={() => zoomOut()}
+        className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
+        title="Zoom Out"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
+      <div className="h-px bg-white/10" />
+      <button
+        onClick={() => fitView()}
+        className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
+        title="Fit View"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+        </svg>
+      </button>
+    </div>
+  );
+}
 
 // Helper to get full URL for backend-served files
 const getFullUrl = (url: string | undefined): string | undefined => {
@@ -669,6 +709,14 @@ export default function EditorPage() {
             onExport={handleExport}
             onImport={handleImport}
           />
+        </div>
+
+        {/* Zoom Controls - positioned above Log Panel */}
+        <div
+          className="absolute z-10"
+          style={{ left: '285px', bottom: '180px' }}
+        >
+          <ZoomControls />
         </div>
 
         {/* Log Panel at bottom */}

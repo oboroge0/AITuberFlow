@@ -3,7 +3,6 @@
 import React, { useCallback, useRef, useMemo, useState, useEffect } from 'react';
 import {
   ReactFlow,
-  ReactFlowProvider,
   Background,
   Controls,
   useNodesState,
@@ -102,16 +101,8 @@ interface DataPreviewState {
   targetNodeId: string;
 }
 
-// Wrapper component to provide ReactFlowProvider context
-export default function Canvas(props: CanvasProps) {
-  return (
-    <ReactFlowProvider>
-      <CanvasInner {...props} />
-    </ReactFlowProvider>
-  );
-}
-
-function CanvasInner({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
+// Canvas component - requires ReactFlowProvider to be provided by parent
+export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
@@ -655,7 +646,7 @@ function CanvasInner({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
           style={{ background: 'transparent' }}
         />
         <Controls
-          className="!bg-gray-800/90 !border-white/20 !rounded-lg !shadow-lg"
+          className="!bg-gray-800/90 !border-white/20 !rounded-lg !shadow-lg !hidden"
           showZoom={true}
           showFitView={true}
           showInteractive={true}
@@ -683,10 +674,7 @@ function CanvasInner({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
       {/* Custom styles for React Flow */}
       <style jsx global>{`
         .react-flow__controls {
-          background: rgba(31, 41, 55, 0.95) !important;
-          border: 1px solid rgba(255, 255, 255, 0.2) !important;
-          border-radius: 8px !important;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+          display: none !important;
         }
         .react-flow__controls-button {
           background: transparent !important;
