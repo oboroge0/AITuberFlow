@@ -121,10 +121,12 @@ export default function HomePage() {
 
     try {
       const text = await file.text();
-      const importData = JSON.parse(text) as { workflow?: WorkflowExport } | WorkflowExport;
-      const workflow = 'workflow' in importData ? importData.workflow : importData;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const importData = JSON.parse(text) as any;
+      // Handle both wrapped format { workflow: {...} } and flat format { name, nodes, ... }
+      const workflow = (importData.workflow || importData) as WorkflowExport | undefined;
 
-      if (!workflow || !Array.isArray(workflow.nodes)) {
+      if (!workflow || !workflow.nodes || !Array.isArray(workflow.nodes)) {
         throw new Error('Invalid workflow file');
       }
 
