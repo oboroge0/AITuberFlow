@@ -22,7 +22,7 @@
       {
         "id": "input",
         "type": "any",
-        "description": "Input to pass through"
+        "description": "Data received when workflow ends"
       }
     ],
     "outputs": [],

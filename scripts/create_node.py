@@ -11,6 +11,7 @@ AITuberFlow プラグイン作成CLI
 
 import argparse
 import json
+import keyword
 import os
 import re
 import sys
@@ -34,7 +35,7 @@ CATEGORY_COLORS = {
     "obs": {"color": "#302E31", "bgColor": "rgba(48, 46, 49, 0.3)"},
 }
 
-# カテゴリごとのデフォルトアイコン
+# カテゴリごとのデフォルトアイコン (apps/web/lib/icons.tsx で定義されているもの)
 CATEGORY_ICONS = {
     "control": "Play",
     "input": "MessageSquare",
@@ -42,8 +43,8 @@ CATEGORY_ICONS = {
     "tts": "Volume2",
     "avatar": "User",
     "output": "Monitor",
-    "utility": "Wrench",
-    "obs": "Tv",
+    "utility": "FileJson",
+    "obs": "Monitor",
 }
 
 
@@ -257,6 +258,19 @@ def prompt_ports(port_type: str) -> list:
         if not port_id:
             break
 
+        # Validate port_id
+        if not port_id.isidentifier():
+            print(f"   ❌ '{port_id}' は有効な識別子ではありません（英字で始まり、英数字とアンダースコアのみ使用可能）")
+            continue
+
+        if keyword.iskeyword(port_id):
+            print(f"   ❌ '{port_id}' はPythonの予約語です")
+            continue
+
+        if any(p["id"] == port_id for p in ports):
+            print(f"   ❌ '{port_id}' は既に追加されています")
+            continue
+
         port_data_type = prompt_input("  型", "string")
         port_desc = prompt_input("  説明", "")
 
@@ -292,6 +306,20 @@ def interactive_mode() -> Optional[dict]:
 
     # カテゴリ
     categories = load_categories()
+    if not categories:
+        print("\n   ❌ カテゴリ定義が見つかりません (plugins/categories.json)")
+        print("   デフォルトカテゴリを使用します")
+        categories = [
+            {"id": "control", "label": "制御フロー"},
+            {"id": "input", "label": "入力"},
+            {"id": "llm", "label": "LLM"},
+            {"id": "tts", "label": "音声合成"},
+            {"id": "avatar", "label": "アバター"},
+            {"id": "output", "label": "出力"},
+            {"id": "utility", "label": "ユーティリティ"},
+            {"id": "obs", "label": "OBS"},
+        ]
+
     print("\n3. カテゴリを選択してください:")
     for i, cat in enumerate(categories, 1):
         print(f"   [{i}] {cat['id']:12} - {cat['label']}")
@@ -388,6 +416,13 @@ def main():
         valid, error = validate_plugin_name(args.name)
         if not valid:
             print(f"❌ {error}")
+            sys.exit(1)
+
+        # カテゴリのバリデーション
+        allowed_categories = set(CATEGORY_COLORS.keys())
+        if args.category and args.category not in allowed_categories:
+            print(f"❌ 無効なカテゴリ: '{args.category}'")
+            print(f"   有効なカテゴリ: {', '.join(sorted(allowed_categories))}")
             sys.exit(1)
 
         category = args.category or "utility"

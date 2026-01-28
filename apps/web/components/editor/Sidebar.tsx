@@ -26,9 +26,9 @@ interface SidebarProps {
   onImport?: () => void;
 }
 
-// Category display colors
+// Category display colors (consistent with create_node.py)
 const CATEGORY_COLORS: Record<PluginCategory, string> = {
-  control: '#F59E0B',
+  control: '#10B981',
   input: '#22C55E',
   llm: '#10B981',
   tts: '#F59E0B',
@@ -91,7 +91,7 @@ export function getNodeTypes(): SidebarNodeType[] {
 
 export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onImport }: SidebarProps) {
   const { addNode } = useWorkflowStore();
-  const { plugins, categories, isLoading, fetchPlugins } = usePluginStore();
+  const { plugins, categories, isLoading, error, fetchPlugins } = usePluginStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [isHydrated, setIsHydrated] = useState(false);
@@ -289,6 +289,16 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onIm
             <div className="text-center py-4 text-white/40 text-xs">
               Loading plugins...
             </div>
+          ) : error ? (
+            <div className="text-center py-4 space-y-2">
+              <div className="text-red-400 text-xs">{error}</div>
+              <button
+                onClick={() => fetchPlugins()}
+                className="px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 text-white/70 rounded transition-colors"
+              >
+                Retry
+              </button>
+            </div>
           ) : filteredCategories.length === 0 ? (
             <div className="text-center py-4 text-white/40 text-xs">
               No nodes found
@@ -393,6 +403,3 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onIm
     </div>
   );
 }
-
-// Export nodeTypes for backward compatibility
-export const nodeTypes: SidebarNodeType[] = [];

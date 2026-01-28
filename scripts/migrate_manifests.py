@@ -295,8 +295,14 @@ PLUGIN_UI_CONFIG = {
 }
 
 
-def migrate_manifest(plugin_dir: Path) -> bool:
-    """1つのプラグインのmanifest.jsonを更新"""
+def migrate_manifest(plugin_dir: Path) -> bool | None:
+    """1つのプラグインのmanifest.jsonを更新
+
+    Returns:
+        True: 更新成功
+        False: スキップ（既に設定済みなど）
+        None: エラー
+    """
     manifest_path = plugin_dir / "manifest.json"
     if not manifest_path.exists():
         return False
@@ -311,7 +317,7 @@ def migrate_manifest(plugin_dir: Path) -> bool:
             manifest = json.load(f)
     except json.JSONDecodeError as e:
         print(f"  ❌ {plugin_id}: JSONパースエラー: {e}")
-        return False
+        return None
 
     # 既にui設定がある場合はスキップ
     if "ui" in manifest:
@@ -363,11 +369,11 @@ def main():
             continue
 
         result = migrate_manifest(plugin_dir)
-        if result:
+        if result is True:
             updated += 1
         elif result is False:
             skipped += 1
-        else:
+        elif result is None:
             errors += 1
 
     print("\n" + "=" * 50)
