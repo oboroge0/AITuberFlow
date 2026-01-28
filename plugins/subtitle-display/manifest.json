@@ -1,14 +1,22 @@
 {
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
   "id": "subtitle-display",
   "name": "Subtitle Display",
   "version": "1.0.0",
   "description": "Display text as subtitle overlay for streaming",
   "author": {
     "name": "AITuberFlow",
-    "url": "https://github.com/aituberflow"
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
   "category": "output",
+  "ui": {
+    "label": "Subtitle Display",
+    "icon": "Subtitles",
+    "color": "#A855F7",
+    "bgColor": "rgba(168, 85, 247, 0.1)",
+    "statusText": "Subtitle Display"
+  },
   "node": {
     "inputs": [
       {

@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Convert text to speech using VOICEVOX engine. Requires VOICEVOX to be running locally.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
-  "category": "output",
+  "category": "tts",
+  "ui": {
+    "label": "VOICEVOX",
+    "icon": "Volume2",
+    "color": "#F59E0B",
+    "bgColor": "rgba(245, 158, 11, 0.1)",
+    "statusText": "Engine: VOICEVOX"
+  },
   "node": {
     "inputs": [
       {

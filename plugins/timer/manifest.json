@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Triggers at regular intervals. Useful for periodic actions.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
   "category": "input",
+  "ui": {
+    "label": "Timer",
+    "icon": "Clock",
+    "color": "#06B6D4",
+    "bgColor": "rgba(6, 182, 212, 0.1)",
+    "statusText": "Timer"
+  },
   "node": {
     "inputs": [],
     "outputs": [

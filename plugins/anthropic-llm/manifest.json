@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Generate text using Anthropic's Claude models. Supports Claude 3 family.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
-  "category": "process",
+  "category": "llm",
+  "ui": {
+    "label": "Claude",
+    "icon": "Cpu",
+    "color": "#D97706",
+    "bgColor": "rgba(217, 119, 6, 0.1)",
+    "statusText": "Model: Claude"
+  },
   "node": {
     "inputs": [
       {

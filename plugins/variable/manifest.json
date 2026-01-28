@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Store and retrieve values. Can be used as a constant or to pass data between nodes.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
-  "category": "control",
+  "category": "utility",
+  "ui": {
+    "label": "Variable",
+    "icon": "Variable",
+    "color": "#14B8A6",
+    "bgColor": "rgba(20, 184, 166, 0.1)",
+    "statusText": "Variable"
+  },
   "node": {
     "inputs": [
       {

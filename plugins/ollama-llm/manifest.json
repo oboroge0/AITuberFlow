@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Generate text using Ollama local LLM server. Supports various open-source models.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
-  "category": "process",
+  "category": "llm",
+  "ui": {
+    "label": "Ollama",
+    "icon": "Cpu",
+    "color": "#1F2937",
+    "bgColor": "rgba(31, 41, 55, 0.3)",
+    "statusText": "Model: Ollama"
+  },
   "node": {
     "inputs": [
       {

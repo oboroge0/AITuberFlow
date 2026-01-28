@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Make HTTP requests to external APIs. Supports GET, POST, PUT, DELETE methods.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
-  "category": "process",
+  "category": "utility",
+  "ui": {
+    "label": "HTTP Request",
+    "icon": "Globe",
+    "color": "#3B82F6",
+    "bgColor": "rgba(59, 130, 246, 0.1)",
+    "statusText": "HTTP Request"
+  },
   "node": {
     "inputs": [
       {

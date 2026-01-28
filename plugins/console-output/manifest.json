@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Display text in the execution log panel. Useful for debugging and monitoring workflow output.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
   "category": "output",
+  "ui": {
+    "label": "Console Output",
+    "icon": "Terminal",
+    "color": "#A855F7",
+    "bgColor": "rgba(168, 85, 247, 0.1)",
+    "statusText": "Ready to display"
+  },
   "node": {
     "inputs": [
       {

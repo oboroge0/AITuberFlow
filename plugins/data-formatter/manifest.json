@@ -1,59 +1,79 @@
 {
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
   "id": "data-formatter",
   "name": "Data Formatter",
   "version": "1.0.0",
   "description": "Format data as JSON, XML, or YAML for structured output",
-  "author": "AITuberFlow",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
+  },
+  "license": "MIT",
   "category": "utility",
-  "inputs": [
-    {
-      "id": "data",
-      "label": "Data",
-      "type": "any",
-      "description": "Input data to format (object, string, or any value)"
+  "ui": {
+    "label": "Data Formatter",
+    "icon": "FileJson",
+    "color": "#6366F1",
+    "bgColor": "rgba(99, 102, 241, 0.1)",
+    "statusText": "Data Formatter"
+  },
+  "node": {
+    "inputs": [
+      {
+        "id": "data",
+        "type": "any",
+        "description": "Input data to format (object, string, or any value)"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "formatted",
+        "type": "string",
+        "description": "Formatted output string"
+      },
+      {
+        "id": "parsed",
+        "type": "object",
+        "description": "Parsed data object (useful for chaining)"
+      }
+    ],
+    "events": {
+      "emits": [],
+      "listens": []
     }
-  ],
-  "outputs": [
-    {
-      "id": "formatted",
-      "label": "Formatted",
-      "type": "string",
-      "description": "Formatted output string"
-    },
-    {
-      "id": "parsed",
-      "label": "Parsed",
-      "type": "object",
-      "description": "Parsed data object (useful for chaining)"
-    }
-  ],
-  "config": [
-    {
-      "key": "format",
-      "label": "Output Format",
+  },
+  "config": {
+    "format": {
       "type": "select",
-      "options": ["json", "xml", "yaml"],
+      "label": "Output Format",
+      "description": "Output format type",
+      "options": [
+        {"label": "JSON", "value": "json"},
+        {"label": "XML", "value": "xml"},
+        {"label": "YAML", "value": "yaml"}
+      ],
       "default": "json"
     },
-    {
-      "key": "template",
-      "label": "Template",
+    "template": {
       "type": "textarea",
+      "label": "Template",
       "description": "Template for structured output. Use {{field}} for substitution.",
       "default": "{\n  \"message\": \"{{text}}\",\n  \"author\": \"{{author}}\"\n}"
     },
-    {
-      "key": "rootElement",
+    "rootElement": {
+      "type": "string",
       "label": "XML Root Element",
-      "type": "text",
-      "default": "data",
-      "description": "Root element name for XML output"
+      "description": "Root element name for XML output",
+      "default": "data"
     },
-    {
-      "key": "prettyPrint",
+    "prettyPrint": {
+      "type": "boolean",
       "label": "Pretty Print",
-      "type": "checkbox",
+      "description": "Format output with indentation",
       "default": true
     }
-  ]
+  },
+  "dependencies": {
+    "python": []
+  }
 }

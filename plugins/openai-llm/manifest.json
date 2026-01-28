@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Generate text using OpenAI GPT models. Supports GPT-4o, GPT-4 Turbo, and GPT-4o Mini.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
-  "category": "process",
+  "category": "llm",
+  "ui": {
+    "label": "ChatGPT",
+    "icon": "Cpu",
+    "color": "#10B981",
+    "bgColor": "rgba(16, 185, 129, 0.1)",
+    "statusText": "Model: gpt-4o-mini"
+  },
   "node": {
     "inputs": [
       {

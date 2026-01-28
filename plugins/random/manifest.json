@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Generate random values: numbers, choices from list, or random chance branching.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
-  "category": "control",
+  "category": "utility",
+  "ui": {
+    "label": "Random",
+    "icon": "Dice5",
+    "color": "#8B5CF6",
+    "bgColor": "rgba(139, 92, 246, 0.1)",
+    "statusText": "Random Generator"
+  },
   "node": {
     "inputs": [
       {

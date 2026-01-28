@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Receive messages from Discord channels. Supports text messages, replies, and mentions.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
   "category": "input",
+  "ui": {
+    "label": "Discord Chat",
+    "icon": "MessageSquare",
+    "color": "#5865F2",
+    "bgColor": "rgba(88, 101, 242, 0.1)",
+    "statusText": "Waiting for messages..."
+  },
   "node": {
     "inputs": [],
     "outputs": [

@@ -1,54 +1,88 @@
 {
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
   "id": "loop",
   "name": "Loop",
   "version": "1.0.0",
   "description": "Iterates execution a specified number of times or while a condition is true",
-  "author": "AITuber Flow",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
+  },
+  "license": "MIT",
   "category": "control",
-  "inputs": [
-    {
-      "id": "input",
-      "label": "Input",
-      "type": "any"
-    },
-    {
-      "id": "loopback",
-      "label": "Loop Back",
-      "type": "any"
+  "ui": {
+    "label": "Loop",
+    "icon": "RefreshCw",
+    "color": "#F59E0B",
+    "bgColor": "rgba(245, 158, 11, 0.15)",
+    "statusText": "Loop iteration"
+  },
+  "node": {
+    "inputs": [
+      {
+        "id": "input",
+        "type": "any",
+        "description": "Input data"
+      },
+      {
+        "id": "loopback",
+        "type": "any",
+        "description": "Loop back input"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "loop",
+        "type": "any",
+        "description": "Loop output"
+      },
+      {
+        "id": "done",
+        "type": "any",
+        "description": "Done output"
+      }
+    ],
+    "events": {
+      "emits": [],
+      "listens": []
     }
-  ],
-  "outputs": [
-    {
-      "id": "loop",
-      "label": "Loop",
-      "type": "any"
-    },
-    {
-      "id": "done",
-      "label": "Done",
-      "type": "any"
-    }
-  ],
+  },
   "config": {
     "mode": {
-      "type": "string",
+      "type": "select",
+      "label": "Mode",
+      "description": "Loop mode: count, while, or infinite",
       "default": "count",
-      "description": "Loop mode: count, while, or infinite"
+      "options": [
+        {"label": "Count", "value": "count"},
+        {"label": "While", "value": "while"},
+        {"label": "Infinite", "value": "infinite"}
+      ]
     },
     "count": {
       "type": "number",
+      "label": "Count",
+      "description": "Number of iterations (for count mode)",
       "default": 3,
-      "description": "Number of iterations (for count mode)"
+      "min": 1,
+      "max": 1000
     },
     "condition": {
       "type": "string",
-      "default": "",
-      "description": "Condition expression (for while mode)"
+      "label": "Condition",
+      "description": "Condition expression (for while mode)",
+      "default": ""
     },
     "maxIterations": {
       "type": "number",
+      "label": "Max Iterations",
+      "description": "Maximum iterations (safety limit)",
       "default": 100,
-      "description": "Maximum iterations (safety limit)"
+      "min": 1,
+      "max": 10000
     }
+  },
+  "dependencies": {
+    "python": []
   }
 }

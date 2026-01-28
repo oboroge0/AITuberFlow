@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Text-to-speech using COEIROINK. Free Japanese voice synthesis engine.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
-  "category": "output",
+  "category": "tts",
+  "ui": {
+    "label": "COEIROINK",
+    "icon": "Volume2",
+    "color": "#E91E63",
+    "bgColor": "rgba(233, 30, 99, 0.1)",
+    "statusText": "Engine: COEIROINK"
+  },
   "node": {
     "inputs": [
       {

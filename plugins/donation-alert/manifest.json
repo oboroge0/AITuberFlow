@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Display visual and audio alerts for donations (Super Chat, Bits, etc.)",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
   "category": "output",
+  "ui": {
+    "label": "Donation Alert",
+    "icon": "Gift",
+    "color": "#F59E0B",
+    "bgColor": "rgba(245, 158, 11, 0.1)",
+    "statusText": "Donation Alert"
+  },
   "node": {
     "inputs": [
       {

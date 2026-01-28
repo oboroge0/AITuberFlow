@@ -1,14 +1,22 @@
 {
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
   "id": "avatar-configuration",
   "name": "Avatar Configuration",
   "version": "2.0.0",
   "description": "Static avatar configuration - sets VRM model, idle animation, and renderer type",
   "author": {
     "name": "AITuberFlow",
-    "url": "https://github.com/aituberflow"
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
   "category": "avatar",
+  "ui": {
+    "label": "Avatar Config",
+    "icon": "User",
+    "color": "#E879F9",
+    "bgColor": "rgba(232, 121, 249, 0.1)",
+    "statusText": "Avatar Configuration"
+  },
   "node": {
     "inputs": [],
     "outputs": [],

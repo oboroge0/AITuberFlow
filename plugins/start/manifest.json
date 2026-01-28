@@ -1,23 +1,45 @@
 {
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
   "id": "start",
   "name": "Start",
   "version": "1.0.0",
   "description": "Workflow entry point - marks the beginning of execution",
-  "author": "AITuber Flow",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
+  },
+  "license": "MIT",
   "category": "control",
-  "inputs": [],
-  "outputs": [
-    {
-      "id": "trigger",
-      "label": "Trigger",
-      "type": "trigger"
+  "ui": {
+    "label": "Start",
+    "icon": "Play",
+    "color": "#10B981",
+    "bgColor": "rgba(16, 185, 129, 0.15)",
+    "statusText": "Workflow entry point"
+  },
+  "node": {
+    "inputs": [],
+    "outputs": [
+      {
+        "id": "trigger",
+        "type": "trigger",
+        "description": "Trigger output"
+      }
+    ],
+    "events": {
+      "emits": [],
+      "listens": []
     }
-  ],
+  },
   "config": {
     "autoStart": {
       "type": "boolean",
-      "default": true,
-      "description": "Start automatically when workflow runs"
+      "label": "Auto Start",
+      "description": "Start automatically when workflow runs",
+      "default": true
     }
+  },
+  "dependencies": {
+    "python": []
   }
 }

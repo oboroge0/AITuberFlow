@@ -1,12 +1,14 @@
-.PHONY: help install dev dev-frontend dev-backend test lint clean
+.PHONY: help install dev dev-frontend dev-backend test lint clean create-node migrate-manifests
 
 help:
 	@echo "Available commands:"
-	@echo "  make install  - Install all dependencies"
-	@echo "  make dev      - Start development servers (frontend + backend)"
-	@echo "  make test     - Run tests"
-	@echo "  make lint     - Run linters"
-	@echo "  make clean    - Clean build artifacts"
+	@echo "  make install           - Install all dependencies"
+	@echo "  make dev               - Start development servers (frontend + backend)"
+	@echo "  make test              - Run tests"
+	@echo "  make lint              - Run linters"
+	@echo "  make clean             - Clean build artifacts"
+	@echo "  make create-node       - Create a new plugin (interactive)"
+	@echo "  make migrate-manifests - Add UI settings to all manifests"
 
 install:
 	npm install
@@ -33,3 +35,9 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".next" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
+
+create-node:
+	cd apps/server && uv run python ../../scripts/create_node.py
+
+migrate-manifests:
+	cd apps/server && uv run python ../../scripts/migrate_manifests.py
