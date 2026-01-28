@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Fetch live chat messages from Twitch streams via IRC.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
   "category": "input",
+  "ui": {
+    "label": "Twitch Chat",
+    "icon": "MessageSquare",
+    "color": "#9146FF",
+    "bgColor": "rgba(145, 70, 255, 0.1)",
+    "statusText": "Waiting for chat..."
+  },
   "node": {
     "inputs": [],
     "outputs": [

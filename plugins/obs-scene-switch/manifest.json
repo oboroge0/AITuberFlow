@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Switch OBS scenes via WebSocket. Requires OBS Studio 28+ with WebSocket server enabled.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
-  "category": "output",
+  "category": "obs",
+  "ui": {
+    "label": "OBS Scene Switch",
+    "icon": "Monitor",
+    "color": "#302E31",
+    "bgColor": "rgba(48, 46, 49, 0.3)",
+    "statusText": "OBS Scene Switch"
+  },
   "node": {
     "inputs": [
       {

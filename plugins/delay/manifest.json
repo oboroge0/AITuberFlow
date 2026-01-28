@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Add a time delay before passing data to the next node. Useful for pacing responses.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
   "category": "control",
+  "ui": {
+    "label": "Delay",
+    "icon": "Clock",
+    "color": "#F97316",
+    "bgColor": "rgba(249, 115, 22, 0.1)",
+    "statusText": "Delay: 1000ms"
+  },
   "node": {
     "inputs": [
       {

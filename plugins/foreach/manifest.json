@@ -1,39 +1,61 @@
 {
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
   "id": "foreach",
   "name": "ForEach",
   "version": "1.0.0",
   "description": "Iterates over each item in a list or text separated by a delimiter",
-  "author": "AITuber Flow",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
+  },
+  "license": "MIT",
   "category": "control",
-  "inputs": [
-    {
-      "id": "list",
-      "label": "List/Text",
-      "type": "any"
+  "ui": {
+    "label": "ForEach",
+    "icon": "List",
+    "color": "#F97316",
+    "bgColor": "rgba(249, 115, 22, 0.15)",
+    "statusText": "ForEach iteration"
+  },
+  "node": {
+    "inputs": [
+      {
+        "id": "list",
+        "type": "any",
+        "description": "List or text to iterate over"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "item",
+        "type": "any",
+        "description": "Current item"
+      },
+      {
+        "id": "index",
+        "type": "number",
+        "description": "Current index"
+      },
+      {
+        "id": "done",
+        "type": "trigger",
+        "description": "Triggered when iteration completes"
+      }
+    ],
+    "events": {
+      "emits": [],
+      "listens": []
     }
-  ],
-  "outputs": [
-    {
-      "id": "item",
-      "label": "Current Item",
-      "type": "any"
-    },
-    {
-      "id": "index",
-      "label": "Index",
-      "type": "number"
-    },
-    {
-      "id": "done",
-      "label": "Done",
-      "type": "trigger"
-    }
-  ],
+  },
   "config": {
     "separator": {
       "type": "string",
-      "default": "\n",
-      "description": "Separator for splitting text into items"
+      "label": "Separator",
+      "description": "Separator for splitting text into items",
+      "default": "\n"
     }
+  },
+  "dependencies": {
+    "python": []
   }
 }

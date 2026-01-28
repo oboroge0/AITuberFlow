@@ -20,11 +20,12 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useWorkflowStore } from '@/stores/workflowStore';
+import { usePluginStore } from '@/stores/pluginStore';
 import CustomNode, { type CustomNodeData } from './CustomNode';
 import FieldSelectorNode from './FieldSelectorNode';
 import ContextMenu, { type ContextMenuItem } from './ContextMenu';
 import DataPreviewPopup from './DataPreviewPopup';
-import { nodeTypes as sidebarNodeTypes, type SidebarNodeType } from './Sidebar';
+import { getNodeTypes, type SidebarNodeType } from './Sidebar';
 import { type PortType, type PortDefinition } from '@/lib/portTypes';
 import { useUIPreferencesStore, type NodeDisplayMode } from '@/stores/uiPreferencesStore';
 import { type PromptSection } from '@/components/panels/NodeSettings';
@@ -35,53 +36,32 @@ interface CanvasProps {
   onRunWorkflow?: (startNodeId?: string) => void;
 }
 
-const nodeTypes: NodeTypes = {
+const reactFlowNodeTypes: NodeTypes = {
   custom: CustomNode,
   'field-selector': FieldSelectorNode,
 };
 
-// Node type colors for edge styling
-const nodeTypeColors: Record<string, string> = {
-  // Control flow
-  'start': '#10B981',
-  'end': '#EF4444',
-  'loop': '#F59E0B',
-  'foreach': '#F97316',
-  // Input
-  'youtube-chat': '#FF0000',
-  'twitch-chat': '#9146FF',
-  'discord-chat': '#5865F2',
-  'manual-input': '#22C55E',
-  'timer': '#06B6D4',
-  // LLM
-  'openai-llm': '#10B981',
-  'anthropic-llm': '#D97706',
-  'google-llm': '#4285F4',
-  'ollama-llm': '#6B7280',
-  // TTS
-  'voicevox-tts': '#F59E0B',
-  'coeiroink-tts': '#E91E63',
-  'sbv2-tts': '#9C27B0',
-  // Output
-  'console-output': '#A855F7',
-  'donation-alert': '#F59E0B',
-  // Control
-  'switch': '#F97316',
-  'delay': '#F97316',
-  // Utility
-  'http-request': '#3B82F6',
-  'text-transform': '#EC4899',
-  'field-selector': '#8B5CF6',
-  'random': '#8B5CF6',
-  'variable': '#14B8A6',
-  // Avatar
-  'avatar-configuration': '#E879F9',
-  'emotion-analyzer': '#F472B6',
-  'motion-trigger': '#C084FC',
-  'lip-sync': '#FB7185',
-  'subtitle-display': '#A855F7',
-  'audio-player': '#8B5CF6',
-};
+// Default color for edges when plugin color is not found
+const DEFAULT_EDGE_COLOR = '#10B981';
+
+// Map plugin category to legacy category for CustomNodeData
+function mapPluginCategoryToLegacy(category: string): 'input' | 'process' | 'output' | 'control' {
+  switch (category) {
+    case 'control':
+      return 'control';
+    case 'input':
+      return 'input';
+    case 'output':
+    case 'tts':
+    case 'avatar':
+    case 'obs':
+      return 'output';
+    case 'llm':
+    case 'utility':
+    default:
+      return 'process';
+  }
+}
 
 interface ContextMenuState {
   show: boolean;
@@ -132,6 +112,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
   } = useWorkflowStore();
 
   const { nodeDisplayMode, setNodeDisplayMode } = useUIPreferencesStore();
+  const { getPluginColor, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs } = usePluginStore();
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -245,24 +226,41 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
       const entryPointTypes = new Set(['start', 'manual-input', 'youtube-chat', 'twitch-chat', 'timer']);
 
       return workflowNodes.map((node) => {
-        const nodeInputs = getNodeInputs(node.type, node.config);
+        // Get inputs from plugin store or fall back to dynamic input logic
+        const pluginInputs = getPluginInputs(node.type);
+        const nodeInputs = pluginInputs.length > 0
+          ? pluginInputs.map(p => ({ id: p.id, label: p.description || p.id, type: p.type as PortType }))
+          : getNodeInputs(node.type, node.config);
+
+        // Get outputs from plugin store or fall back to static definitions
+        const pluginOutputs = getPluginOutputs(node.type);
+        const nodeOutputs = pluginOutputs.length > 0
+          ? pluginOutputs.map(p => ({ id: p.id, label: p.description || p.id, type: p.type as PortType }))
+          : getNodeOutputs(node.type);
+
         const isEntryPoint = entryPointTypes.has(node.type) || nodeInputs.length === 0;
         const isReachable = !hasStartNode || reachableNodes.has(node.id);
 
         // Use special node types for custom node components
         const reactFlowNodeType = node.type === 'field-selector' ? 'field-selector' : 'custom';
 
+        // Get category from plugin or fall back to legacy function
+        const plugin = getPluginById(node.type);
+        const category = plugin?.category
+          ? mapPluginCategoryToLegacy(plugin.category)
+          : getNodeCategory(node.type);
+
         return {
           id: node.id,
           type: reactFlowNodeType,
           position: node.position,
           data: {
-            label: getNodeLabel(node.type),
+            label: getPluginLabel(node.type),
             type: node.type,
-            category: getNodeCategory(node.type),
+            category,
             config: node.config,
             inputs: nodeInputs,
-            outputs: getNodeOutputs(node.type),
+            outputs: nodeOutputs,
             isReachable,
             isEntryPoint,
             onPlayClick: () => onRunWorkflow?.(node.id),
@@ -271,7 +269,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         };
       });
     },
-    [workflowNodes, selectedNodeId, reachableNodes, hasStartNode, onRunWorkflow]
+    [workflowNodes, selectedNodeId, reachableNodes, hasStartNode, onRunWorkflow, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs]
   );
 
   // Convert workflow connections to React Flow edges with gradient style
@@ -280,7 +278,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     () =>
       connections.map((conn) => {
         const sourceNode = workflowNodes.find((n) => n.id === conn.from.nodeId);
-        const edgeColor = sourceNode ? nodeTypeColors[sourceNode.type] || '#10B981' : '#10B981';
+        const edgeColor = sourceNode ? (getPluginColor(sourceNode.type) || DEFAULT_EDGE_COLOR) : DEFAULT_EDGE_COLOR;
 
         // Check if this edge involves unreachable nodes (only when Start node exists)
         const sourceReachable = !hasStartNode || reachableNodes.has(conn.from.nodeId);
@@ -302,7 +300,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
           },
         };
       }),
-    [connections, workflowNodes, reachableNodes, hasStartNode]
+    [connections, workflowNodes, reachableNodes, hasStartNode, getPluginColor]
   );
 
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState(flowNodes);
@@ -581,8 +579,9 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
       ];
     }
 
-    // Pane context menu - add nodes
-    return sidebarNodeTypes.map((nodeType) => ({
+    // Pane context menu - add nodes (dynamically loaded from plugins)
+    const nodeTypesList = getNodeTypes();
+    return nodeTypesList.map((nodeType) => ({
       label: `Add ${nodeType.label}`,
       icon: <span style={{ color: nodeType.color }}>{nodeType.icon}</span>,
       onClick: () => {
@@ -628,13 +627,13 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         onNodeContextMenu={onNodeContextMenu}
         onPaneContextMenu={onPaneContextMenu}
         onEdgeContextMenu={onEdgeContextMenu}
-        nodeTypes={nodeTypes}
+        nodeTypes={reactFlowNodeTypes}
         fitView
         className="!bg-transparent"
         connectionMode={ConnectionMode.Loose}
         defaultEdgeOptions={{
           animated: true,
-          style: { stroke: '#10B981', strokeWidth: 3 },
+          style: { stroke: DEFAULT_EDGE_COLOR, strokeWidth: 3 },
         }}
         deleteKeyCode={['Backspace', 'Delete']}
         multiSelectionKeyCode={['Shift']}
@@ -720,9 +719,9 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
           <DataPreviewPopup
             x={dataPreview.x}
             y={dataPreview.y}
-            sourceNodeLabel={getNodeLabel(sourceNode?.type || '')}
+            sourceNodeLabel={getPluginLabel(sourceNode?.type || '')}
             sourceNodeType={sourceNode?.type || ''}
-            targetNodeLabel={getNodeLabel(targetNode?.type || '')}
+            targetNodeLabel={getPluginLabel(targetNode?.type || '')}
             data={nodeStatuses[dataPreview.sourceNodeId]?.data?.outputs}
             selectedFields={connection?.from.fieldPaths || []}
             onFieldsChange={(fieldPaths) => {
@@ -740,51 +739,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
   );
 }
 
-// Helper functions to get node metadata
-function getNodeLabel(type: string): string {
-  const labels: Record<string, string> = {
-    // Control flow
-    'start': 'Start',
-    'end': 'End',
-    'loop': 'Loop',
-    'foreach': 'ForEach',
-    // Input
-    'manual-input': 'Manual Input',
-    'youtube-chat': 'YouTube Chat',
-    'twitch-chat': 'Twitch Chat',
-    'discord-chat': 'Discord Chat',
-    'timer': 'Timer',
-    // LLM
-    'openai-llm': 'ChatGPT',
-    'anthropic-llm': 'Claude',
-    'google-llm': 'Gemini',
-    'ollama-llm': 'Ollama',
-    // Control
-    'switch': 'Switch',
-    'delay': 'Delay',
-    // Output
-    'console-output': 'Console Output',
-    'donation-alert': 'Donation Alert',
-    'voicevox-tts': 'VOICEVOX',
-    'coeiroink-tts': 'COEIROINK',
-    'sbv2-tts': 'Style-Bert-VITS2',
-    // Utility
-    'http-request': 'HTTP Request',
-    'text-transform': 'Text Transform',
-    'field-selector': 'Field Selector',
-    'random': 'Random',
-    'variable': 'Variable',
-    // Avatar
-    'avatar-configuration': 'Avatar Config',
-    'emotion-analyzer': 'Emotion Analyzer',
-    'motion-trigger': 'Motion Trigger',
-    'lip-sync': 'Lip Sync',
-    'subtitle-display': 'Subtitle Display',
-    'audio-player': 'Audio Player',
-  };
-  return labels[type] || type;
-}
-
+// Legacy helper functions for fallback when plugin data is not available
 function getNodeCategory(type: string): 'input' | 'process' | 'output' | 'control' {
   const categories: Record<string, 'input' | 'process' | 'output' | 'control'> = {
     // Control flow

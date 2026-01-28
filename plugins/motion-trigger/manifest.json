@@ -1,14 +1,22 @@
 {
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
   "id": "motion-trigger",
   "name": "Motion Trigger",
   "version": "1.1.0",
   "description": "Trigger avatar expressions and motions (connect to Avatar Controller)",
   "author": {
     "name": "AITuberFlow",
-    "url": "https://github.com/aituberflow"
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
   "category": "avatar",
+  "ui": {
+    "label": "Motion Trigger",
+    "icon": "Play",
+    "color": "#C084FC",
+    "bgColor": "rgba(192, 132, 252, 0.1)",
+    "statusText": "Motion Trigger"
+  },
   "node": {
     "inputs": [
       {

@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Enter text manually to send downstream. Useful for testing workflows.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
   "category": "input",
+  "ui": {
+    "label": "Manual Input",
+    "icon": "Type",
+    "color": "#22C55E",
+    "bgColor": "rgba(34, 197, 94, 0.1)",
+    "statusText": "Ready for input"
+  },
   "node": {
     "inputs": [],
     "outputs": [

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/categories.json",
+  "categories": [
+    {
+      "id": "control",
+      "label": "制御フロー",
+      "labelEn": "Control Flow",
+      "order": 1,
+      "description": "ワークフローの開始、終了、ループなど"
+    },
+    {
+      "id": "input",
+      "label": "入力",
+      "labelEn": "Input",
+      "order": 2,
+      "description": "チャット、タイマーなどの入力ソース"
+    },
+    {
+      "id": "llm",
+      "label": "LLM",
+      "labelEn": "LLM",
+      "order": 3,
+      "description": "大規模言語モデル（ChatGPT、Claude等）"
+    },
+    {
+      "id": "tts",
+      "label": "音声合成",
+      "labelEn": "TTS",
+      "order": 4,
+      "description": "テキストを音声に変換"
+    },
+    {
+      "id": "avatar",
+      "label": "アバター",
+      "labelEn": "Avatar",
+      "order": 5,
+      "description": "アバター制御、表情、リップシンク"
+    },
+    {
+      "id": "output",
+      "label": "出力",
+      "labelEn": "Output",
+      "order": 6,
+      "description": "字幕表示、音声再生など"
+    },
+    {
+      "id": "utility",
+      "label": "ユーティリティ",
+      "labelEn": "Utility",
+      "order": 7,
+      "description": "テキスト変換、HTTP、変数など"
+    },
+    {
+      "id": "obs",
+      "label": "OBS",
+      "labelEn": "OBS",
+      "order": 8,
+      "description": "OBS連携（シーン切替、ソース制御）"
+    }
+  ]
+}

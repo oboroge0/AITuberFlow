@@ -1,23 +1,45 @@
 {
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
   "id": "end",
   "name": "End",
   "version": "1.0.0",
   "description": "Workflow exit point - marks the end of execution",
-  "author": "AITuber Flow",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
+  },
+  "license": "MIT",
   "category": "control",
-  "inputs": [
-    {
-      "id": "input",
-      "label": "Input",
-      "type": "any"
+  "ui": {
+    "label": "End",
+    "icon": "Square",
+    "color": "#EF4444",
+    "bgColor": "rgba(239, 68, 68, 0.15)",
+    "statusText": "Workflow exit point"
+  },
+  "node": {
+    "inputs": [
+      {
+        "id": "input",
+        "type": "any",
+        "description": "Data received when workflow ends"
+      }
+    ],
+    "outputs": [],
+    "events": {
+      "emits": [],
+      "listens": []
     }
-  ],
-  "outputs": [],
+  },
   "config": {
     "message": {
       "type": "string",
-      "default": "Workflow completed",
-      "description": "Message to display when workflow ends"
+      "label": "End Message",
+      "description": "Message to display when workflow ends",
+      "default": "Workflow completed"
     }
+  },
+  "dependencies": {
+    "python": []
   }
 }

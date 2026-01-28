@@ -66,6 +66,24 @@ export interface Memory {
 }
 
 // Plugin types
+export type PluginCategory =
+  | 'control'
+  | 'input'
+  | 'llm'
+  | 'tts'
+  | 'avatar'
+  | 'output'
+  | 'utility'
+  | 'obs';
+
+export interface PluginUI {
+  label: string;
+  icon: string;
+  color: string;
+  bgColor: string;
+  statusText?: string;
+}
+
 export interface PluginManifest {
   id: string;
   name: string;
@@ -74,9 +92,10 @@ export interface PluginManifest {
   author: {
     name: string;
     url?: string;
-  };
+  } | string;
   license: string;
-  category: 'input' | 'process' | 'output' | 'control';
+  category: PluginCategory;
+  ui?: PluginUI;
   node: {
     inputs: PortDefinition[];
     outputs: PortDefinition[];
@@ -86,6 +105,14 @@ export interface PluginManifest {
     };
   };
   config: Record<string, ConfigField>;
+}
+
+export interface CategoryDefinition {
+  id: PluginCategory;
+  label: string;
+  labelEn: string;
+  order: number;
+  description?: string;
 }
 
 export interface PortDefinition {

@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Conditional routing based on input values. Routes data to different outputs based on conditions.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
   "category": "control",
+  "ui": {
+    "label": "Switch",
+    "icon": "GitBranch",
+    "color": "#F97316",
+    "bgColor": "rgba(249, 115, 22, 0.1)",
+    "statusText": "Conditional routing"
+  },
   "node": {
     "inputs": [
       {

@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Transform text with various operations: uppercase, lowercase, trim, replace, template, etc.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
-  "category": "process",
+  "category": "utility",
+  "ui": {
+    "label": "Text Transform",
+    "icon": "Type",
+    "color": "#EC4899",
+    "bgColor": "rgba(236, 72, 153, 0.1)",
+    "statusText": "Text Transform"
+  },
   "node": {
     "inputs": [
       {

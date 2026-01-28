@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Fetch live chat messages from YouTube streams. Emits events for regular messages, superchats, and memberships.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
   "category": "input",
+  "ui": {
+    "label": "YouTube Chat",
+    "icon": "MessageSquare",
+    "color": "#FF0000",
+    "bgColor": "rgba(255, 0, 0, 0.1)",
+    "statusText": "Waiting for comments..."
+  },
   "node": {
     "inputs": [],
     "outputs": [

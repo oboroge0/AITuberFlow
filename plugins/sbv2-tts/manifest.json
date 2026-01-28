@@ -5,11 +5,18 @@
   "version": "1.0.0",
   "description": "Text-to-speech using Style-Bert-VITS2. High-quality Japanese voice synthesis with style control.",
   "author": {
-    "name": "AITuberFlow Team",
-    "url": "https://github.com/aituber-flow"
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
   },
   "license": "MIT",
-  "category": "output",
+  "category": "tts",
+  "ui": {
+    "label": "Style-Bert-VITS2",
+    "icon": "Volume2",
+    "color": "#9C27B0",
+    "bgColor": "rgba(156, 39, 176, 0.1)",
+    "statusText": "Engine: Style-Bert-VITS2"
+  },
   "node": {
     "inputs": [
       {
