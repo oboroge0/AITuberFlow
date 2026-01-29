@@ -225,17 +225,25 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
       // Entry point node types (nodes with no inputs that can start execution)
       const entryPointTypes = new Set(['start', 'manual-input', 'youtube-chat', 'twitch-chat', 'timer']);
 
+      // Convert port ID to display label (e.g., "text" -> "Text", "expression_id" -> "Expression ID")
+      const formatPortLabel = (id: string): string => {
+        return id
+          .split(/[_-]/)
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+      };
+
       return workflowNodes.map((node) => {
         // Get inputs from plugin store or fall back to dynamic input logic
         const pluginInputs = getPluginInputs(node.type);
         const nodeInputs = pluginInputs.length > 0
-          ? pluginInputs.map(p => ({ id: p.id, label: p.description || p.id, type: p.type as PortType }))
+          ? pluginInputs.map(p => ({ id: p.id, label: formatPortLabel(p.id), type: p.type as PortType }))
           : getNodeInputs(node.type, node.config);
 
         // Get outputs from plugin store or fall back to static definitions
         const pluginOutputs = getPluginOutputs(node.type);
         const nodeOutputs = pluginOutputs.length > 0
-          ? pluginOutputs.map(p => ({ id: p.id, label: p.description || p.id, type: p.type as PortType }))
+          ? pluginOutputs.map(p => ({ id: p.id, label: formatPortLabel(p.id), type: p.type as PortType }))
           : getNodeOutputs(node.type);
 
         const isEntryPoint = entryPointTypes.has(node.type) || nodeInputs.length === 0;

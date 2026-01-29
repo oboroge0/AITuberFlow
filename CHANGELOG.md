@@ -5,6 +5,34 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
 [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.0] - 2026-01-29
+
+### 追加
+
+#### プラグインシステム強化
+- **動的UI登録** - プラグイン追加時にフロントエンドの手動編集が不要に
+  - `manifest.json` の `ui` セクションでアイコン、色、ラベルを定義
+  - サイドバー、ノード表示が自動的に反映
+  - 約770行のハードコードを削減
+- **プラグイン開発CLI** - `make create-node` でプラグインを対話的に作成
+  - プラグイン名、カテゴリ、入出力ポートを対話的に設定
+  - `manifest.json`、`node.py`、`README.md` を自動生成
+  - バリデーション（名前の重複チェック、形式チェック）
+
+### 改善
+
+#### パフォーマンス
+- **開発サーバーのメモリ使用量を改善**
+  - `serverExternalPackages` でthree.js系をサーバー側解析から除外
+  - Next.js 16のTurbopack設定を最適化
+
+#### 開発者体験
+- **プラグイン追加が `manifest.json` と `node.py` だけで完結**
+  - 以前: Sidebar.tsx, Canvas.tsx, CustomNode.tsx の3ファイルを手動編集
+  - 現在: manifest.jsonにUI設定を追加するだけ
+
+---
+
 ## [1.1.2] - 2026-01-27
 
 ### 改善
@@ -153,6 +181,7 @@
 - 基本的なワークフローエディタ機能
 - コアプラグインの実装
 
+[1.2.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.0
 [1.1.2]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.1.2
 [1.1.1]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.1.1
 [1.1.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.1.0
