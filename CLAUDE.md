@@ -70,12 +70,21 @@ context.create_task(coroutine)  # Background task
 context.cancel_background_tasks()  # Cancel all tasks
 ```
 
-### Frontend Registration
+### Frontend Registration (v1.2.0+)
 
-When adding a new node, update:
-1. `apps/web/components/editor/Sidebar.tsx` - Node palette
-2. `apps/web/components/editor/Canvas.tsx` - Node metadata (colors, labels, inputs/outputs)
-3. `apps/web/components/editor/CustomNode.tsx` - Node appearance (icon, colors)
+プラグインのUI設定は `manifest.json` の `ui` セクションで定義するだけで自動登録されます。
+フロントエンドのコード編集は不要です。
+
+```json
+{
+  "ui": {
+    "label": "My Node",
+    "icon": "Cpu",
+    "color": "#10B981",
+    "bgColor": "rgba(16, 185, 129, 0.1)"
+  }
+}
+```
 
 ## Node Categories
 
@@ -183,3 +192,59 @@ docs: プラグイン開発ガイドを更新
 | APIリファレンス | `docs/api-reference.ja.md` | `docs/api-reference.md` |
 
 - 変更時は両言語を同期して更新すること
+
+## リリースプロセス
+
+### 1. リリース前チェック（ブランチ作業中）
+
+- [ ] 全ての変更が完了している（README更新含む）
+- [ ] テストが通る
+- [ ] マイルストーンのissueを全て確認
+
+### 2. バージョン更新
+
+以下のファイルのバージョンを更新:
+- `apps/web/package.json`
+- `apps/server/pyproject.toml`
+- `CHANGELOG.md`（日付は `date +%Y-%m-%d` で確認）
+
+### 3. コミット＆マージ
+
+```bash
+# コミットメッセージに closes #XX を含める
+git commit -m "Release vX.X.X
+
+- 変更内容1
+- 変更内容2
+
+closes #XX, closes #YY
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+
+# mainにマージ
+git checkout main
+git merge <branch>
+```
+
+**⚠️ 重要: タグ作成前に追加修正がないか最終確認すること**
+
+### 4. タグ作成（全ての修正が終わってから）
+
+```bash
+git tag -a vX.X.X -m "Release vX.X.X - 概要"
+git push origin main
+git push origin vX.X.X
+```
+
+### 5. GitHubリリースノート作成
+
+- URL: `https://github.com/oboroge0/AITuberFlow/releases/new?tag=vX.X.X`
+- CHANGELOGからコピーして整形
+- 絵文字を追加（✨新機能、🚀改善、🐛修正）
+
+### 6. 最終確認
+
+- [ ] タグが正しいコミットを指している
+- [ ] マイルストーンのissueがクローズされている
+- [ ] リリースノートが公開されている
+- [ ] ZIPダウンロードで最新のREADMEが含まれている
