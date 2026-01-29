@@ -179,10 +179,11 @@ git clone https://github.com/oboroge0/AITuberFlow.git
 cd AITuberFlow
 
 # Install dependencies
-make install
+npm install
+npm run install:all
 
 # Start development servers (frontend + backend simultaneously)
-make dev
+npm run dev
 ```
 
 The editor will be available at `http://localhost:3000`.
@@ -191,11 +192,13 @@ The editor will be available at `http://localhost:3000`.
 
 ```bash
 # Frontend only
-make dev-frontend
+npm run dev:web
 
 # Backend only
-make dev-backend
+npm run dev:api
 ```
+
+> **💡 Tip**: On macOS/Linux, you can also use `make dev` (see Makefile)
 
 ---
 

@@ -109,10 +109,11 @@ git clone https://github.com/oboroge0/AITuberFlow.git
 cd AITuberFlow
 
 # 依存関係をインストール
-make install
+npm install
+npm run install:all
 
 # 開発サーバーを起動（フロントエンド + バックエンド同時起動）
-make dev
+npm run dev
 ```
 
 これで `http://localhost:3000` でエディタが開きます。
@@ -121,11 +122,13 @@ make dev
 
 ```bash
 # フロントエンドのみ
-make dev-frontend
+npm run dev:web
 
 # バックエンドのみ
-make dev-backend
+npm run dev:api
 ```
+
+> **💡 ヒント**: macOS/Linuxでは `make dev` も使えます（Makefile参照）
 
 ### Docker で起動する場合
 
