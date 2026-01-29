@@ -5,6 +5,15 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
 [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.1] - 2026-01-30
+
+### セキュリティ
+
+- **Next.js** 16.1.3 → 16.1.5 にアップデート
+- **python-multipart** 0.0.21 → 0.0.22 にアップデート
+
+---
+
 ## [1.2.0] - 2026-01-29
 
 ### 追加
@@ -181,6 +190,7 @@
 - 基本的なワークフローエディタ機能
 - コアプラグインの実装
 
+[1.2.1]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.1
 [1.2.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.0
 [1.1.2]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.1.2
 [1.1.1]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.1.1
