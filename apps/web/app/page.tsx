@@ -177,15 +177,16 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className="w-10 h-10 rounded-[10px] flex items-center justify-center"
+              className="w-10 h-10 rounded-[10px] overflow-hidden flex items-center justify-center"
               style={{
-                background: 'linear-gradient(135deg, #10B981, #3B82F6)',
                 boxShadow: '0 4px 20px rgba(16, 185, 129, 0.3)',
               }}
             >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-              </svg>
+              <img
+                src="/logo.png"
+                alt="AITuberFlow logo"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <h1
