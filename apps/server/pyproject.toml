@@ -1,6 +1,6 @@
 [project]
 name = "aituber-flow-server"
-version = "1.2.1"
+version = "1.2.2"
 description = "AITuberFlow Backend Server"
 readme = "README.md"
 requires-python = ">=3.11"
