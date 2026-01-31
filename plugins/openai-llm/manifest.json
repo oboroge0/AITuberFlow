@@ -2,8 +2,8 @@
   "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
   "id": "openai-llm",
   "name": "OpenAI LLM",
-  "version": "1.0.0",
-  "description": "Generate text using OpenAI GPT models. Supports GPT-4o, GPT-4 Turbo, and GPT-4o Mini.",
+  "version": "1.1.0",
+  "description": "Generate text using OpenAI GPT models. Supports GPT-5 series, GPT-4o, and GPT-4 Turbo.",
   "author": {
     "name": "AITuberFlow",
     "url": "https://github.com/oboroge0/AITuberFlow"
@@ -53,6 +53,26 @@
       "default": "gpt-4o-mini",
       "options": [
         {
+          "label": "GPT-5.2",
+          "value": "gpt-5.2"
+        },
+        {
+          "label": "GPT-5.1",
+          "value": "gpt-5.1"
+        },
+        {
+          "label": "GPT-5",
+          "value": "gpt-5"
+        },
+        {
+          "label": "GPT-5 Mini",
+          "value": "gpt-5-mini"
+        },
+        {
+          "label": "GPT-5 Nano",
+          "value": "gpt-5-nano"
+        },
+        {
           "label": "GPT-4o Mini",
           "value": "gpt-4o-mini"
         },
@@ -65,6 +85,43 @@
           "value": "gpt-4-turbo"
         }
       ]
+    },
+    "reasoningEffort": {
+      "type": "select",
+      "label": "Reasoning Effort",
+      "description": "Controls how much effort the model spends on reasoning (GPT-5 series only)",
+      "default": "medium",
+      "options": [
+        {
+          "label": "None",
+          "value": "none"
+        },
+        {
+          "label": "Minimal",
+          "value": "minimal"
+        },
+        {
+          "label": "Low",
+          "value": "low"
+        },
+        {
+          "label": "Medium",
+          "value": "medium"
+        },
+        {
+          "label": "High",
+          "value": "high"
+        },
+        {
+          "label": "Extra High",
+          "value": "xhigh"
+        }
+      ],
+      "showWhen": {
+        "field": "model",
+        "operator": "in",
+        "value": ["gpt-5", "gpt-5.1", "gpt-5.2", "gpt-5-mini", "gpt-5-nano"]
+      }
     },
     "systemPrompt": {
       "type": "textarea",

@@ -30,6 +30,9 @@ class OpenAILLMNode(BaseNode):
     # Demo mode response
     DEMO_RESPONSE = "これはデモモードの応答です。実際のLLMを使用するにはAPIキーを設定してください。"
 
+    # GPT-5 series models that support reasoning_effort
+    GPT5_MODELS = {"gpt-5", "gpt-5.1", "gpt-5.2", "gpt-5-mini", "gpt-5-nano"}
+
     def __init__(self):
         self.client = None
         self.api_key = None
@@ -37,6 +40,7 @@ class OpenAILLMNode(BaseNode):
         self.system_prompt = "You are a helpful assistant."
         self.temperature = 0.7
         self.max_tokens = 1024
+        self.reasoning_effort = None  # For GPT-5 series models
         self.prompt_sections = None  # For structured prompt building
 
     async def setup(self, config: dict, context: NodeContext) -> None:
@@ -51,6 +55,7 @@ class OpenAILLMNode(BaseNode):
         self.system_prompt = config.get("systemPrompt", "You are a helpful assistant.")
         self.temperature = config.get("temperature", 0.7)
         self.max_tokens = config.get("maxTokens", 1024)
+        self.reasoning_effort = config.get("reasoningEffort")  # For GPT-5 series
         self.prompt_sections = config.get("promptSections")  # Structured prompt config
 
         if not self.api_key:
@@ -58,7 +63,10 @@ class OpenAILLMNode(BaseNode):
             await context.log("[デモモード] OpenAI APIキー未設定 - 定型文応答を返します", "warning")
         else:
             self.client = openai.AsyncOpenAI(api_key=self.api_key)
-            await context.log(f"OpenAI client initialized (model: {self.model})")
+            model_info = f"model: {self.model}"
+            if self.model in self.GPT5_MODELS and self.reasoning_effort:
+                model_info += f", reasoning: {self.reasoning_effort}"
+            await context.log(f"OpenAI client initialized ({model_info})")
 
     def _build_prompt_from_sections(self, inputs: dict) -> str:
         """Build prompt from sections configuration."""
@@ -118,15 +126,22 @@ class OpenAILLMNode(BaseNode):
             if character_personality:
                 full_system_prompt = f"{self.system_prompt}\n\nYou are {character_name}. {character_personality}"
 
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=[
+            # Build API parameters
+            api_params = {
+                "model": self.model,
+                "messages": [
                     {"role": "system", "content": full_system_prompt},
                     {"role": "user", "content": prompt},
                 ],
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
-            )
+                "temperature": self.temperature,
+                "max_tokens": self.max_tokens,
+            }
+
+            # Add reasoning_effort for GPT-5 series models
+            if self.model in self.GPT5_MODELS and self.reasoning_effort:
+                api_params["reasoning"] = {"effort": self.reasoning_effort}
+
+            response = await self.client.chat.completions.create(**api_params)
 
             result = response.choices[0].message.content
             await context.log(f"Response received ({len(result)} chars)")

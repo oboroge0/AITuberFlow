@@ -40,6 +40,7 @@ export interface AvatarViewProps {
   backgroundColor?: string;
   enableControls?: boolean;
   showGrid?: boolean;
+  showDebugInfo?: boolean; // Show debug info overlay (default: false)
   onMotionComplete?: () => void; // Called when one-shot motion finishes
 }
 
@@ -95,6 +96,7 @@ export default function AvatarView({
   backgroundColor = 'transparent',
   enableControls = false,
   showGrid = false,
+  showDebugInfo = false,
   onMotionComplete,
 }: AvatarViewProps) {
   const renderAvatar = useCallback(() => {
@@ -180,8 +182,8 @@ export default function AvatarView({
         </div>
       )}
 
-      {/* Debug Info (can be toggled) */}
-      {process.env.NODE_ENV === 'development' && (
+      {/* Debug Info (explicitly enabled via showDebugInfo prop) */}
+      {showDebugInfo && (
         <div className="absolute top-2 left-2 bg-black/50 backdrop-blur-sm rounded px-2 py-1 text-xs text-white/70 pointer-events-none">
           <div>Renderer: {renderer}</div>
           <div>Expression: {state.expression}</div>

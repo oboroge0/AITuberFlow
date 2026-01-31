@@ -5,6 +5,22 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
 [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.3] - 2026-02-01
+
+### 追加
+
+- **GPT-5シリーズ対応** - OpenAI LLMノードにGPT-5系モデルを追加
+  - GPT-5, GPT-5.1, GPT-5.2, GPT-5 Mini, GPT-5 Nano
+  - `reasoning_effort` パラメータ対応（none, minimal, low, medium, high, xhigh）
+
+### 修正
+
+- **Overlayページのデバッグ表示** - 開発環境でも不要なUI要素が表示されないように修正
+  - AvatarViewコンポーネントに `showDebugInfo` プロップを追加
+  - Next.jsの開発インジケーター（左下のロゴ）を非表示に設定
+
+---
+
 ## [1.2.2] - 2026-01-31
 
 ### 改善
@@ -200,6 +216,8 @@
 - 基本的なワークフローエディタ機能
 - コアプラグインの実装
 
+[1.2.3]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.3
+[1.2.2]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.2
 [1.2.1]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.1
 [1.2.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.0
 [1.1.2]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.1.2

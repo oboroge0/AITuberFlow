@@ -13,6 +13,9 @@ const nextConfig = {
 
   // Turbopack config (Next.js 16+ default bundler)
   turbopack: {},
+
+  // Disable dev indicators (Next.js logo in bottom-left corner)
+  devIndicators: false,
 };
 
 module.exports = nextConfig;
