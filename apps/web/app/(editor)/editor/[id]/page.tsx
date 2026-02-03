@@ -12,6 +12,7 @@ import MotionLibrary, { Motion } from '@/components/panels/MotionLibrary';
 import { AvatarView, RendererType } from '@/components/avatar';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { toast } from '@/stores/toastStore';
 import api from '@/lib/api';
 import { DEFAULT_MODEL_URL } from '@/lib/constants';
 
@@ -188,7 +189,7 @@ export default function EditorPage() {
         isInitialLoad.current = false;
       }, 500);
     } else if (response.error) {
-      console.error('Failed to load workflow:', response.error);
+      toast.error(`ワークフローの読み込みに失敗: ${response.error}`);
       if (response.error.includes('not found')) {
         router.push('/');
       }
@@ -214,7 +215,7 @@ export default function EditorPage() {
     });
 
     if (response.error) {
-      console.error('Auto-save failed:', response.error);
+      toast.error(`自動保存に失敗: ${response.error}`);
     } else {
       // Show "Saved" indicator briefly
       setShowSaved(true);
@@ -395,14 +396,16 @@ export default function EditorPage() {
         }
 
         addLog({ level: 'success', message: `Imported as new workflow: ${response.data.name}` });
+        toast.success(`インポート完了: ${response.data.name}`);
 
         // Navigate to the new workflow immediately
         // Use window.location.href instead of router.push() to force a full page reload
         // This ensures the new workflow data is properly loaded
         window.location.href = `/editor/${response.data.id}`;
       } catch (err) {
-        console.error('Import failed:', err);
-        addLog({ level: 'error', message: `Import failed: ${err instanceof Error ? err.message : 'Unknown error'}` });
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        toast.error(`インポートに失敗: ${errorMessage}`);
+        addLog({ level: 'error', message: `Import failed: ${errorMessage}` });
       }
     };
     input.click();
