@@ -12,6 +12,7 @@ import MotionLibrary, { Motion } from '@/components/panels/MotionLibrary';
 import { AvatarView, RendererType } from '@/components/avatar';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { toast } from '@/stores/toastStore';
 import api from '@/lib/api';
 import { DEFAULT_MODEL_URL } from '@/lib/constants';
@@ -98,6 +99,8 @@ export default function EditorPage() {
     addLog,
     clearLogs,
     selectedNodeId,
+    selectNode,
+    removeNode,
     nodes,
     connections,
     character,
@@ -269,6 +272,25 @@ export default function EditorPage() {
 
     setSaving(false);
   };
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onSave: () => {
+      if (workflowId !== 'new') {
+        handleSave();
+      }
+    },
+    onDelete: () => {
+      if (selectedNodeId) {
+        removeNode(selectedNodeId);
+        toast.success('ノードを削除しました');
+      }
+    },
+    onEscape: () => {
+      selectNode(null);
+      setShowAvatarControls(false);
+    },
+  });
 
   const handleStart = async (startNodeId?: string) => {
     clearLogs();
