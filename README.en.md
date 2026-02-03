@@ -54,6 +54,7 @@ AITuberFlow is a visual tool for building AI-powered virtual streamer (AITuber/V
 >
 > - 🐛 Found a bug? → Open an [Issue](https://github.com/oboroge0/AITuberFlow/issues)
 > - 💡 Have an idea? → Join [Discussions](https://github.com/oboroge0/AITuberFlow/discussions)
+> - 💬 Questions? → [X DM (@oboroge9)](https://x.com/oboroge9)
 > - ⭐ Like this project? → Give us a Star!
 
 ---

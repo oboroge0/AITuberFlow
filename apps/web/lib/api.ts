@@ -1,6 +1,10 @@
 import { Workflow, PluginManifest, ApiResponse } from './types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+// Use relative URLs in browser (proxied via Next.js rewrites)
+// Use full URL only for server-side or when explicitly set
+const API_BASE = typeof window !== 'undefined'
+  ? ''  // Browser: use relative URLs (proxied by Next.js)
+  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001');
 
 class ApiClient {
   private baseUrl: string;

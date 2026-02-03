@@ -54,6 +54,7 @@ AITuberFlowは、AIを活用したバーチャル配信者（AITuber）のパイ
 >
 > - 🐛 バグを見つけたら → [Issue](https://github.com/oboroge0/AITuberFlow/issues)へ
 > - 💡 こんな機能ほしい！→ [Discussions](https://github.com/oboroge0/AITuberFlow/discussions)へ
+> - 💬 お問い合わせ → [X DM (@oboroge9)](https://x.com/oboroge9)へ
 > - ⭐ 応援してくれる方 → Starお願いします！
 
 ---

@@ -28,20 +28,21 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # CORS configuration
-# Default origins for development; override with CORS_ORIGINS env var for production
-DEFAULT_CORS_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3001",
-]
-
-def get_cors_origins() -> list:
-    """Get CORS origins from environment or use defaults."""
+# Development: allows common localhost ports (3000-3010)
+# Production: set CORS_ORIGINS env var (comma-separated list)
+def get_cors_origins() -> list[str]:
+    """Get CORS origins from environment or generate defaults for development."""
     cors_env = os.getenv("CORS_ORIGINS", "")
     if cors_env:
         return [origin.strip() for origin in cors_env.split(",") if origin.strip()]
-    return DEFAULT_CORS_ORIGINS
+
+    # Development: allow localhost ports 3000-3010
+    origins = []
+    for port in range(3000, 3011):
+        origins.append(f"http://localhost:{port}")
+        origins.append(f"http://127.0.0.1:{port}")
+    return origins
+
 
 CORS_ORIGINS = get_cors_origins()
 

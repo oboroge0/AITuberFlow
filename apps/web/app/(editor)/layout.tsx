@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './editor.css';
+import ToastContainer from '@/components/ui/ToastContainer';
 
 export const metadata: Metadata = {
   title: 'AITuberFlow - Visual Workflow Editor',
@@ -17,5 +18,10 @@ export default function EditorLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <ToastContainer />
+    </>
+  );
 }

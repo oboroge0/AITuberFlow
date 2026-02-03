@@ -12,10 +12,20 @@ import MotionLibrary, { Motion } from '@/components/panels/MotionLibrary';
 import { AvatarView, RendererType } from '@/components/avatar';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { toast } from '@/stores/toastStore';
 import api from '@/lib/api';
 import { DEFAULT_MODEL_URL } from '@/lib/constants';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+
+// Auto-save error throttling state (module-level to persist across re-renders)
+let lastAutoSaveError: string | null = null;
+let lastAutoSaveErrorAt: number = 0;
+const AUTO_SAVE_ERROR_THROTTLE_MS = 30000; // 30 seconds
+
+// Session storage key for import success message
+const IMPORT_SUCCESS_KEY = 'aituber-flow-import-success';
 
 // Zoom Controls component using ReactFlow's zoom API
 function ZoomControls() {
@@ -97,6 +107,8 @@ export default function EditorPage() {
     addLog,
     clearLogs,
     selectedNodeId,
+    selectNode,
+    removeNode,
     nodes,
     connections,
     character,
@@ -183,12 +195,20 @@ export default function EditorPage() {
           personality: 'Friendly and helpful',
         },
       });
+
+      // Check for import success message from sessionStorage
+      const importSuccessName = sessionStorage.getItem(IMPORT_SUCCESS_KEY);
+      if (importSuccessName) {
+        sessionStorage.removeItem(IMPORT_SUCCESS_KEY);
+        toast.success(`インポート完了: ${importSuccessName}`);
+      }
+
       // Allow auto-save after initial load settles
       setTimeout(() => {
         isInitialLoad.current = false;
       }, 500);
     } else if (response.error) {
-      console.error('Failed to load workflow:', response.error);
+      toast.error(`ワークフローの読み込みに失敗: ${response.error}`);
       if (response.error.includes('not found')) {
         router.push('/');
       }
@@ -214,7 +234,16 @@ export default function EditorPage() {
     });
 
     if (response.error) {
-      console.error('Auto-save failed:', response.error);
+      // Throttle auto-save error toasts to avoid spam
+      const now = Date.now();
+      const isDifferentError = response.error !== lastAutoSaveError;
+      const isThrottleExpired = now - lastAutoSaveErrorAt > AUTO_SAVE_ERROR_THROTTLE_MS;
+
+      if (isDifferentError || isThrottleExpired) {
+        toast.error(`自動保存に失敗: ${response.error}`);
+        lastAutoSaveError = response.error;
+        lastAutoSaveErrorAt = now;
+      }
     } else {
       // Show "Saved" indicator briefly
       setShowSaved(true);
@@ -268,6 +297,25 @@ export default function EditorPage() {
 
     setSaving(false);
   };
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onSave: () => {
+      if (workflowId !== 'new') {
+        handleSave();
+      }
+    },
+    onDelete: () => {
+      if (selectedNodeId) {
+        removeNode(selectedNodeId);
+        // Toast is shown by Canvas.tsx onNodesChange handler
+      }
+    },
+    onEscape: () => {
+      selectNode(null);
+      setShowAvatarControls(false);
+    },
+  });
 
   const handleStart = async (startNodeId?: string) => {
     clearLogs();
@@ -396,13 +444,17 @@ export default function EditorPage() {
 
         addLog({ level: 'success', message: `Imported as new workflow: ${response.data.name}` });
 
-        // Navigate to the new workflow immediately
-        // Use window.location.href instead of router.push() to force a full page reload
-        // This ensures the new workflow data is properly loaded
+        // Persist success message to sessionStorage for the target page to display
+        // (toast would be lost due to immediate page navigation)
+        sessionStorage.setItem(IMPORT_SUCCESS_KEY, response.data.name);
+
+        // Navigate to the new workflow
+        // Use window.location.href to force a full page reload
         window.location.href = `/editor/${response.data.id}`;
       } catch (err) {
-        console.error('Import failed:', err);
-        addLog({ level: 'error', message: `Import failed: ${err instanceof Error ? err.message : 'Unknown error'}` });
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        toast.error(`インポートに失敗: ${errorMessage}`);
+        addLog({ level: 'error', message: `Import failed: ${errorMessage}` });
       }
     };
     input.click();
