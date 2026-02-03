@@ -122,6 +122,12 @@
     "invalidJson": "無効なJSONファイルです",
     "loadTemplateFailed": "テンプレートの読み込みに失敗しました"
   },
+  "support": {
+    "title": "お問い合わせ",
+    "description": "問題が発生した場合やご意見がございましたら、お気軽にお問い合わせください",
+    "issue": "Issue",
+    "dm": "X DM"
+  },
   "defaults": {
     "workflowName": "新規ワークフロー",
     "assistantName": "AIアシスタント",

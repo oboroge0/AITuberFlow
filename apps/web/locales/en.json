@@ -122,6 +122,12 @@
     "invalidJson": "Invalid JSON file",
     "loadTemplateFailed": "Failed to load template"
   },
+  "support": {
+    "title": "Support",
+    "description": "If you encounter any issues or have feedback, please reach out",
+    "issue": "Issue",
+    "dm": "X DM"
+  },
   "defaults": {
     "workflowName": "New Workflow",
     "assistantName": "AI Assistant",
