@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
+import { DEFAULT_MODEL_URL } from '@/lib/constants';
 
 // Dynamically import VRMRenderer to avoid SSR issues with Three.js
 const VRMRenderer = dynamic(() => import('./VRMRenderer'), {
@@ -102,16 +103,9 @@ export default function AvatarView({
   const renderAvatar = useCallback(() => {
     switch (renderer) {
       case 'vrm':
-        if (!modelUrl) {
-          return (
-            <div className="flex items-center justify-center h-full text-white/50">
-              No VRM model specified
-            </div>
-          );
-        }
         return (
           <VRMRenderer
-            modelUrl={modelUrl}
+            modelUrl={modelUrl || DEFAULT_MODEL_URL}
             animationUrl={animationUrl}
             motionUrl={state.motion}
             expression={state.expression}
