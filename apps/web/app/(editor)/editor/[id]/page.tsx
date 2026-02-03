@@ -283,7 +283,7 @@ export default function EditorPage() {
     onDelete: () => {
       if (selectedNodeId) {
         removeNode(selectedNodeId);
-        toast.success('ノードを削除しました');
+        // Toast is shown by Canvas.tsx onNodesChange handler
       }
     },
     onEscape: () => {

@@ -16,6 +16,17 @@ const nextConfig = {
 
   // Disable dev indicators (Next.js logo in bottom-left corner)
   devIndicators: false,
+
+  // Proxy API requests to backend (eliminates CORS issues)
+  async rewrites() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${apiUrl}/api/:path*`,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

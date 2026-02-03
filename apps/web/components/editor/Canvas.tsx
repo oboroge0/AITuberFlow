@@ -21,6 +21,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { usePluginStore } from '@/stores/pluginStore';
+import { toast } from '@/stores/toastStore';
 import CustomNode, { type CustomNodeData } from './CustomNode';
 import FieldSelectorNode from './FieldSelectorNode';
 import ContextMenu, { type ContextMenuItem } from './ContextMenu';
@@ -334,6 +335,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         }
         if (change.type === 'remove') {
           removeNode(change.id);
+          toast.success('ノードを削除しました');
         }
       });
     },
