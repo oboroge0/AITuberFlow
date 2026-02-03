@@ -44,6 +44,7 @@ function ToastItem({ toast }: { toast: Toast }) {
       <p className="text-white text-sm flex-1">{toast.message}</p>
       <button
         onClick={() => removeToast(toast.id)}
+        aria-label="通知を閉じる"
         className="text-white/60 hover:text-white transition-colors flex-shrink-0"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -3,7 +3,7 @@
   "name": "Twitch Stream VTuber",
   "name_ja": "Twitch配信VTuber",
   "description": "Respond to Twitch chat messages with AI-generated voice and avatar expressions.",
-  "description_ja": "Twitchチャットのメッセージにai生成の音声とアバター表情で応答します。",
+  "description_ja": "TwitchチャットのメッセージにAI生成の音声とアバター表情で応答します。",
   "nodes": [
     {
       "id": "node-twitch",
