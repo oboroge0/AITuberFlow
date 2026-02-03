@@ -26,6 +26,14 @@ if str(SDK_PATH) not in sys.path:
 SOURCE_NODE_TYPES: Set[str] = {'twitch-chat', 'youtube-chat', 'timer'}
 
 
+class WorkflowCycleError(Exception):
+    """Raised when a cycle is detected in the workflow graph."""
+
+    def __init__(self, cycle_nodes: List[str]):
+        self.cycle_nodes = cycle_nodes
+        super().__init__(f"Cycle detected in workflow: {', '.join(cycle_nodes)}")
+
+
 @dataclass
 class NodeContext:
     """Context passed to node execution."""
@@ -672,6 +680,17 @@ class WorkflowExecutor:
                 continue
             except asyncio.CancelledError:
                 break
+            except WorkflowCycleError as e:
+                error_msg = f"ワークフローに循環参照が検出されました / Cycle detected: {', '.join(e.cycle_nodes)}"
+                await self._log(workflow_id, None, error_msg, "error")
+                logger.error(f"Cycle detected in workflow {workflow_id}: {e.cycle_nodes}")
+                if queue:
+                    queue.set_processing(False)
+                # Stop the workflow
+                if workflow_id in self._running_workflows:
+                    self._running_workflows[workflow_id]["status"] = "error"
+                    self._running_workflows[workflow_id]["error"] = error_msg
+                break
             except Exception as e:
                 logger.error(f"Queue processor error: {e}")
                 import traceback
@@ -688,7 +707,12 @@ class WorkflowExecutor:
     ):
         """Traditional linear execution (no source nodes)."""
         # Build execution order (topological sort for linear flow)
-        execution_order = self._get_execution_order(nodes, connections)
+        try:
+            execution_order = self._get_execution_order(nodes, connections)
+        except WorkflowCycleError as e:
+            error_msg = f"ワークフローに循環参照が検出されました / Cycle detected in workflow: {', '.join(e.cycle_nodes)}"
+            await self._log(workflow_id, None, error_msg, "error")
+            raise
 
         if not execution_order:
             await self._log(workflow_id, None, "No executable nodes found", "warning")
@@ -834,19 +858,17 @@ class WorkflowExecutor:
             return []
 
         # Calculate in-degree for downstream nodes only
+        # We exclude edges from source node so cycle detection works correctly
         in_degree = {nid: 0 for nid in downstream_ids}
         for conn in connections:
             from_id = conn.get("from", {}).get("nodeId")
             to_id = conn.get("to", {}).get("nodeId")
             if to_id in in_degree:
-                # Count edges from source or other downstream nodes
-                if from_id == source_id or from_id in downstream_ids:
+                # Only count edges from other downstream nodes (not from source)
+                if from_id in downstream_ids:
                     in_degree[to_id] += 1
 
-        # Nodes directly connected to source have in_degree adjusted
-        for nid in adjacency.get(source_id, []):
-            if nid in in_degree:
-                in_degree[nid] = 0  # Ready to execute
+        # Nodes directly connected to source (and have no other dependencies) start with in_degree 0
 
         # Kahn's algorithm
         queue = [nid for nid, deg in in_degree.items() if deg == 0]
@@ -861,6 +883,11 @@ class WorkflowExecutor:
                     in_degree[neighbor] -= 1
                     if in_degree[neighbor] == 0:
                         queue.append(neighbor)
+
+        # Cycle detection: if not all downstream nodes were processed, there's a cycle
+        if len(order) < len(downstream_ids):
+            cycle_nodes = [nid for nid, deg in in_degree.items() if deg > 0]
+            raise WorkflowCycleError(cycle_nodes)
 
         return order
 
@@ -933,6 +960,12 @@ class WorkflowExecutor:
                     filtered_in_degree[neighbor] -= 1
                     if filtered_in_degree[neighbor] == 0:
                         exec_queue.append(neighbor)
+
+        # Cycle detection: if not all reachable nodes were processed, there's a cycle
+        if len(order) < len(reachable):
+            # Find nodes that are part of the cycle (still have in_degree > 0)
+            cycle_nodes = [nid for nid, deg in filtered_in_degree.items() if deg > 0]
+            raise WorkflowCycleError(cycle_nodes)
 
         return order
 
