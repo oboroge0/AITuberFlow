@@ -19,11 +19,15 @@ const nextConfig = {
 
   // Proxy API requests to backend (eliminates CORS issues)
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+    // Normalize: strip trailing slashes and trailing /api suffix to avoid double slashes
+    const apiUrlNormalized = rawApiUrl
+      .replace(/\/+$/, '')      // Remove trailing slashes
+      .replace(/\/api$/, '');   // Remove trailing /api if present
     return [
       {
         source: '/api/:path*',
-        destination: `${apiUrl}/api/:path*`,
+        destination: `${apiUrlNormalized}/api/:path*`,
       },
     ];
   },
