@@ -5,6 +5,16 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
 [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.4] - 2026-02-03
+
+### 修正
+
+- **デフォルトVRM自動読み込み** - VRMモデル未指定時に`Flowchan.vrm`を自動で読み込むように修正 (#44)
+  - `constants.ts`のパスを正しいファイル名に修正
+  - `AvatarView`でフォールバック処理を追加
+
+---
+
 ## [1.2.3] - 2026-02-01
 
 ### 追加
@@ -216,6 +226,7 @@
 - 基本的なワークフローエディタ機能
 - コアプラグインの実装
 
+[1.2.4]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.4
 [1.2.3]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.3
 [1.2.2]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.2
 [1.2.1]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.1
