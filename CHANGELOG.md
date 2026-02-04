@@ -5,6 +5,40 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
 [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.3.0] - 2026-02-05
+
+### 追加
+
+- **ワークフロー循環参照チェック** - 無限ループ防止機能を追加 (#53)
+  - Kahn's algorithm による循環検出
+  - 循環検出時に日本語/英語でエラーメッセージを表示
+  - WorkflowCycleError 例外を定義
+
+- **WebSocket再接続ロジック** - 接続の安定性を向上 (#52)
+  - 指数バックオフ再接続（1秒〜30秒）
+  - 接続状態インジケーターをエディタヘッダーに表示
+  - connectionStatus 状態（connected/disconnected/reconnecting）
+
+- **エラーバッジ表示** - ノードエラーの可視化 (#56)
+  - ノードエラー時に詳細バッジを表示
+  - ホバーでエラーメッセージのツールチップ
+
+- **プラグインエラー処理明確化** - 例外クラスを追加 (#54)
+  - NodeExecutionError, NodeConfigError, NodeConnectionError
+  - WORKFLOW_CYCLE_DETECTED エラーコード
+
+- **パスワード/APIキーマスク表示** - セキュリティ向上 (#58)
+  - パスワードフィールドに表示/非表示トグル
+  - YouTube APIキーをパスワードタイプに変更
+
+### 修正
+
+- **SVGエラーアイコン** - 表示サイズを修正し視認性を向上
+- **WebSocket再接続スパム** - ステール・クロージャーバグを修正
+- **パスワードトグル** - アクセシビリティ属性を追加
+
+---
+
 ## [1.2.5] - 2026-02-04
 
 ### 追加
@@ -264,6 +298,8 @@
 - 基本的なワークフローエディタ機能
 - コアプラグインの実装
 
+[1.3.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.3.0
+[1.2.5]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.5
 [1.2.4]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.4
 [1.2.3]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.3
 [1.2.2]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.2
