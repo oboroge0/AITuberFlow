@@ -45,9 +45,11 @@ function PasswordField({ value, onChange, placeholder, style }: PasswordFieldPro
       />
       <button
         type="button"
-        onClick={() => setShowPassword(!showPassword)}
+        onClick={() => setShowPassword((prev) => !prev)}
+        aria-label={showPassword ? 'Hide password' : 'Show password'}
+        aria-pressed={showPassword}
         className="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors"
-        title={showPassword ? 'Hide' : 'Show'}
+        title={showPassword ? 'Hide password' : 'Show password'}
       >
         {showPassword ? (
           // Eye-off icon

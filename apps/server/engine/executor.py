@@ -690,6 +690,16 @@ class WorkflowExecutor:
                 if workflow_id in self._running_workflows:
                     self._running_workflows[workflow_id]["status"] = "error"
                     self._running_workflows[workflow_id]["error"] = error_msg
+                # Best-effort cleanup to avoid leaked resources
+                self._queue_processors.pop(workflow_id, None)
+                await self._cancel_background_tasks(workflow_id)
+                await self._teardown_nodes(workflow_id)
+                self._source_nodes.pop(workflow_id, None)
+                if workflow_id in self._event_buses:
+                    await self._event_buses[workflow_id].stop()
+                    self._event_buses.pop(workflow_id, None)
+                self._event_queues.pop(workflow_id, None)
+                await self._disconnect_vts_if_needed(workflow_id)
                 break
             except Exception as e:
                 logger.error(f"Queue processor error: {e}")

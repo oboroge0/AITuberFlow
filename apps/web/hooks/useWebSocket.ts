@@ -27,6 +27,8 @@ export function useWebSocket(workflowId: string | null) {
   // Connection status for UI feedback
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
   const [reconnectAttempt, setReconnectAttempt] = useState(0);
+  // Ref to track reconnect attempts for use in callbacks (avoids stale closure)
+  const reconnectAttemptRef = useRef(0);
 
   useEffect(() => {
     if (!workflowId) return;
@@ -50,6 +52,7 @@ export function useWebSocket(workflowId: string | null) {
       console.log('WebSocket connected');
       setConnectionStatus('connected');
       setReconnectAttempt(0);
+      reconnectAttemptRef.current = 0;
       socket.emit('join', { workflowId });
       addLog({ level: 'info', message: 'サーバーに接続しました / Connected to server' });
     });
@@ -69,6 +72,7 @@ export function useWebSocket(workflowId: string | null) {
     socket.on('reconnect_attempt', (attempt) => {
       setConnectionStatus('reconnecting');
       setReconnectAttempt(attempt);
+      reconnectAttemptRef.current = attempt;
       const delay = Math.min(INITIAL_RECONNECT_DELAY * Math.pow(2, attempt - 1), MAX_RECONNECT_DELAY);
       console.log(`Reconnection attempt ${attempt}, next delay: ${delay}ms`);
       addLog({
@@ -99,7 +103,7 @@ export function useWebSocket(workflowId: string | null) {
     socket.on('connect_error', (error) => {
       console.error('Connection error:', error.message);
       // Only log on first error to avoid spam
-      if (reconnectAttempt === 0) {
+      if (reconnectAttemptRef.current === 0) {
         addLog({
           level: 'warning',
           message: `接続エラー / Connection error: ${error.message}`,
