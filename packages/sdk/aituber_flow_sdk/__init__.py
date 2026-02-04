@@ -18,6 +18,9 @@ from .errors import (
     ErrorCode,
     get_error_message,
     format_error_with_action,
+    NodeExecutionError,
+    NodeConfigError,
+    NodeConnectionError,
 )
 
 __version__ = "0.1.0"
@@ -34,4 +37,7 @@ __all__ = [
     "ErrorCode",
     "get_error_message",
     "format_error_with_action",
+    "NodeExecutionError",
+    "NodeConfigError",
+    "NodeConnectionError",
 ]

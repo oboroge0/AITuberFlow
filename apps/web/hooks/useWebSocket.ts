@@ -6,6 +6,13 @@ import { AvatarState } from '@/components/avatar';
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8001';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
+// Reconnection settings with exponential backoff
+const INITIAL_RECONNECT_DELAY = 1000; // 1 second
+const MAX_RECONNECT_DELAY = 30000; // 30 seconds
+const MAX_RECONNECT_ATTEMPTS = 10;
+
+export type ConnectionStatus = 'connected' | 'disconnected' | 'connecting' | 'reconnecting';
+
 export function useWebSocket(workflowId: string | null) {
   const socketRef = useRef<Socket | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -17,24 +24,91 @@ export function useWebSocket(workflowId: string | null) {
     mouthOpen: 0,
   });
 
+  // Connection status for UI feedback
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
+  const [reconnectAttempt, setReconnectAttempt] = useState(0);
+  // Ref to track reconnect attempts for use in callbacks (avoids stale closure)
+  const reconnectAttemptRef = useRef(0);
+
   useEffect(() => {
     if (!workflowId) return;
 
-    // Connect to WebSocket server
+    setConnectionStatus('connecting');
+
+    // Connect to WebSocket server with custom reconnection settings
     const socket = io(WS_URL, {
       path: '/ws/socket.io',
       transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
+      reconnectionDelay: INITIAL_RECONNECT_DELAY,
+      reconnectionDelayMax: MAX_RECONNECT_DELAY,
+      randomizationFactor: 0.5, // Add jitter to prevent thundering herd
     });
 
     socketRef.current = socket;
 
     socket.on('connect', () => {
       console.log('WebSocket connected');
+      setConnectionStatus('connected');
+      setReconnectAttempt(0);
+      reconnectAttemptRef.current = 0;
       socket.emit('join', { workflowId });
+      addLog({ level: 'info', message: 'サーバーに接続しました / Connected to server' });
     });
 
-    socket.on('disconnect', () => {
-      console.log('WebSocket disconnected');
+    socket.on('disconnect', (reason) => {
+      console.log('WebSocket disconnected:', reason);
+      setConnectionStatus('disconnected');
+      // Only log if it's an unexpected disconnect
+      if (reason !== 'io client disconnect') {
+        addLog({
+          level: 'warning',
+          message: `サーバーから切断されました / Disconnected from server: ${reason}`,
+        });
+      }
+    });
+
+    socket.on('reconnect_attempt', (attempt) => {
+      setConnectionStatus('reconnecting');
+      setReconnectAttempt(attempt);
+      reconnectAttemptRef.current = attempt;
+      const delay = Math.min(INITIAL_RECONNECT_DELAY * Math.pow(2, attempt - 1), MAX_RECONNECT_DELAY);
+      console.log(`Reconnection attempt ${attempt}, next delay: ${delay}ms`);
+      addLog({
+        level: 'info',
+        message: `再接続を試行中... (${attempt}/${MAX_RECONNECT_ATTEMPTS}) / Reconnecting...`,
+      });
+    });
+
+    socket.on('reconnect', (attempt) => {
+      console.log('Reconnected after', attempt, 'attempts');
+      setConnectionStatus('connected');
+      setReconnectAttempt(0);
+      addLog({
+        level: 'info',
+        message: `再接続に成功しました / Reconnected successfully`,
+      });
+    });
+
+    socket.on('reconnect_failed', () => {
+      console.log('Reconnection failed after all attempts');
+      setConnectionStatus('disconnected');
+      addLog({
+        level: 'error',
+        message: `再接続に失敗しました。ページを再読み込みしてください / Reconnection failed. Please reload the page.`,
+      });
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Connection error:', error.message);
+      // Only log on first error to avoid spam
+      if (reconnectAttemptRef.current === 0) {
+        addLog({
+          level: 'warning',
+          message: `接続エラー / Connection error: ${error.message}`,
+        });
+      }
     });
 
     // Handle log events
@@ -160,5 +234,12 @@ export function useWebSocket(workflowId: string | null) {
     setAvatarState((prev) => ({ ...prev, ...update }));
   }, []);
 
-  return { emit, avatarState, clearMotion, updateAvatarState };
+  return {
+    emit,
+    avatarState,
+    clearMotion,
+    updateAvatarState,
+    connectionStatus,
+    reconnectAttempt,
+  };
 }

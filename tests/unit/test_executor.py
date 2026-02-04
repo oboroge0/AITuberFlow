@@ -20,7 +20,7 @@ if str(APPS_SERVER) not in sys.path:
 if str(SDK_PATH) not in sys.path:
     sys.path.insert(0, str(SDK_PATH))
 
-from engine.executor import WorkflowExecutor, NodeContext, EventQueue
+from engine.executor import WorkflowExecutor, NodeContext, EventQueue, WorkflowCycleError
 from engine.event_bus import Event, EventFilter
 
 
@@ -299,6 +299,61 @@ class TestExecutionOrder:
         assert "b" in order_ids
         # c is isolated and not reachable from start node
         assert "c" not in order_ids
+
+    def test_execution_order_detects_simple_cycle(self, executor):
+        """Test that a simple cycle is detected and raises an error."""
+        nodes = [
+            {"id": "a", "type": "start"},
+            {"id": "b", "type": "process"},
+            {"id": "c", "type": "process"},
+        ]
+        # Create a cycle: a -> b -> c -> b
+        connections = [
+            {"from": {"nodeId": "a"}, "to": {"nodeId": "b"}},
+            {"from": {"nodeId": "b"}, "to": {"nodeId": "c"}},
+            {"from": {"nodeId": "c"}, "to": {"nodeId": "b"}},  # Cycle!
+        ]
+
+        with pytest.raises(WorkflowCycleError) as exc_info:
+            executor._get_execution_order(nodes, connections)
+
+        # The cycle nodes should be identified
+        assert "b" in exc_info.value.cycle_nodes or "c" in exc_info.value.cycle_nodes
+
+    def test_execution_order_detects_self_loop(self, executor):
+        """Test that a self-loop is detected."""
+        nodes = [
+            {"id": "a", "type": "start"},
+            {"id": "b", "type": "process"},
+        ]
+        # Self-loop on b
+        connections = [
+            {"from": {"nodeId": "a"}, "to": {"nodeId": "b"}},
+            {"from": {"nodeId": "b"}, "to": {"nodeId": "b"}},  # Self-loop!
+        ]
+
+        with pytest.raises(WorkflowCycleError) as exc_info:
+            executor._get_execution_order(nodes, connections)
+
+        assert "b" in exc_info.value.cycle_nodes
+
+    def test_execution_order_from_detects_cycle(self, executor):
+        """Test that _get_execution_order_from also detects cycles."""
+        nodes = [
+            {"id": "a", "type": "source"},
+            {"id": "b", "type": "process"},
+            {"id": "c", "type": "process"},
+        ]
+        # Cycle: b -> c -> b
+        connections = [
+            {"from": {"nodeId": "a"}, "to": {"nodeId": "b"}},
+            {"from": {"nodeId": "b"}, "to": {"nodeId": "c"}},
+            {"from": {"nodeId": "c"}, "to": {"nodeId": "b"}},  # Cycle!
+        ]
+        adjacency = executor._build_adjacency(nodes, connections)
+
+        with pytest.raises(WorkflowCycleError):
+            executor._get_execution_order_from("a", nodes, connections, adjacency)
 
 
 class TestFilterSubgraph:

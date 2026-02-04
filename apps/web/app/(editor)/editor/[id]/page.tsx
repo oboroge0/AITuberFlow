@@ -137,7 +137,7 @@ export default function EditorPage() {
   };
 
   // Connect WebSocket and get avatar state
-  const { avatarState, clearMotion, emit, updateAvatarState } = useWebSocket(workflowId);
+  const { avatarState, clearMotion, emit, updateAvatarState, connectionStatus, reconnectAttempt } = useWebSocket(workflowId);
 
   // Handle motion selection from library
   const handleMotionSelect = useCallback((motion: Motion) => {
@@ -544,6 +544,40 @@ export default function EditorPage() {
             <p className="text-xs text-white/50 m-0">
               Build your AI streamer visually
             </p>
+            {/* Connection status indicator */}
+            {connectionStatus === 'reconnecting' && (
+              <span className="text-xs flex items-center gap-1 text-yellow-400" title={`Reconnecting (${reconnectAttempt}/10)...`}>
+                <svg
+                  className="animate-spin"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+                Reconnecting...
+              </span>
+            )}
+            {connectionStatus === 'disconnected' && (
+              <span className="text-xs flex items-center gap-1 text-red-400" title="Disconnected from server">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="15" y1="9" x2="9" y2="15" />
+                  <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
+                Offline
+              </span>
+            )}
             {/* Auto-save indicator */}
             {saving ? (
               <span className="text-xs flex items-center gap-1 text-emerald-400">

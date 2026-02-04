@@ -152,7 +152,10 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     ) : null
   );
 
-  // Status indicator component
+  // Error badge state for showing error details on hover
+  const [showErrorTooltip, setShowErrorTooltip] = useState(false);
+
+  // Status indicator component with enhanced error badge
   const StatusIndicator = () => (
     <>
       {status?.status === 'running' && (
@@ -166,8 +169,39 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         </div>
       )}
       {status?.status === 'error' && (
-        <div className="absolute -top-1 -right-1">
-          <span className="w-3 h-3 rounded-full bg-red-400 block" />
+        <div
+          className="absolute -top-2 -right-2"
+          onMouseEnter={() => setShowErrorTooltip(true)}
+          onMouseLeave={() => setShowErrorTooltip(false)}
+        >
+          {/* Error badge with exclamation mark */}
+          <div
+            className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center cursor-help"
+            style={{
+              border: '2px solid #1F2937',
+              boxShadow: '0 2px 8px rgba(239, 68, 68, 0.5)',
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <circle cx="12" cy="16" r="1.5" fill="white" />
+            </svg>
+          </div>
+
+          {/* Error tooltip */}
+          {showErrorTooltip && status?.data?.error && (
+            <div
+              className="absolute right-0 top-full mt-1 z-50 pointer-events-none"
+              style={{ minWidth: '200px', maxWidth: '300px' }}
+            >
+              <div className="bg-red-900/95 backdrop-blur-sm border border-red-500/50 rounded-lg p-2 shadow-xl">
+                <div className="text-[10px] font-semibold text-red-200 mb-1">Error</div>
+                <div className="text-[11px] text-white/90 leading-relaxed break-words">
+                  {status.data.error}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </>

@@ -8,6 +8,54 @@ from enum import Enum
 from typing import Optional
 
 
+class NodeExecutionError(Exception):
+    """
+    Base exception for node execution errors.
+
+    Use this to raise errors with standardized error codes and localized messages.
+
+    Example:
+        ```python
+        from aituber_flow_sdk.errors import NodeExecutionError, ErrorCode
+
+        raise NodeExecutionError(
+            ErrorCode.LLM_API_KEY_MISSING,
+            provider="OpenAI"
+        )
+        ```
+    """
+
+    def __init__(
+        self,
+        code: "ErrorCode",
+        lang: str = "ja",
+        **format_kwargs,
+    ):
+        self.code = code
+        self.lang = lang
+        self.format_kwargs = format_kwargs
+        self.message = get_error_message(code, lang, **format_kwargs)
+        super().__init__(self.message)
+
+
+class NodeConfigError(NodeExecutionError):
+    """
+    Exception for node configuration errors.
+
+    Use when required configuration is missing or invalid.
+    """
+    pass
+
+
+class NodeConnectionError(NodeExecutionError):
+    """
+    Exception for connection errors to external services.
+
+    Use when the node fails to connect to external APIs or services.
+    """
+    pass
+
+
 class ErrorCode(Enum):
     """Standardized error codes for AITuberFlow nodes."""
 
@@ -26,6 +74,9 @@ class ErrorCode(Enum):
     PACKAGE_NOT_INSTALLED = "PACKAGE_NOT_INSTALLED"
     INVALID_INPUT = "INVALID_INPUT"
     CONNECTION_TIMEOUT = "CONNECTION_TIMEOUT"
+
+    # Workflow errors
+    WORKFLOW_CYCLE_DETECTED = "WORKFLOW_CYCLE_DETECTED"
 
 
 ERROR_MESSAGES: dict[ErrorCode, dict[str, str]] = {
@@ -112,6 +163,18 @@ ERROR_MESSAGES: dict[ErrorCode, dict[str, str]] = {
 [Action Required]
 1. Ensure {service} is running
 2. Check your network connection""",
+    },
+    ErrorCode.WORKFLOW_CYCLE_DETECTED: {
+        "ja": """ワークフローに循環参照が検出されました
+[対処法]
+1. ノードの接続を確認してください
+2. 出力が自身の入力に戻る経路がないか確認してください
+検出された循環ノード: {nodes}""",
+        "en": """Cycle detected in workflow
+[Action Required]
+1. Check your node connections
+2. Ensure no output loops back to its own input
+Nodes in cycle: {nodes}""",
     },
 }
 
