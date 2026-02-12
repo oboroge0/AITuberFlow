@@ -228,14 +228,13 @@ app.post("/models/upload", async (c) => {
   const filePath = join(UPLOAD_DIR, safeFilename);
 
   try {
-    const buffer = await file.arrayBuffer();
-    await Bun.write(filePath, buffer);
+    await Bun.write(filePath, file);
     const urlPath = `/api/integrations/models/file/${safeFilename}`;
     return c.json({
       success: true,
       filename: safeFilename,
       url: urlPath,
-      size: buffer.byteLength,
+      size: file.size,
     });
   } catch (err) {
     console.error("Failed to upload model:", err);
@@ -339,13 +338,12 @@ app.post("/animations/upload", async (c) => {
   const filePath = join(ANIMATIONS_DIR, safeFilename);
 
   try {
-    const buffer = await file.arrayBuffer();
-    await Bun.write(filePath, buffer);
+    await Bun.write(filePath, file);
     return c.json({
       success: true,
       filename: safeFilename,
       url: `/api/integrations/animations/file/${safeFilename}`,
-      size: buffer.byteLength,
+      size: file.size,
     });
   } catch (err) {
     console.error("Failed to upload animation:", err);
