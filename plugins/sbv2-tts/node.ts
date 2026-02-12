@@ -201,7 +201,7 @@ function getWavDuration(data: Uint8Array): number {
         const frames = chunkSize / (numChannels * (bitsPerSample / 8));
         return frames / sampleRate;
       }
-      offset += 8 + chunkSize;
+      offset += 8 + chunkSize + (chunkSize % 2); // RIFF word-alignment padding
     }
 
     return 0;

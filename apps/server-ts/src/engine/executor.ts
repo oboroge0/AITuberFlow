@@ -532,6 +532,9 @@ export class WorkflowExecutor {
 
     // Update status
     this.runningWorkflows.delete(workflowId);
+    this.logCallbacks.delete(workflowId);
+    this.eventCallbacks.delete(workflowId);
+    this.statusCallbacks.delete(workflowId);
     console.log(`Stopped workflow: ${workflowId}`);
   }
 
@@ -986,6 +989,9 @@ export class WorkflowExecutor {
 
     // Completed workflows should not stay in memory.
     this.runningWorkflows.delete(workflowId);
+    this.logCallbacks.delete(workflowId);
+    this.eventCallbacks.delete(workflowId);
+    this.statusCallbacks.delete(workflowId);
   }
 
   // ─── Graph Algorithms ─────────────

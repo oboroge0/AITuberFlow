@@ -258,7 +258,7 @@ function getWavDuration(data: Uint8Array): number {
 
     // Find the "data" subchunk to get the actual data size
     let offset = 12; // skip RIFF header
-    while (offset + 8 < data.length) {
+    while (offset + 8 <= data.length) {
       const chunkId = String.fromCharCode(
         data[offset],
         data[offset + 1],

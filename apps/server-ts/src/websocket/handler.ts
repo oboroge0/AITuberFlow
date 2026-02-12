@@ -23,7 +23,7 @@ interface WSMessage {
 
 interface ClientInfo {
   id: string;
-  workflowId: string | null;
+  rooms: Set<string>;
   ws: WSContext<ServerWebSocket<any>>;
 }
 
@@ -35,14 +35,16 @@ export class WSBroadcaster {
   private wsClientIds = new WeakMap<WSContext<ServerWebSocket<any>>, string>();
 
   addClient(id: string, ws: WSContext<ServerWebSocket<any>>): void {
-    this.clients.set(id, { id, workflowId: null, ws });
+    this.clients.set(id, { id, rooms: new Set(), ws });
     this.wsClientIds.set(ws, id);
   }
 
   removeClient(id: string): void {
     const client = this.clients.get(id);
-    if (client?.workflowId) {
-      this.leaveRoom(id, `workflow:${client.workflowId}`);
+    if (client) {
+      for (const room of Array.from(client.rooms)) {
+        this.leaveRoom(id, room);
+      }
     }
     if (client) {
       this.wsClientIds.delete(client.ws);
@@ -62,11 +64,12 @@ export class WSBroadcaster {
 
     const client = this.clients.get(clientId);
     if (client) {
-      client.workflowId = room.replace("workflow:", "");
+      client.rooms.add(room);
     }
   }
 
   leaveRoom(clientId: string, room: string): void {
+    this.clients.get(clientId)?.rooms.delete(room);
     this.rooms.get(room)?.delete(clientId);
     if (this.rooms.get(room)?.size === 0) {
       this.rooms.delete(room);
@@ -255,12 +258,18 @@ export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
           case "workflow_stop": {
             const workflowId = msg.payload?.workflowId;
             if (workflowId && executor) {
-              executor.stopWorkflow(workflowId);
-              wsBroadcaster.broadcast(
-                workflowId,
-                "execution.stopped",
-                { reason: "User requested stop" }
-              );
+              void executor
+                .stopWorkflow(workflowId)
+                .then(() => {
+                  wsBroadcaster.broadcast(
+                    workflowId,
+                    "execution.stopped",
+                    { reason: "User requested stop" }
+                  );
+                })
+                .catch((err) => {
+                  console.error(`Failed to stop workflow ${workflowId}:`, err);
+                });
             }
             break;
           }

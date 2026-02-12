@@ -22,6 +22,8 @@ const ANIMATIONS_DIR = join(
 );
 const AUDIO_DIR = join(PROJECT_ROOT, "apps", "server-ts", "audio_output");
 const DEFAULT_VOICEVOX_HOST = "http://localhost:50021";
+const MAX_MODEL_UPLOAD_BYTES = 100 * 1024 * 1024;
+const MAX_ANIMATION_UPLOAD_BYTES = 100 * 1024 * 1024;
 const ALLOWED_VOICEVOX_HOSTS = new Set([
   "localhost",
   "127.0.0.1",
@@ -80,6 +82,21 @@ function sanitizeUploadStem(filename: string): string {
   return sanitized || "upload";
 }
 
+function sanitizeHeaderFilename(filename: string): string {
+  return filename.replace(/[^A-Za-z0-9._-]/g, "_");
+}
+
+function isVoicevoxUnavailableError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+
+  if (err.name === "AbortError" || err.name === "TimeoutError") {
+    return true;
+  }
+
+  const withCause = err as Error & { cause?: { code?: string } };
+  return err.name === "TypeError" || withCause.cause?.code === "ECONNREFUSED";
+}
+
 // Ensure directories exist
 await mkdir(UPLOAD_DIR, { recursive: true }).catch(() => {});
 await mkdir(ANIMATIONS_DIR, { recursive: true }).catch(() => {});
@@ -116,7 +133,7 @@ app.get("/voicevox/speakers", async (c) => {
 
     return c.json({ speakers });
   } catch (err: any) {
-    if (err.name === "TypeError" || err.cause?.code === "ECONNREFUSED") {
+    if (isVoicevoxUnavailableError(err)) {
       return c.json(
         {
           detail: `Cannot connect to VOICEVOX at ${host}. Make sure VOICEVOX is running.`,
@@ -165,10 +182,12 @@ app.get("/audio/:filename", async (c) => {
     return c.json({ detail: "Audio file not found" }, 404);
   }
 
+  const safeHeaderFilename = sanitizeHeaderFilename(filename);
+
   return new Response(file, {
     headers: {
       "Content-Type": "audio/wav",
-      "Content-Disposition": `inline; filename="${filename}"`,
+      "Content-Disposition": `inline; filename="${safeHeaderFilename}"`,
     },
   });
 });
@@ -189,6 +208,12 @@ app.post("/models/upload", async (c) => {
         detail: `File type not allowed. Allowed: ${[...ALLOWED_EXTENSIONS].join(", ")}`,
       },
       400
+    );
+  }
+  if (file.size > MAX_MODEL_UPLOAD_BYTES) {
+    return c.json(
+      { detail: `File too large. Max size is ${MAX_MODEL_UPLOAD_BYTES} bytes.` },
+      413
     );
   }
 
@@ -291,6 +316,14 @@ app.post("/animations/upload", async (c) => {
         detail: `File type not allowed. Allowed: ${[...ALLOWED_ANIMATION_EXTENSIONS].join(", ")}`,
       },
       400
+    );
+  }
+  if (file.size > MAX_ANIMATION_UPLOAD_BYTES) {
+    return c.json(
+      {
+        detail: `File too large. Max size is ${MAX_ANIMATION_UPLOAD_BYTES} bytes.`,
+      },
+      413
     );
   }
 
