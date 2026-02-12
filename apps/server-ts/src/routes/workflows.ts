@@ -5,7 +5,6 @@
  */
 
 import { Hono } from "hono";
-import { v4 as uuidv4 } from "crypto";
 import { eq } from "drizzle-orm";
 import { db } from "../db/database";
 import { workflows } from "../db/schema";

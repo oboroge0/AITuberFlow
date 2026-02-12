@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import type { ServerWebSocket } from "bun";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { createBunWebSocket } from "hono/bun";
@@ -11,7 +12,7 @@ import { createWebSocketHandler, wsBroadcaster, setExecutorForWS } from "./webso
 import { WorkflowExecutor } from "./engine/executor";
 
 const app = new Hono();
-const { upgradeWebSocket, websocket } = createBunWebSocket();
+const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket<any>>();
 
 // CORS configuration
 const corsOrigins = process.env.CORS_ORIGINS

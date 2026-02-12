@@ -6,6 +6,85 @@
 
 import { BaseNode, NodeContext, createEvent } from "@aituber-flow/sdk";
 
+type ConditionOperand = string | number | boolean | null;
+
+function parseConditionOperand(token: string): ConditionOperand {
+  const trimmed = token.trim();
+
+  if (
+    (trimmed.startsWith("\"") && trimmed.endsWith("\"")) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1);
+  }
+
+  if (trimmed === "true") return true;
+  if (trimmed === "false") return false;
+  if (trimmed === "null") return null;
+
+  const num = Number(trimmed);
+  if (trimmed !== "" && Number.isFinite(num)) {
+    return num;
+  }
+
+  return trimmed;
+}
+
+function compareCondition(
+  left: ConditionOperand,
+  operator: string,
+  right: ConditionOperand,
+): boolean {
+  switch (operator) {
+    case "===":
+      return left === right;
+    case "!==":
+      return left !== right;
+    case "==":
+      return left == right;
+    case "!=":
+      return left != right;
+    case ">":
+      return Number(left) > Number(right);
+    case ">=":
+      return Number(left) >= Number(right);
+    case "<":
+      return Number(left) < Number(right);
+    case "<=":
+      return Number(left) <= Number(right);
+    default:
+      return false;
+  }
+}
+
+function evaluateSafeCondition(
+  template: string,
+  inputValue: unknown,
+  iteration: number,
+): boolean {
+  const condition = template
+    .replace(/\{\{value\}\}/g, JSON.stringify(inputValue ?? null))
+    .replace(/\{\{iteration\}\}/g, String(iteration))
+    .trim();
+
+  if (!condition) return false;
+  if (condition === "true") return true;
+  if (condition === "false") return false;
+
+  const match = condition.match(
+    /^(?<left>.+?)\s*(===|!==|>=|<=|==|!=|>|<)\s*(?<right>.+)$/u,
+  );
+  if (!match?.groups) {
+    throw new Error(
+      "Unsupported condition format. Use {{value}}/{{iteration}} with comparison operators.",
+    );
+  }
+
+  const left = parseConditionOperand(match.groups.left);
+  const right = parseConditionOperand(match.groups.right);
+  return compareCondition(left, match[2], right);
+}
+
 export default class LoopNode extends BaseNode {
   private mode = "count";
   private count = 3;
@@ -47,21 +126,12 @@ export default class LoopNode extends BaseNode {
     if (this.mode === "count") {
       shouldContinue = this.currentIteration <= this.count;
     } else if (this.mode === "while") {
-      // Simple condition evaluation (for basic cases)
-      // This mirrors the Python eval() behavior from the original node.py.
-      // The condition string comes from the user's workflow config
-      // and supports {{value}} and {{iteration}} template variables.
       try {
-        let condStr = this.condition.replace(
-          /\{\{value\}\}/g,
-          String(inputValue),
+        shouldContinue = evaluateSafeCondition(
+          this.condition,
+          inputValue,
+          this.currentIteration,
         );
-        condStr = condStr.replace(
-          /\{\{iteration\}\}/g,
-          String(this.currentIteration),
-        );
-        // eslint-disable-next-line no-new-func
-        shouldContinue = Boolean(new Function(`return (${condStr})`)());
       } catch (e) {
         await context.log(`Condition evaluation error: ${e}`, "error");
         shouldContinue = false;

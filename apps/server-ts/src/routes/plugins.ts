@@ -6,12 +6,30 @@
 
 import { Hono } from "hono";
 import { readdir } from "fs/promises";
-import { join } from "path";
+import { join, resolve, sep } from "path";
 import { getPluginsDir } from "../engine/plugin-loader";
 
 const app = new Hono();
 
 const PLUGINS_DIR = getPluginsDir();
+const RESOLVED_PLUGINS_DIR = resolve(PLUGINS_DIR);
+
+function resolvePluginDir(pluginId: string): string | null {
+  if (!/^[A-Za-z0-9._-]+$/.test(pluginId)) {
+    return null;
+  }
+
+  const pluginDir = resolve(RESOLVED_PLUGINS_DIR, pluginId);
+  const rootWithSep = RESOLVED_PLUGINS_DIR.endsWith(sep)
+    ? RESOLVED_PLUGINS_DIR
+    : `${RESOLVED_PLUGINS_DIR}${sep}`;
+
+  if (!pluginDir.startsWith(rootWithSep)) {
+    return null;
+  }
+
+  return pluginDir;
+}
 
 async function loadPluginManifest(
   pluginDir: string
@@ -54,7 +72,11 @@ app.get("/", async (c) => {
 // Get specific plugin
 app.get("/:pluginId", async (c) => {
   const pluginId = c.req.param("pluginId");
-  const pluginDir = join(PLUGINS_DIR, pluginId);
+  const pluginDir = resolvePluginDir(pluginId);
+  if (!pluginDir) {
+    return c.json({ detail: "Invalid plugin ID" }, 400);
+  }
+
   const manifest = await loadPluginManifest(pluginDir);
   if (!manifest)
     return c.json({ detail: "Plugin not found" }, 404);

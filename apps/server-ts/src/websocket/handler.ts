@@ -6,9 +6,13 @@
  */
 
 import type { ServerWebSocket } from "bun";
-import type { WSEvents } from "hono/bun";
+import type {
+  WSEvents,
+  WSContext,
+  WSMessageReceive,
+} from "hono/ws";
 import { WorkflowExecutor } from "../engine/executor";
-import type { Event } from "../engine/event-bus";
+import type { Event as WorkflowEvent } from "../engine/event-bus";
 
 // ─── Types ────────────────────────────────
 
@@ -20,7 +24,7 @@ interface WSMessage {
 interface ClientInfo {
   id: string;
   workflowId: string | null;
-  ws: ServerWebSocket<any>;
+  ws: WSContext<ServerWebSocket<any>>;
 }
 
 // ─── Broadcaster ──────────────────────────
@@ -28,9 +32,11 @@ interface ClientInfo {
 export class WSBroadcaster {
   private clients = new Map<string, ClientInfo>();
   private rooms = new Map<string, Set<string>>(); // room -> client ids
+  private wsClientIds = new WeakMap<WSContext<ServerWebSocket<any>>, string>();
 
-  addClient(id: string, ws: ServerWebSocket<any>): void {
+  addClient(id: string, ws: WSContext<ServerWebSocket<any>>): void {
     this.clients.set(id, { id, workflowId: null, ws });
+    this.wsClientIds.set(ws, id);
   }
 
   removeClient(id: string): void {
@@ -38,7 +44,14 @@ export class WSBroadcaster {
     if (client?.workflowId) {
       this.leaveRoom(id, `workflow:${client.workflowId}`);
     }
+    if (client) {
+      this.wsClientIds.delete(client.ws);
+    }
     this.clients.delete(id);
+  }
+
+  getClientId(ws: WSContext<ServerWebSocket<any>>): string | undefined {
+    return this.wsClientIds.get(ws);
   }
 
   joinRoom(clientId: string, room: string): void {
@@ -132,7 +145,7 @@ function setupWorkflowCallbacks(workflowId: string): void {
   );
 
   // Event callback (audio, avatar, subtitle)
-  executor.setEventCallback(workflowId, async (event: Event) => {
+  executor.setEventCallback(workflowId, async (event: WorkflowEvent) => {
     if (event.type === "audio.generated") {
       wsBroadcaster.broadcast(workflowId, "audio", {
         filename: event.payload.filename ?? "",
@@ -167,24 +180,33 @@ function setupWorkflowCallbacks(workflowId: string): void {
 
 let clientCounter = 0;
 
-export function createWebSocketHandler(): WSEvents {
+function parseMessageData(data: WSMessageReceive): WSMessage {
+  if (typeof data === "string") {
+    return JSON.parse(data) as WSMessage;
+  }
+
+  if (data instanceof Blob) {
+    throw new Error("Blob WebSocket messages are not supported");
+  }
+
+  const bytes = new Uint8Array(data);
+  return JSON.parse(new TextDecoder().decode(bytes)) as WSMessage;
+}
+
+export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
   return {
-    onOpen(_evt, ws) {
+    onOpen(_evt: Event, ws: WSContext<ServerWebSocket<any>>) {
       const clientId = `client_${++clientCounter}`;
-      (ws as any).__clientId = clientId;
-      wsBroadcaster.addClient(clientId, ws as any);
+      wsBroadcaster.addClient(clientId, ws);
       console.log(`WebSocket client connected: ${clientId}`);
     },
 
-    onMessage(evt, ws) {
-      const clientId = (ws as any).__clientId as string;
+    onMessage(evt: MessageEvent<WSMessageReceive>, ws: WSContext<ServerWebSocket<any>>) {
+      const clientId = wsBroadcaster.getClientId(ws);
       if (!clientId) return;
 
       try {
-        const msg: WSMessage =
-          typeof evt.data === "string"
-            ? JSON.parse(evt.data)
-            : JSON.parse(new TextDecoder().decode(evt.data as ArrayBuffer));
+        const msg = parseMessageData(evt.data);
 
         switch (msg.type) {
           case "join": {
@@ -256,16 +278,16 @@ export function createWebSocketHandler(): WSEvents {
       }
     },
 
-    onClose(_evt, ws) {
-      const clientId = (ws as any).__clientId as string;
+    onClose(_evt: CloseEvent, ws: WSContext<ServerWebSocket<any>>) {
+      const clientId = wsBroadcaster.getClientId(ws);
       if (clientId) {
         wsBroadcaster.removeClient(clientId);
         console.log(`WebSocket client disconnected: ${clientId}`);
       }
     },
 
-    onError(evt, ws) {
-      const clientId = (ws as any).__clientId as string;
+    onError(evt: Event, ws: WSContext<ServerWebSocket<any>>) {
+      const clientId = wsBroadcaster.getClientId(ws);
       console.error(`WebSocket error for ${clientId}:`, evt);
     },
   };

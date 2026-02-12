@@ -5,7 +5,7 @@
  */
 
 import { Hono } from "hono";
-import { join, extname } from "path";
+import { join, extname, basename } from "path";
 import { readdir, mkdir, unlink } from "fs/promises";
 import { getProjectRoot } from "../engine/plugin-loader";
 
@@ -21,6 +21,14 @@ const ANIMATIONS_DIR = join(
   "animations"
 );
 const AUDIO_DIR = join(PROJECT_ROOT, "apps", "server-ts", "audio_output");
+const DEFAULT_VOICEVOX_HOST = "http://localhost:50021";
+const ALLOWED_VOICEVOX_HOSTS = new Set([
+  "localhost",
+  "127.0.0.1",
+  "0.0.0.0",
+  "::1",
+  "[::1]",
+]);
 
 const ALLOWED_EXTENSIONS = new Set([
   ".vrm",
@@ -32,6 +40,46 @@ const ALLOWED_EXTENSIONS = new Set([
 ]);
 const ALLOWED_ANIMATION_EXTENSIONS = new Set([".fbx", ".glb", ".gltf"]);
 
+function validateVoicevoxHost(rawHost?: string): {
+  host: string;
+  error?: string;
+} {
+  const value = rawHost ?? DEFAULT_VOICEVOX_HOST;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return { host: DEFAULT_VOICEVOX_HOST, error: "Invalid host URL" };
+  }
+
+  if (!["http:", "https:"].includes(parsed.protocol)) {
+    return {
+      host: DEFAULT_VOICEVOX_HOST,
+      error: "Only http/https hosts are allowed",
+    };
+  }
+
+  if (!ALLOWED_VOICEVOX_HOSTS.has(parsed.hostname)) {
+    return {
+      host: DEFAULT_VOICEVOX_HOST,
+      error: "Only localhost VOICEVOX hosts are allowed",
+    };
+  }
+
+  return { host: `${parsed.protocol}//${parsed.host}` };
+}
+
+function sanitizeUploadStem(filename: string): string {
+  const base = basename(filename);
+  const stem = base.replace(/\.[^.]+$/, "");
+  const sanitized = stem
+    .replace(/[^A-Za-z0-9_-]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return sanitized || "upload";
+}
+
 // Ensure directories exist
 await mkdir(UPLOAD_DIR, { recursive: true }).catch(() => {});
 await mkdir(ANIMATIONS_DIR, { recursive: true }).catch(() => {});
@@ -40,10 +88,13 @@ await mkdir(AUDIO_DIR, { recursive: true }).catch(() => {});
 // ─── VOICEVOX ─────────────────────────────
 
 app.get("/voicevox/speakers", async (c) => {
-  const host = c.req.query("host") ?? "http://localhost:50021";
+  const { host, error } = validateVoicevoxHost(c.req.query("host"));
+  if (error) {
+    return c.json({ detail: error }, 400);
+  }
 
   try {
-    const response = await fetch(`${host.replace(/\/$/, "")}/speakers`, {
+    const response = await fetch(`${host}/speakers`, {
       signal: AbortSignal.timeout(10000),
     });
     if (!response.ok) {
@@ -53,7 +104,7 @@ app.get("/voicevox/speakers", async (c) => {
       );
     }
 
-    const speakersData: any[] = await response.json();
+    const speakersData = (await response.json()) as any[];
     const speakers = speakersData.flatMap((speaker: any) =>
       (speaker.styles ?? []).map((style: any) => ({
         id: style.id,
@@ -78,9 +129,13 @@ app.get("/voicevox/speakers", async (c) => {
 });
 
 app.get("/voicevox/health", async (c) => {
-  const host = c.req.query("host") ?? "http://localhost:50021";
+  const { host, error } = validateVoicevoxHost(c.req.query("host"));
+  if (error) {
+    return c.json({ detail: error }, 400);
+  }
+
   try {
-    const response = await fetch(`${host.replace(/\/$/, "")}/version`, {
+    const response = await fetch(`${host}/version`, {
       signal: AbortSignal.timeout(5000),
     });
     if (!response.ok) throw new Error(response.statusText);
@@ -138,8 +193,8 @@ app.post("/models/upload", async (c) => {
   }
 
   const uniqueId = crypto.randomUUID().substring(0, 8);
-  const stem = file.name.replace(/\.[^.]+$/, "");
-  const safeFilename = `${uniqueId}_${stem}${ext}`;
+  const safeStem = sanitizeUploadStem(file.name);
+  const safeFilename = `${uniqueId}_${safeStem}${ext}`;
   const filePath = join(UPLOAD_DIR, safeFilename);
 
   try {
@@ -240,8 +295,8 @@ app.post("/animations/upload", async (c) => {
   }
 
   const uniqueId = crypto.randomUUID().substring(0, 8);
-  const stem = file.name.replace(/\.[^.]+$/, "");
-  const safeFilename = `${uniqueId}_${stem}${ext}`;
+  const safeStem = sanitizeUploadStem(file.name);
+  const safeFilename = `${uniqueId}_${safeStem}${ext}`;
   const filePath = join(ANIMATIONS_DIR, safeFilename);
 
   try {

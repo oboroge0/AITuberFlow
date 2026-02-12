@@ -274,7 +274,7 @@ class VTubeStudioClient {
       const timer = setTimeout(() => {
         this.pendingRequests.delete(requestID);
         console.warn(`[VTS] Request ${messageType} timed out`);
-        resolve(null);
+        reject(new Error(`Request ${messageType} timed out`));
       }, timeout);
 
       this.pendingRequests.set(requestID, { resolve, reject, timer });

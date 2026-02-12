@@ -20,7 +20,7 @@ const AUDIO_DIR = resolve(
   "..",
   "..",
   "apps",
-  "server",
+  "server-ts",
   "audio_output",
 );
 

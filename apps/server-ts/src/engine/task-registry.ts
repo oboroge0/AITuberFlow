@@ -15,7 +15,7 @@ export class TaskRegistry {
   register(
     id: string,
     fn: (signal: AbortSignal) => Promise<void>
-  ): void {
+  ): AbortController {
     // Cancel existing task with same ID
     this.cancel(id);
 
@@ -34,6 +34,7 @@ export class TaskRegistry {
       });
 
     this.promises.set(id, promise);
+    return controller;
   }
 
   /** Cancel a specific task by ID. */

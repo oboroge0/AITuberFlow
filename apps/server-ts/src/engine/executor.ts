@@ -68,6 +68,8 @@ export class NodeContext {
   private eventBus: EventBus | null;
   private logCallback: LogCallback | null;
   private taskRegistry: TaskRegistry | null;
+  private taskIds = new Set<string>();
+  private localControllers = new Set<AbortController>();
 
   constructor(opts: {
     workflowId: string;
@@ -117,11 +119,36 @@ export class NodeContext {
     }
   }
 
-  createTask(fn: (signal: AbortSignal) => Promise<void>): void {
+  createTask(fn: (signal: AbortSignal) => Promise<void>): AbortController {
+    const taskId = `${this.nodeId}_${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+
     if (this.taskRegistry) {
-      const taskId = `${this.nodeId}_${Date.now()}`;
-      this.taskRegistry.register(taskId, fn);
+      this.taskIds.add(taskId);
+      return this.taskRegistry.register(taskId, async (signal) => {
+        try {
+          await fn(signal);
+        } finally {
+          this.taskIds.delete(taskId);
+        }
+      });
     }
+
+    const controller = new AbortController();
+    this.localControllers.add(controller);
+
+    fn(controller.signal)
+      .catch((err) => {
+        if (err?.name !== "AbortError") {
+          console.error(`Background task ${taskId} error:`, err);
+        }
+      })
+      .finally(() => {
+        this.localControllers.delete(controller);
+      });
+
+    return controller;
   }
 
   async updateCharacter(updates: Record<string, any>): Promise<void> {
@@ -134,6 +161,25 @@ export class NodeContext {
 
   getCharacterPersonality(): string {
     return (this.character.personality as string) ?? "";
+  }
+
+  getEmotion(): Record<string, any> {
+    return (this.character.emotion as Record<string, any>) ?? {
+      current: "neutral",
+      intensity: 0.5,
+    };
+  }
+
+  async cancelBackgroundTasks(): Promise<void> {
+    for (const taskId of this.taskIds) {
+      this.taskRegistry?.cancel(taskId);
+    }
+    this.taskIds.clear();
+
+    for (const controller of this.localControllers) {
+      controller.abort();
+    }
+    this.localControllers.clear();
   }
 }
 
