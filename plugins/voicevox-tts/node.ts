@@ -15,7 +15,7 @@ import {
 } from "@aituber-flow/sdk";
 
 /** Audio output directory */
-const AUDIO_DIR = resolve(
+const DEFAULT_AUDIO_DIR = resolve(
   import.meta.dir,
   "..",
   "..",
@@ -23,6 +23,20 @@ const AUDIO_DIR = resolve(
   "server-ts",
   "audio_output",
 );
+const CONNECT_TIMEOUT_MS = 10_000;
+const QUERY_TIMEOUT_MS = 30_000;
+const SYNTH_TIMEOUT_MS = 60_000;
+
+function resolveAudioOutputDir(configOutputDir: unknown): string {
+  if (typeof configOutputDir === "string" && configOutputDir.trim()) {
+    return resolve(configOutputDir.trim());
+  }
+  const envOutputDir = process.env.AUDIO_OUTPUT_DIR;
+  if (envOutputDir && envOutputDir.trim()) {
+    return resolve(envOutputDir.trim());
+  }
+  return DEFAULT_AUDIO_DIR;
+}
 
 interface Speaker {
   name?: string;
@@ -48,23 +62,25 @@ export default class VoicevoxTTSNode extends BaseNode {
     this.speedScale = Number(config.speedScale ?? 1.0);
     this.pitchScale = Number(config.pitchScale ?? 0.0);
     this.volumeScale = Number(config.volumeScale ?? 1.0);
-    this.outputDir = AUDIO_DIR;
+    this.outputDir = resolveAudioOutputDir(config.outputDir);
     this.demoMode = config.demoMode ?? false;
 
-    if (!existsSync(AUDIO_DIR)) {
-      mkdirSync(AUDIO_DIR, { recursive: true });
+    if (!existsSync(this.outputDir)) {
+      mkdirSync(this.outputDir, { recursive: true });
     }
 
     if (config.outputDir) {
       await context.log(
-        "outputDir is ignored; using server audio_output directory",
-        "warning",
+        `Using custom audio output directory: ${this.outputDir}`,
+        "info",
       );
     }
 
     // Test connection
     try {
-      const response = await fetch(`${this.host}/speakers`);
+      const response = await fetch(`${this.host}/speakers`, {
+        signal: AbortSignal.timeout(CONNECT_TIMEOUT_MS),
+      });
       if (response.ok) {
         const speakers: Speaker[] = await response.json();
         const speakerName = this.getSpeakerName(speakers, this.speaker);
@@ -136,7 +152,10 @@ export default class VoicevoxTTSNode extends BaseNode {
       });
       const queryResponse = await fetch(
         `${this.host}/audio_query?${queryParams}`,
-        { method: "POST" },
+        {
+          method: "POST",
+          signal: AbortSignal.timeout(QUERY_TIMEOUT_MS),
+        },
       );
       if (!queryResponse.ok) {
         throw new Error(`audio_query failed: ${queryResponse.status}`);
@@ -158,6 +177,7 @@ export default class VoicevoxTTSNode extends BaseNode {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(query),
+          signal: AbortSignal.timeout(SYNTH_TIMEOUT_MS),
         },
       );
       if (!synthResponse.ok) {
@@ -174,6 +194,7 @@ export default class VoicevoxTTSNode extends BaseNode {
 
       // Calculate duration from WAV
       const duration = getWavDuration(audioData);
+      const audioUrl = `/api/integrations/audio/${filename}`;
 
       await context.log(`Audio generated: ${duration.toFixed(2)}s`);
 
@@ -181,18 +202,19 @@ export default class VoicevoxTTSNode extends BaseNode {
       await context.emitEvent(
         createEvent("audio.generated", {
           audio: audioPath,
-          audioUrl: audioPath,
+          audioUrl,
           filename,
           duration,
           text,
         }),
       );
 
-      return { audio: audioPath, audioUrl: audioPath, filename, duration };
+      return { audio: audioPath, audioUrl, filename, duration };
     } catch (e) {
       if (
-        e instanceof TypeError &&
-        (e.message.includes("fetch") || e.message.includes("connect"))
+        (e instanceof TypeError &&
+          (e.message.includes("fetch") || e.message.includes("connect"))) ||
+        (e instanceof Error && (e.name === "AbortError" || e.name === "TimeoutError"))
       ) {
         const errorMsg = getErrorMessage(
           ErrorCode.TTS_CONNECTION_FAILED,
@@ -248,7 +270,7 @@ function getWavDuration(data: Uint8Array): number {
         const frames = chunkSize / (numChannels * (bitsPerSample / 8));
         return frames / sampleRate;
       }
-      offset += 8 + chunkSize;
+      offset += 8 + chunkSize + (chunkSize % 2); // RIFF word-alignment padding
     }
 
     return 0;

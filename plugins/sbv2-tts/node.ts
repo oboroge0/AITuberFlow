@@ -126,12 +126,14 @@ export default class SBV2TTSNode extends BaseNode {
 
       const url = `${this.host}/voice?${params}`;
 
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(60_000),
+      });
 
       if (!response.ok) {
         const error = await response.text();
         await context.log(`Synthesis failed: ${error}`, "error");
-        return { audio: "" };
+        return { audio: "", filename: "", duration: 0 };
       }
 
       // Save audio file
@@ -157,8 +159,12 @@ export default class SBV2TTSNode extends BaseNode {
 
       return { audio: filepath, filename, duration };
     } catch (e) {
+      if (e instanceof Error && (e.name === "AbortError" || e.name === "TimeoutError")) {
+        await context.log("Style-Bert-VITS2 request timed out", "error");
+        return { audio: "", filename: "", duration: 0 };
+      }
       await context.log(`Style-Bert-VITS2 error: ${String(e)}`, "error");
-      return { audio: "" };
+      return { audio: "", filename: "", duration: 0 };
     }
   }
 

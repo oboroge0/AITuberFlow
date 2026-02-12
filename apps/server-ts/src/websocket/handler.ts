@@ -83,7 +83,12 @@ export class WSBroadcaster {
     const clientIds = this.rooms.get(room);
     if (!clientIds) return;
 
-    const message = JSON.stringify({ type, ...payload });
+    const payloadObj =
+      payload && typeof payload === "object"
+        ? (payload as Record<string, unknown>)
+        : {};
+    const { type: _discardedType, ...safePayload } = payloadObj;
+    const message = JSON.stringify({ type, ...safePayload });
 
     for (const clientId of clientIds) {
       const client = this.clients.get(clientId);

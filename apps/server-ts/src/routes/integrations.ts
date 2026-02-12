@@ -235,7 +235,7 @@ app.get("/models", async (c) => {
 
 app.delete("/models/:filename", async (c) => {
   const filename = c.req.param("filename");
-  if (filename.includes("..") || filename.includes("/")) {
+  if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
     return c.json({ detail: "Invalid filename" }, 400);
   }
 
@@ -250,7 +250,7 @@ app.delete("/models/:filename", async (c) => {
 
 app.get("/models/file/:filename", async (c) => {
   const filename = c.req.param("filename");
-  if (filename.includes("..") || filename.includes("/")) {
+  if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
     return c.json({ detail: "Invalid filename" }, 400);
   }
 
@@ -336,7 +336,7 @@ app.get("/animations", async (c) => {
 
 app.delete("/animations/:filename", async (c) => {
   const filename = c.req.param("filename");
-  if (filename.includes("..") || filename.includes("/")) {
+  if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
     return c.json({ detail: "Invalid filename" }, 400);
   }
 
@@ -350,7 +350,7 @@ app.delete("/animations/:filename", async (c) => {
 
 app.get("/animations/file/:filename", async (c) => {
   const filename = c.req.param("filename");
-  if (filename.includes("..") || filename.includes("/")) {
+  if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
     return c.json({ detail: "Invalid filename" }, 400);
   }
 

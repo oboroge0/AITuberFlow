@@ -263,7 +263,7 @@ export class WorkflowExecutor {
 
     if (avatarConfig.renderer !== "vtube-studio") return;
 
-    const port = (avatarConfig.vtube_port as number) ?? 8001;
+    const port = (avatarConfig.vtube_port as number) ?? 8002;
     const mouthParam =
       (avatarConfig.vtube_mouth_param as string) ?? "MouthOpen";
 
@@ -983,6 +983,9 @@ export class WorkflowExecutor {
 
     // Clean up event queue
     this.eventQueues.delete(workflowId);
+
+    // Completed workflows should not stay in memory.
+    this.runningWorkflows.delete(workflowId);
   }
 
   // ─── Graph Algorithms ─────────────
