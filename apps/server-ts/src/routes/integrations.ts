@@ -141,7 +141,8 @@ app.get("/voicevox/speakers", async (c) => {
         503
       );
     }
-    return c.json({ detail: `Failed to fetch speakers: ${err}` }, 500);
+    console.error("Failed to fetch VOICEVOX speakers:", err);
+    return c.json({ detail: "Failed to fetch speakers" }, 500);
   }
 });
 
@@ -159,7 +160,11 @@ app.get("/voicevox/health", async (c) => {
     const version = (await response.text()).replace(/"/g, "");
     return c.json({ status: "healthy", version, host });
   } catch (err) {
-    return c.json({ status: "unhealthy", error: String(err), host });
+    console.error("VOICEVOX health check failed:", err);
+    return c.json(
+      { status: "unhealthy", error: "VOICEVOX unavailable", host },
+      503
+    );
   }
 });
 
@@ -233,7 +238,8 @@ app.post("/models/upload", async (c) => {
       size: buffer.byteLength,
     });
   } catch (err) {
-    return c.json({ detail: `Failed to upload: ${err}` }, 500);
+    console.error("Failed to upload model:", err);
+    return c.json({ detail: "Failed to upload model" }, 500);
   }
 });
 
@@ -342,7 +348,8 @@ app.post("/animations/upload", async (c) => {
       size: buffer.byteLength,
     });
   } catch (err) {
-    return c.json({ detail: `Failed to upload: ${err}` }, 500);
+    console.error("Failed to upload animation:", err);
+    return c.json({ detail: "Failed to upload animation" }, 500);
   }
 });
 

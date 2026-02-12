@@ -73,6 +73,10 @@ export class WSBroadcaster {
     this.rooms.get(room)?.delete(clientId);
     if (this.rooms.get(room)?.size === 0) {
       this.rooms.delete(room);
+      if (room.startsWith("workflow:")) {
+        const workflowId = room.replace("workflow:", "");
+        executor?.clearCallbacks(workflowId);
+      }
     }
   }
 
@@ -246,10 +250,16 @@ export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
           case "workflow_start": {
             const workflowId = msg.payload?.workflowId;
             if (workflowId) {
-              wsBroadcaster.broadcast(
-                workflowId,
-                "execution.started",
-                {}
+              console.warn(
+                `Received workflow_start via WebSocket for ${workflowId}. Use HTTP /api/workflows/:id/start.`
+              );
+              ws.send(
+                JSON.stringify({
+                  type: "warning",
+                  workflowId,
+                  message:
+                    "workflow_start via WebSocket is notification-only. Use POST /api/workflows/:id/start.",
+                })
               );
             }
             break;

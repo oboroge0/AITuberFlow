@@ -233,6 +233,12 @@ export class WorkflowExecutor {
     this.statusCallbacks.set(workflowId, callback);
   }
 
+  clearCallbacks(workflowId: string): void {
+    this.logCallbacks.delete(workflowId);
+    this.eventCallbacks.delete(workflowId);
+    this.statusCallbacks.delete(workflowId);
+  }
+
   // ─── Status ───────────────────────
 
   getStatus(workflowId: string): Record<string, any> {
@@ -532,9 +538,6 @@ export class WorkflowExecutor {
 
     // Update status
     this.runningWorkflows.delete(workflowId);
-    this.logCallbacks.delete(workflowId);
-    this.eventCallbacks.delete(workflowId);
-    this.statusCallbacks.delete(workflowId);
     console.log(`Stopped workflow: ${workflowId}`);
   }
 
@@ -959,8 +962,22 @@ export class WorkflowExecutor {
     // Wait for background tasks
     const registry = this.taskRegistries.get(workflowId);
     if (registry) {
-      await registry.awaitAll();
       registry.cancelAll();
+      let awaitTimedOut = false;
+      await Promise.race([
+        registry.awaitAll(),
+        new Promise<void>((resolve) => {
+          setTimeout(() => {
+            awaitTimedOut = true;
+            resolve();
+          }, 30_000);
+        }),
+      ]);
+      if (awaitTimedOut) {
+        console.warn(
+          `Timed out waiting for background tasks to finish for workflow ${workflowId}`
+        );
+      }
       this.taskRegistries.delete(workflowId);
     }
 
@@ -989,9 +1006,6 @@ export class WorkflowExecutor {
 
     // Completed workflows should not stay in memory.
     this.runningWorkflows.delete(workflowId);
-    this.logCallbacks.delete(workflowId);
-    this.eventCallbacks.delete(workflowId);
-    this.statusCallbacks.delete(workflowId);
   }
 
   // ─── Graph Algorithms ─────────────
