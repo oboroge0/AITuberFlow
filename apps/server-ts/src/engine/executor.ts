@@ -1097,10 +1097,14 @@ export class WorkflowExecutor {
     const inDegree = new Map<string, number>();
     for (const id of downstreamIds) inDegree.set(id, 0);
 
-    for (const conn of connections) {
-      const toId = conn.to.nodeId;
-      if (inDegree.has(toId) && downstreamSet.has(conn.from.nodeId)) {
-        inDegree.set(toId, (inDegree.get(toId) ?? 0) + 1);
+    // Compute in-degree from adjacency (which deduplicates multi-edges)
+    // to stay consistent with what Kahn's algorithm traverses.
+    for (const [fromId, neighbors] of adjacency) {
+      if (!downstreamSet.has(fromId)) continue;
+      for (const toId of neighbors) {
+        if (inDegree.has(toId)) {
+          inDegree.set(toId, (inDegree.get(toId) ?? 0) + 1);
+        }
       }
     }
 

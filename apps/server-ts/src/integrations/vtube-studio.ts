@@ -1,4 +1,4 @@
-import WebSocket from "ws";
+// Bun provides global WebSocket - no external package needed
 import { readFileSync, writeFileSync, mkdirSync, unlinkSync, existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 

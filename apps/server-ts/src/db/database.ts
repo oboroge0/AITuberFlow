@@ -1,11 +1,11 @@
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
+import { Database } from "bun:sqlite";
+import { drizzle } from "drizzle-orm/bun-sqlite";
 import * as schema from "./schema";
 
 const DATABASE_URL = process.env.DATABASE_URL || "./aituber_flow.db";
 
-const sqlite = new Database(DATABASE_URL);
-sqlite.pragma("journal_mode = WAL");
+const sqlite = new Database(DATABASE_URL, { create: true });
+sqlite.exec("PRAGMA journal_mode = WAL");
 
 export const db = drizzle(sqlite, { schema });
 
@@ -23,7 +23,7 @@ const CREATE_TABLE_SQL = `
 `;
 
 export function initDb(): void {
-  sqlite.prepare(CREATE_TABLE_SQL).run();
+  sqlite.exec(CREATE_TABLE_SQL);
 }
 
 // ─── JSON helpers ───────────────────────────────────────────────

@@ -592,6 +592,15 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
       { key: 'channel', type: 'text', label: 'Channel', placeholder: 'Channel name' },
     ],
   },
+  'discord-chat': {
+    label: 'Discord Chat',
+    fields: [
+      { key: 'botToken', type: 'password', label: 'Bot Token', placeholder: 'Your Discord bot token' },
+      { key: 'channelIds', type: 'text', label: 'Channel IDs', placeholder: 'Comma-separated (empty = all)' },
+      { key: 'filterBots', type: 'checkbox', label: 'Filter Bot Messages' },
+      { key: 'mentionOnly', type: 'checkbox', label: 'Mention Only' },
+    ],
+  },
   'openai-llm': {
     label: 'ChatGPT (OpenAI)',
     fields: [
@@ -971,6 +980,131 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
           { label: 'Japanese', value: 'ja' },
           { label: 'English', value: 'en' },
           { label: 'Auto-detect', value: 'auto' },
+        ],
+      },
+    ],
+  },
+  'audio-player': {
+    label: 'Audio Player',
+    fields: [
+      { key: 'volume', type: 'number', label: 'Volume (0.0-1.0)', placeholder: '1.0' },
+      {
+        key: 'output_device',
+        type: 'select',
+        label: 'Output Device',
+        options: [
+          { label: 'Browser (Overlay)', value: 'browser' },
+          { label: 'Server', value: 'server' },
+        ],
+      },
+      { key: 'wait_for_completion', type: 'checkbox', label: 'Wait for Completion' },
+    ],
+  },
+  'subtitle-display': {
+    label: 'Subtitle Display',
+    fields: [
+      {
+        key: 'style',
+        type: 'select',
+        label: 'Style Preset',
+        options: [
+          { label: 'Default', value: 'default' },
+          { label: 'Gaming', value: 'gaming' },
+          { label: 'Minimal', value: 'minimal' },
+          { label: 'Custom', value: 'custom' },
+        ],
+      },
+      {
+        key: 'position',
+        type: 'select',
+        label: 'Position',
+        options: [
+          { label: 'Bottom Center', value: 'bottom-center' },
+          { label: 'Bottom Left', value: 'bottom-left' },
+          { label: 'Top Center', value: 'top-center' },
+          { label: 'Center', value: 'center' },
+        ],
+      },
+      { key: 'font_size', type: 'number', label: 'Font Size (px)', placeholder: '24' },
+      { key: 'font_color', type: 'text', label: 'Font Color', placeholder: '#ffffff' },
+      { key: 'background_color', type: 'text', label: 'Background Color', placeholder: 'rgba(0, 0, 0, 0.7)' },
+      { key: 'show_speaker', type: 'checkbox', label: 'Show Speaker Name' },
+      {
+        key: 'animation',
+        type: 'select',
+        label: 'Animation',
+        options: [
+          { label: 'None', value: 'none' },
+          { label: 'Fade', value: 'fade' },
+          { label: 'Typewriter', value: 'typewriter' },
+          { label: 'Slide', value: 'slide' },
+        ],
+      },
+      { key: 'duration', type: 'number', label: 'Display Duration (ms)', placeholder: '0 = until next' },
+    ],
+  },
+  'data-formatter': {
+    label: 'Data Formatter',
+    fields: [
+      {
+        key: 'format',
+        type: 'select',
+        label: 'Output Format',
+        options: [
+          { label: 'JSON', value: 'json' },
+          { label: 'XML', value: 'xml' },
+          { label: 'YAML', value: 'yaml' },
+        ],
+      },
+      { key: 'template', type: 'textarea', label: 'Template', placeholder: '{"message": "{{text}}"}' },
+      { key: 'rootElement', type: 'text', label: 'XML Root Element', placeholder: 'data' },
+      { key: 'prettyPrint', type: 'checkbox', label: 'Pretty Print' },
+    ],
+  },
+  'donation-alert': {
+    label: 'Donation Alert',
+    fields: [
+      { key: 'alertSound', type: 'text', label: 'Alert Sound URL', placeholder: 'URL to sound file' },
+      { key: 'displayDuration', type: 'number', label: 'Display Duration (ms)', placeholder: '5000' },
+      { key: 'minAmount', type: 'number', label: 'Minimum Amount', placeholder: '0 = all' },
+      { key: 'template', type: 'text', label: 'Message Template', placeholder: '{author} donated {amount} {currency}!' },
+      {
+        key: 'style',
+        type: 'select',
+        label: 'Alert Style',
+        options: [
+          { label: 'Default', value: 'default' },
+          { label: 'Minimal', value: 'minimal' },
+          { label: 'Fancy', value: 'fancy' },
+        ],
+      },
+    ],
+  },
+  'obs-scene-switch': {
+    label: 'OBS Scene Switch',
+    fields: [
+      { key: 'host', type: 'text', label: 'Host', placeholder: 'localhost' },
+      { key: 'port', type: 'number', label: 'Port', placeholder: '4455' },
+      { key: 'password', type: 'password', label: 'Password', placeholder: 'OBS WebSocket password' },
+      { key: 'scene_name', type: 'text', label: 'Scene Name', placeholder: 'Target scene' },
+    ],
+  },
+  'obs-source-toggle': {
+    label: 'OBS Source Toggle',
+    fields: [
+      { key: 'host', type: 'text', label: 'Host', placeholder: 'localhost' },
+      { key: 'port', type: 'number', label: 'Port', placeholder: '4455' },
+      { key: 'password', type: 'password', label: 'Password', placeholder: 'OBS WebSocket password' },
+      { key: 'scene_name', type: 'text', label: 'Scene Name', placeholder: 'Current scene if empty' },
+      { key: 'source_name', type: 'text', label: 'Source Name', placeholder: 'Source to toggle' },
+      {
+        key: 'action',
+        type: 'select',
+        label: 'Action',
+        options: [
+          { label: 'Toggle', value: 'toggle' },
+          { label: 'Show', value: 'show' },
+          { label: 'Hide', value: 'hide' },
         ],
       },
     ],
@@ -1644,6 +1778,7 @@ export default function NodeSettings() {
       'foreach': 'nodeConfig.foreach.label',
       'youtube-chat': 'nodeConfig.youtubeChat.label',
       'twitch-chat': 'nodeConfig.twitchChat.label',
+      'discord-chat': 'nodeConfig.discordChat.label',
       'openai-llm': 'nodeConfig.openaiLlm.label',
       'anthropic-llm': 'nodeConfig.anthropicLlm.label',
       'google-llm': 'nodeConfig.googleLlm.label',
@@ -1667,6 +1802,8 @@ export default function NodeSettings() {
       'avatar-display': 'nodeConfig.avatarDisplay.label',
       'audio-player': 'nodeConfig.audioPlayer.label',
       'subtitle-display': 'nodeConfig.subtitleDisplay.label',
+      'data-formatter': 'nodeConfig.dataFormatter.label',
+      'donation-alert': 'nodeConfig.donationAlert.label',
       'obs-scene-switch': 'nodeConfig.obsSceneSwitch.label',
       'obs-source-toggle': 'nodeConfig.obsSourceToggle.label',
     };
@@ -1684,6 +1821,7 @@ export default function NodeSettings() {
       'foreach': 'foreach',
       'youtube-chat': 'youtubeChat',
       'twitch-chat': 'twitchChat',
+      'discord-chat': 'discordChat',
       'openai-llm': 'openaiLlm',
       'anthropic-llm': 'anthropicLlm',
       'google-llm': 'googleLlm',
@@ -1707,6 +1845,8 @@ export default function NodeSettings() {
       'avatar-display': 'avatarDisplay',
       'audio-player': 'audioPlayer',
       'subtitle-display': 'subtitleDisplay',
+      'data-formatter': 'dataFormatter',
+      'donation-alert': 'donationAlert',
       'obs-scene-switch': 'obsSceneSwitch',
       'obs-source-toggle': 'obsSourceToggle',
     };

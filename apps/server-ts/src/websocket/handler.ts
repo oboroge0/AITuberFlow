@@ -32,11 +32,17 @@ interface ClientInfo {
 export class WSBroadcaster {
   private clients = new Map<string, ClientInfo>();
   private rooms = new Map<string, Set<string>>(); // room -> client ids
-  private wsClientIds = new WeakMap<WSContext<ServerWebSocket<any>>, string>();
+  // Use ws.raw (ServerWebSocket) as key instead of WSContext,
+  // because Hono creates a new WSContext wrapper per event.
+  private wsClientIds = new WeakMap<ServerWebSocket<any>, string>();
+
+  private getRaw(ws: WSContext<ServerWebSocket<any>>): ServerWebSocket<any> {
+    return (ws as any).raw;
+  }
 
   addClient(id: string, ws: WSContext<ServerWebSocket<any>>): void {
     this.clients.set(id, { id, rooms: new Set(), ws });
-    this.wsClientIds.set(ws, id);
+    this.wsClientIds.set(this.getRaw(ws), id);
   }
 
   removeClient(id: string): void {
@@ -45,15 +51,13 @@ export class WSBroadcaster {
       for (const room of Array.from(client.rooms)) {
         this.leaveRoom(id, room);
       }
-    }
-    if (client) {
-      this.wsClientIds.delete(client.ws);
+      this.wsClientIds.delete(this.getRaw(client.ws));
     }
     this.clients.delete(id);
   }
 
   getClientId(ws: WSContext<ServerWebSocket<any>>): string | undefined {
-    return this.wsClientIds.get(ws);
+    return this.wsClientIds.get(this.getRaw(ws));
   }
 
   joinRoom(clientId: string, room: string): void {

@@ -24,9 +24,10 @@ No local setup required!
 Before you begin, make sure you have the following installed:
 
 - **Node.js** 22 or higher
-- **Python** 3.11 or higher
+- **[Bun](https://bun.sh/)** 1.0 or higher (for TypeScript backend)
 - **npm** (comes with Node.js)
-- **[uv](https://docs.astral.sh/uv/)** (recommended) or pip
+
+> **Note:** If using the Python backend (legacy), you also need **Python** 3.11+ and **[uv](https://docs.astral.sh/uv/)**.
 
 ## Installation
 
@@ -37,40 +38,25 @@ git clone https://github.com/oboroge0/AITuberFlow.git
 cd AITuberFlow
 ```
 
-### 2. Set Up the Backend (using uv - Recommended)
+### 2. Set Up the Backend (TypeScript - Recommended)
 
 ```bash
-# Navigate to server directory
-cd apps/server
+# Navigate to TypeScript server directory
+cd apps/server-ts
 
-# Install dependencies (uv will create .venv automatically)
-uv sync
-
-# Create environment file
-cp .env.example .env
+# Install dependencies
+bun install
 ```
 
-### 2. Set Up the Backend (using pip)
-
-```bash
-# Navigate to server directory
-cd apps/server
-
-# Create a Python virtual environment
-python -m venv .venv
-
-# Activate the virtual environment
-# On Windows:
-.venv\Scripts\activate
-# On macOS/Linux:
-source .venv/bin/activate
-
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Create environment file
-cp .env.example .env
-```
+> **To use the Python backend (legacy) instead:**
+>
+> ```bash
+> cd apps/server
+> uv sync            # using uv
+> # or
+> pip install -r requirements.txt  # using pip
+> cp .env.example .env
+> ```
 
 ### 3. Set Up the Frontend
 
@@ -83,6 +69,16 @@ npm install
 
 # Create environment file
 cp .env.example .env.local
+```
+
+### Install Everything at Once
+
+```bash
+# From project root, install dependencies (TypeScript only)
+make install
+
+# Install everything (TypeScript + Python)
+make install-all
 ```
 
 ## Running the Application
@@ -153,19 +149,28 @@ docker compose down -v
 
 If you prefer to run the application without Docker:
 
-### Start the Backend Server
+#### Start the TypeScript Backend (Recommended)
 
 ```bash
-# From apps/server (using uv)
-uv run python main.py
-
-# Or with pip (venv activated)
-python main.py
+# From project root
+npm run dev:ts
 ```
 
-The server will start at `http://localhost:8001`. You can access the API documentation at `http://localhost:8001/docs`.
+This starts both the frontend and TypeScript backend simultaneously.
 
-### Start the Frontend Development Server
+To start services individually:
+
+```bash
+# TypeScript backend only (from apps/server-ts)
+bun run dev
+
+# Python backend only (legacy, from apps/server)
+uv run python main.py
+```
+
+The backend starts at `http://localhost:8001`.
+
+#### Start the Frontend Development Server
 
 ```bash
 # From apps/web (in a new terminal)
@@ -272,7 +277,13 @@ Share workflows with others using the sidebar buttons:
 - Data is stored in a Docker volume named `aituberflow-backend-data`
 - To reset: `docker compose down -v` (this deletes all data)
 
-### Backend won't start
+### TypeScript backend won't start
+
+- Verify Bun is installed: `bun --version` (should be 1.0+)
+- Install dependencies: `cd apps/server-ts && bun install`
+- Check if port 8001 is already in use: `lsof -i :8001`
+
+### Python backend won't start (legacy)
 
 - If using uv: Run `uv sync` to ensure dependencies are installed
 - If using pip: Make sure the virtual environment is activated and run `pip install -r requirements.txt`

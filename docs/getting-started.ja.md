@@ -24,9 +24,10 @@ GitHub Codespacesを使えば、ブラウザ上でワンクリックで開発環
 開始する前に、以下がインストールされていることを確認してください：
 
 - **Node.js** 22以上
-- **Python** 3.11以上
+- **[Bun](https://bun.sh/)** 1.0以上（TypeScriptバックエンド用）
 - **npm** (Node.jsに付属)
-- **[uv](https://docs.astral.sh/uv/)** (推奨) または pip
+
+> **Note:** Pythonバックエンド（レガシー）を使用する場合は、**Python** 3.11以上と **[uv](https://docs.astral.sh/uv/)** も必要です。
 
 ## インストール
 
@@ -37,40 +38,25 @@ git clone https://github.com/oboroge0/AITuberFlow.git
 cd AITuberFlow
 ```
 
-### 2. バックエンドのセットアップ (uvを使用 - 推奨)
+### 2. バックエンドのセットアップ (TypeScript - 推奨)
 
 ```bash
-# サーバーディレクトリに移動
-cd apps/server
+# TypeScriptサーバーディレクトリに移動
+cd apps/server-ts
 
-# 依存関係をインストール (uvが自動的に.venvを作成)
-uv sync
-
-# 環境設定ファイルを作成
-cp .env.example .env
+# 依存関係をインストール
+bun install
 ```
 
-### 2. バックエンドのセットアップ (pipを使用)
-
-```bash
-# サーバーディレクトリに移動
-cd apps/server
-
-# Python仮想環境を作成
-python -m venv .venv
-
-# 仮想環境を有効化
-# Windows:
-.venv\Scripts\activate
-# macOS/Linux:
-source .venv/bin/activate
-
-# Python依存関係をインストール
-pip install -r requirements.txt
-
-# 環境設定ファイルを作成
-cp .env.example .env
-```
+> **Pythonバックエンド（レガシー）を使用する場合：**
+>
+> ```bash
+> cd apps/server
+> uv sync            # uvを使用する場合
+> # または
+> pip install -r requirements.txt  # pipを使用する場合
+> cp .env.example .env
+> ```
 
 ### 3. フロントエンドのセットアップ
 
@@ -83,6 +69,16 @@ npm install
 
 # 環境設定ファイルを作成
 cp .env.example .env.local
+```
+
+### 一括インストール
+
+```bash
+# プロジェクトルートからインストール（TypeScriptのみ）
+make install
+
+# TypeScript + Python 両方をインストール
+make install-all
 ```
 
 ## アプリケーションの実行
@@ -153,19 +149,28 @@ docker compose down -v
 
 Dockerを使用せずにアプリケーションを実行する場合：
 
-### バックエンドサーバーを起動
+#### TypeScriptバックエンドを起動（推奨）
 
 ```bash
-# apps/serverから (uvを使用)
-uv run python main.py
-
-# またはpipで (venvを有効化済み)
-python main.py
+# プロジェクトルートから
+npm run dev:ts
 ```
 
-サーバーは `http://localhost:8001` で起動します。APIドキュメントは `http://localhost:8001/docs` でアクセスできます。
+これによりフロントエンドとTypeScriptバックエンドが同時に起動します。
 
-### フロントエンド開発サーバーを起動
+個別に起動する場合：
+
+```bash
+# TypeScriptバックエンドのみ (apps/server-tsから)
+bun run dev
+
+# Pythonバックエンドのみ (レガシー、apps/serverから)
+uv run python main.py
+```
+
+バックエンドは `http://localhost:8001` で起動します。
+
+#### フロントエンド開発サーバーを起動
 
 ```bash
 # apps/webから (新しいターミナルで)
@@ -272,7 +277,13 @@ npm run dev
 - データは `aituberflow-backend-data` という名前のDockerボリュームに保存
 - リセットするには: `docker compose down -v` (全データが削除されます)
 
-### バックエンドが起動しない
+### TypeScriptバックエンドが起動しない
+
+- Bunがインストールされていることを確認: `bun --version` (1.0以上)
+- 依存関係をインストール: `cd apps/server-ts && bun install`
+- ポート8001が使用中でないか確認: `lsof -i :8001`
+
+### Pythonバックエンドが起動しない（レガシー）
 
 - uvを使用している場合: `uv sync` を実行して依存関係がインストールされていることを確認
 - pipを使用している場合: 仮想環境が有効化されていることを確認し、`pip install -r requirements.txt` を実行
@@ -281,7 +292,7 @@ npm run dev
 ### フロントエンドが起動しない
 
 - すべてのnpmパッケージがインストールされていることを確認: `npm install`
-- Node.jsバージョンを確認: `node --version` (18以上であること)
+- Node.jsバージョンを確認: `node --version` (22以上であること)
 - `node_modules` を削除して再インストールを試す
 
 ### バックエンドに接続できない

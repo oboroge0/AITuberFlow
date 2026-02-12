@@ -1,12 +1,14 @@
-.PHONY: help install dev dev-frontend dev-backend dev-backend-ts test test-py test-ts lint clean create-node migrate-manifests
+.PHONY: help install install-all dev dev-py dev-frontend dev-backend dev-backend-py test test-py test-ts lint clean create-node migrate-manifests
 
 help:
 	@echo "Available commands:"
-	@echo "  make install           - Install all dependencies"
-	@echo "  make dev               - Start development servers (frontend + backend)"
+	@echo "  make install           - Install dependencies (TypeScript only)"
+	@echo "  make install-all       - Install all dependencies (TypeScript + Python)"
+	@echo "  make dev               - Start development servers (frontend + TS backend)"
+	@echo "  make dev-py            - Start development servers (frontend + Python backend)"
 	@echo "  make test              - Run all tests (Python + TypeScript)"
-	@echo "  make test-py           - Run Python tests only"
 	@echo "  make test-ts           - Run TypeScript tests only"
+	@echo "  make test-py           - Run Python tests only"
 	@echo "  make lint              - Run linters"
 	@echo "  make clean             - Clean build artifacts"
 	@echo "  make create-node       - Create a new plugin (interactive)"
@@ -15,33 +17,37 @@ help:
 install:
 	npm install
 	cd apps/web && npm install
-	cd apps/server && uv sync
 	cd apps/server-ts && bun install
 	cd packages/sdk-ts && bun install
 
+install-all: install
+	cd apps/server && uv sync
+
 dev:
 	npm run dev
+
+dev-py:
+	npm run dev:py
 
 dev-frontend:
 	cd apps/web && npm run dev
 
 dev-backend:
-	cd apps/server && uv run python main.py
-
-dev-backend-ts:
 	cd apps/server-ts && bun run dev
 
-test: test-py test-ts
+dev-backend-py:
+	cd apps/server && uv run python main.py
 
-test-py:
-	cd apps/server && uv run pytest ../../tests/unit/ -v --tb=short
+test: test-ts test-py
 
 test-ts:
 	bun test tests/engine/ tests/routes/ --verbose
 
+test-py:
+	cd apps/server && uv run pytest ../../tests/unit/ -v --tb=short
+
 lint:
 	cd apps/web && npm run lint || true
-	cd apps/server && uv run ruff check . || true
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true

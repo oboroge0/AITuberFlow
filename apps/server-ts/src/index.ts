@@ -68,6 +68,8 @@ initDb();
 const port = Number(process.env.PORT) || 8001;
 console.log(`AITuberFlow server starting on port ${port}...`);
 
+// Use export default for Bun's built-in server management.
+// This ensures --hot mode works correctly (handler replacement without restart).
 export default {
   port,
   fetch: app.fetch,

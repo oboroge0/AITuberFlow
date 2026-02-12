@@ -17,6 +17,7 @@ const PLUGINS_DIR = join(PROJECT_ROOT, "plugins");
 export const SOURCE_NODE_TYPES = new Set([
   "twitch-chat",
   "youtube-chat",
+  "discord-chat",
   "timer",
 ]);
 

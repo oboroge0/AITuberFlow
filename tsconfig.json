@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@aituber-flow/sdk": ["./packages/sdk-ts/src/index.ts"]
+    }
+  }
+}
