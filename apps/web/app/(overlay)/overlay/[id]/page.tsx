@@ -36,11 +36,10 @@
 
 import React, { useEffect, useState, useCallback, useRef, use } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { io, Socket } from 'socket.io-client';
 import { AvatarView, AvatarState, RendererType } from '@/components/avatar';
 import api from '@/lib/api';
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8001';
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8001';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
 const getFullUrl = (url: string | undefined): string | undefined => {
@@ -184,188 +183,195 @@ export default function OverlayPage({ params }: OverlayPageProps) {
 
   // WebSocket connection
   useEffect(() => {
-    const socket = io(WS_URL, {
-      path: '/ws/socket.io',
-      transports: ['websocket', 'polling'],
-    });
+    const wsUrl = `${WS_URL.replace(/^http/, 'ws')}/ws`;
+    const ws = new WebSocket(wsUrl);
 
-    socket.on('connect', () => {
+    ws.onopen = () => {
       console.log('[Overlay] Connected');
       setConnected(true);
-      socket.emit('join', { workflowId });
-    });
+      ws.send(JSON.stringify({ type: 'join', payload: { workflowId } }));
+    };
 
-    socket.on('disconnect', () => {
+    ws.onclose = () => {
       console.log('[Overlay] Disconnected');
       setConnected(false);
-    });
+    };
 
-    // Avatar events
-    socket.on('avatar.expression', (data: { expression: string }) => {
-      setAvatarState((prev) => ({ ...prev, expression: data.expression }));
-    });
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const { type, ...rest } = data;
 
-    socket.on('avatar.mouth', (data: { value: number }) => {
-      setAvatarState((prev) => ({ ...prev, mouthOpen: data.value }));
-    });
+        switch (type) {
+          // Avatar events
+          case 'avatar.expression':
+            setAvatarState((prev) => ({ ...prev, expression: rest.expression }));
+            break;
 
-    socket.on('avatar.motion', (data: { motion?: string; motion_url?: string }) => {
-      const motionUrl = data.motion_url || data.motion;
-      if (motionUrl) {
-        setAvatarState((prev) => ({ ...prev, motion: motionUrl }));
-      }
-    });
+          case 'avatar.mouth':
+            setAvatarState((prev) => ({ ...prev, mouthOpen: rest.value }));
+            break;
 
-    socket.on('avatar.lookAt', (data: { x: number; y: number }) => {
-      setAvatarState((prev) => ({ ...prev, lookAt: data }));
-    });
-
-    socket.on('avatar.update', (data: Partial<AvatarState> & {
-      model_url?: string;
-      idle_animation?: string;
-      renderer?: RendererType;
-      vtube_port?: number;
-      vtube_mouth_param?: string;
-      vtube_expression_map?: string | Record<string, string>;
-    }) => {
-      if (data.renderer || data.model_url || data.idle_animation || data.vtube_port || data.vtube_mouth_param || data.vtube_expression_map) {
-        // Parse VTube Studio expression map if it's a string
-        let expressionMap: Record<string, string> | undefined;
-        if (data.vtube_expression_map) {
-          try {
-            expressionMap = typeof data.vtube_expression_map === 'string'
-              ? JSON.parse(data.vtube_expression_map)
-              : data.vtube_expression_map;
-          } catch {
-            console.warn('Failed to parse vtube_expression_map');
+          case 'avatar.motion': {
+            const motionUrl = rest.motion_url || rest.motion;
+            if (motionUrl) {
+              setAvatarState((prev) => ({ ...prev, motion: motionUrl }));
+            }
+            break;
           }
+
+          case 'avatar.lookAt':
+            setAvatarState((prev) => ({ ...prev, lookAt: rest }));
+            break;
+
+          case 'avatar.update': {
+            if (rest.renderer || rest.model_url || rest.idle_animation || rest.vtube_port || rest.vtube_mouth_param || rest.vtube_expression_map) {
+              let expressionMap: Record<string, string> | undefined;
+              if (rest.vtube_expression_map) {
+                try {
+                  expressionMap = typeof rest.vtube_expression_map === 'string'
+                    ? JSON.parse(rest.vtube_expression_map)
+                    : rest.vtube_expression_map;
+                } catch {
+                  console.warn('Failed to parse vtube_expression_map');
+                }
+              }
+
+              setAvatarConfig((prev) => ({
+                renderer: rest.renderer || prev.renderer,
+                modelUrl: rest.model_url || prev.modelUrl,
+                animationUrl: rest.idle_animation || prev.animationUrl,
+                vtubePort: rest.vtube_port || prev.vtubePort,
+                vtubeMouthParam: rest.vtube_mouth_param || prev.vtubeMouthParam,
+                vtubeExpressionMap: expressionMap || prev.vtubeExpressionMap,
+              }));
+            }
+            setAvatarState((prev) => ({ ...prev, ...rest }));
+            break;
+          }
+
+          // Subtitle events
+          case 'subtitle': {
+            if (!rest.text) {
+              setSubtitleVisible(false);
+              setTimeout(() => setSubtitle(null), 300);
+              break;
+            }
+
+            setSubtitle(rest as SubtitleData);
+            setSubtitleVisible(true);
+
+            if (rest.duration && rest.duration > 0) {
+              setTimeout(() => {
+                setSubtitleVisible(false);
+                setTimeout(() => setSubtitle(null), 300);
+              }, rest.duration);
+            }
+            break;
+          }
+
+          // Audio events
+          case 'audio': {
+            if (!rest.filename) break;
+            const audioUrl = rest.filename.startsWith('http')
+              ? rest.filename
+              : `${API_BASE}/api/integrations/audio/${rest.filename}`;
+
+            if (audioRef.current) {
+              audioRef.current.pause();
+            }
+
+            const audio = new Audio(audioUrl);
+            audio.volume = volume;
+            audioRef.current = audio;
+
+            audio.onended = () => {
+              setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
+            };
+
+            audio.play().catch(console.error);
+            break;
+          }
+
+          case 'audio.play': {
+            if (!rest.filename) break;
+            const playUrl = rest.filename.startsWith('http')
+              ? rest.filename
+              : `${API_BASE}/api/integrations/audio/${rest.filename}`;
+
+            if (audioRef.current) {
+              audioRef.current.pause();
+            }
+
+            const playAudio = new Audio(playUrl);
+            playAudio.volume = rest.volume ?? volume;
+            audioRef.current = playAudio;
+
+            playAudio.onended = () => {
+              setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
+            };
+
+            playAudio.play().catch(console.error);
+            break;
+          }
+
+          case 'audio.stop':
+            if (audioRef.current) {
+              audioRef.current.pause();
+              audioRef.current = null;
+            }
+            break;
+
+          // Donation alert events
+          case 'donation.alert': {
+            const alertData = rest as DonationAlertData;
+            setDonationAlert(alertData);
+            setDonationAlertVisible(true);
+
+            if (alertData.sound) {
+              const soundUrl = alertData.sound.startsWith('http')
+                ? alertData.sound
+                : `${API_BASE}${alertData.sound}`;
+
+              if (donationAudioRef.current) {
+                donationAudioRef.current.pause();
+              }
+
+              const alertAudio = new Audio(soundUrl);
+              alertAudio.volume = volume;
+              donationAudioRef.current = alertAudio;
+              alertAudio.play().catch(console.error);
+            }
+
+            const duration = alertData.duration || 5000;
+            setTimeout(() => {
+              setDonationAlertVisible(false);
+              setTimeout(() => setDonationAlert(null), 500);
+            }, duration);
+            break;
+          }
+
+          // Execution events
+          case 'execution.stopped':
+            setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
+            setSubtitleVisible(false);
+            setTimeout(() => setSubtitle(null), 300);
+            if (audioRef.current) {
+              audioRef.current.pause();
+              audioRef.current = null;
+            }
+            break;
         }
-
-        setAvatarConfig((prev) => ({
-          renderer: data.renderer || prev.renderer,
-          modelUrl: data.model_url || prev.modelUrl,
-          animationUrl: data.idle_animation || prev.animationUrl,
-          vtubePort: data.vtube_port || prev.vtubePort,
-          vtubeMouthParam: data.vtube_mouth_param || prev.vtubeMouthParam,
-          vtubeExpressionMap: expressionMap || prev.vtubeExpressionMap,
-        }));
+      } catch (err) {
+        console.warn('Failed to parse WebSocket message:', err);
       }
-      setAvatarState((prev) => ({ ...prev, ...data }));
-    });
-
-    // Subtitle events
-    socket.on('subtitle', (data: SubtitleData) => {
-      if (!data.text) {
-        setSubtitleVisible(false);
-        setTimeout(() => setSubtitle(null), 300);
-        return;
-      }
-
-      setSubtitle(data);
-      setSubtitleVisible(true);
-
-      if (data.duration && data.duration > 0) {
-        setTimeout(() => {
-          setSubtitleVisible(false);
-          setTimeout(() => setSubtitle(null), 300);
-        }, data.duration);
-      }
-    });
-
-    // Audio events
-    socket.on('audio', (data: { filename: string; duration?: number }) => {
-      if (!data.filename) return;
-
-      const audioUrl = data.filename.startsWith('http')
-        ? data.filename
-        : `${API_BASE}/api/integrations/audio/${data.filename}`;
-
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-
-      const audio = new Audio(audioUrl);
-      audio.volume = volume;
-      audioRef.current = audio;
-
-      audio.onended = () => {
-        setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
-      };
-
-      audio.play().catch(console.error);
-    });
-
-    socket.on('audio.play', (data: { filename: string; volume?: number }) => {
-      if (!data.filename) return;
-
-      const audioUrl = data.filename.startsWith('http')
-        ? data.filename
-        : `${API_BASE}/api/integrations/audio/${data.filename}`;
-
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-
-      const audio = new Audio(audioUrl);
-      audio.volume = data.volume ?? volume;
-      audioRef.current = audio;
-
-      audio.onended = () => {
-        setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
-      };
-
-      audio.play().catch(console.error);
-    });
-
-    socket.on('audio.stop', () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    });
-
-    // Donation alert events
-    socket.on('donation.alert', (data: DonationAlertData) => {
-      setDonationAlert(data);
-      setDonationAlertVisible(true);
-
-      // Play alert sound if provided
-      if (data.sound) {
-        const soundUrl = data.sound.startsWith('http')
-          ? data.sound
-          : `${API_BASE}${data.sound}`;
-
-        if (donationAudioRef.current) {
-          donationAudioRef.current.pause();
-        }
-
-        const audio = new Audio(soundUrl);
-        audio.volume = volume;
-        donationAudioRef.current = audio;
-        audio.play().catch(console.error);
-      }
-
-      // Hide after duration
-      const duration = data.duration || 5000;
-      setTimeout(() => {
-        setDonationAlertVisible(false);
-        setTimeout(() => setDonationAlert(null), 500);
-      }, duration);
-    });
-
-    // Execution events
-    socket.on('execution.stopped', () => {
-      setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
-      setSubtitleVisible(false);
-      setTimeout(() => setSubtitle(null), 300);
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    });
+    };
 
     return () => {
-      socket.disconnect();
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'leave', payload: { workflowId } }));
+      }
+      ws.close();
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;

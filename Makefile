@@ -1,10 +1,12 @@
-.PHONY: help install dev dev-frontend dev-backend test lint clean create-node migrate-manifests
+.PHONY: help install dev dev-frontend dev-backend dev-backend-ts test test-py test-ts lint clean create-node migrate-manifests
 
 help:
 	@echo "Available commands:"
 	@echo "  make install           - Install all dependencies"
 	@echo "  make dev               - Start development servers (frontend + backend)"
-	@echo "  make test              - Run tests"
+	@echo "  make test              - Run all tests (Python + TypeScript)"
+	@echo "  make test-py           - Run Python tests only"
+	@echo "  make test-ts           - Run TypeScript tests only"
 	@echo "  make lint              - Run linters"
 	@echo "  make clean             - Clean build artifacts"
 	@echo "  make create-node       - Create a new plugin (interactive)"
@@ -14,6 +16,8 @@ install:
 	npm install
 	cd apps/web && npm install
 	cd apps/server && uv sync
+	cd apps/server-ts && bun install
+	cd packages/sdk-ts && bun install
 
 dev:
 	npm run dev
@@ -24,8 +28,16 @@ dev-frontend:
 dev-backend:
 	cd apps/server && uv run python main.py
 
-test:
-	cd apps/server && uv run pytest ../../tests/ -v --tb=short
+dev-backend-ts:
+	cd apps/server-ts && bun run dev
+
+test: test-py test-ts
+
+test-py:
+	cd apps/server && uv run pytest ../../tests/unit/ -v --tb=short
+
+test-ts:
+	bun test tests/engine/ tests/routes/ --verbose
 
 lint:
 	cd apps/web && npm run lint || true

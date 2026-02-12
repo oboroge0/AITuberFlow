@@ -1,21 +1,28 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { AvatarState } from '@/components/avatar';
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8001';
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8001';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
 // Reconnection settings with exponential backoff
 const INITIAL_RECONNECT_DELAY = 1000; // 1 second
 const MAX_RECONNECT_DELAY = 30000; // 30 seconds
 const MAX_RECONNECT_ATTEMPTS = 10;
+const JITTER_FACTOR = 0.5;
 
 export type ConnectionStatus = 'connected' | 'disconnected' | 'connecting' | 'reconnecting';
 
+/**
+ * Native WebSocket hook replacing Socket.IO.
+ *
+ * Connects to the Hono WebSocket endpoint and handles
+ * workflow events, avatar state, and audio playback.
+ */
 export function useWebSocket(workflowId: string | null) {
-  const socketRef = useRef<Socket | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { addLog, setNodeStatus, setExecuting } = useWorkflowStore();
 
   // Avatar state for preview
@@ -27,190 +34,234 @@ export function useWebSocket(workflowId: string | null) {
   // Connection status for UI feedback
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
   const [reconnectAttempt, setReconnectAttempt] = useState(0);
-  // Ref to track reconnect attempts for use in callbacks (avoids stale closure)
   const reconnectAttemptRef = useRef(0);
+  const workflowIdRef = useRef(workflowId);
+
+  // Keep workflowId ref in sync
+  useEffect(() => {
+    workflowIdRef.current = workflowId;
+  }, [workflowId]);
 
   useEffect(() => {
     if (!workflowId) return;
 
-    setConnectionStatus('connecting');
+    let intentionalClose = false;
 
-    // Connect to WebSocket server with custom reconnection settings
-    const socket = io(WS_URL, {
-      path: '/ws/socket.io',
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
-      reconnectionDelay: INITIAL_RECONNECT_DELAY,
-      reconnectionDelayMax: MAX_RECONNECT_DELAY,
-      randomizationFactor: 0.5, // Add jitter to prevent thundering herd
-    });
+    function getWsUrl(): string {
+      // Convert http(s):// to ws(s)://
+      const base = WS_URL.replace(/^http/, 'ws');
+      return `${base}/ws`;
+    }
 
-    socketRef.current = socket;
+    function connect() {
+      setConnectionStatus(reconnectAttemptRef.current > 0 ? 'reconnecting' : 'connecting');
 
-    socket.on('connect', () => {
-      console.log('WebSocket connected');
-      setConnectionStatus('connected');
-      setReconnectAttempt(0);
-      reconnectAttemptRef.current = 0;
-      socket.emit('join', { workflowId });
-      addLog({ level: 'info', message: 'サーバーに接続しました / Connected to server' });
-    });
+      const ws = new WebSocket(getWsUrl());
+      wsRef.current = ws;
 
-    socket.on('disconnect', (reason) => {
-      console.log('WebSocket disconnected:', reason);
-      setConnectionStatus('disconnected');
-      // Only log if it's an unexpected disconnect
-      if (reason !== 'io client disconnect') {
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+        setConnectionStatus('connected');
+        setReconnectAttempt(0);
+        reconnectAttemptRef.current = 0;
+
+        // Join the workflow room
+        ws.send(JSON.stringify({
+          type: 'join',
+          payload: { workflowId: workflowIdRef.current },
+        }));
+
+        addLog({ level: 'info', message: 'サーバーに接続しました / Connected to server' });
+      };
+
+      ws.onclose = (event) => {
+        console.log('WebSocket disconnected:', event.code, event.reason);
+        setConnectionStatus('disconnected');
+
+        if (!intentionalClose) {
+          addLog({
+            level: 'warning',
+            message: `サーバーから切断されました / Disconnected from server: ${event.reason || event.code}`,
+          });
+          scheduleReconnect();
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        if (reconnectAttemptRef.current === 0) {
+          addLog({
+            level: 'warning',
+            message: '接続エラー / Connection error',
+          });
+        }
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          handleMessage(data);
+        } catch (err) {
+          console.warn('Failed to parse WebSocket message:', err);
+        }
+      };
+    }
+
+    function scheduleReconnect() {
+      if (intentionalClose) return;
+
+      const attempt = reconnectAttemptRef.current + 1;
+      if (attempt > MAX_RECONNECT_ATTEMPTS) {
+        console.log('Reconnection failed after all attempts');
+        setConnectionStatus('disconnected');
         addLog({
-          level: 'warning',
-          message: `サーバーから切断されました / Disconnected from server: ${reason}`,
+          level: 'error',
+          message: '再接続に失敗しました。ページを再読み込みしてください / Reconnection failed. Please reload the page.',
         });
+        return;
       }
-    });
 
-    socket.on('reconnect_attempt', (attempt) => {
-      setConnectionStatus('reconnecting');
-      setReconnectAttempt(attempt);
       reconnectAttemptRef.current = attempt;
-      const delay = Math.min(INITIAL_RECONNECT_DELAY * Math.pow(2, attempt - 1), MAX_RECONNECT_DELAY);
-      console.log(`Reconnection attempt ${attempt}, next delay: ${delay}ms`);
+      setReconnectAttempt(attempt);
+      setConnectionStatus('reconnecting');
+
+      // Exponential backoff with jitter
+      const baseDelay = Math.min(INITIAL_RECONNECT_DELAY * Math.pow(2, attempt - 1), MAX_RECONNECT_DELAY);
+      const jitter = baseDelay * JITTER_FACTOR * Math.random();
+      const delay = baseDelay + jitter;
+
+      console.log(`Reconnection attempt ${attempt}, delay: ${Math.round(delay)}ms`);
       addLog({
         level: 'info',
         message: `再接続を試行中... (${attempt}/${MAX_RECONNECT_ATTEMPTS}) / Reconnecting...`,
       });
-    });
 
-    socket.on('reconnect', (attempt) => {
-      console.log('Reconnected after', attempt, 'attempts');
-      setConnectionStatus('connected');
-      setReconnectAttempt(0);
-      addLog({
-        level: 'info',
-        message: `再接続に成功しました / Reconnected successfully`,
-      });
-    });
+      reconnectTimerRef.current = setTimeout(() => {
+        connect();
+      }, delay);
+    }
 
-    socket.on('reconnect_failed', () => {
-      console.log('Reconnection failed after all attempts');
-      setConnectionStatus('disconnected');
-      addLog({
-        level: 'error',
-        message: `再接続に失敗しました。ページを再読み込みしてください / Reconnection failed. Please reload the page.`,
-      });
-    });
+    function handleMessage(data: any) {
+      const { type, ...rest } = data;
 
-    socket.on('connect_error', (error) => {
-      console.error('Connection error:', error.message);
-      // Only log on first error to avoid spam
-      if (reconnectAttemptRef.current === 0) {
-        addLog({
-          level: 'warning',
-          message: `接続エラー / Connection error: ${error.message}`,
-        });
-      }
-    });
-
-    // Handle log events
-    socket.on('log', (data: { level: string; message: string; nodeId?: string }) => {
-      addLog({
-        level: data.level as 'info' | 'warning' | 'error' | 'debug',
-        message: data.message,
-        nodeId: data.nodeId,
-      });
-    });
-
-    // Handle node status updates
-    socket.on('node.status', (data: { nodeId: string; status: string; data?: any }) => {
-      setNodeStatus(
-        data.nodeId,
-        data.status as 'idle' | 'running' | 'completed' | 'error',
-        data.data
-      );
-    });
-
-    // Handle execution events
-    socket.on('execution.started', () => {
-      setExecuting(true);
-      addLog({ level: 'info', message: 'Workflow execution started' });
-    });
-
-    socket.on('execution.stopped', (data: { reason?: string }) => {
-      setExecuting(false);
-      addLog({
-        level: 'info',
-        message: `Workflow execution stopped${data.reason ? `: ${data.reason}` : ''}`,
-      });
-    });
-
-    socket.on('execution.error', (data: { nodeId?: string; error: string }) => {
-      addLog({
-        level: 'error',
-        message: data.error,
-        nodeId: data.nodeId,
-      });
-    });
-
-    // Handle audio events - play generated audio
-    socket.on('audio', (data: { filename: string; duration: number; text: string }) => {
-      if (data.filename) {
-        const audioUrl = `${API_URL}/api/integrations/audio/${data.filename}`;
-        addLog({
-          level: 'info',
-          message: `Playing audio: ${data.text?.substring(0, 30) || 'audio'}...`,
-        });
-
-        // Create and play audio
-        if (audioRef.current) {
-          audioRef.current.pause();
-        }
-        const audio = new Audio(audioUrl);
-        audioRef.current = audio;
-
-        // Close mouth when audio ends
-        audio.onended = () => {
-          setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
-        };
-
-        audio.play().catch((err) => {
-          console.error('Failed to play audio:', err);
+      switch (type) {
+        case 'log':
           addLog({
-            level: 'warning',
-            message: `Audio playback failed: ${err.message}`,
+            level: rest.level as 'info' | 'warning' | 'error' | 'debug',
+            message: rest.message,
+            nodeId: rest.nodeId,
           });
-        });
+          break;
+
+        case 'node.status':
+          setNodeStatus(
+            rest.nodeId,
+            rest.status as 'idle' | 'running' | 'completed' | 'error',
+            rest.data,
+          );
+          break;
+
+        case 'execution.started':
+          setExecuting(true);
+          addLog({ level: 'info', message: 'Workflow execution started' });
+          break;
+
+        case 'execution.stopped':
+          setExecuting(false);
+          addLog({
+            level: 'info',
+            message: `Workflow execution stopped${rest.reason ? `: ${rest.reason}` : ''}`,
+          });
+          break;
+
+        case 'execution.error':
+          addLog({
+            level: 'error',
+            message: rest.error,
+            nodeId: rest.nodeId,
+          });
+          break;
+
+        case 'audio':
+          if (rest.filename) {
+            const audioUrl = `${API_URL}/api/integrations/audio/${rest.filename}`;
+            addLog({
+              level: 'info',
+              message: `Playing audio: ${rest.text?.substring(0, 30) || 'audio'}...`,
+            });
+
+            if (audioRef.current) {
+              audioRef.current.pause();
+            }
+            const audio = new Audio(audioUrl);
+            audioRef.current = audio;
+
+            audio.onended = () => {
+              setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
+            };
+
+            audio.play().catch((err) => {
+              console.error('Failed to play audio:', err);
+              addLog({
+                level: 'warning',
+                message: `Audio playback failed: ${err.message}`,
+              });
+            });
+          }
+          break;
+
+        case 'avatar.expression':
+          setAvatarState((prev) => ({ ...prev, expression: rest.expression }));
+          break;
+
+        case 'avatar.mouth':
+          setAvatarState((prev) => ({ ...prev, mouthOpen: rest.value }));
+          break;
+
+        case 'avatar.motion': {
+          const motionUrl = rest.motion_url || rest.motion;
+          if (motionUrl) {
+            setAvatarState((prev) => ({ ...prev, motion: motionUrl }));
+          }
+          break;
+        }
+
+        case 'avatar.lookAt':
+          setAvatarState((prev) => ({ ...prev, lookAt: rest }));
+          break;
+
+        case 'avatar.update':
+          setAvatarState((prev) => ({ ...prev, ...rest }));
+          break;
+
+        case 'subtitle':
+          // Subtitles are handled via the existing subtitle display mechanism
+          break;
       }
-    });
+    }
 
-    // Handle avatar events
-    socket.on('avatar.expression', (data: { expression: string }) => {
-      setAvatarState((prev) => ({ ...prev, expression: data.expression }));
-    });
-
-    socket.on('avatar.mouth', (data: { value: number }) => {
-      setAvatarState((prev) => ({ ...prev, mouthOpen: data.value }));
-    });
-
-    socket.on('avatar.motion', (data: { motion?: string; motion_url?: string }) => {
-      const motionUrl = data.motion_url || data.motion;
-      if (motionUrl) {
-        setAvatarState((prev) => ({ ...prev, motion: motionUrl }));
-      }
-    });
-
-    socket.on('avatar.lookAt', (data: { x: number; y: number }) => {
-      setAvatarState((prev) => ({ ...prev, lookAt: data }));
-    });
-
-    socket.on('avatar.update', (data: Partial<AvatarState>) => {
-      setAvatarState((prev) => ({ ...prev, ...data }));
-    });
+    connect();
 
     return () => {
-      socket.emit('leave', { workflowId });
-      socket.disconnect();
-      socketRef.current = null;
-      // Stop any playing audio
+      intentionalClose = true;
+
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+
+      if (wsRef.current) {
+        // Send leave message before closing
+        if (wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({
+            type: 'leave',
+            payload: { workflowId },
+          }));
+        }
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
@@ -219,8 +270,11 @@ export function useWebSocket(workflowId: string | null) {
   }, [workflowId, addLog, setNodeStatus, setExecuting]);
 
   const emit = useCallback((event: string, data: any) => {
-    if (socketRef.current?.connected) {
-      socketRef.current.emit(event, data);
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: event,
+        payload: data,
+      }));
     }
   }, []);
 

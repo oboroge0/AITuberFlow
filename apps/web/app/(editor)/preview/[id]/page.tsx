@@ -2,13 +2,12 @@
 
 import React, { useEffect, useState, useCallback, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { io, Socket } from 'socket.io-client';
 import { AvatarView, AvatarState, RendererType } from '@/components/avatar';
 import api, { ModelInfo } from '@/lib/api';
 import { Workflow } from '@/lib/types';
 import { DEFAULT_MODEL_URL } from '@/lib/constants';
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8001';
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8001';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
 // Helper to get full URL (backend serves uploaded files)
@@ -45,7 +44,7 @@ export default function PreviewPage({ params }: PreviewPageProps) {
   const { id: workflowId } = use(params);
   const router = useRouter();
 
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
   const [connected, setConnected] = useState(false);
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -126,83 +125,77 @@ export default function PreviewPage({ params }: PreviewPageProps) {
 
   // WebSocket connection
   useEffect(() => {
-    const newSocket = io(WS_URL, {
-      path: '/ws/socket.io',
-      transports: ['websocket', 'polling'],
-    });
+    const wsUrl = `${WS_URL.replace(/^http/, 'ws')}/ws`;
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
 
-    newSocket.on('connect', () => {
+    ws.onopen = () => {
       console.log('Connected to WebSocket');
       setConnected(true);
-      newSocket.emit('join', { workflowId });
-    });
+      ws.send(JSON.stringify({ type: 'join', payload: { workflowId } }));
+    };
 
-    newSocket.on('disconnect', () => {
+    ws.onclose = () => {
       console.log('Disconnected from WebSocket');
       setConnected(false);
-    });
+    };
 
-    // Avatar events
-    newSocket.on('avatar.expression', (data: { expression: string }) => {
-      setAvatarState((prev) => ({ ...prev, expression: data.expression }));
-    });
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const { type, ...rest } = data;
 
-    newSocket.on('avatar.mouth', (data: { value: number }) => {
-      setAvatarState((prev) => ({ ...prev, mouthOpen: data.value }));
-    });
-
-    newSocket.on('avatar.motion', (data: { motion: string }) => {
-      setAvatarState((prev) => ({ ...prev, motion: data.motion }));
-    });
-
-    newSocket.on('avatar.lookAt', (data: { x: number; y: number }) => {
-      setAvatarState((prev) => ({ ...prev, lookAt: data }));
-    });
-
-    // Combined avatar update
-    newSocket.on('avatar.update', (data: Partial<AvatarState>) => {
-      setAvatarState((prev) => ({ ...prev, ...data }));
-    });
-
-    // Subtitle events
-    newSocket.on('subtitle', (data: { text: string }) => {
-      setSubtitle(data.text);
-    });
-
-    // Audio events - play generated audio
-    newSocket.on('audio', (data: { filename: string; duration: number; text: string }) => {
-      if (data.filename) {
-        const audioUrl = `${API_BASE}/api/integrations/audio/${data.filename}`;
-        console.log('Playing audio:', audioUrl);
-
-        // Stop previous audio if playing
-        if (audioRef.current) {
-          audioRef.current.pause();
+        switch (type) {
+          case 'avatar.expression':
+            setAvatarState((prev) => ({ ...prev, expression: rest.expression }));
+            break;
+          case 'avatar.mouth':
+            setAvatarState((prev) => ({ ...prev, mouthOpen: rest.value }));
+            break;
+          case 'avatar.motion':
+            setAvatarState((prev) => ({ ...prev, motion: rest.motion }));
+            break;
+          case 'avatar.lookAt':
+            setAvatarState((prev) => ({ ...prev, lookAt: rest }));
+            break;
+          case 'avatar.update':
+            setAvatarState((prev) => ({ ...prev, ...rest }));
+            break;
+          case 'subtitle':
+            setSubtitle(rest.text);
+            break;
+          case 'audio':
+            if (rest.filename) {
+              const audioUrl = `${API_BASE}/api/integrations/audio/${rest.filename}`;
+              console.log('Playing audio:', audioUrl);
+              if (audioRef.current) {
+                audioRef.current.pause();
+              }
+              const audio = new Audio(audioUrl);
+              audioRef.current = audio;
+              audio.play().catch((err) => {
+                console.error('Failed to play audio:', err);
+              });
+            }
+            break;
+          case 'execution.started':
+            setIsRunning(true);
+            break;
+          case 'execution.stopped':
+            setIsRunning(false);
+            break;
         }
-
-        // Create and play new audio
-        const audio = new Audio(audioUrl);
-        audioRef.current = audio;
-        audio.play().catch((err) => {
-          console.error('Failed to play audio:', err);
-        });
+      } catch (err) {
+        console.warn('Failed to parse WebSocket message:', err);
       }
-    });
-
-    // Execution events
-    newSocket.on('execution.started', () => {
-      setIsRunning(true);
-    });
-
-    newSocket.on('execution.stopped', () => {
-      setIsRunning(false);
-    });
-
-    setSocket(newSocket);
+    };
 
     return () => {
-      newSocket.disconnect();
-      // Stop any playing audio
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'leave', payload: { workflowId } }));
+      }
+      ws.close();
+      wsRef.current = null;
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;

@@ -60,10 +60,29 @@ jobs:
       - name: Type check with mypy
         run: uv run mypy . --ignore-missing-imports
 
-  test:
-    name: Run Tests
+  backend-ts:
+    name: Backend (TypeScript) Check
     runs-on: ubuntu-latest
-    needs: [backend]  # Run tests after backend check passes
+    defaults:
+      run:
+        working-directory: apps/server-ts
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Type check
+        run: bun run typecheck
+
+  test:
+    name: Run Tests (Python)
+    runs-on: ubuntu-latest
+    needs: [backend]
 
     steps:
       - uses: actions/checkout@v4
@@ -82,7 +101,7 @@ jobs:
 
       - name: Run tests with coverage
         working-directory: apps/server
-        run: uv run pytest ../../tests/ -v --tb=short --cov=. --cov-report=xml --cov-report=term-missing
+        run: uv run pytest ../../tests/unit/ -v --tb=short --cov=. --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -92,3 +111,25 @@ jobs:
           verbose: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  test-ts:
+    name: Run Tests (TypeScript)
+    runs-on: ubuntu-latest
+    needs: [backend-ts]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install server-ts dependencies
+        working-directory: apps/server-ts
+        run: bun install
+
+      - name: Install SDK dependencies
+        working-directory: packages/sdk-ts
+        run: bun install
+
+      - name: Run TypeScript tests
+        run: bun test tests/engine/ tests/routes/ --verbose
