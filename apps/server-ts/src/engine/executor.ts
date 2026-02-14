@@ -8,12 +8,12 @@
  * Ported from Python apps/server/engine/executor.py (1173 lines).
  */
 
+import { vtsClient } from "../integrations/vtube-studio";
 import type { Event } from "./event-bus";
 import { EventBus, EventFilter } from "./event-bus";
 import { EventQueue } from "./event-queue";
+import { SOURCE_NODE_TYPES, loadPlugin } from "./plugin-loader";
 import { TaskRegistry } from "./task-registry";
-import { loadPlugin, SOURCE_NODE_TYPES } from "./plugin-loader";
-import { vtsClient } from "../integrations/vtube-studio";
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -45,18 +45,14 @@ interface EventFilterDef {
   condition?: string;
 }
 
-type LogCallback = (
-  nodeId: string | null,
-  message: string,
-  level: string
-) => Promise<void>;
+type LogCallback = (nodeId: string | null, message: string, level: string) => Promise<void>;
 
 type EventCallback = (event: Event) => Promise<void>;
 
 type StatusCallback = (
   nodeId: string,
   status: string,
-  data?: Record<string, any> | null
+  data?: Record<string, any> | null,
 ) => Promise<void>;
 
 // ─── NodeContext (executor-internal) ─────────────────────────────
@@ -92,8 +88,7 @@ export class NodeContext {
 
     let evt: Event;
     if ("type" in event && typeof event.type === "string") {
-      const { type, source_node_id, sourceNodeId, timestamp, ...payload } =
-        event as any;
+      const { type, source_node_id, sourceNodeId, timestamp, ...payload } = event as any;
       evt = {
         type,
         payload: (event as Event).payload ?? payload,
@@ -120,9 +115,7 @@ export class NodeContext {
   }
 
   createTask(fn: (signal: AbortSignal) => Promise<void>): AbortController {
-    const taskId = `${this.nodeId}_${Date.now()}_${Math.random()
-      .toString(36)
-      .slice(2, 8)}`;
+    const taskId = `${this.nodeId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
     if (this.taskRegistry) {
       this.taskIds.add(taskId);
@@ -164,10 +157,12 @@ export class NodeContext {
   }
 
   getEmotion(): Record<string, any> {
-    return (this.character.emotion as Record<string, any>) ?? {
-      current: "neutral",
-      intensity: 0.5,
-    };
+    return (
+      (this.character.emotion as Record<string, any>) ?? {
+        current: "neutral",
+        intensity: 0.5,
+      }
+    );
   }
 
   async cancelBackgroundTasks(): Promise<void> {
@@ -257,46 +252,35 @@ export class WorkflowExecutor {
 
   // ─── VTube Studio ─────────────────
 
-  private async setupVtsIfNeeded(
-    workflowId: string,
-    workflowData: WorkflowData
-  ): Promise<void> {
+  private async setupVtsIfNeeded(workflowId: string, workflowData: WorkflowData): Promise<void> {
     const nodes = workflowData.nodes;
-    const avatarConfig = nodes.find(
-      (n) => n.type === "avatar-configuration"
-    )?.config;
+    const avatarConfig = nodes.find((n) => n.type === "avatar-configuration")?.config;
     if (!avatarConfig) return;
 
     if (avatarConfig.renderer !== "vtube-studio") return;
 
     const port = (avatarConfig.vtube_port as number) ?? 8001;
-    const mouthParam =
-      (avatarConfig.vtube_mouth_param as string) ?? "MouthOpen";
+    const mouthParam = (avatarConfig.vtube_mouth_param as string) ?? "MouthOpen";
 
     let expressionMap: Record<string, string> | undefined;
     const rawMap = avatarConfig.vtube_expression_map;
     if (rawMap) {
       try {
-        expressionMap =
-          typeof rawMap === "string" ? JSON.parse(rawMap) : rawMap;
+        expressionMap = typeof rawMap === "string" ? JSON.parse(rawMap) : rawMap;
       } catch {
         console.warn("Failed to parse VTS expression map");
       }
     }
 
     vtsClient.configure(port, mouthParam, expressionMap);
-    console.log(
-      `Workflow ${workflowId} uses VTube Studio mode, connecting...`
-    );
+    console.log(`Workflow ${workflowId} uses VTube Studio mode, connecting...`);
 
     const success = await vtsClient.connect();
     if (success) {
       this.vtsWorkflows.add(workflowId);
       console.log(`VTube Studio connected for workflow ${workflowId}`);
     } else {
-      console.warn(
-        `Failed to connect to VTube Studio for workflow ${workflowId}`
-      );
+      console.warn(`Failed to connect to VTube Studio for workflow ${workflowId}`);
     }
   }
 
@@ -315,7 +299,7 @@ export class WorkflowExecutor {
   private createNodeContext(
     workflowId: string,
     nodeId: string,
-    character: Record<string, any>
+    character: Record<string, any>,
   ): NodeContext {
     return new NodeContext({
       workflowId,
@@ -332,7 +316,7 @@ export class WorkflowExecutor {
   private async initializeNodes(
     workflowId: string,
     nodes: NodeData[],
-    character: Record<string, any>
+    character: Record<string, any>,
   ): Promise<void> {
     const runtimes = new Map<string, NodeRuntime>();
     this.nodeInstances.set(workflowId, runtimes);
@@ -354,37 +338,24 @@ export class WorkflowExecutor {
         try {
           await instance.setup(node.config ?? {}, context);
         } catch (err) {
-          await this.log(
-            workflowId,
-            node.id,
-            `Node setup error: ${err}`,
-            "error"
-          );
+          await this.log(workflowId, node.id, `Node setup error: ${err}`, "error");
         }
       }
     }
   }
 
-  private getNodeRuntime(
-    workflowId: string,
-    nodeId: string
-  ): NodeRuntime | undefined {
+  private getNodeRuntime(workflowId: string, nodeId: string): NodeRuntime | undefined {
     return this.nodeInstances.get(workflowId)?.get(nodeId);
   }
 
   private async executeNodeRuntime(
     runtime: NodeRuntime,
-    inputs: Record<string, any>
+    inputs: Record<string, any>,
   ): Promise<Record<string, any>> {
     if (runtime.instance) {
       return await runtime.instance.execute(inputs, runtime.context);
     }
-    return await this.executeBuiltinNode(
-      runtime.nodeType,
-      runtime.config,
-      inputs,
-      runtime.context
-    );
+    return await this.executeBuiltinNode(runtime.nodeType, runtime.config, inputs, runtime.context);
   }
 
   private async teardownNodes(workflowId: string): Promise<void> {
@@ -422,12 +393,10 @@ export class WorkflowExecutor {
   async startWorkflow(
     workflowId: string,
     workflowData: WorkflowData,
-    startNodeId?: string | null
+    startNodeId?: string | null,
   ): Promise<void> {
     if (this.runningWorkflows.has(workflowId)) {
-      console.log(
-        `Workflow ${workflowId} is already running, restarting...`
-      );
+      console.log(`Workflow ${workflowId} is already running, restarting...`);
       await this.stopWorkflow(workflowId);
     }
 
@@ -480,9 +449,7 @@ export class WorkflowExecutor {
     let data = workflowData;
     if (startNodeId) {
       data = this.filterSubgraph(workflowData, startNodeId);
-      console.log(
-        `Filtered workflow to subgraph starting from node: ${startNodeId}`
-      );
+      console.log(`Filtered workflow to subgraph starting from node: ${startNodeId}`);
     }
 
     // Track running state
@@ -494,7 +461,7 @@ export class WorkflowExecutor {
 
     // Start execution in background (non-blocking)
     this.executeWorkflow(workflowId, data).catch((err) => {
-      console.error(`Workflow execution error:`, err);
+      console.error("Workflow execution error:", err);
     });
 
     console.log(`Started workflow: ${workflowId}`);
@@ -543,10 +510,7 @@ export class WorkflowExecutor {
 
   // ─── Main Execution ───────────────
 
-  private async executeWorkflow(
-    workflowId: string,
-    workflowData: WorkflowData
-  ): Promise<void> {
+  private async executeWorkflow(workflowId: string, workflowData: WorkflowData): Promise<void> {
     try {
       const { nodes, connections, character } = workflowData;
       if (!nodes?.length) {
@@ -556,12 +520,8 @@ export class WorkflowExecutor {
 
       await this.initializeNodes(workflowId, nodes, character);
 
-      const sourceNodes = nodes.filter((n) =>
-        SOURCE_NODE_TYPES.has(n.type)
-      );
-      const regularNodes = nodes.filter(
-        (n) => !SOURCE_NODE_TYPES.has(n.type)
-      );
+      const sourceNodes = nodes.filter((n) => SOURCE_NODE_TYPES.has(n.type));
+      const regularNodes = nodes.filter((n) => !SOURCE_NODE_TYPES.has(n.type));
       const adjacency = this.buildAdjacency(nodes, connections);
 
       const hasStartNode = nodes.some((n) => n.type === "start");
@@ -572,7 +532,7 @@ export class WorkflowExecutor {
           workflowId,
           null,
           `Event-driven workflow: ${sourceNodes.length} source node(s), ${regularNodes.length} regular node(s)`,
-          "info"
+          "info",
         );
         await this.runEventDriven(
           workflowId,
@@ -580,27 +540,17 @@ export class WorkflowExecutor {
           connections,
           character,
           sourceNodes,
-          adjacency
+          adjacency,
         );
       } else if (hasStartNode) {
-        await this.log(
-          workflowId,
-          null,
-          `Linear workflow (${nodes.length} nodes)`,
-          "info"
-        );
+        await this.log(workflowId, null, `Linear workflow (${nodes.length} nodes)`, "info");
         await this.runLinear(workflowId, nodes, connections, character);
       } else {
-        await this.log(
-          workflowId,
-          null,
-          `Workflow started (${nodes.length} nodes)`,
-          "info"
-        );
+        await this.log(workflowId, null, `Workflow started (${nodes.length} nodes)`, "info");
         await this.runLinear(workflowId, nodes, connections, character);
       }
     } catch (err) {
-      console.error(`Workflow execution error:`, err);
+      console.error("Workflow execution error:", err);
       const status = this.runningWorkflows.get(workflowId);
       if (status) {
         status.status = "error";
@@ -617,7 +567,7 @@ export class WorkflowExecutor {
     connections: ConnectionData[],
     character: Record<string, any>,
     sourceNodes: NodeData[],
-    adjacency: Map<string, string[]>
+    adjacency: Map<string, string[]>,
   ): Promise<void> {
     const sources = new Map<string, any>();
     this.sourceNodes.set(workflowId, sources);
@@ -626,12 +576,7 @@ export class WorkflowExecutor {
     for (const node of sourceNodes) {
       const runtime = this.getNodeRuntime(workflowId, node.id);
       if (!runtime?.instance) {
-        await this.log(
-          workflowId,
-          node.id,
-          `Failed to load source node: ${node.type}`,
-          "error"
-        );
+        await this.log(workflowId, node.id, `Failed to load source node: ${node.type}`, "error");
         await this.updateNodeStatus(workflowId, node.id, "error", {
           error: "Plugin not found",
         });
@@ -644,12 +589,7 @@ export class WorkflowExecutor {
         context: runtime.context,
       });
       await this.updateNodeStatus(workflowId, node.id, "listening");
-      await this.log(
-        workflowId,
-        node.id,
-        `Source node started: ${node.type}`,
-        "info"
-      );
+      await this.log(workflowId, node.id, `Source node started: ${node.type}`, "info");
     }
 
     // Subscribe to source events
@@ -663,12 +603,7 @@ export class WorkflowExecutor {
             source_node_id: event.sourceNodeId,
           });
           if (!added) {
-            await this.log(
-              workflowId,
-              null,
-              "Event queue full, dropping event",
-              "warning"
-            );
+            await this.log(workflowId, null, "Event queue full, dropping event", "warning");
           }
         }
       };
@@ -687,7 +622,7 @@ export class WorkflowExecutor {
       connections,
       character,
       adjacency,
-      controller.signal
+      controller.signal,
     ).catch(() => {
       // Cancelled or errored - handled internally
     });
@@ -701,7 +636,7 @@ export class WorkflowExecutor {
     connections: ConnectionData[],
     character: Record<string, any>,
     adjacency: Map<string, string[]>,
-    signal: AbortSignal
+    signal: AbortSignal,
   ): Promise<void> {
     const queue = this.eventQueues.get(workflowId);
     if (!queue) return;
@@ -716,25 +651,12 @@ export class WorkflowExecutor {
         const event: Event = (eventData as any).event;
         const sourceNodeId: string = (eventData as any).source_node_id;
 
-        await this.log(
-          workflowId,
-          sourceNodeId,
-          `Processing event: ${event.type}`,
-          "info"
-        );
+        await this.log(workflowId, sourceNodeId, `Processing event: ${event.type}`, "info");
 
-        const downstreamIds = this.getDownstreamNodes(
-          sourceNodeId,
-          adjacency
-        );
+        const downstreamIds = this.getDownstreamNodes(sourceNodeId, adjacency);
 
         if (downstreamIds.length === 0) {
-          await this.log(
-            workflowId,
-            sourceNodeId,
-            "No downstream nodes connected",
-            "warning"
-          );
+          await this.log(workflowId, sourceNodeId, "No downstream nodes connected", "warning");
           queue.processing = false;
           continue;
         }
@@ -755,68 +677,33 @@ export class WorkflowExecutor {
           sourceNodeId,
           nodes,
           connections,
-          adjacency
+          adjacency,
         );
 
         for (const node of executionOrder) {
-          if (
-            !this.runningWorkflows.has(workflowId) ||
-            signal.aborted
-          )
-            break;
+          if (!this.runningWorkflows.has(workflowId) || signal.aborted) break;
 
           if (SOURCE_NODE_TYPES.has(node.type)) continue;
           if (!this.nodeAcceptsEvent(node, event)) continue;
 
-          const inputs = this.getNodeInputs(
-            node.id,
-            connections,
-            nodeOutputs
-          );
-          if (
-            Object.keys(inputs).length === 0 &&
-            (inboundCounts.get(node.id) ?? 0) > 0
-          )
-            continue;
+          const inputs = this.getNodeInputs(node.id, connections, nodeOutputs);
+          if (Object.keys(inputs).length === 0 && (inboundCounts.get(node.id) ?? 0) > 0) continue;
 
           const runtime = this.getNodeRuntime(workflowId, node.id);
           if (!runtime) {
-            await this.log(
-              workflowId,
-              node.id,
-              `Node runtime missing: ${node.type}`,
-              "warning"
-            );
+            await this.log(workflowId, node.id, `Node runtime missing: ${node.type}`, "warning");
             continue;
           }
 
           await this.updateNodeStatus(workflowId, node.id, "running");
 
           try {
-            const outputs = await this.executeNodeRuntime(
-              runtime,
-              inputs
-            );
+            const outputs = await this.executeNodeRuntime(runtime, inputs);
             nodeOutputs.set(node.id, outputs ?? {});
-            await this.updateNodeStatus(
-              workflowId,
-              node.id,
-              "completed",
-              { outputs }
-            );
+            await this.updateNodeStatus(workflowId, node.id, "completed", { outputs });
           } catch (err) {
-            await this.updateNodeStatus(
-              workflowId,
-              node.id,
-              "error",
-              { error: String(err) }
-            );
-            await this.log(
-              workflowId,
-              node.id,
-              `Node error: ${err}`,
-              "error"
-            );
+            await this.updateNodeStatus(workflowId, node.id, "error", { error: String(err) });
+            await this.log(workflowId, node.id, `Node error: ${err}`, "error");
           }
         }
 
@@ -827,10 +714,7 @@ export class WorkflowExecutor {
         if (err instanceof WorkflowCycleError) {
           const errorMsg = `ワークフローに循環参照が検出されました / Cycle detected: ${err.cycleNodes.join(", ")}`;
           await this.log(workflowId, null, errorMsg, "error");
-          console.error(
-            `Cycle detected in workflow ${workflowId}:`,
-            err.cycleNodes
-          );
+          console.error(`Cycle detected in workflow ${workflowId}:`, err.cycleNodes);
           queue.processing = false;
 
           const status = this.runningWorkflows.get(workflowId);
@@ -855,7 +739,7 @@ export class WorkflowExecutor {
           break;
         }
 
-        console.error(`Queue processor error:`, err);
+        console.error("Queue processor error:", err);
         queue.processing = false;
       }
     }
@@ -867,7 +751,7 @@ export class WorkflowExecutor {
     workflowId: string,
     nodes: NodeData[],
     connections: ConnectionData[],
-    character: Record<string, any>
+    character: Record<string, any>,
   ): Promise<void> {
     let executionOrder: NodeData[];
     try {
@@ -881,12 +765,7 @@ export class WorkflowExecutor {
     }
 
     if (executionOrder.length === 0) {
-      await this.log(
-        workflowId,
-        null,
-        "No executable nodes found",
-        "warning"
-      );
+      await this.log(workflowId, null, "No executable nodes found", "warning");
       return;
     }
 
@@ -898,21 +777,11 @@ export class WorkflowExecutor {
       const inputs = this.getNodeInputs(node.id, connections, nodeOutputs);
       const runtime = this.getNodeRuntime(workflowId, node.id);
       if (!runtime) {
-        await this.log(
-          workflowId,
-          node.id,
-          `Node runtime missing: ${node.type}`,
-          "warning"
-        );
+        await this.log(workflowId, node.id, `Node runtime missing: ${node.type}`, "warning");
         continue;
       }
 
-      await this.log(
-        workflowId,
-        node.id,
-        `Executing node: ${node.type}`,
-        "info"
-      );
+      await this.log(workflowId, node.id, `Executing node: ${node.type}`, "info");
       await this.updateNodeStatus(workflowId, node.id, "running");
 
       try {
@@ -921,32 +790,17 @@ export class WorkflowExecutor {
         await this.updateNodeStatus(workflowId, node.id, "completed", {
           outputs,
         });
-        await this.log(
-          workflowId,
-          node.id,
-          `Node completed: ${node.type}`,
-          "info"
-        );
+        await this.log(workflowId, node.id, `Node completed: ${node.type}`, "info");
       } catch (err) {
         await this.updateNodeStatus(workflowId, node.id, "error", {
           error: String(err),
         });
-        await this.log(
-          workflowId,
-          node.id,
-          `Node error: ${err}`,
-          "error"
-        );
+        await this.log(workflowId, node.id, `Node error: ${err}`, "error");
         throw err;
       }
     }
 
-    await this.log(
-      workflowId,
-      null,
-      "Workflow execution completed",
-      "info"
-    );
+    await this.log(workflowId, null, "Workflow execution completed", "info");
 
     const status = this.runningWorkflows.get(workflowId);
     if (status) {
@@ -974,9 +828,7 @@ export class WorkflowExecutor {
         }),
       ]);
       if (awaitTimedOut) {
-        console.warn(
-          `Timed out waiting for background tasks to finish for workflow ${workflowId}`
-        );
+        console.warn(`Timed out waiting for background tasks to finish for workflow ${workflowId}`);
       }
       this.taskRegistries.delete(workflowId);
     }
@@ -1010,10 +862,7 @@ export class WorkflowExecutor {
 
   // ─── Graph Algorithms ─────────────
 
-  private filterSubgraph(
-    workflowData: WorkflowData,
-    startNodeId: string
-  ): WorkflowData {
+  private filterSubgraph(workflowData: WorkflowData, startNodeId: string): WorkflowData {
     const { nodes, connections } = workflowData;
     const adjacency = new Map<string, string[]>();
     for (const node of nodes) adjacency.set(node.id, []);
@@ -1021,7 +870,7 @@ export class WorkflowExecutor {
       const fromId = conn.from.nodeId;
       const toId = conn.to.nodeId;
       if (adjacency.has(fromId)) {
-        adjacency.get(fromId)!.push(toId);
+        adjacency.get(fromId)?.push(toId);
       }
     }
 
@@ -1029,7 +878,8 @@ export class WorkflowExecutor {
     const reachable = new Set<string>([startNodeId]);
     const queue = [startNodeId];
     while (queue.length > 0) {
-      const current = queue.shift()!;
+      const current = queue.shift();
+      if (current === undefined) break;
       for (const neighbor of adjacency.get(current) ?? []) {
         if (!reachable.has(neighbor)) {
           reachable.add(neighbor);
@@ -1042,16 +892,12 @@ export class WorkflowExecutor {
       ...workflowData,
       nodes: nodes.filter((n) => reachable.has(n.id)),
       connections: connections.filter(
-        (c) =>
-          reachable.has(c.from.nodeId) && reachable.has(c.to.nodeId)
+        (c) => reachable.has(c.from.nodeId) && reachable.has(c.to.nodeId),
       ),
     };
   }
 
-  private buildAdjacency(
-    nodes: NodeData[],
-    connections: ConnectionData[]
-  ): Map<string, string[]> {
+  private buildAdjacency(nodes: NodeData[], connections: ConnectionData[]): Map<string, string[]> {
     const adjacency = new Map<string, string[]>();
     for (const node of nodes) adjacency.set(node.id, []);
     for (const conn of connections) {
@@ -1065,16 +911,14 @@ export class WorkflowExecutor {
     return adjacency;
   }
 
-  private getDownstreamNodes(
-    sourceId: string,
-    adjacency: Map<string, string[]>
-  ): string[] {
+  private getDownstreamNodes(sourceId: string, adjacency: Map<string, string[]>): string[] {
     const visited = new Set<string>();
     const queue = [...(adjacency.get(sourceId) ?? [])];
     const result: string[] = [];
 
     while (queue.length > 0) {
-      const nodeId = queue.shift()!;
+      const nodeId = queue.shift();
+      if (nodeId === undefined) break;
       if (visited.has(nodeId)) continue;
       visited.add(nodeId);
       result.push(nodeId);
@@ -1087,7 +931,7 @@ export class WorkflowExecutor {
     sourceId: string,
     nodes: NodeData[],
     connections: ConnectionData[],
-    adjacency: Map<string, string[]>
+    adjacency: Map<string, string[]>,
   ): NodeData[] {
     const nodeMap = new Map(nodes.map((n) => [n.id, n]));
     const downstreamIds = this.getDownstreamNodes(sourceId, adjacency);
@@ -1109,13 +953,12 @@ export class WorkflowExecutor {
     }
 
     // Kahn's algorithm
-    const queue = [...inDegree.entries()]
-      .filter(([, deg]) => deg === 0)
-      .map(([id]) => id);
+    const queue = [...inDegree.entries()].filter(([, deg]) => deg === 0).map(([id]) => id);
     const order: NodeData[] = [];
 
     while (queue.length > 0) {
-      const nodeId = queue.shift()!;
+      const nodeId = queue.shift();
+      if (nodeId === undefined) break;
       const node = nodeMap.get(nodeId);
       if (node) order.push(node);
 
@@ -1129,19 +972,14 @@ export class WorkflowExecutor {
     }
 
     if (order.length < downstreamIds.length) {
-      const cycleNodes = [...inDegree.entries()]
-        .filter(([, deg]) => deg > 0)
-        .map(([id]) => id);
+      const cycleNodes = [...inDegree.entries()].filter(([, deg]) => deg > 0).map(([id]) => id);
       throw new WorkflowCycleError(cycleNodes);
     }
 
     return order;
   }
 
-  private getExecutionOrder(
-    nodes: NodeData[],
-    connections: ConnectionData[]
-  ): NodeData[] {
+  private getExecutionOrder(nodes: NodeData[], connections: ConnectionData[]): NodeData[] {
     if (nodes.length === 0) return [];
 
     const nodeMap = new Map(nodes.map((n) => [n.id, n]));
@@ -1157,22 +995,18 @@ export class WorkflowExecutor {
       const fromId = conn.from.nodeId;
       const toId = conn.to.nodeId;
       if (adjacency.has(fromId) && inDegree.has(toId)) {
-        adjacency.get(fromId)!.push(toId);
+        adjacency.get(fromId)?.push(toId);
         inDegree.set(toId, (inDegree.get(toId) ?? 0) + 1);
       }
     }
 
     // Find Start nodes
-    const startNodes = nodes
-      .filter((n) => n.type === "start")
-      .map((n) => n.id);
+    const startNodes = nodes.filter((n) => n.type === "start").map((n) => n.id);
     const hasStartNode = startNodes.length > 0;
 
     const entryPoints = hasStartNode
       ? startNodes
-      : [...inDegree.entries()]
-          .filter(([, deg]) => deg === 0)
-          .map(([id]) => id);
+      : [...inDegree.entries()].filter(([, deg]) => deg === 0).map(([id]) => id);
 
     if (entryPoints.length === 0) return [];
 
@@ -1180,7 +1014,8 @@ export class WorkflowExecutor {
     const reachable = new Set<string>();
     const bfsQueue = [...entryPoints];
     while (bfsQueue.length > 0) {
-      const nodeId = bfsQueue.shift()!;
+      const nodeId = bfsQueue.shift();
+      if (nodeId === undefined) break;
       if (reachable.has(nodeId)) continue;
       reachable.add(nodeId);
       for (const neighbor of adjacency.get(nodeId) ?? []) {
@@ -1192,14 +1027,8 @@ export class WorkflowExecutor {
     const filteredInDegree = new Map<string, number>();
     for (const id of reachable) filteredInDegree.set(id, 0);
     for (const conn of connections) {
-      if (
-        reachable.has(conn.from.nodeId) &&
-        reachable.has(conn.to.nodeId)
-      ) {
-        filteredInDegree.set(
-          conn.to.nodeId,
-          (filteredInDegree.get(conn.to.nodeId) ?? 0) + 1
-        );
+      if (reachable.has(conn.from.nodeId) && reachable.has(conn.to.nodeId)) {
+        filteredInDegree.set(conn.to.nodeId, (filteredInDegree.get(conn.to.nodeId) ?? 0) + 1);
       }
     }
 
@@ -1210,7 +1039,8 @@ export class WorkflowExecutor {
     const order: NodeData[] = [];
 
     while (execQueue.length > 0) {
-      const nodeId = execQueue.shift()!;
+      const nodeId = execQueue.shift();
+      if (nodeId === undefined) break;
       const node = nodeMap.get(nodeId);
       if (node) order.push(node);
 
@@ -1236,7 +1066,7 @@ export class WorkflowExecutor {
   private getNodeInputs(
     nodeId: string,
     connections: ConnectionData[],
-    nodeOutputs: Map<string, Record<string, any>>
+    nodeOutputs: Map<string, Record<string, any>>,
   ): Record<string, any> {
     const inputs: Record<string, any> = {};
 
@@ -1262,7 +1092,7 @@ export class WorkflowExecutor {
     nodeType: string,
     config: Record<string, any>,
     inputs: Record<string, any>,
-    context: NodeContext
+    context: NodeContext,
   ): Promise<Record<string, any>> {
     switch (nodeType) {
       case "start":
@@ -1270,9 +1100,7 @@ export class WorkflowExecutor {
         return { trigger: true };
 
       case "end":
-        await context.log(
-          `Workflow ended: ${config.message ?? "Workflow completed"}`
-        );
+        await context.log(`Workflow ended: ${config.message ?? "Workflow completed"}`);
         return {};
 
       case "manual-input": {
@@ -1300,7 +1128,7 @@ export class WorkflowExecutor {
     workflowId: string,
     nodeId: string | null,
     message: string,
-    level: string
+    level: string,
   ): Promise<void> {
     const callback = this.logCallbacks.get(workflowId);
     if (callback) {
@@ -1312,7 +1140,7 @@ export class WorkflowExecutor {
     workflowId: string,
     nodeId: string,
     status: string,
-    data?: Record<string, any> | null
+    data?: Record<string, any> | null,
   ): Promise<void> {
     const callback = this.statusCallbacks.get(workflowId);
     if (callback) {

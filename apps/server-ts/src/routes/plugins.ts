@@ -4,9 +4,9 @@
  * Ported from Python apps/server/routers/plugins.py
  */
 
+import { readdir } from "node:fs/promises";
+import { join, resolve, sep } from "node:path";
 import { Hono } from "hono";
-import { readdir } from "fs/promises";
-import { join, resolve, sep } from "path";
 import { getPluginsDir } from "../engine/plugin-loader";
 
 const app = new Hono();
@@ -31,9 +31,7 @@ function resolvePluginDir(pluginId: string): string | null {
   return pluginDir;
 }
 
-async function loadPluginManifest(
-  pluginDir: string
-): Promise<Record<string, any> | null> {
+async function loadPluginManifest(pluginDir: string): Promise<Record<string, any> | null> {
   const manifestPath = join(pluginDir, "manifest.json");
   try {
     const file = Bun.file(manifestPath);
@@ -51,9 +49,7 @@ async function getAllPlugins(): Promise<Record<string, any>[]> {
     const entries = await readdir(PLUGINS_DIR, { withFileTypes: true });
     for (const entry of entries) {
       if (entry.isDirectory()) {
-        const manifest = await loadPluginManifest(
-          join(PLUGINS_DIR, entry.name)
-        );
+        const manifest = await loadPluginManifest(join(PLUGINS_DIR, entry.name));
         if (manifest) plugins.push(manifest);
       }
     }
@@ -78,8 +74,7 @@ app.get("/:pluginId", async (c) => {
   }
 
   const manifest = await loadPluginManifest(pluginDir);
-  if (!manifest)
-    return c.json({ detail: "Plugin not found" }, 404);
+  if (!manifest) return c.json({ detail: "Plugin not found" }, 404);
   return c.json(manifest);
 });
 

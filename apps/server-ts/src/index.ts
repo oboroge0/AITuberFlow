@@ -1,15 +1,15 @@
-import { Hono } from "hono";
 import type { ServerWebSocket } from "bun";
+import { Hono } from "hono";
+import { createBunWebSocket } from "hono/bun";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { createBunWebSocket } from "hono/bun";
 import { initDb } from "./db/database";
-import { workflowRoutes, setExecutor, setWSBroadcaster } from "./routes/workflows";
+import { WorkflowExecutor } from "./engine/executor";
+import { integrationRoutes } from "./routes/integrations";
 import { pluginRoutes } from "./routes/plugins";
 import { templateRoutes } from "./routes/templates";
-import { integrationRoutes } from "./routes/integrations";
-import { createWebSocketHandler, wsBroadcaster, setExecutorForWS } from "./websocket/handler";
-import { WorkflowExecutor } from "./engine/executor";
+import { setExecutor, setWSBroadcaster, workflowRoutes } from "./routes/workflows";
+import { createWebSocketHandler, setExecutorForWS, wsBroadcaster } from "./websocket/handler";
 
 const app = new Hono();
 const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket<any>>();
@@ -28,7 +28,7 @@ app.use(
   cors({
     origin: corsOrigins,
     credentials: true,
-  })
+  }),
 );
 
 // Global executor instance
@@ -40,14 +40,10 @@ setWSBroadcaster(wsBroadcaster);
 setExecutorForWS(executor);
 
 // Health check
-app.get("/health", (c) =>
-  c.json({ status: "healthy", version: "1.0.0", runtime: "bun" })
-);
+app.get("/health", (c) => c.json({ status: "healthy", version: "1.0.0", runtime: "bun" }));
 
 // Root
-app.get("/", (c) =>
-  c.json({ name: "AITuberFlow API", version: "1.0.0", runtime: "bun" })
-);
+app.get("/", (c) => c.json({ name: "AITuberFlow API", version: "1.0.0", runtime: "bun" }));
 
 // API routes
 app.route("/api/workflows", workflowRoutes);
@@ -59,7 +55,7 @@ app.route("/api/integrations", integrationRoutes);
 const wsHandler = createWebSocketHandler();
 app.get(
   "/ws",
-  upgradeWebSocket(() => wsHandler)
+  upgradeWebSocket(() => wsHandler),
 );
 
 // Initialize database on startup

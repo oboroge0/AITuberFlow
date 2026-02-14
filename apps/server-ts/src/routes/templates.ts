@@ -4,18 +4,16 @@
  * Ported from Python apps/server/routers/templates.py
  */
 
+import { readdir } from "node:fs/promises";
+import { join } from "node:path";
 import { Hono } from "hono";
-import { readdir } from "fs/promises";
-import { join } from "path";
 import { getProjectRoot } from "../engine/plugin-loader";
 
 const app = new Hono();
 
 const TEMPLATES_DIR = join(getProjectRoot(), "templates");
 
-async function loadTemplate(
-  templatePath: string
-): Promise<Record<string, any> | null> {
+async function loadTemplate(templatePath: string): Promise<Record<string, any> | null> {
   try {
     const file = Bun.file(templatePath);
     if (!(await file.exists())) return null;
@@ -42,8 +40,7 @@ app.get("/", async (c) => {
         name: template.name ?? stem,
         name_ja: template.name_ja ?? template.name ?? stem,
         description: template.description ?? "",
-        description_ja:
-          template.description_ja ?? template.description ?? "",
+        description_ja: template.description_ja ?? template.description ?? "",
         nodeCount: (template.nodes ?? []).length,
         connectionCount: (template.connections ?? []).length,
       });

@@ -6,13 +6,9 @@
  */
 
 import type { ServerWebSocket } from "bun";
-import type {
-  WSEvents,
-  WSContext,
-  WSMessageReceive,
-} from "hono/ws";
-import { WorkflowExecutor } from "../engine/executor";
+import type { WSContext, WSEvents, WSMessageReceive } from "hono/ws";
 import type { Event as WorkflowEvent } from "../engine/event-bus";
+import type { WorkflowExecutor } from "../engine/executor";
 
 // ─── Types ────────────────────────────────
 
@@ -64,7 +60,7 @@ export class WSBroadcaster {
     if (!this.rooms.has(room)) {
       this.rooms.set(room, new Set());
     }
-    this.rooms.get(room)!.add(clientId);
+    this.rooms.get(room)?.add(clientId);
 
     const client = this.clients.get(clientId);
     if (client) {
@@ -85,19 +81,13 @@ export class WSBroadcaster {
   }
 
   /** Send a message to all clients in a workflow room. */
-  broadcast(
-    workflowId: string,
-    type: string,
-    payload: any
-  ): void {
+  broadcast(workflowId: string, type: string, payload: any): void {
     const room = `workflow:${workflowId}`;
     const clientIds = this.rooms.get(room);
     if (!clientIds) return;
 
     const payloadObj =
-      payload && typeof payload === "object"
-        ? (payload as Record<string, unknown>)
-        : {};
+      payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
     const { type: _discardedType, ...safePayload } = payloadObj;
     const message = JSON.stringify({ type, ...safePayload });
 
@@ -135,30 +125,24 @@ function setupWorkflowCallbacks(workflowId: string): void {
   if (!executor) return;
 
   // Log callback
-  executor.setLogCallback(
-    workflowId,
-    async (nodeId, message, level) => {
-      wsBroadcaster.broadcast(workflowId, "log", {
-        nodeId,
-        message,
-        level,
-        timestamp: new Date().toISOString(),
-      });
-    }
-  );
+  executor.setLogCallback(workflowId, async (nodeId, message, level) => {
+    wsBroadcaster.broadcast(workflowId, "log", {
+      nodeId,
+      message,
+      level,
+      timestamp: new Date().toISOString(),
+    });
+  });
 
   // Node status callback
-  executor.setStatusCallback(
-    workflowId,
-    async (nodeId, status, data) => {
-      wsBroadcaster.broadcast(workflowId, "node.status", {
-        nodeId,
-        status,
-        data,
-        timestamp: new Date().toISOString(),
-      });
-    }
-  );
+  executor.setStatusCallback(workflowId, async (nodeId, status, data) => {
+    wsBroadcaster.broadcast(workflowId, "node.status", {
+      nodeId,
+      status,
+      data,
+      timestamp: new Date().toISOString(),
+    });
+  });
 
   // Event callback (audio, avatar, subtitle)
   executor.setEventCallback(workflowId, async (event: WorkflowEvent) => {
@@ -230,9 +214,7 @@ export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
             if (workflowId) {
               wsBroadcaster.joinRoom(clientId, `workflow:${workflowId}`);
               setupWorkflowCallbacks(workflowId);
-              console.log(
-                `Client ${clientId} joined workflow: ${workflowId}`
-              );
+              console.log(`Client ${clientId} joined workflow: ${workflowId}`);
             }
             break;
           }
@@ -240,13 +222,8 @@ export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
           case "leave": {
             const workflowId = msg.payload?.workflowId;
             if (workflowId) {
-              wsBroadcaster.leaveRoom(
-                clientId,
-                `workflow:${workflowId}`
-              );
-              console.log(
-                `Client ${clientId} left workflow: ${workflowId}`
-              );
+              wsBroadcaster.leaveRoom(clientId, `workflow:${workflowId}`);
+              console.log(`Client ${clientId} left workflow: ${workflowId}`);
             }
             break;
           }
@@ -255,7 +232,7 @@ export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
             const workflowId = msg.payload?.workflowId;
             if (workflowId) {
               console.warn(
-                `Received workflow_start via WebSocket for ${workflowId}. Use HTTP /api/workflows/:id/start.`
+                `Received workflow_start via WebSocket for ${workflowId}. Use HTTP /api/workflows/:id/start.`,
               );
               ws.send(
                 JSON.stringify({
@@ -263,7 +240,7 @@ export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
                   workflowId,
                   message:
                     "workflow_start via WebSocket is notification-only. Use POST /api/workflows/:id/start.",
-                })
+                }),
               );
             }
             break;
@@ -275,11 +252,9 @@ export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
               void executor
                 .stopWorkflow(workflowId)
                 .then(() => {
-                  wsBroadcaster.broadcast(
-                    workflowId,
-                    "execution.stopped",
-                    { reason: "User requested stop" }
-                  );
+                  wsBroadcaster.broadcast(workflowId, "execution.stopped", {
+                    reason: "User requested stop",
+                  });
                 })
                 .catch((err) => {
                   console.error(`Failed to stop workflow ${workflowId}:`, err);
@@ -302,7 +277,7 @@ export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
           }
         }
       } catch (err) {
-        console.warn(`Failed to parse WebSocket message:`, err);
+        console.warn("Failed to parse WebSocket message:", err);
       }
     },
 

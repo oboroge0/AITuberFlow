@@ -4,42 +4,23 @@
  * Ported from Python apps/server/routers/integrations.py
  */
 
+import { mkdir, readdir, unlink } from "node:fs/promises";
+import { basename, extname, join } from "node:path";
 import { Hono } from "hono";
-import { join, extname, basename } from "path";
-import { readdir, mkdir, unlink } from "fs/promises";
 import { getProjectRoot } from "../engine/plugin-loader";
 
 const app = new Hono();
 
 const PROJECT_ROOT = getProjectRoot();
 const UPLOAD_DIR = join(PROJECT_ROOT, "apps", "web", "public", "models");
-const ANIMATIONS_DIR = join(
-  PROJECT_ROOT,
-  "apps",
-  "web",
-  "public",
-  "animations"
-);
+const ANIMATIONS_DIR = join(PROJECT_ROOT, "apps", "web", "public", "animations");
 const AUDIO_DIR = join(PROJECT_ROOT, "apps", "server-ts", "audio_output");
 const DEFAULT_VOICEVOX_HOST = "http://localhost:50021";
 const MAX_MODEL_UPLOAD_BYTES = 100 * 1024 * 1024;
 const MAX_ANIMATION_UPLOAD_BYTES = 100 * 1024 * 1024;
-const ALLOWED_VOICEVOX_HOSTS = new Set([
-  "localhost",
-  "127.0.0.1",
-  "0.0.0.0",
-  "::1",
-  "[::1]",
-]);
+const ALLOWED_VOICEVOX_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"]);
 
-const ALLOWED_EXTENSIONS = new Set([
-  ".vrm",
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".gif",
-  ".webp",
-]);
+const ALLOWED_EXTENSIONS = new Set([".vrm", ".png", ".jpg", ".jpeg", ".gif", ".webp"]);
 const ALLOWED_ANIMATION_EXTENSIONS = new Set([".fbx", ".glb", ".gltf"]);
 
 function validateVoicevoxHost(rawHost?: string): {
@@ -117,7 +98,7 @@ app.get("/voicevox/speakers", async (c) => {
     if (!response.ok) {
       return c.json(
         { detail: `VOICEVOX API error: ${response.statusText}` },
-        response.status as any
+        response.status as any,
       );
     }
 
@@ -128,7 +109,7 @@ app.get("/voicevox/speakers", async (c) => {
         name: speaker.name ?? "Unknown",
         style: style.name ?? "Normal",
         label: `${speaker.name ?? "Unknown"} (${style.name ?? "Normal"})`,
-      }))
+      })),
     );
 
     return c.json({ speakers });
@@ -138,7 +119,7 @@ app.get("/voicevox/speakers", async (c) => {
         {
           detail: `Cannot connect to VOICEVOX at ${host}. Make sure VOICEVOX is running.`,
         },
-        503
+        503,
       );
     }
     console.error("Failed to fetch VOICEVOX speakers:", err);
@@ -161,10 +142,7 @@ app.get("/voicevox/health", async (c) => {
     return c.json({ status: "healthy", version, host });
   } catch (err) {
     console.error("VOICEVOX health check failed:", err);
-    return c.json(
-      { status: "unhealthy", error: "VOICEVOX unavailable", host },
-      503
-    );
+    return c.json({ status: "unhealthy", error: "VOICEVOX unavailable", host }, 503);
   }
 });
 
@@ -212,14 +190,11 @@ app.post("/models/upload", async (c) => {
       {
         detail: `File type not allowed. Allowed: ${[...ALLOWED_EXTENSIONS].join(", ")}`,
       },
-      400
+      400,
     );
   }
   if (file.size > MAX_MODEL_UPLOAD_BYTES) {
-    return c.json(
-      { detail: `File too large. Max size is ${MAX_MODEL_UPLOAD_BYTES} bytes.` },
-      413
-    );
+    return c.json({ detail: `File too large. Max size is ${MAX_MODEL_UPLOAD_BYTES} bytes.` }, 413);
   }
 
   const uniqueId = crypto.randomUUID().substring(0, 8);
@@ -320,7 +295,7 @@ app.post("/animations/upload", async (c) => {
       {
         detail: `File type not allowed. Allowed: ${[...ALLOWED_ANIMATION_EXTENSIONS].join(", ")}`,
       },
-      400
+      400,
     );
   }
   if (file.size > MAX_ANIMATION_UPLOAD_BYTES) {
@@ -328,7 +303,7 @@ app.post("/animations/upload", async (c) => {
       {
         detail: `File too large. Max size is ${MAX_ANIMATION_UPLOAD_BYTES} bytes.`,
       },
-      413
+      413,
     );
   }
 

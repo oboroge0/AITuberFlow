@@ -24,9 +24,11 @@ export class EventQueue<T = unknown> {
 
     // If someone is waiting for an event, deliver immediately
     if (this.resolvers.length > 0) {
-      const resolve = this.resolvers.shift()!;
-      resolve(event);
-      return true;
+      const resolve = this.resolvers.shift();
+      if (resolve) {
+        resolve(event);
+        return true;
+      }
     }
 
     this.queue.push(event);
@@ -37,7 +39,7 @@ export class EventQueue<T = unknown> {
   async get(timeoutMs?: number): Promise<T | null> {
     // If queue has items, return immediately
     if (this.queue.length > 0) {
-      return this.queue.shift()!;
+      return this.queue.shift() ?? null;
     }
 
     // Otherwise wait for an event

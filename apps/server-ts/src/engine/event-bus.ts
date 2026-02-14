@@ -38,9 +38,7 @@ export class EventFilter {
     const pattern = this.event;
     if (!pattern.includes("*")) return pattern === eventType;
 
-    const regex = new RegExp(
-      "^" + pattern.replace(/\./g, "\\.").replace(/\*/g, ".*") + "$",
-    );
+    const regex = new RegExp(`^${pattern.replace(/\./g, "\\.").replace(/\*/g, ".*")}$`);
     return regex.test(eventType);
   }
 
@@ -56,9 +54,7 @@ export class EventFilter {
 
     try {
       // Normalize logical operators
-      const normalized = this.condition
-        .replace(/\band\b/g, "&&")
-        .replace(/\bor\b/g, "||");
+      const normalized = this.condition.replace(/\band\b/g, "&&").replace(/\bor\b/g, "||");
 
       // Split on logical operators and check each clause
       return this._parseLogical(normalized, event);
@@ -135,9 +131,7 @@ export class EventFilter {
    */
   private _parseComparison(expr: string, event: Event): boolean {
     // Match: value operator value
-    const match = expr.match(
-      /^\s*(.+?)\s*(===|!==|==|!=|>=|<=|>|<)\s*(.+?)\s*$/,
-    );
+    const match = expr.match(/^\s*(.+?)\s*(===|!==|==|!=|>=|<=|>|<)\s*(.+?)\s*$/);
     if (!match) {
       // Try as a single truthy value
       const val = this._resolveValue(expr.trim(), event);
@@ -172,10 +166,7 @@ export class EventFilter {
    * Resolve a value reference against the event.
    * Handles: event.field paths, string literals, numbers, booleans.
    */
-  private _resolveValue(
-    raw: string,
-    event: Event,
-  ): string | number | boolean | null {
+  private _resolveValue(raw: string, event: Event): string | number | boolean | null {
     const trimmed = raw.trim();
 
     // String literal
@@ -268,7 +259,8 @@ export class EventBus {
       this._subscriptions.set(eventType, []);
     }
 
-    const subs = this._subscriptions.get(eventType)!;
+    const subs = this._subscriptions.get(eventType);
+    if (!subs) return "";
     subs.push({ callback, filters: filters ?? [], nodeId });
 
     return `${eventType}:${subs.length - 1}`;
@@ -341,9 +333,7 @@ export class EventBus {
     if (pattern === "*") return true;
     if (!pattern.includes("*")) return pattern === eventType;
 
-    const regex = new RegExp(
-      "^" + pattern.replace(/\./g, "\\.").replace(/\*/g, ".*") + "$",
-    );
+    const regex = new RegExp(`^${pattern.replace(/\./g, "\\.").replace(/\*/g, ".*")}$`);
     return regex.test(eventType);
   }
 
@@ -366,7 +356,7 @@ export class EventBus {
   /**
    * Get recent event history, optionally filtered by type.
    */
-  getHistory(eventType?: string, limit: number = 10): Event[] {
+  getHistory(eventType?: string, limit = 10): Event[] {
     const events = eventType
       ? this._eventHistory.filter((e) => e.type === eventType)
       : this._eventHistory;

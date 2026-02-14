@@ -12,10 +12,7 @@ export class TaskRegistry {
    * Register and start a background task.
    * The task receives an AbortSignal it should respect for cancellation.
    */
-  register(
-    id: string,
-    fn: (signal: AbortSignal) => Promise<void>
-  ): AbortController {
+  register(id: string, fn: (signal: AbortSignal) => Promise<void>): AbortController {
     // Cancel existing task with same ID
     this.cancel(id);
 

@@ -1,4 +1,4 @@
-import type { Message, Memory, Emotion } from "@aituber-flow/sdk";
+import type { Emotion, Memory, Message } from "@aituber-flow/sdk";
 
 export class CharacterState {
   name = "AI Assistant";

@@ -4,13 +4,13 @@
  * Ported from Python apps/server/routers/workflows.py
  */
 
-import { Hono } from "hono";
-import { eq } from "drizzle-orm";
 import { zValidator } from "@hono/zod-validator";
+import { eq } from "drizzle-orm";
+import { Hono } from "hono";
 import { z } from "zod";
 import { db as defaultDb } from "../db/database";
 import { workflows } from "../db/schema";
-import { WorkflowExecutor } from "../engine/executor";
+import type { WorkflowExecutor } from "../engine/executor";
 import type { WSBroadcaster } from "../websocket/handler";
 
 const app = new Hono();
@@ -44,14 +44,7 @@ const createWorkflowBody = z.object({
 
 // ─── Helpers ──────────────────────────────
 
-const SENSITIVE_KEYS = [
-  "apiKey",
-  "api_key",
-  "password",
-  "secret",
-  "token",
-  "apiSecret",
-];
+const SENSITIVE_KEYS = ["apiKey", "api_key", "password", "secret", "token", "apiSecret"];
 
 function stripApiKeys(nodes: any[]): any[] {
   return nodes.map((node) => {
@@ -75,8 +68,7 @@ function workflowToResponse(row: any): Record<string, any> {
     nodes: JSON.parse(row.nodesJson || "[]"),
     connections: JSON.parse(row.connectionsJson || "[]"),
     character: JSON.parse(
-      row.characterJson ||
-        '{"name": "AI Assistant", "personality": "Friendly and helpful"}'
+      row.characterJson || '{"name": "AI Assistant", "personality": "Friendly and helpful"}',
     ),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -117,10 +109,7 @@ app.post("/", zValidator("json", createWorkflowBody), async (c) => {
     updatedAt: now,
   });
 
-  const [row] = await _db
-    .select()
-    .from(workflows)
-    .where(eq(workflows.id, id));
+  const [row] = await _db.select().from(workflows).where(eq(workflows.id, id));
   return c.json(workflowToResponse(row));
 });
 
@@ -128,20 +117,14 @@ app.post("/", zValidator("json", createWorkflowBody), async (c) => {
 app.get("/", async (c) => {
   const rows = await _db.select().from(workflows);
   // Sort by updatedAt descending
-  rows.sort(
-    (a, b) =>
-      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-  );
+  rows.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   return c.json(rows.map(workflowToResponse));
 });
 
 // Get workflow
 app.get("/:id", async (c) => {
   const id = c.req.param("id");
-  const [row] = await _db
-    .select()
-    .from(workflows)
-    .where(eq(workflows.id, id));
+  const [row] = await _db.select().from(workflows).where(eq(workflows.id, id));
   if (!row) return c.json({ detail: "Workflow not found" }, 404);
   return c.json(workflowToResponse(row));
 });
@@ -151,38 +134,26 @@ app.put("/:id", async (c) => {
   const id = c.req.param("id");
   const body = await c.req.json();
 
-  const [existing] = await _db
-    .select()
-    .from(workflows)
-    .where(eq(workflows.id, id));
+  const [existing] = await _db.select().from(workflows).where(eq(workflows.id, id));
   if (!existing) return c.json({ detail: "Workflow not found" }, 404);
 
   const updates: Record<string, any> = { updatedAt: nowISO() };
   if (body.name !== undefined) updates.name = body.name;
   if (body.description !== undefined) updates.description = body.description;
-  if (body.nodes !== undefined)
-    updates.nodesJson = JSON.stringify(body.nodes);
-  if (body.connections !== undefined)
-    updates.connectionsJson = JSON.stringify(body.connections);
-  if (body.character !== undefined)
-    updates.characterJson = JSON.stringify(body.character);
+  if (body.nodes !== undefined) updates.nodesJson = JSON.stringify(body.nodes);
+  if (body.connections !== undefined) updates.connectionsJson = JSON.stringify(body.connections);
+  if (body.character !== undefined) updates.characterJson = JSON.stringify(body.character);
 
   await _db.update(workflows).set(updates).where(eq(workflows.id, id));
 
-  const [row] = await _db
-    .select()
-    .from(workflows)
-    .where(eq(workflows.id, id));
+  const [row] = await _db.select().from(workflows).where(eq(workflows.id, id));
   return c.json(workflowToResponse(row));
 });
 
 // Delete workflow
 app.delete("/:id", async (c) => {
   const id = c.req.param("id");
-  const [existing] = await _db
-    .select()
-    .from(workflows)
-    .where(eq(workflows.id, id));
+  const [existing] = await _db.select().from(workflows).where(eq(workflows.id, id));
   if (!existing) return c.json({ detail: "Workflow not found" }, 404);
 
   await executor.stopWorkflow(id);
@@ -193,10 +164,7 @@ app.delete("/:id", async (c) => {
 // Duplicate workflow
 app.post("/:id/duplicate", async (c) => {
   const id = c.req.param("id");
-  const [existing] = await _db
-    .select()
-    .from(workflows)
-    .where(eq(workflows.id, id));
+  const [existing] = await _db.select().from(workflows).where(eq(workflows.id, id));
   if (!existing) return c.json({ detail: "Workflow not found" }, 404);
 
   const newId = generateId();
@@ -213,10 +181,7 @@ app.post("/:id/duplicate", async (c) => {
     updatedAt: now,
   });
 
-  const [row] = await _db
-    .select()
-    .from(workflows)
-    .where(eq(workflows.id, newId));
+  const [row] = await _db.select().from(workflows).where(eq(workflows.id, newId));
   return c.json(workflowToResponse(row));
 });
 
@@ -225,10 +190,7 @@ app.get("/:id/export", async (c) => {
   const id = c.req.param("id");
   const excludeApiKeys = c.req.query("exclude_api_keys") !== "false";
 
-  const [existing] = await _db
-    .select()
-    .from(workflows)
-    .where(eq(workflows.id, id));
+  const [existing] = await _db.select().from(workflows).where(eq(workflows.id, id));
   if (!existing) return c.json({ detail: "Workflow not found" }, 404);
 
   let nodes = JSON.parse(existing.nodesJson || "[]");
@@ -261,26 +223,20 @@ app.post("/import", async (c) => {
       data.character ?? {
         name: "AI Assistant",
         personality: "Friendly",
-      }
+      },
     ),
     createdAt: now,
     updatedAt: now,
   });
 
-  const [row] = await _db
-    .select()
-    .from(workflows)
-    .where(eq(workflows.id, id));
+  const [row] = await _db.select().from(workflows).where(eq(workflows.id, id));
   return c.json(workflowToResponse(row));
 });
 
 // Start workflow execution
 app.post("/:id/start", async (c) => {
   const id = c.req.param("id");
-  const [existing] = await _db
-    .select()
-    .from(workflows)
-    .where(eq(workflows.id, id));
+  const [existing] = await _db.select().from(workflows).where(eq(workflows.id, id));
   if (!existing) return c.json({ detail: "Workflow not found" }, 404);
 
   let body: any = {};
@@ -291,10 +247,8 @@ app.post("/:id/start", async (c) => {
   }
 
   const nodes = body.nodes ?? JSON.parse(existing.nodesJson || "[]");
-  const connections =
-    body.connections ?? JSON.parse(existing.connectionsJson || "[]");
-  const character =
-    body.character ?? JSON.parse(existing.characterJson || "{}");
+  const connections = body.connections ?? JSON.parse(existing.connectionsJson || "[]");
+  const character = body.character ?? JSON.parse(existing.characterJson || "{}");
   const startNodeId = body.startNodeId ?? null;
 
   const workflowData = {

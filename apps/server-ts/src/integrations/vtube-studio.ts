@@ -1,5 +1,5 @@
 // Bun provides global WebSocket (browser-standard API) - no external package needed
-import { readFileSync, writeFileSync, mkdirSync, unlinkSync, existsSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
 const PLUGIN_NAME = "AITuberFlow";
@@ -31,11 +31,7 @@ class VTubeStudioClient {
     return this.connected && this.authenticated;
   }
 
-  configure(
-    port = 8001,
-    mouthParam = "MouthOpen",
-    expressionMap?: Record<string, string>
-  ): void {
+  configure(port = 8001, mouthParam = "MouthOpen", expressionMap?: Record<string, string>): void {
     this.port = port;
     this.mouthParam = mouthParam;
     this.expressionMap = expressionMap ?? {
@@ -63,27 +59,35 @@ class VTubeStudioClient {
         this.abortController = new AbortController();
         const { signal } = this.abortController;
 
-        ws.addEventListener("open", async () => {
-          this.ws = ws;
-          this.connected = true;
-          console.log("[VTS] Connected to VTube Studio");
-          this.setupReceiveHandler();
+        ws.addEventListener(
+          "open",
+          async () => {
+            this.ws = ws;
+            this.connected = true;
+            console.log("[VTS] Connected to VTube Studio");
+            this.setupReceiveHandler();
 
-          const success = await this.authenticate();
-          if (success) {
-            console.log("[VTS] Authentication successful");
-          } else {
-            console.warn("[VTS] Authentication failed");
-          }
-          resolve(success);
-        }, { signal });
+            const success = await this.authenticate();
+            if (success) {
+              console.log("[VTS] Authentication successful");
+            } else {
+              console.warn("[VTS] Authentication failed");
+            }
+            resolve(success);
+          },
+          { signal },
+        );
 
-        ws.addEventListener("error", () => {
-          console.error("[VTS] Connection error");
-          this.connected = false;
-          this.authenticated = false;
-          resolve(false);
-        }, { signal });
+        ws.addEventListener(
+          "error",
+          () => {
+            console.error("[VTS] Connection error");
+            this.connected = false;
+            this.authenticated = false;
+            resolve(false);
+          },
+          { signal },
+        );
       });
     } catch (e) {
       console.error(`[VTS] Failed to connect: ${e}`);
@@ -117,13 +121,13 @@ class VTubeStudioClient {
   async setParameter(paramId: string, value: number): Promise<boolean> {
     if (!this.isConnected) return false;
 
-    value = Math.max(0, Math.min(1, value));
+    const clamped = Math.max(0, Math.min(1, value));
 
     try {
       await this.sendRequest("InjectParameterDataRequest", {
         faceFound: true,
         mode: "set",
-        parameterValues: [{ id: paramId, value }],
+        parameterValues: [{ id: paramId, value: clamped }],
       });
       return true;
     } catch {
@@ -184,7 +188,7 @@ class VTubeStudioClient {
           pluginName: PLUGIN_NAME,
           pluginDeveloper: PLUGIN_DEVELOPER,
         },
-        60_000
+        60_000,
       )) as Record<string, any> | null;
 
       return response?.data?.authenticationToken ?? null;
@@ -232,11 +236,7 @@ class VTubeStudioClient {
       mkdirSync(dirname(TOKEN_FILE), { recursive: true });
       writeFileSync(
         TOKEN_FILE,
-        JSON.stringify(
-          { token, port: this.port, updatedAt: new Date().toISOString() },
-          null,
-          2
-        )
+        JSON.stringify({ token, port: this.port, updatedAt: new Date().toISOString() }, null, 2),
       );
       console.log("[VTS] Token saved");
     } catch (e) {
@@ -257,7 +257,7 @@ class VTubeStudioClient {
   private sendRequest(
     messageType: string,
     data?: Record<string, unknown>,
-    timeout = 10_000
+    timeout = 10_000,
   ): Promise<unknown> {
     return new Promise((resolve, reject) => {
       if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
@@ -291,39 +291,52 @@ class VTubeStudioClient {
 
     const { signal } = this.abortController;
 
-    this.ws.addEventListener("message", (event: MessageEvent) => {
-      try {
-        const data = JSON.parse(
-          typeof event.data === "string" ? event.data : String(event.data)
-        ) as Record<string, unknown>;
-        const requestId = data.requestID as string | undefined;
+    this.ws.addEventListener(
+      "message",
+      (event: MessageEvent) => {
+        try {
+          const data = JSON.parse(
+            typeof event.data === "string" ? event.data : String(event.data),
+          ) as Record<string, unknown>;
+          const requestId = data.requestID as string | undefined;
 
-        if (requestId && this.pendingRequests.has(requestId)) {
-          const pending = this.pendingRequests.get(requestId)!;
-          clearTimeout(pending.timer);
-          this.pendingRequests.delete(requestId);
-          pending.resolve(data);
+          if (requestId && this.pendingRequests.has(requestId)) {
+            const pending = this.pendingRequests.get(requestId);
+            if (!pending) return;
+            clearTimeout(pending.timer);
+            this.pendingRequests.delete(requestId);
+            pending.resolve(data);
+          }
+        } catch {
+          console.warn("[VTS] Failed to parse message");
         }
-      } catch {
-        console.warn("[VTS] Failed to parse message");
-      }
-    }, { signal });
+      },
+      { signal },
+    );
 
-    this.ws.addEventListener("close", () => {
-      console.log("[VTS] Connection closed");
-      this.connected = false;
-      this.authenticated = false;
+    this.ws.addEventListener(
+      "close",
+      () => {
+        console.log("[VTS] Connection closed");
+        this.connected = false;
+        this.authenticated = false;
 
-      if (this.shouldReconnect) {
-        setTimeout(() => this.reconnect(), 3000);
-      }
-    }, { signal });
+        if (this.shouldReconnect) {
+          setTimeout(() => this.reconnect(), 3000);
+        }
+      },
+      { signal },
+    );
 
-    this.ws.addEventListener("error", () => {
-      console.error("[VTS] WebSocket error");
-      this.connected = false;
-      this.authenticated = false;
-    }, { signal });
+    this.ws.addEventListener(
+      "error",
+      () => {
+        console.error("[VTS] WebSocket error");
+        this.connected = false;
+        this.authenticated = false;
+      },
+      { signal },
+    );
   }
 
   private async reconnect(): Promise<void> {
