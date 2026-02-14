@@ -503,6 +503,9 @@ export class WorkflowExecutor {
     // Disconnect VTS
     await this.disconnectVtsIfNeeded(workflowId);
 
+    // Clean up callbacks
+    this.clearCallbacks(workflowId);
+
     // Update status
     this.runningWorkflows.delete(workflowId);
     console.log(`Stopped workflow: ${workflowId}`);
