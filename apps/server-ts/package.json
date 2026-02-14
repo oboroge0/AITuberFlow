@@ -1,11 +1,15 @@
 {
   "name": "@aituber-flow/server",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "bun run src/index.ts",
     "build": "bun build --compile --target=bun src/index.ts --outfile=server",
+    "build:desktop": "bun build --compile --target=bun src/index.ts --outfile=../desktop/src-tauri/binaries/server",
+    "build:desktop-darwin-arm64": "bun build --compile --target=bun-darwin-arm64 src/index.ts --outfile=../desktop/src-tauri/binaries/server-aarch64-apple-darwin",
+    "build:desktop-darwin-x64": "bun build --compile --target=bun-darwin-x64 src/index.ts --outfile=../desktop/src-tauri/binaries/server-x86_64-apple-darwin",
+    "build:desktop-windows-x64": "bun build --compile --target=bun-windows-x64 src/index.ts --outfile=../desktop/src-tauri/binaries/server-x86_64-pc-windows-msvc.exe",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/",
     "db:generate": "drizzle-kit generate",

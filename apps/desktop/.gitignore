@@ -1,0 +1,14 @@
+# Compiled sidecar binaries
+src-tauri/binaries/server*
+!src-tauri/binaries/.gitkeep
+
+# Copied resources (regenerated during build)
+src-tauri/resources/
+
+# Rust build output
+src-tauri/target/
+
+# Tauri generated files
+src-tauri/gen/
+
+node_modules/

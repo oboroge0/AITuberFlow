@@ -1,6 +1,8 @@
+import { join } from "node:path";
 import type { ServerWebSocket } from "bun";
 import { Hono } from "hono";
 import { createBunWebSocket } from "hono/bun";
+import { serveStatic } from "hono/bun";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { initDb } from "./db/database";
@@ -13,6 +15,9 @@ import { createWebSocketHandler, setExecutorForWS, wsBroadcaster } from "./webso
 
 const app = new Hono();
 const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket<any>>();
+
+// Static file serving directory (set by Tauri for desktop mode)
+const STATIC_DIR = process.env.STATIC_DIR;
 
 // CORS configuration
 const corsOrigins = process.env.CORS_ORIGINS
@@ -40,12 +45,9 @@ setWSBroadcaster(wsBroadcaster);
 setExecutorForWS(executor);
 
 // Health check
-app.get("/health", (c) => c.json({ status: "healthy", version: "1.0.0", runtime: "bun" }));
+app.get("/health", (c) => c.json({ status: "healthy", version: "2.0.0", runtime: "bun" }));
 
-// Root
-app.get("/", (c) => c.json({ name: "AITuberFlow API", version: "1.0.0", runtime: "bun" }));
-
-// API routes
+// API routes (must be registered BEFORE static file serving)
 app.route("/api/workflows", workflowRoutes);
 app.route("/api/plugins", pluginRoutes);
 app.route("/api/templates", templateRoutes);
@@ -58,11 +60,57 @@ app.get(
   upgradeWebSocket(() => wsHandler),
 );
 
+// Static file serving for desktop mode
+// When STATIC_DIR is set, serve the Next.js static export and provide SPA fallback
+if (STATIC_DIR) {
+  // Serve static files from the export directory
+  app.use("/*", serveStatic({ root: STATIC_DIR }));
+
+  // SPA fallback: serve the correct HTML shell for each route pattern
+  // Next.js static export generates /editor/_.html, /preview/_.html, /overlay/_.html
+  app.get("/editor/:id", async (c) => {
+    const file = Bun.file(join(STATIC_DIR, "editor", "_.html"));
+    if (await file.exists()) return c.html(await file.text());
+    return c.notFound();
+  });
+  app.get("/preview/:id", async (c) => {
+    const file = Bun.file(join(STATIC_DIR, "preview", "_.html"));
+    if (await file.exists()) return c.html(await file.text());
+    return c.notFound();
+  });
+  app.get("/overlay/:id", async (c) => {
+    const file = Bun.file(join(STATIC_DIR, "overlay", "_.html"));
+    if (await file.exists()) return c.html(await file.text());
+    return c.notFound();
+  });
+
+  // Root fallback for any other unmatched path → serve index.html
+  app.get("*", async (c) => {
+    const file = Bun.file(join(STATIC_DIR, "index.html"));
+    if (await file.exists()) return c.html(await file.text());
+    return c.notFound();
+  });
+} else {
+  // API-only mode: show API info at root
+  app.get("/", (c) => c.json({ name: "AITuberFlow API", version: "2.0.0", runtime: "bun" }));
+}
+
 // Initialize database on startup
 initDb();
 
-const port = Number(process.env.PORT) || 8001;
+const parsedPort = process.env.PORT === undefined ? Number.NaN : Number(process.env.PORT);
+const port = Number.isFinite(parsedPort) ? parsedPort : 8001;
 console.log(`AITuberFlow server starting on port ${port}...`);
+
+// Graceful shutdown handler
+process.on("SIGTERM", () => {
+  console.log("Received SIGTERM, shutting down gracefully...");
+  process.exit(0);
+});
+process.on("SIGINT", () => {
+  console.log("Received SIGINT, shutting down gracefully...");
+  process.exit(0);
+});
 
 // Use export default for Bun's built-in server management.
 // This ensures --hot mode works correctly (handler replacement without restart).

@@ -6,6 +6,11 @@ import { useRouter } from 'next/navigation';
 import api, { TemplateSummary, WorkflowExport } from '@/lib/api';
 import { Workflow } from '@/lib/types';
 import { useTranslation } from '@/stores/localeStore';
+import { toast } from '@/stores/toastStore';
+
+type TauriInternals = {
+  invoke?: (command: string, args?: Record<string, unknown>) => Promise<unknown>;
+};
 
 export default function HomePage() {
   const router = useRouter();
@@ -14,10 +19,23 @@ export default function HomePage() {
   const [templates, setTemplates] = useState<TemplateSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const deleteConfirmTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const getTauriInternals = () =>
+    (window as Window & { __TAURI_INTERNALS__?: TauriInternals }).__TAURI_INTERNALS__;
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (deleteConfirmTimerRef.current) {
+        clearTimeout(deleteConfirmTimerRef.current);
+      }
+    };
   }, []);
 
   const loadData = async () => {
@@ -81,11 +99,36 @@ export default function HomePage() {
   };
 
   const deleteWorkflow = async (id: string) => {
-    if (!confirm(t('home.deleteConfirm'))) return;
+    const tauri = getTauriInternals();
+    const isDesktop = typeof tauri?.invoke === 'function';
+    if (isDesktop) {
+      if (pendingDeleteId !== id) {
+        setPendingDeleteId(id);
+        toast.warning('もう一度押すと削除します');
+        if (deleteConfirmTimerRef.current) {
+          clearTimeout(deleteConfirmTimerRef.current);
+        }
+        deleteConfirmTimerRef.current = setTimeout(() => {
+          setPendingDeleteId(null);
+          deleteConfirmTimerRef.current = null;
+        }, 5000);
+        return;
+      }
+    } else if (!confirm(t('home.deleteConfirm'))) {
+      return;
+    }
 
     const response = await api.deleteWorkflow(id);
-    if (!response.error) {
+    if (response.error) {
+      setError(response.error);
+    } else {
       setWorkflows(workflows.filter((w) => w.id !== id));
+      setPendingDeleteId(null);
+      if (deleteConfirmTimerRef.current) {
+        clearTimeout(deleteConfirmTimerRef.current);
+        deleteConfirmTimerRef.current = null;
+      }
+      toast.success('ワークフローを削除しました');
     }
   };
 
@@ -101,15 +144,33 @@ export default function HomePage() {
   const exportWorkflow = async (id: string, name: string) => {
     const response = await api.exportWorkflow(id);
     if (response.data) {
-      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
+      const jsonText = JSON.stringify(response.data, null, 2);
+      const safeName = `${name.replace(/[^a-zA-Z0-9_-]/g, '_') || 'workflow'}.json`;
+      const tauri = getTauriInternals();
+
+      if (typeof tauri?.invoke === 'function') {
+        try {
+          const savedPath = await tauri.invoke('save_workflow_export', {
+            filename: safeName,
+            content: jsonText,
+          });
+          toast.success(`保存しました: ${String(savedPath)}`);
+        } catch (invokeError) {
+          setError(invokeError instanceof Error ? invokeError.message : '保存に失敗しました');
+        }
+        return;
+      }
+
+      const blob = new Blob([jsonText], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${name.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+      a.download = safeName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      toast.success('ワークフローをダウンロードしました');
     } else if (response.error) {
       setError(response.error);
     }
@@ -419,8 +480,12 @@ export default function HomePage() {
                           </button>
                           <button
                             onClick={() => deleteWorkflow(workflow.id)}
-                            className="text-xs text-gray-400 hover:text-red-400 transition-colors"
-                            title="Delete"
+                            className={`text-xs transition-colors ${
+                              pendingDeleteId === workflow.id
+                                ? 'text-red-400'
+                                : 'text-gray-400 hover:text-red-400'
+                            }`}
+                            title={pendingDeleteId === workflow.id ? 'Click again to delete' : 'Delete'}
                           >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <polyline points="3 6 5 6 21 6"/>

@@ -12,9 +12,10 @@ import { getProjectRoot } from "../engine/plugin-loader";
 const app = new Hono();
 
 const PROJECT_ROOT = getProjectRoot();
-const UPLOAD_DIR = join(PROJECT_ROOT, "apps", "web", "public", "models");
-const ANIMATIONS_DIR = join(PROJECT_ROOT, "apps", "web", "public", "animations");
-const AUDIO_DIR = join(PROJECT_ROOT, "apps", "server-ts", "audio_output");
+const UPLOAD_DIR = process.env.UPLOAD_DIR || join(PROJECT_ROOT, "apps", "web", "public", "models");
+const ANIMATIONS_DIR =
+  process.env.ANIMATIONS_DIR || join(PROJECT_ROOT, "apps", "web", "public", "animations");
+const AUDIO_DIR = process.env.AUDIO_DIR || join(PROJECT_ROOT, "apps", "server-ts", "audio_output");
 const DEFAULT_VOICEVOX_HOST = "http://localhost:50021";
 const MAX_MODEL_UPLOAD_BYTES = 100 * 1024 * 1024;
 const MAX_ANIMATION_UPLOAD_BYTES = 100 * 1024 * 1024;

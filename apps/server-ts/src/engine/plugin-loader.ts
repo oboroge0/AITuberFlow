@@ -11,7 +11,7 @@ import { join, resolve } from "node:path";
 
 // Project root: go up from apps/server-ts/src/engine/ → project root
 const PROJECT_ROOT = resolve(import.meta.dir, "../../../..");
-const PLUGINS_DIR = join(PROJECT_ROOT, "plugins");
+const PLUGINS_DIR = process.env.PLUGINS_DIR || join(PROJECT_ROOT, "plugins");
 
 /** Source node types that run continuously and emit events. */
 export const SOURCE_NODE_TYPES = new Set(["twitch-chat", "youtube-chat", "discord-chat", "timer"]);

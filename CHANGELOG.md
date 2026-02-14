@@ -5,6 +5,78 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
 [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [2.0.0] - 2026-02-15
+
+### 追加
+
+#### デスクトップアプリケーション
+- **Tauri v2 デスクトップアプリ** - macOS / Windows 対応のネイティブアプリ (#75)
+  - ワンクリック起動（サーバー自動起動）
+  - DMG (macOS) / NSIS インストーラー (Windows) で配布
+  - GitHub Releases からの自動アップデート機能
+  - スプラッシュスクリーン（サーバー起動待ち表示）
+
+#### TypeScript バックエンド
+- **Bun + Hono バックエンド** - Python バックエンドを完全に TypeScript で再実装
+  - Bun ランタイムによる高速な起動・実行
+  - Hono フレームワークによる軽量 API サーバー
+  - bun:sqlite + Drizzle ORM によるデータベース管理
+  - Zod によるリクエストバリデーション
+  - Biome によるコードフォーマットと静的解析
+
+- **TypeScript SDK** - プラグイン開発用 `@aituber-flow/sdk` パッケージ
+  - BaseNode クラス（setup, execute, onEvent, teardown）
+  - NodeContext API（ログ出力、イベント発行、バックグラウンドタスク）
+  - 型安全なプラグイン開発体験
+
+- **ネイティブ WebSocket** - Socket.IO から Hono/Bun ネイティブ WebSocket に移行
+  - 依存関係の削減（socket.io パッケージ不要）
+  - バイナリメッセージ対応
+  - より軽量な通信プロトコル
+
+#### ビルドシステム
+- **静的エクスポート対応** - Next.js の `output: 'export'` モード
+  - `BUILD_MODE=desktop` で静的 HTML/JS/CSS を生成
+  - Bun サーバーが API + 静的フロントエンドを同一ポートで配信
+  - CORS 不要（同一オリジン）
+- **デスクトップビルドパイプライン**
+  - `npm run build:desktop` で静的ビルド → サイドカーコンパイル → リソースコピー
+  - GitHub Actions によるクロスプラットフォームビルド（macOS ARM/Intel, Windows x64）
+
+### 改善
+
+- **環境変数によるパス設定** - デスクトップモード向けに全リソースパスを環境変数でオーバーライド可能に
+  - `PLUGINS_DIR`, `TEMPLATES_DIR`, `UPLOAD_DIR`, `ANIMATIONS_DIR`, `AUDIO_DIR`, `STATIC_DIR`, `DATABASE_URL`
+- **グレースフルシャットダウン** - SIGTERM/SIGINT ハンドラーによる安全なサーバー停止
+- **CI/CD パイプライン** - TypeScript バックエンド用のテスト・型チェック・lint ワークフロー
+
+### 破壊的変更
+
+- **WebSocket プロトコル変更** - Socket.IO → ネイティブ WebSocket
+  - フロントエンドの接続方法が変更（自動対応済み）
+  - カスタムクライアントは WebSocket API に移行が必要
+- **バックエンド API ランタイム変更** - Python (FastAPI) → TypeScript (Bun + Hono)
+  - Python バックエンドは `apps/server/` に残存（レガシー）
+  - TypeScript バックエンドが `apps/server-ts/` で推奨
+
+### 技術詳細
+
+#### バックエンド（Bun + Hono + TypeScript）
+- Bun ランタイムによるサーバー実行
+- Hono フレームワークによる REST API
+- bun:sqlite + Drizzle ORM によるデータベース管理
+- ネイティブ WebSocket によるリアルタイム通信
+- Zod スキーマによるリクエストバリデーション
+- 95 のユニットテスト（bun:test）
+
+#### デスクトップ（Tauri v2 + Rust）
+- Rust シェルによるネイティブウィンドウ管理
+- サイドカーパターン（コンパイル済み Bun バイナリ）
+- リソースバンドル（プラグイン、テンプレート、フロントエンド）
+- 自動アップデーター（GitHub Releases 連携）
+
+---
+
 ## [1.3.0] - 2026-02-05
 
 ### 追加
@@ -298,6 +370,7 @@
 - 基本的なワークフローエディタ機能
 - コアプラグインの実装
 
+[2.0.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.0.0
 [1.3.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.3.0
 [1.2.5]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.5
 [1.2.4]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.4

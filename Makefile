@@ -1,4 +1,4 @@
-.PHONY: help install install-all dev dev-py dev-frontend dev-backend dev-backend-py test test-py test-ts lint clean create-node migrate-manifests
+.PHONY: help install install-all dev dev-py dev-frontend dev-backend dev-backend-py test test-py test-ts lint clean create-node migrate-manifests build-desktop dev-desktop
 
 help:
 	@echo "Available commands:"
@@ -6,6 +6,8 @@ help:
 	@echo "  make install-all       - Install all dependencies (TypeScript + Python)"
 	@echo "  make dev               - Start development servers (frontend + TS backend)"
 	@echo "  make dev-py            - Start development servers (frontend + Python backend)"
+	@echo "  make dev-desktop       - Start Tauri desktop app in dev mode"
+	@echo "  make build-desktop     - Build desktop app (static frontend + sidecar + Tauri)"
 	@echo "  make test              - Run all tests (Python + TypeScript)"
 	@echo "  make test-ts           - Run TypeScript tests only"
 	@echo "  make test-py           - Run Python tests only"
@@ -37,6 +39,12 @@ dev-backend:
 
 dev-backend-py:
 	cd apps/server && uv run python main.py
+
+dev-desktop:
+	npm run dev:desktop
+
+build-desktop:
+	npm run build:desktop
 
 test: test-ts test-py
 

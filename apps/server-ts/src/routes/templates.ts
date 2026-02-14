@@ -11,7 +11,7 @@ import { getProjectRoot } from "../engine/plugin-loader";
 
 const app = new Hono();
 
-const TEMPLATES_DIR = join(getProjectRoot(), "templates");
+const TEMPLATES_DIR = process.env.TEMPLATES_DIR || join(getProjectRoot(), "templates");
 
 async function loadTemplate(templatePath: string): Promise<Record<string, any> | null> {
   try {

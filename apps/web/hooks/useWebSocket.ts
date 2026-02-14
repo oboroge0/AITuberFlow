@@ -1,9 +1,10 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { AvatarState } from '@/components/avatar';
+import { getApiBaseUrl, getWsBaseUrl } from '@/lib/runtimeEndpoints';
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8001';
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+const WS_URL = getWsBaseUrl();
+const API_URL = getApiBaseUrl();
 
 // Reconnection settings with exponential backoff
 const INITIAL_RECONNECT_DELAY = 1000; // 1 second

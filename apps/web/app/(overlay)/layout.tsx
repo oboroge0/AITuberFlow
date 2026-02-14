@@ -1,10 +1,4 @@
-import type { Metadata } from 'next';
 import './overlay.css';
-
-export const metadata: Metadata = {
-  title: 'AITuberFlow Overlay',
-  description: 'Streaming overlay for OBS',
-};
 
 /**
  * Overlay Layout
