@@ -1,11 +1,11 @@
 /**
  * Workflow API Routes - Comprehensive Tests
  *
- * Tests the Hono workflow routes using a self-contained in-memory SQLite
- * database and a test Hono app that mirrors the production route handlers.
+ * Tests the PRODUCTION Hono workflow routes using an in-memory SQLite
+ * database injected via setDb(). This ensures test coverage catches
+ * regressions in the actual route handlers.
  *
  * Uses `app.request()` pattern so no running server is needed.
- * Uses `bun:sqlite` (Bun's native SQLite) instead of better-sqlite3.
  */
 
 import {
@@ -19,30 +19,18 @@ import {
 import { Hono } from "hono";
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
-import { eq } from "drizzle-orm";
-import { sqliteTable, text } from "drizzle-orm/sqlite-core";
-
-// ─── Schema (mirrors apps/server-ts/src/db/schema.ts) ─────────
-
-const workflows = sqliteTable("workflows", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  description: text("description"),
-  nodesJson: text("nodes_json").notNull().default("[]"),
-  connectionsJson: text("connections_json").notNull().default("[]"),
-  characterJson: text("character_json").default(
-    '{"name": "AI Assistant", "personality": "Friendly and helpful"}'
-  ),
-  createdAt: text("created_at").notNull(),
-  updatedAt: text("updated_at").notNull(),
-});
+import {
+  workflowRoutes,
+  setDb,
+  setExecutor,
+} from "../../apps/server-ts/src/routes/workflows";
+import { workflows } from "../../apps/server-ts/src/db/schema";
 
 // ─── Test Database ─────────────────────────────────────────────
 
 let sqlite: Database;
-let db: ReturnType<typeof drizzle>;
 
-function setupTestDb(): void {
+function setupTestDb(): ReturnType<typeof drizzle> {
   sqlite = new Database(":memory:");
   sqlite.run(`
     CREATE TABLE IF NOT EXISTS workflows (
@@ -56,7 +44,7 @@ function setupTestDb(): void {
       updated_at TEXT NOT NULL
     )
   `);
-  db = drizzle(sqlite, { schema: { workflows } });
+  return drizzle(sqlite, { schema: { workflows } });
 }
 
 function resetDb(): void {
@@ -65,55 +53,6 @@ function resetDb(): void {
 
 function teardownDb(): void {
   sqlite.close();
-}
-
-// ─── Helpers (mirrors production routes) ───────────────────────
-
-const SENSITIVE_KEYS = [
-  "apiKey",
-  "api_key",
-  "password",
-  "secret",
-  "token",
-  "apiSecret",
-];
-
-function stripApiKeys(nodes: any[]): any[] {
-  return nodes.map((node) => {
-    const copy = { ...node };
-    if (copy.config && typeof copy.config === "object") {
-      const configCopy = { ...copy.config };
-      for (const key of SENSITIVE_KEYS) {
-        if (key in configCopy) configCopy[key] = "";
-      }
-      copy.config = configCopy;
-    }
-    return copy;
-  });
-}
-
-function workflowToResponse(row: any): Record<string, any> {
-  return {
-    id: row.id,
-    name: row.name,
-    description: row.description,
-    nodes: JSON.parse(row.nodesJson || "[]"),
-    connections: JSON.parse(row.connectionsJson || "[]"),
-    character: JSON.parse(
-      row.characterJson ||
-        '{"name": "AI Assistant", "personality": "Friendly and helpful"}'
-    ),
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
-}
-
-function generateId(): string {
-  return crypto.randomUUID();
-}
-
-function nowISO(): string {
-  return new Date().toISOString();
 }
 
 // ─── Mock Executor ─────────────────────────────────────────────
@@ -130,225 +69,6 @@ const mockExecutor = {
   setEventCallback: () => {},
   setStatusCallback: () => {},
 };
-
-// ─── Test Hono App ─────────────────────────────────────────────
-
-function createTestApp(): Hono {
-  const app = new Hono();
-
-  // POST /api/workflows - Create workflow
-  app.post("/api/workflows", async (c) => {
-    const body = await c.req.json();
-    const id = generateId();
-    const now = nowISO();
-
-    const nodes = body.nodes ?? [];
-    const connections = body.connections ?? [];
-    const character = body.character ?? {
-      name: "AI Assistant",
-      personality: "Friendly and helpful virtual streamer",
-    };
-
-    await db.insert(workflows).values({
-      id,
-      name: body.name,
-      description: body.description ?? null,
-      nodesJson: JSON.stringify(nodes),
-      connectionsJson: JSON.stringify(connections),
-      characterJson: JSON.stringify(character),
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    const [row] = await db
-      .select()
-      .from(workflows)
-      .where(eq(workflows.id, id));
-    return c.json(workflowToResponse(row));
-  });
-
-  // GET /api/workflows - List workflows
-  app.get("/api/workflows", async (c) => {
-    const rows = await db.select().from(workflows);
-    rows.sort(
-      (a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    );
-    return c.json(rows.map(workflowToResponse));
-  });
-
-  // GET /api/workflows/:id - Get workflow
-  app.get("/api/workflows/:id", async (c) => {
-    const id = c.req.param("id");
-    const [row] = await db
-      .select()
-      .from(workflows)
-      .where(eq(workflows.id, id));
-    if (!row) return c.json({ detail: "Workflow not found" }, 404);
-    return c.json(workflowToResponse(row));
-  });
-
-  // PUT /api/workflows/:id - Update workflow
-  app.put("/api/workflows/:id", async (c) => {
-    const id = c.req.param("id");
-    const body = await c.req.json();
-
-    const [existing] = await db
-      .select()
-      .from(workflows)
-      .where(eq(workflows.id, id));
-    if (!existing) return c.json({ detail: "Workflow not found" }, 404);
-
-    const updates: Record<string, any> = { updatedAt: nowISO() };
-    if (body.name !== undefined) updates.name = body.name;
-    if (body.description !== undefined) updates.description = body.description;
-    if (body.nodes !== undefined)
-      updates.nodesJson = JSON.stringify(body.nodes);
-    if (body.connections !== undefined)
-      updates.connectionsJson = JSON.stringify(body.connections);
-    if (body.character !== undefined)
-      updates.characterJson = JSON.stringify(body.character);
-
-    await db.update(workflows).set(updates).where(eq(workflows.id, id));
-
-    const [row] = await db
-      .select()
-      .from(workflows)
-      .where(eq(workflows.id, id));
-    return c.json(workflowToResponse(row));
-  });
-
-  // DELETE /api/workflows/:id - Delete workflow
-  app.delete("/api/workflows/:id", async (c) => {
-    const id = c.req.param("id");
-    const [existing] = await db
-      .select()
-      .from(workflows)
-      .where(eq(workflows.id, id));
-    if (!existing) return c.json({ detail: "Workflow not found" }, 404);
-
-    await mockExecutor.stopWorkflow(id);
-    await db.delete(workflows).where(eq(workflows.id, id));
-    return c.json({ status: "deleted" });
-  });
-
-  // POST /api/workflows/:id/duplicate - Duplicate workflow
-  app.post("/api/workflows/:id/duplicate", async (c) => {
-    const id = c.req.param("id");
-    const [existing] = await db
-      .select()
-      .from(workflows)
-      .where(eq(workflows.id, id));
-    if (!existing) return c.json({ detail: "Workflow not found" }, 404);
-
-    const newId = generateId();
-    const now = nowISO();
-
-    await db.insert(workflows).values({
-      id: newId,
-      name: `${existing.name} (Copy)`,
-      description: existing.description,
-      nodesJson: existing.nodesJson,
-      connectionsJson: existing.connectionsJson,
-      characterJson: existing.characterJson,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    const [row] = await db
-      .select()
-      .from(workflows)
-      .where(eq(workflows.id, newId));
-    return c.json(workflowToResponse(row));
-  });
-
-  // GET /api/workflows/:id/export - Export workflow
-  app.get("/api/workflows/:id/export", async (c) => {
-    const id = c.req.param("id");
-    const excludeApiKeys = c.req.query("exclude_api_keys") !== "false";
-
-    const [existing] = await db
-      .select()
-      .from(workflows)
-      .where(eq(workflows.id, id));
-    if (!existing) return c.json({ detail: "Workflow not found" }, 404);
-
-    let nodes = JSON.parse(existing.nodesJson || "[]");
-    if (excludeApiKeys) nodes = stripApiKeys(nodes);
-
-    return c.json({
-      name: existing.name,
-      description: existing.description,
-      nodes,
-      connections: JSON.parse(existing.connectionsJson || "[]"),
-      character: JSON.parse(existing.characterJson || "{}"),
-      exportedAt: nowISO(),
-      version: "1.0",
-    });
-  });
-
-  // POST /api/workflows/import - Import workflow
-  app.post("/api/workflows/import", async (c) => {
-    const data = await c.req.json();
-    const id = generateId();
-    const now = nowISO();
-
-    await db.insert(workflows).values({
-      id,
-      name: data.name ?? "Imported Workflow",
-      description: data.description ?? null,
-      nodesJson: JSON.stringify(data.nodes ?? []),
-      connectionsJson: JSON.stringify(data.connections ?? []),
-      characterJson: JSON.stringify(
-        data.character ?? {
-          name: "AI Assistant",
-          personality: "Friendly",
-        }
-      ),
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    const [row] = await db
-      .select()
-      .from(workflows)
-      .where(eq(workflows.id, id));
-    return c.json(workflowToResponse(row));
-  });
-
-  // POST /api/workflows/:id/start - Start workflow execution
-  app.post("/api/workflows/:id/start", async (c) => {
-    const id = c.req.param("id");
-    const [existing] = await db
-      .select()
-      .from(workflows)
-      .where(eq(workflows.id, id));
-    if (!existing) return c.json({ detail: "Workflow not found" }, 404);
-
-    return c.json({ status: "started", workflow_id: id });
-  });
-
-  // POST /api/workflows/:id/stop - Stop workflow execution
-  app.post("/api/workflows/:id/stop", async (c) => {
-    const id = c.req.param("id");
-    await mockExecutor.stopWorkflow(id);
-    return c.json({ status: "stopped", workflow_id: id });
-  });
-
-  // GET /api/workflows/:id/status - Get workflow execution status
-  app.get("/api/workflows/:id/status", async (c) => {
-    const id = c.req.param("id");
-    const status = mockExecutor.getStatus(id);
-    return c.json({
-      workflowId: id,
-      status: status.status ?? "idle",
-      startedAt: status.started_at ?? null,
-      error: status.error ?? null,
-    });
-  });
-
-  return app;
-}
 
 // ─── Request Helpers ───────────────────────────────────────────
 
@@ -382,13 +102,17 @@ async function createWorkflowViaApi(
   return res.json();
 }
 
-// ─── Tests ─────────────────────────────────────────────────────
+// ─── Setup ────────────────────────────────────────────────────
 
 let app: Hono;
 
 beforeAll(() => {
-  setupTestDb();
-  app = createTestApp();
+  const testDb = setupTestDb();
+  setDb(testDb);
+  setExecutor(mockExecutor as any);
+
+  app = new Hono();
+  app.route("/api/workflows", workflowRoutes);
 });
 
 beforeEach(() => {
@@ -424,6 +148,16 @@ describe("Workflow CRUD", () => {
     expect(data.character).toBeDefined();
     expect(data.createdAt).toBeDefined();
     expect(data.updatedAt).toBeDefined();
+  });
+
+  it("should reject create without name", async () => {
+    const res = await app.request(
+      jsonRequest("POST", "/api/workflows", {
+        description: "Missing name",
+      })
+    );
+
+    expect(res.status).toBe(400);
   });
 
   it("should list workflows when empty", async () => {
@@ -941,8 +675,7 @@ describe("Workflow with Nodes", () => {
 
 describe("Edge Cases", () => {
   it("should handle workflow with empty name gracefully", async () => {
-    // The production route does not validate name length; it trusts the DB
-    // NOT NULL constraint. An empty string is still valid.
+    // An empty string is still a valid string and passes NOT NULL constraint.
     const res = await app.request(
       jsonRequest("POST", "/api/workflows", { name: "" })
     );
@@ -952,7 +685,7 @@ describe("Edge Cases", () => {
     expect(data.name).toBe("");
   });
 
-  it("should handle partial updates (only name)", async () => {
+  it("should partial updates (only name)", async () => {
     const created = await createWorkflowViaApi(app, {
       name: "Before",
       description: "Keep me",

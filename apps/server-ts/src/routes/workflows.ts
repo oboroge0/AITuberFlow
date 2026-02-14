@@ -6,16 +6,23 @@
 
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
-import { db } from "../db/database";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
+import { db as defaultDb } from "../db/database";
 import { workflows } from "../db/schema";
 import { WorkflowExecutor } from "../engine/executor";
 import type { WSBroadcaster } from "../websocket/handler";
 
 const app = new Hono();
 
-// Shared instances (set by main)
+// Shared instances (set by main or tests)
+let _db: typeof defaultDb = defaultDb;
 let executor: WorkflowExecutor;
 let wsBroadcaster: WSBroadcaster | null = null;
+
+export function setDb(newDb: typeof defaultDb): void {
+  _db = newDb;
+}
 
 export function setExecutor(exec: WorkflowExecutor): void {
   executor = exec;
@@ -24,6 +31,16 @@ export function setExecutor(exec: WorkflowExecutor): void {
 export function setWSBroadcaster(broadcaster: WSBroadcaster): void {
   wsBroadcaster = broadcaster;
 }
+
+// ─── Validation Schemas ──────────────────────
+
+const createWorkflowBody = z.object({
+  name: z.string({ required_error: "name is required" }),
+  description: z.string().optional(),
+  nodes: z.array(z.any()).default([]),
+  connections: z.array(z.any()).default([]),
+  character: z.record(z.any()).optional(),
+});
 
 // ─── Helpers ──────────────────────────────
 
@@ -77,8 +94,8 @@ function nowISO(): string {
 // ─── Routes ───────────────────────────────
 
 // Create workflow
-app.post("/", async (c) => {
-  const body = await c.req.json();
+app.post("/", zValidator("json", createWorkflowBody), async (c) => {
+  const body = c.req.valid("json");
   const id = generateId();
   const now = nowISO();
 
@@ -89,7 +106,7 @@ app.post("/", async (c) => {
     personality: "Friendly and helpful virtual streamer",
   };
 
-  await db.insert(workflows).values({
+  await _db.insert(workflows).values({
     id,
     name: body.name,
     description: body.description ?? null,
@@ -100,7 +117,7 @@ app.post("/", async (c) => {
     updatedAt: now,
   });
 
-  const [row] = await db
+  const [row] = await _db
     .select()
     .from(workflows)
     .where(eq(workflows.id, id));
@@ -109,7 +126,7 @@ app.post("/", async (c) => {
 
 // List workflows
 app.get("/", async (c) => {
-  const rows = await db.select().from(workflows);
+  const rows = await _db.select().from(workflows);
   // Sort by updatedAt descending
   rows.sort(
     (a, b) =>
@@ -121,7 +138,7 @@ app.get("/", async (c) => {
 // Get workflow
 app.get("/:id", async (c) => {
   const id = c.req.param("id");
-  const [row] = await db
+  const [row] = await _db
     .select()
     .from(workflows)
     .where(eq(workflows.id, id));
@@ -134,7 +151,7 @@ app.put("/:id", async (c) => {
   const id = c.req.param("id");
   const body = await c.req.json();
 
-  const [existing] = await db
+  const [existing] = await _db
     .select()
     .from(workflows)
     .where(eq(workflows.id, id));
@@ -150,9 +167,9 @@ app.put("/:id", async (c) => {
   if (body.character !== undefined)
     updates.characterJson = JSON.stringify(body.character);
 
-  await db.update(workflows).set(updates).where(eq(workflows.id, id));
+  await _db.update(workflows).set(updates).where(eq(workflows.id, id));
 
-  const [row] = await db
+  const [row] = await _db
     .select()
     .from(workflows)
     .where(eq(workflows.id, id));
@@ -162,21 +179,21 @@ app.put("/:id", async (c) => {
 // Delete workflow
 app.delete("/:id", async (c) => {
   const id = c.req.param("id");
-  const [existing] = await db
+  const [existing] = await _db
     .select()
     .from(workflows)
     .where(eq(workflows.id, id));
   if (!existing) return c.json({ detail: "Workflow not found" }, 404);
 
   await executor.stopWorkflow(id);
-  await db.delete(workflows).where(eq(workflows.id, id));
+  await _db.delete(workflows).where(eq(workflows.id, id));
   return c.json({ status: "deleted" });
 });
 
 // Duplicate workflow
 app.post("/:id/duplicate", async (c) => {
   const id = c.req.param("id");
-  const [existing] = await db
+  const [existing] = await _db
     .select()
     .from(workflows)
     .where(eq(workflows.id, id));
@@ -185,7 +202,7 @@ app.post("/:id/duplicate", async (c) => {
   const newId = generateId();
   const now = nowISO();
 
-  await db.insert(workflows).values({
+  await _db.insert(workflows).values({
     id: newId,
     name: `${existing.name} (Copy)`,
     description: existing.description,
@@ -196,7 +213,7 @@ app.post("/:id/duplicate", async (c) => {
     updatedAt: now,
   });
 
-  const [row] = await db
+  const [row] = await _db
     .select()
     .from(workflows)
     .where(eq(workflows.id, newId));
@@ -208,7 +225,7 @@ app.get("/:id/export", async (c) => {
   const id = c.req.param("id");
   const excludeApiKeys = c.req.query("exclude_api_keys") !== "false";
 
-  const [existing] = await db
+  const [existing] = await _db
     .select()
     .from(workflows)
     .where(eq(workflows.id, id));
@@ -234,7 +251,7 @@ app.post("/import", async (c) => {
   const id = generateId();
   const now = nowISO();
 
-  await db.insert(workflows).values({
+  await _db.insert(workflows).values({
     id,
     name: data.name ?? "Imported Workflow",
     description: data.description ?? null,
@@ -250,7 +267,7 @@ app.post("/import", async (c) => {
     updatedAt: now,
   });
 
-  const [row] = await db
+  const [row] = await _db
     .select()
     .from(workflows)
     .where(eq(workflows.id, id));
@@ -260,7 +277,7 @@ app.post("/import", async (c) => {
 // Start workflow execution
 app.post("/:id/start", async (c) => {
   const id = c.req.param("id");
-  const [existing] = await db
+  const [existing] = await _db
     .select()
     .from(workflows)
     .where(eq(workflows.id, id));

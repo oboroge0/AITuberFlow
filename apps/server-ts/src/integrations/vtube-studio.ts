@@ -1,4 +1,4 @@
-// Bun provides global WebSocket - no external package needed
+// Bun provides global WebSocket (browser-standard API) - no external package needed
 import { readFileSync, writeFileSync, mkdirSync, unlinkSync, existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
@@ -25,6 +25,7 @@ class VTubeStudioClient {
   private expressionMap: Record<string, string> = {};
   private mouthParam = "MouthOpen";
   private shouldReconnect = true;
+  private abortController: AbortController | null = null;
 
   get isConnected(): boolean {
     return this.connected && this.authenticated;
@@ -59,8 +60,10 @@ class VTubeStudioClient {
 
       return await new Promise<boolean>((resolve) => {
         const ws = new WebSocket(uri);
+        this.abortController = new AbortController();
+        const { signal } = this.abortController;
 
-        ws.on("open", async () => {
+        ws.addEventListener("open", async () => {
           this.ws = ws;
           this.connected = true;
           console.log("[VTS] Connected to VTube Studio");
@@ -73,14 +76,14 @@ class VTubeStudioClient {
             console.warn("[VTS] Authentication failed");
           }
           resolve(success);
-        });
+        }, { signal });
 
-        ws.on("error", (err) => {
-          console.error(`[VTS] Connection error: ${err.message}`);
+        ws.addEventListener("error", () => {
+          console.error("[VTS] Connection error");
           this.connected = false;
           this.authenticated = false;
           resolve(false);
-        });
+        }, { signal });
       });
     } catch (e) {
       console.error(`[VTS] Failed to connect: ${e}`);
@@ -100,7 +103,8 @@ class VTubeStudioClient {
     }
 
     if (this.ws) {
-      this.ws.removeAllListeners();
+      this.abortController?.abort();
+      this.abortController = null;
       this.ws.close();
       this.ws = null;
     }
@@ -283,11 +287,15 @@ class VTubeStudioClient {
   }
 
   private setupReceiveHandler(): void {
-    if (!this.ws) return;
+    if (!this.ws || !this.abortController) return;
 
-    this.ws.on("message", (raw) => {
+    const { signal } = this.abortController;
+
+    this.ws.addEventListener("message", (event: MessageEvent) => {
       try {
-        const data = JSON.parse(raw.toString()) as Record<string, unknown>;
+        const data = JSON.parse(
+          typeof event.data === "string" ? event.data : String(event.data)
+        ) as Record<string, unknown>;
         const requestId = data.requestID as string | undefined;
 
         if (requestId && this.pendingRequests.has(requestId)) {
@@ -299,9 +307,9 @@ class VTubeStudioClient {
       } catch {
         console.warn("[VTS] Failed to parse message");
       }
-    });
+    }, { signal });
 
-    this.ws.on("close", () => {
+    this.ws.addEventListener("close", () => {
       console.log("[VTS] Connection closed");
       this.connected = false;
       this.authenticated = false;
@@ -309,13 +317,13 @@ class VTubeStudioClient {
       if (this.shouldReconnect) {
         setTimeout(() => this.reconnect(), 3000);
       }
-    });
+    }, { signal });
 
-    this.ws.on("error", (err) => {
-      console.error(`[VTS] WebSocket error: ${err.message}`);
+    this.ws.addEventListener("error", () => {
+      console.error("[VTS] WebSocket error");
       this.connected = false;
       this.authenticated = false;
-    });
+    }, { signal });
   }
 
   private async reconnect(): Promise<void> {
