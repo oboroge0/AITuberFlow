@@ -43,7 +43,11 @@
       }
     ],
     "events": {
-      "emits": ["audio.generated", "audio.playing", "audio.finished"],
+      "emits": [
+        "audio.generated",
+        "audio.playing",
+        "audio.finished"
+      ],
       "listens": []
     }
   },
@@ -66,15 +70,15 @@
       "type": "number",
       "label": "Speed",
       "description": "Speech speed (0.5-2.0)",
-      "default": 1.0,
+      "default": 1,
       "min": 0.5,
-      "max": 2.0
+      "max": 2
     },
     "pitchScale": {
       "type": "number",
       "label": "Pitch",
       "description": "Voice pitch (-0.15 to 0.15)",
-      "default": 0.0,
+      "default": 0,
       "min": -0.15,
       "max": 0.15
     },
@@ -82,9 +86,9 @@
       "type": "number",
       "label": "Volume",
       "description": "Audio volume (0.0-2.0)",
-      "default": 1.0,
-      "min": 0.0,
-      "max": 2.0
+      "default": 1,
+      "min": 0,
+      "max": 2
     },
     "outputDir": {
       "type": "string",
@@ -100,8 +104,5 @@
       "description_ja": "VOICEVOX未接続時にスキップ",
       "default": false
     }
-  },
-  "dependencies": {
-    "python": ["httpx>=0.26.0"]
   }
 }

@@ -21,7 +21,9 @@
     "inputs": [],
     "outputs": [],
     "events": {
-      "emits": ["avatar.update"]
+      "emits": [
+        "avatar.update"
+      ]
     }
   },
   "config": {
@@ -30,9 +32,18 @@
       "label": "Renderer",
       "description": "Avatar renderer type",
       "options": [
-        { "label": "VRM (Built-in)", "value": "vrm" },
-        { "label": "VTube Studio", "value": "vtube-studio" },
-        { "label": "PNG Images", "value": "png" }
+        {
+          "label": "VRM (Built-in)",
+          "value": "vrm"
+        },
+        {
+          "label": "VTube Studio",
+          "value": "vtube-studio"
+        },
+        {
+          "label": "PNG Images",
+          "value": "png"
+        }
       ],
       "default": "vrm"
     },
@@ -72,8 +83,5 @@
       "description": "Path to idle animation file (Mixamo FBX)",
       "default": ""
     }
-  },
-  "dependencies": {
-    "python": []
   }
 }

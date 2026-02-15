@@ -37,7 +37,11 @@
       }
     ],
     "events": {
-      "emits": ["message.received", "message.subscription", "message.bits"],
+      "emits": [
+        "message.received",
+        "message.subscription",
+        "message.bits"
+      ],
       "listens": []
     }
   },
@@ -60,8 +64,5 @@
       "description": "Ignore messages from known bots",
       "default": true
     }
-  },
-  "dependencies": {
-    "python": []
   }
 }

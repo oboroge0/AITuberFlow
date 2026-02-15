@@ -48,7 +48,9 @@
       }
     ],
     "events": {
-      "emits": ["avatar.mouth"]
+      "emits": [
+        "avatar.mouth"
+      ]
     }
   },
   "config": {
@@ -57,8 +59,14 @@
       "label": "Lip Sync Method",
       "description": "Method to use for lip sync generation",
       "options": [
-        { "label": "Volume-based (Simple)", "value": "volume" },
-        { "label": "Envelope Following", "value": "envelope" }
+        {
+          "label": "Volume-based (Simple)",
+          "value": "volume"
+        },
+        {
+          "label": "Envelope Following",
+          "value": "envelope"
+        }
       ],
       "default": "volume"
     },
@@ -66,16 +74,16 @@
       "type": "number",
       "label": "Sensitivity",
       "description": "How much the mouth opens relative to audio volume. Higher = more movement. (1.0 - 10.0)",
-      "default": 5.0,
-      "min": 1.0,
-      "max": 10.0
+      "default": 5,
+      "min": 1,
+      "max": 10
     },
     "smoothing": {
       "type": "number",
       "label": "Smoothing",
       "description": "Smoothing factor for mouth movement. Higher = smoother but slower response. (0.0 - 0.9)",
       "default": 0.3,
-      "min": 0.0,
+      "min": 0,
       "max": 0.9
     },
     "threshold": {
@@ -83,7 +91,7 @@
       "label": "Threshold",
       "description": "Minimum volume to trigger mouth movement. Filters out background noise. (0.0 - 0.2)",
       "default": 0.02,
-      "min": 0.0,
+      "min": 0,
       "max": 0.2
     },
     "emit_realtime": {
@@ -100,8 +108,5 @@
       "min": 10,
       "max": 60
     }
-  },
-  "dependencies": {
-    "python": []
   }
 }

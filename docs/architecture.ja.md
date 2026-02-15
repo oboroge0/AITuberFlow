@@ -7,7 +7,7 @@
 - [システム概要](#システム概要)
 - [高レベルアーキテクチャ](#高レベルアーキテクチャ)
 - [バックエンドアーキテクチャ](#バックエンドアーキテクチャ)
-  - [技術スタック比較](#技術スタック比較)
+  - [技術スタック](#技術スタック)
   - [ワークフローエグゼキューター](#ワークフローエグゼキューター)
   - [イベントバス](#イベントバス)
   - [APIエンドポイント](#apiエンドポイント)
@@ -69,7 +69,7 @@ AITuberFlowは、AITuber配信セットアップを作成するための**ビジ
 ```
 AITuberFlow/
 ├── apps/
-│   ├── server-ts/             # TypeScript Bun+Hono バックエンド (推奨)
+│   ├── server-ts/             # TypeScript Bun+Hono バックエンド
 │   │   ├── src/
 │   │   │   ├── engine/        # ワークフロー実行エンジン
 │   │   │   │   ├── executor.ts    # コア実行ロジック
@@ -90,11 +90,6 @@ AITuberFlow/
 │   │   │   └── index.ts       # サーバーエントリーポイント
 │   │   └── package.json
 │   │
-│   ├── server/                # Python FastAPI バックエンド (レガシー)
-│   │   ├── engine/            # ワークフロー実行エンジン
-│   │   ├── routers/           # APIエンドポイント
-│   │   └── main.py            # サーバーエントリーポイント
-│   │
 │   └── web/                   # Next.js フロントエンド
 │       ├── app/               # App Routerページ
 │       │   ├── (editor)/      # エディタ & プレビューページ
@@ -108,26 +103,23 @@ AITuberFlow/
 │       └── lib/               # ユーティリティ, 型, APIクライアント
 │
 ├── packages/
-│   ├── sdk-ts/                # TypeScript プラグインSDK
-│   │   └── src/
-│   │       ├── base.ts        # BaseNodeクラス
-│   │       ├── context.ts     # NodeContext, Event
-│   │       ├── types.ts       # Zod型定義
-│   │       ├── errors.ts      # エラーハンドリング
-│   │       └── index.ts       # エクスポート
-│   └── sdk/                   # Python プラグインSDK (レガシー)
-│       └── aituber_flow_sdk/
+│   └── sdk-ts/                # TypeScript プラグインSDK
+│       └── src/
+│           ├── base.ts        # BaseNodeクラス
+│           ├── context.ts     # NodeContext, Event
+│           ├── types.ts       # Zod型定義
+│           ├── errors.ts      # エラーハンドリング
+│           └── index.ts       # エクスポート
 │
 ├── plugins/                   # ノードプラグイン (32以上の公式)
 │   ├── openai-llm/
 │   │   ├── manifest.json      # ノードメタデータ & 設定
-│   │   └── node.py            # ノード実装
+│   │   └── node.ts            # ノード実装
 │   └── ...
 │
 ├── tests/                     # テストスイート
 │   ├── engine/                # TypeScriptエンジンテスト (bun:test)
-│   ├── routes/                # TypeScriptルートテスト (bun:test)
-│   └── unit/                  # Python単体テスト (pytest)
+│   └── routes/                # TypeScriptルートテスト (bun:test)
 │
 └── templates/                 # ワークフローテンプレート (JSON)
 ```
@@ -136,17 +128,17 @@ AITuberFlow/
 
 ## バックエンドアーキテクチャ
 
-### 技術スタック比較
+### 技術スタック
 
-| 項目 | TypeScript (推奨) | Python (レガシー) |
-|------|-------------------|-------------------|
-| Runtime | Bun | Python 3.11+ |
-| Framework | Hono | FastAPI |
-| Database | bun:sqlite + Drizzle ORM | SQLite + SQLAlchemy |
-| WebSocket | Native WebSocket (Hono/Bun) | python-socketio |
-| Validation | Zod | Pydantic |
-| Package Manager | bun | uv / pip |
-| Plugin SDK | `@aituber-flow/sdk` | `aituber_flow_sdk` |
+| 項目 | 技術 |
+|------|------|
+| Runtime | Bun |
+| Framework | Hono |
+| Database | bun:sqlite + Drizzle ORM |
+| WebSocket | Native WebSocket (Hono/Bun) |
+| Validation | Zod |
+| Package Manager | bun |
+| Plugin SDK | `@aituber-flow/sdk` |
 
 ### ワークフローエグゼキューター
 
@@ -370,7 +362,7 @@ interface LocaleState {
 ```
 plugins/openai-llm/
 ├── manifest.json    # プラグインメタデータと設定スキーマ
-└── node.py          # Python実装
+└── node.ts          # TypeScript実装
 ```
 
 ### マニフェストスキーマ
@@ -415,9 +407,6 @@ plugins/openai-llm/
         {"label": "GPT-4o", "value": "gpt-4o"}
       ]
     }
-  },
-  "dependencies": {
-    "python": ["openai>=1.0.0"]
   }
 }
 ```
@@ -452,7 +441,7 @@ plugins/openai-llm/
 
 ### SDK概要
 
-TypeScript SDK (`packages/sdk-ts/src/`) は基底クラスを提供します：
+プラグインSDK (`packages/sdk-ts/src/`) は基底クラスを提供します：
 
 ```typescript
 import { BaseNode, NodeContext, Event } from "@aituber-flow/sdk";
@@ -483,8 +472,6 @@ class MyNode extends BaseNode {
   }
 }
 ```
-
-> **Python SDK (レガシー)** は `packages/sdk/aituber_flow_sdk/` にあります。同じライフサイクルメソッド (`setup`, `execute`, `on_event`, `teardown`) を提供します。
 
 #### ノードカテゴリ
 

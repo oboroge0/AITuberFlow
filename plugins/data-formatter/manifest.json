@@ -48,9 +48,18 @@
       "label": "Output Format",
       "description": "Output format type",
       "options": [
-        {"label": "JSON", "value": "json"},
-        {"label": "XML", "value": "xml"},
-        {"label": "YAML", "value": "yaml"}
+        {
+          "label": "JSON",
+          "value": "json"
+        },
+        {
+          "label": "XML",
+          "value": "xml"
+        },
+        {
+          "label": "YAML",
+          "value": "yaml"
+        }
       ],
       "default": "json"
     },
@@ -72,8 +81,5 @@
       "description": "Format output with indentation",
       "default": true
     }
-  },
-  "dependencies": {
-    "python": []
   }
 }

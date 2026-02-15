@@ -21,7 +21,7 @@ GitHub Codespaces lets you set up a development environment in your browser with
 
 1. Click the badge above
 2. Wait for Codespace to start (1-2 minutes)
-3. Run `make dev` in the terminal
+3. Run `npm run dev` in the terminal
 4. Open ports 3000 and 8001
 
 No local setup required!
@@ -38,7 +38,6 @@ Before you begin, make sure you have the following installed:
 - **[Bun](https://bun.sh/)** 1.0 or higher (for TypeScript backend)
 - **npm** (comes with Node.js)
 
-> **Note:** If using the Python backend (legacy), you also need **Python** 3.11+ and **[uv](https://docs.astral.sh/uv/)**.
 
 ## Installation
 
@@ -49,25 +48,15 @@ git clone https://github.com/oboroge0/AITuberFlow.git
 cd AITuberFlow
 ```
 
-### 2. Set Up the Backend (TypeScript - Recommended)
+### 2. Set Up the Backend
 
 ```bash
-# Navigate to TypeScript server directory
+# Navigate to server directory
 cd apps/server-ts
 
 # Install dependencies
 bun install
 ```
-
-> **To use the Python backend (legacy) instead:**
->
-> ```bash
-> cd apps/server
-> uv sync            # using uv
-> # or
-> pip install -r requirements.txt  # using pip
-> cp .env.example .env
-> ```
 
 ### 3. Set Up the Frontend
 
@@ -85,11 +74,8 @@ cp .env.example .env.local
 ### Install Everything at Once
 
 ```bash
-# From project root, install dependencies (TypeScript only)
-make install
-
-# Install everything (TypeScript + Python)
-make install-all
+# From project root, install all dependencies
+npm install
 ```
 
 ## Running the Application
@@ -98,7 +84,7 @@ You can run AITuberFlow either using Docker (recommended for quick setup) or man
 
 ### Option A: Using Docker (Recommended)
 
-Docker provides the easiest way to get started without installing Python or Node.js locally.
+Docker provides the easiest way to get started without installing runtimes locally.
 
 #### Prerequisites for Docker
 
@@ -114,7 +100,7 @@ docker compose up --build
 
 This will:
 - Build both backend and frontend images
-- Start the backend at `http://localhost:8000`
+- Start the backend at `http://localhost:8001`
 - Start the frontend at `http://localhost:3000`
 - Create a persistent volume for the SQLite database
 
@@ -124,12 +110,12 @@ Create a `.env` file in the project root to customize settings:
 
 ```bash
 # Backend settings
-BACKEND_PORT=8000
+BACKEND_PORT=8001
 CORS_ORIGINS=http://localhost:3000
 
 # Frontend settings
 FRONTEND_PORT=3000
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_URL=http://localhost:8001
 ```
 
 #### Production Deployment
@@ -160,23 +146,20 @@ docker compose down -v
 
 If you prefer to run the application without Docker:
 
-#### Start the TypeScript Backend (Recommended)
+#### Start the Backend
 
 ```bash
 # From project root
-npm run dev:ts
+npm run dev
 ```
 
-This starts both the frontend and TypeScript backend simultaneously.
+This starts both the frontend and backend simultaneously.
 
 To start services individually:
 
 ```bash
-# TypeScript backend only (from apps/server-ts)
+# Backend only (from apps/server-ts)
 bun run dev
-
-# Python backend only (legacy, from apps/server)
-uv run python main.py
 ```
 
 The backend starts at `http://localhost:8001`.
@@ -275,7 +258,7 @@ Share workflows with others using the sidebar buttons:
 ### Docker issues
 
 **Container fails to start:**
-- Check if ports 8000 or 3000 are already in use: `lsof -i :8000` or `lsof -i :3000`
+- Check if ports 8001 or 3000 are already in use: `lsof -i :8001` or `lsof -i :3000`
 - View container logs: `docker compose logs backend` or `docker compose logs frontend`
 - Try rebuilding: `docker compose build --no-cache`
 
@@ -288,17 +271,11 @@ Share workflows with others using the sidebar buttons:
 - Data is stored in a Docker volume named `aituberflow-backend-data`
 - To reset: `docker compose down -v` (this deletes all data)
 
-### TypeScript backend won't start
+### Backend won't start
 
 - Verify Bun is installed: `bun --version` (should be 1.0+)
 - Install dependencies: `cd apps/server-ts && bun install`
 - Check if port 8001 is already in use: `lsof -i :8001`
-
-### Python backend won't start (legacy)
-
-- If using uv: Run `uv sync` to ensure dependencies are installed
-- If using pip: Make sure the virtual environment is activated and run `pip install -r requirements.txt`
-- Verify Python version: `python --version` (should be 3.11+)
 
 ### Frontend won't start
 
@@ -308,7 +285,7 @@ Share workflows with others using the sidebar buttons:
 
 ### Can't connect to backend
 
-- Make sure the backend is running on port 8001 (local) or 8000 (Docker)
+- Make sure the backend is running on port 8001
 - Check `apps/web/.env.local` has the correct API URL
 - Look for CORS errors in the browser console
 

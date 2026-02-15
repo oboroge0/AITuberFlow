@@ -120,7 +120,13 @@
       "showWhen": {
         "field": "model",
         "operator": "in",
-        "value": ["gpt-5", "gpt-5.1", "gpt-5.2", "gpt-5-mini", "gpt-5-nano"]
+        "value": [
+          "gpt-5",
+          "gpt-5.1",
+          "gpt-5.2",
+          "gpt-5-mini",
+          "gpt-5-nano"
+        ]
       }
     },
     "systemPrompt": {
@@ -145,10 +151,5 @@
       "min": 1,
       "max": 4096
     }
-  },
-  "dependencies": {
-    "python": [
-      "openai>=1.0.0"
-    ]
   }
 }

@@ -38,8 +38,5 @@
       "description": "Start automatically when workflow runs",
       "default": true
     }
-  },
-  "dependencies": {
-    "python": []
   }
 }

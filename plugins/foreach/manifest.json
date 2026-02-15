@@ -54,8 +54,5 @@
       "description": "Separator for splitting text into items",
       "default": "\n"
     }
-  },
-  "dependencies": {
-    "python": []
   }
 }

@@ -120,9 +120,9 @@ git clone https://github.com/oboroge0/AITuberFlow.git
 cd AITuberFlow
 
 # 依存関係をインストール
-make install
+npm install
 
-# 開発サーバーを起動（フロントエンド + TypeScriptバックエンド同時起動）
+# 開発サーバーを起動（フロントエンド + バックエンド同時起動）
 npm run dev
 ```
 
@@ -134,11 +134,9 @@ npm run dev
 # フロントエンドのみ
 npm run dev:web
 
-# TypeScript バックエンドのみ
-npm run dev:api-ts
+# バックエンドのみ
+npm run dev:api
 ```
-
-> **💡 ヒント**: macOS/Linuxでは `make dev` も使えます（Makefile参照）
 
 ### Docker で起動する場合
 
@@ -155,7 +153,7 @@ docker compose down
 
 Docker環境では:
 - フロントエンド: `http://localhost:3000`
-- バックエンド: `http://localhost:8000`
+- バックエンド: `http://localhost:8001`
 
 ---
 
@@ -225,7 +223,7 @@ Docker環境では:
 | **OBS Scene Switch** | OBSのシーンを切り替え |
 | **OBS Source Toggle** | OBSのソースを表示/非表示 |
 
-> **注意:** OBS連携には追加の依存関係が必要です。[オプション依存関係](#オプション依存関係)を参照してください。
+> **注意:** OBS連携にはOBSのWebSocketサーバーを有効にする必要があります。
 
 ---
 
@@ -303,12 +301,10 @@ OBSのブラウザソースとして透過背景で設定できます。
 AITuberFlow/
 ├── apps/
 │   ├── web/             # Next.js フロントエンド
-│   ├── server-ts/       # Bun + Hono バックエンド（推奨）
-│   ├── server/          # Python FastAPI バックエンド（レガシー）
+│   ├── server-ts/       # Bun + Hono バックエンド
 │   └── desktop/         # Tauri v2 デスクトップアプリ
 ├── packages/
-│   ├── sdk-ts/          # TypeScript プラグインSDK
-│   └── sdk/             # Python プラグインSDK（レガシー）
+│   └── sdk-ts/          # TypeScript プラグインSDK
 ├── plugins/             # 公式プラグイン（32+）
 ├── templates/           # ワークフローテンプレート
 └── docs/                # ドキュメント
@@ -318,7 +314,7 @@ AITuberFlow/
 
 ## 詳細なセットアップ
 
-### バックエンド（TypeScript - 推奨）
+### バックエンド
 
 ```bash
 cd apps/server-ts
@@ -331,13 +327,6 @@ bun run dev
 ```
 
 バックエンドは `http://localhost:8001` で起動します。
-
-> **Python バックエンド（レガシー）を使用する場合:**
->
-> ```bash
-> cd apps/server
-> uv sync && cp .env.example .env && uv run python main.py
-> ```
 
 ### フロントエンド
 
@@ -417,7 +406,7 @@ class MyCustomNode extends BaseNode {
 
 - サーバーが起動しているか確認
   - ローカル開発時: `http://localhost:8001/health`
-  - Docker使用時: `http://localhost:8000/health`
+  - Docker使用時: `http://localhost:8001/health`
 - ファイアウォールの設定を確認
 
 ### VOICEVOXに接続できない
@@ -432,7 +421,6 @@ class MyCustomNode extends BaseNode {
 
 ### OBSノードが動作しない
 
-- `obsws-python` がインストールされているか確認（[オプション依存関係](#オプション依存関係)を参照）
 - OBSでWebSocketサーバーを有効にする（ツール → WebSocketサーバー設定）
 - ホスト、ポート、パスワードの設定を確認
 
@@ -453,8 +441,6 @@ class MyCustomNode extends BaseNode {
 ## ライセンス
 
 MIT License - 詳細は [LICENSE](LICENSE) を参照してください。
-
-> **注意:** OBS連携は `obsws-python`（GPL-2.0ライセンス）を使用します。この依存関係はオプションであり、コアパッケージには含まれていません。インストールする場合は、GPL-2.0の要件にご注意ください。
 
 ---
 

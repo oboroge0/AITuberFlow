@@ -21,7 +21,7 @@ GitHub Codespacesを使えば、ブラウザ上でワンクリックで開発環
 
 1. 上のバッジをクリック
 2. Codespaceが起動するまで待つ（1-2分）
-3. ターミナルで `make dev` を実行
+3. ターミナルで `npm run dev` を実行
 4. ポート3000と8001を開く
 
 ローカル環境のセットアップは一切不要です！
@@ -38,7 +38,6 @@ GitHub Codespacesを使えば、ブラウザ上でワンクリックで開発環
 - **[Bun](https://bun.sh/)** 1.0以上（TypeScriptバックエンド用）
 - **npm** (Node.jsに付属)
 
-> **Note:** Pythonバックエンド（レガシー）を使用する場合は、**Python** 3.11以上と **[uv](https://docs.astral.sh/uv/)** も必要です。
 
 ## インストール
 
@@ -49,25 +48,15 @@ git clone https://github.com/oboroge0/AITuberFlow.git
 cd AITuberFlow
 ```
 
-### 2. バックエンドのセットアップ (TypeScript - 推奨)
+### 2. バックエンドのセットアップ
 
 ```bash
-# TypeScriptサーバーディレクトリに移動
+# サーバーディレクトリに移動
 cd apps/server-ts
 
 # 依存関係をインストール
 bun install
 ```
-
-> **Pythonバックエンド（レガシー）を使用する場合：**
->
-> ```bash
-> cd apps/server
-> uv sync            # uvを使用する場合
-> # または
-> pip install -r requirements.txt  # pipを使用する場合
-> cp .env.example .env
-> ```
 
 ### 3. フロントエンドのセットアップ
 
@@ -85,11 +74,8 @@ cp .env.example .env.local
 ### 一括インストール
 
 ```bash
-# プロジェクトルートからインストール（TypeScriptのみ）
-make install
-
-# TypeScript + Python 両方をインストール
-make install-all
+# プロジェクトルートから全ての依存関係をインストール
+npm install
 ```
 
 ## アプリケーションの実行
@@ -98,7 +84,7 @@ AITuberFlowはDocker（クイックセットアップに推奨）またはロー
 
 ### オプションA: Dockerを使用 (推奨)
 
-DockerはPythonやNode.jsをローカルにインストールせずに始める最も簡単な方法です。
+Dockerはローカルに個別のランタイムをインストールせずに始める最も簡単な方法です。
 
 #### Dockerの前提条件
 
@@ -114,7 +100,7 @@ docker compose up --build
 
 これにより：
 - バックエンドとフロントエンドの両方のイメージをビルド
-- バックエンドを `http://localhost:8000` で起動
+- バックエンドを `http://localhost:8001` で起動
 - フロントエンドを `http://localhost:3000` で起動
 - SQLiteデータベース用の永続ボリュームを作成
 
@@ -124,12 +110,12 @@ docker compose up --build
 
 ```bash
 # バックエンド設定
-BACKEND_PORT=8000
+BACKEND_PORT=8001
 CORS_ORIGINS=http://localhost:3000
 
 # フロントエンド設定
 FRONTEND_PORT=3000
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_URL=http://localhost:8001
 ```
 
 #### 本番環境デプロイ
@@ -160,23 +146,20 @@ docker compose down -v
 
 Dockerを使用せずにアプリケーションを実行する場合：
 
-#### TypeScriptバックエンドを起動（推奨）
+#### バックエンドを起動
 
 ```bash
 # プロジェクトルートから
-npm run dev:ts
+npm run dev
 ```
 
-これによりフロントエンドとTypeScriptバックエンドが同時に起動します。
+これによりフロントエンドとバックエンドが同時に起動します。
 
 個別に起動する場合：
 
 ```bash
-# TypeScriptバックエンドのみ (apps/server-tsから)
+# バックエンドのみ (apps/server-tsから)
 bun run dev
-
-# Pythonバックエンドのみ (レガシー、apps/serverから)
-uv run python main.py
 ```
 
 バックエンドは `http://localhost:8001` で起動します。
@@ -275,7 +258,7 @@ npm run dev
 ### Dockerの問題
 
 **コンテナが起動しない:**
-- ポート8000または3000が既に使用されていないか確認: `lsof -i :8000` または `lsof -i :3000`
+- ポート8001または3000が既に使用されていないか確認: `lsof -i :8001` または `lsof -i :3000`
 - コンテナログを表示: `docker compose logs backend` または `docker compose logs frontend`
 - 再ビルドを試す: `docker compose build --no-cache`
 
@@ -288,17 +271,11 @@ npm run dev
 - データは `aituberflow-backend-data` という名前のDockerボリュームに保存
 - リセットするには: `docker compose down -v` (全データが削除されます)
 
-### TypeScriptバックエンドが起動しない
+### バックエンドが起動しない
 
 - Bunがインストールされていることを確認: `bun --version` (1.0以上)
 - 依存関係をインストール: `cd apps/server-ts && bun install`
 - ポート8001が使用中でないか確認: `lsof -i :8001`
-
-### Pythonバックエンドが起動しない（レガシー）
-
-- uvを使用している場合: `uv sync` を実行して依存関係がインストールされていることを確認
-- pipを使用している場合: 仮想環境が有効化されていることを確認し、`pip install -r requirements.txt` を実行
-- Pythonバージョンを確認: `python --version` (3.11以上であること)
 
 ### フロントエンドが起動しない
 
@@ -308,7 +285,7 @@ npm run dev
 
 ### バックエンドに接続できない
 
-- バックエンドがポート8001（ローカル）または8000（Docker）で実行されていることを確認
+- バックエンドがポート8001で実行されていることを確認
 - `apps/web/.env.local` のAPI URLが正しいことを確認
 - ブラウザコンソールでCORSエラーを確認
 
