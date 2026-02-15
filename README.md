@@ -120,7 +120,7 @@ git clone https://github.com/oboroge0/AITuberFlow.git
 cd AITuberFlow
 
 # 依存関係をインストール
-npm install
+npm install && npm run setup
 
 # 開発サーバーを起動（フロントエンド + バックエンド同時起動）
 npm run dev

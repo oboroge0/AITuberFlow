@@ -26,7 +26,7 @@ Ask the user for:
 
 ### Step 2: Create Plugin Directory
 
-```
+```text
 plugins/{node-name}/
 ├── manifest.json
 ├── node.ts
@@ -155,7 +155,7 @@ Use consistent colors based on category:
 - `avatar.*` - Avatar-related events (expression, mouth, motion)
 - `audio.*` - Audio playback events (play, stop)
 - `subtitle` - Subtitle display events
-- Use kebab-case for multi-word events: `avatar.expression`
+- Use kebab-case for multi-word segments: `avatar.lip-sync`
 
 ### Type Mappings
 
@@ -172,7 +172,7 @@ Use consistent colors based on category:
 
 Creating a "Text Counter" node that counts characters:
 
-```
+```bash
 /create-node name=text-counter description="Counts characters in text"
 ```
 

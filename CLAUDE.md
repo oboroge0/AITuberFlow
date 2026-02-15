@@ -155,8 +155,8 @@ npm run dev
 npm run dev:web         # Frontend only
 npm run dev:api         # Backend only
 
-# Install dependencies
-npm run install
+# Install all sub-project dependencies
+npm run setup
 
 # Run tests
 npm test

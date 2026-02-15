@@ -190,7 +190,7 @@ git clone https://github.com/oboroge0/AITuberFlow.git
 cd AITuberFlow
 
 # Install dependencies
-npm install
+npm install && npm run setup
 
 # Start development servers (frontend + backend simultaneously)
 npm run dev

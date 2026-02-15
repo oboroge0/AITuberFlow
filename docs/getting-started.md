@@ -74,8 +74,8 @@ cp .env.example .env.local
 ### Install Everything at Once
 
 ```bash
-# From project root, install all dependencies
-npm install
+# From project root, install all sub-project dependencies
+npm run setup
 ```
 
 ## Running the Application
@@ -146,14 +146,14 @@ docker compose down -v
 
 If you prefer to run the application without Docker:
 
-#### Start the Backend
+#### Start All Services
 
 ```bash
 # From project root
 npm run dev
 ```
 
-This starts both the frontend and backend simultaneously.
+This starts both the backend and frontend simultaneously.
 
 To start services individually:
 

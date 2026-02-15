@@ -7,6 +7,7 @@ This document provides a comprehensive overview of AITuberFlow's architecture, d
 - [System Overview](#system-overview)
 - [High-Level Architecture](#high-level-architecture)
 - [Backend Architecture](#backend-architecture)
+  - [Technology Stack](#technology-stack)
   - [Workflow Executor](#workflow-executor)
   - [Event Bus](#event-bus)
   - [API Endpoints](#api-endpoints)
@@ -72,7 +73,7 @@ graph TB
                             │ HTTP / WebSocket
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      Bun + Hono Backend                             │
+│                      Bun + Hono Backend                         │
 │  ┌─────────────┐  ┌─────────────────┐  ┌────────────────────┐  │
 │  │  Routers    │  │  Workflow       │  │  Event Bus         │  │
 │  │  (API)      │──│  Executor       │──│  (Real-time)       │  │

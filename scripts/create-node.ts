@@ -10,7 +10,7 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
-import { join, resolve } from "path";
+import { join, resolve, relative } from "path";
 import { parseArgs } from "util";
 import * as readline from "readline";
 
@@ -189,14 +189,14 @@ function createNodeTs(config: PluginConfig): string {
 import { BaseNode, NodeContext } from "@aituber-flow/sdk";
 
 export default class ${className}Node extends BaseNode {
-  async setup(config: Record<string, any>, context: NodeContext): Promise<void> {
+  async setup(config: Record<string, unknown>, context: NodeContext): Promise<void> {
     await context.log("${config.displayName}を初期化しました");
   }
 
   async execute(
-    inputs: Record<string, any>,
+    inputs: Record<string, unknown>,
     context: NodeContext,
-  ): Promise<Record<string, any>> {
+  ): Promise<Record<string, unknown>> {
 ${inputCode}
 
     // TODO: ここに処理を実装
@@ -413,7 +413,8 @@ async function main() {
       process.exit(1);
     }
 
-    const allowedCategories = new Set(Object.keys(CATEGORY_COLORS));
+    const categories = loadCategories();
+    const allowedCategories = new Set(categories.map((c) => c.id));
     if (values.category && !allowedCategories.has(values.category)) {
       console.error(`❌ 無効なカテゴリ: '${values.category}'`);
       console.error(
@@ -453,7 +454,7 @@ async function main() {
   }
 
   const pluginDir = createPlugin(config);
-  const relativePath = pluginDir.replace(PROJECT_ROOT + "/", "").replace(PROJECT_ROOT + "\\", "");
+  const relativePath = relative(PROJECT_ROOT, pluginDir);
 
   console.log("\n" + "=".repeat(50));
   console.log(`✅ プラグインを作成しました: ${relativePath}/`);
