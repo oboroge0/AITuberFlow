@@ -51,7 +51,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZCRTQ3M0NEMEZFQUY3QTQKUldTazkrb1B6WFBrYTBEa3hjd3N5RGlIOGFUbVNyMVo3c2QrVWRqTDRoSTlvSVJycG9KeDZudDgK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI4N0I4RDk2Njk2QkUyMEMKUldRTTRtdHBsbzE3dUl2aTd3cVU1MDBIWGlWYm9KOG5rMndKOXdMcVZiaDgvUXNqREpyZE1wUk0K",
       "endpoints": [
         "https://github.com/oboroge0/AITuberFlow/releases/latest/download/latest.json"
       ]
