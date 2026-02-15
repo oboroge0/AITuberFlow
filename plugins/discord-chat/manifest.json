@@ -37,7 +37,10 @@
       }
     ],
     "events": {
-      "emits": ["message.received", "message.mention"],
+      "emits": [
+        "message.received",
+        "message.mention"
+      ],
       "listens": []
     }
   },
@@ -67,8 +70,5 @@
       "description": "Only respond to messages that mention the bot",
       "default": false
     }
-  },
-  "dependencies": {
-    "python": ["discord.py>=2.3.0"]
   }
 }

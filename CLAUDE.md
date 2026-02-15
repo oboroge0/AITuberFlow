@@ -14,11 +14,7 @@ AITuberFlow is a visual workflow editor for creating AI VTuber streaming setups.
 ```
 AITuberFlow/
 ├── apps/
-│   ├── server/          # Python FastAPI backend (legacy)
-│   │   ├── engine/      # Workflow execution engine
-│   │   ├── routers/     # API endpoints
-│   │   └── main.py      # Server entry point
-│   ├── server-ts/       # TypeScript Bun+Hono backend (primary)
+│   ├── server-ts/       # TypeScript Bun+Hono backend
 │   │   ├── src/
 │   │   │   ├── engine/  # Workflow execution engine
 │   │   │   ├── routes/  # API endpoints
@@ -31,24 +27,19 @@ AITuberFlow/
 │       ├── components/  # React components
 │       └── stores/      # Zustand state management
 ├── packages/
-│   ├── sdk/             # Python SDK for node development (legacy)
-│   │   └── aituber_flow_sdk/
 │   └── sdk-ts/          # TypeScript SDK for node development
 │       └── src/
 ├── plugins/             # Node plugins (each in own directory)
 │   ├── {node-name}/
 │   │   ├── manifest.json
-│   │   └── node.py      # Python implementation (being migrated to TS)
+│   │   └── node.ts      # TypeScript implementation
 ├── tests/               # Test suites
 │   ├── engine/          # TypeScript engine tests (bun:test)
-│   ├── routes/          # TypeScript route tests (bun:test)
-│   └── unit/            # Python unit tests (pytest)
+│   └── routes/          # TypeScript route tests (bun:test)
 └── templates/           # Workflow templates (JSON)
 ```
 
-## Backend Options
-
-### TypeScript Backend (Primary - Recommended)
+## Tech Stack
 
 | 項目 | 技術 |
 |------|------|
@@ -57,16 +48,7 @@ AITuberFlow/
 | Database | bun:sqlite + Drizzle ORM |
 | WebSocket | Native WebSocket (Hono/Bun) |
 | Validation | Zod |
-
-### Python Backend (Legacy)
-
-| 項目 | 技術 |
-|------|------|
-| Runtime | Python 3.11+ |
-| Framework | FastAPI |
-| Database | SQLite + SQLAlchemy |
-| WebSocket | python-socketio |
-| Validation | Pydantic |
+| Frontend | Next.js + React + Tailwind CSS |
 
 ## Node Development
 
@@ -74,30 +56,9 @@ AITuberFlow/
 
 Each node is a plugin in `plugins/{node-name}/`:
 - `manifest.json` - Node metadata, inputs, outputs, config schema
-- `node.py` - Python implementation extending `BaseNode`
+- `node.ts` - TypeScript implementation extending `BaseNode`
 
-### BaseNode Methods (Python)
-
-```python
-class MyNode(BaseNode):
-    async def setup(self, config: dict, context: NodeContext) -> None:
-        """Called once when workflow starts"""
-        pass
-
-    async def execute(self, inputs: dict, context: NodeContext) -> dict:
-        """Called each time the node runs, returns outputs"""
-        return {"output_id": value}
-
-    async def on_event(self, event: Event, context: NodeContext) -> Optional[dict]:
-        """Handle WebSocket events (optional)"""
-        return None
-
-    async def teardown(self) -> None:
-        """Called when workflow stops"""
-        pass
-```
-
-### BaseNode Methods (TypeScript SDK)
+### BaseNode Methods
 
 ```typescript
 import { BaseNode, NodeContext, Event } from "@aituber-flow/sdk";
@@ -125,16 +86,7 @@ class MyNode extends BaseNode {
 
 ### NodeContext API
 
-```python
-# Python
-await context.log(message, level="info")  # Log to frontend
-await context.emit_event(Event(type="event.name", payload={}))  # WebSocket event
-context.create_task(coroutine)  # Background task
-context.cancel_background_tasks()  # Cancel all tasks
-```
-
 ```typescript
-// TypeScript
 await context.log(message, "info");  // Log to frontend
 await context.emitEvent({ type: "event.name", payload: {} });  // WebSocket event
 context.createTask(promise);  // Background task
@@ -171,16 +123,7 @@ context.cancelBackgroundTasks();  // Cancel all tasks
 
 Events enable real-time communication between nodes and frontend:
 
-```python
-# Python
-await context.emit_event(Event(
-    type="avatar.expression",
-    payload={"expression": "happy", "intensity": 0.8}
-))
-```
-
 ```typescript
-// TypeScript
 await context.emitEvent({
   type: "avatar.expression",
   payload: { expression: "happy", intensity: 0.8 },
@@ -205,30 +148,24 @@ OBS-compatible overlay at `/overlay/[workflowId]`:
 ## Commands
 
 ```bash
-# Full stack (TypeScript backend + frontend) - recommended
+# Full stack (backend + frontend)
 npm run dev
-
-# Full stack (Python backend + frontend) - legacy
-npm run dev:py
 
 # Individual services
 npm run dev:web         # Frontend only
-npm run dev:api-ts      # TypeScript backend only
-npm run dev:api         # Python backend only
+npm run dev:api         # Backend only
 
-# Install dependencies (TypeScript only)
-make install
-
-# Install all dependencies (TypeScript + Python)
-make install-all
+# Install all sub-project dependencies
+npm run setup
 
 # Run tests
-make test               # All tests (Python + TypeScript)
-make test-ts            # TypeScript tests only
-make test-py            # Python tests only
+npm test
 
 # Lint
-make lint
+npm run lint
+
+# Create a new plugin
+npm run create-node
 ```
 
 ## Development Tips
@@ -238,38 +175,28 @@ make lint
 3. **Outputs for Data Flow**: Use outputs for data that flows to next node
 4. **Pass-through Outputs**: Include input data in outputs when downstream nodes need it
 5. **Async/Await**: All node methods are async - use `await` properly
-6. **Type Safety**: Match manifest types with Python/TypeScript implementations
+6. **Type Safety**: Match manifest types with TypeScript implementations
 
 ## Running the Project
 
 ```bash
-# TypeScript backend (recommended)
+# Backend
 cd apps/server-ts && bun run dev
-
-# Python backend (legacy)
-cd apps/server && uv run python main.py
 
 # Frontend
 cd apps/web && npm run dev
 
 # Or use the combined command
-npm run dev       # Frontend + TypeScript backend (default)
-npm run dev:py    # Frontend + Python backend (legacy)
+npm run dev       # Frontend + Backend
 ```
 
-Both backends serve on port **8001** by default. The frontend runs on port **3000**.
+The backend serves on port **8001** by default. The frontend runs on port **3000**.
 
 ## Testing
 
 ```bash
 # TypeScript tests (bun:test)
-bun test tests/engine/ tests/routes/ --verbose
-
-# Python tests (pytest)
-cd apps/server && uv run pytest ../../tests/unit/ -v --tb=short
-
-# All tests
-make test
+npm test
 ```
 
 ## Testing Workflows
@@ -332,7 +259,6 @@ docs: プラグイン開発ガイドを更新
 以下のファイルのバージョンを更新:
 - `apps/web/package.json`
 - `apps/server-ts/package.json`
-- `apps/server/pyproject.toml` (legacy)
 - `CHANGELOG.md`（日付は `date +%Y-%m-%d` で確認）
 
 ### 3. コミット＆マージ

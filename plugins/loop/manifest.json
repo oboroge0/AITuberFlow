@@ -54,9 +54,18 @@
       "description": "Loop mode: count, while, or infinite",
       "default": "count",
       "options": [
-        {"label": "Count", "value": "count"},
-        {"label": "While", "value": "while"},
-        {"label": "Infinite", "value": "infinite"}
+        {
+          "label": "Count",
+          "value": "count"
+        },
+        {
+          "label": "While",
+          "value": "while"
+        },
+        {
+          "label": "Infinite",
+          "value": "infinite"
+        }
       ]
     },
     "count": {
@@ -81,8 +90,5 @@
       "min": 1,
       "max": 10000
     }
-  },
-  "dependencies": {
-    "python": []
   }
 }

@@ -33,7 +33,9 @@
       }
     ],
     "events": {
-      "emits": ["subtitle"]
+      "emits": [
+        "subtitle"
+      ]
     }
   },
   "config": {
@@ -42,10 +44,22 @@
       "label": "Style Preset",
       "description": "Subtitle style preset",
       "options": [
-        { "label": "Default", "value": "default" },
-        { "label": "Gaming", "value": "gaming" },
-        { "label": "Minimal", "value": "minimal" },
-        { "label": "Custom", "value": "custom" }
+        {
+          "label": "Default",
+          "value": "default"
+        },
+        {
+          "label": "Gaming",
+          "value": "gaming"
+        },
+        {
+          "label": "Minimal",
+          "value": "minimal"
+        },
+        {
+          "label": "Custom",
+          "value": "custom"
+        }
       ],
       "default": "default"
     },
@@ -54,10 +68,22 @@
       "label": "Position",
       "description": "Subtitle position on screen",
       "options": [
-        { "label": "Bottom Center", "value": "bottom-center" },
-        { "label": "Bottom Left", "value": "bottom-left" },
-        { "label": "Top Center", "value": "top-center" },
-        { "label": "Center", "value": "center" }
+        {
+          "label": "Bottom Center",
+          "value": "bottom-center"
+        },
+        {
+          "label": "Bottom Left",
+          "value": "bottom-left"
+        },
+        {
+          "label": "Top Center",
+          "value": "top-center"
+        },
+        {
+          "label": "Center",
+          "value": "center"
+        }
       ],
       "default": "bottom-center"
     },
@@ -92,10 +118,22 @@
       "label": "Animation",
       "description": "Text appearance animation",
       "options": [
-        { "label": "None", "value": "none" },
-        { "label": "Fade In", "value": "fade" },
-        { "label": "Typewriter", "value": "typewriter" },
-        { "label": "Slide Up", "value": "slide" }
+        {
+          "label": "None",
+          "value": "none"
+        },
+        {
+          "label": "Fade In",
+          "value": "fade"
+        },
+        {
+          "label": "Typewriter",
+          "value": "typewriter"
+        },
+        {
+          "label": "Slide Up",
+          "value": "slide"
+        }
       ],
       "default": "fade"
     },
@@ -107,8 +145,5 @@
       "min": 0,
       "max": 30000
     }
-  },
-  "dependencies": {
-    "python": []
   }
 }

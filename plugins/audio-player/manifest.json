@@ -43,7 +43,10 @@
       }
     ],
     "events": {
-      "emits": ["audio.play", "audio.stop"]
+      "emits": [
+        "audio.play",
+        "audio.stop"
+      ]
     }
   },
   "config": {
@@ -57,22 +60,25 @@
       "type": "number",
       "label": "Volume",
       "description": "Playback volume (0.0 - 1.0)",
-      "default": 1.0,
-      "min": 0.0,
-      "max": 1.0
+      "default": 1,
+      "min": 0,
+      "max": 1
     },
     "output_device": {
       "type": "select",
       "label": "Output Device",
       "description": "Where to play the audio",
       "options": [
-        { "label": "Browser (Frontend)", "value": "browser" },
-        { "label": "Server (Local)", "value": "server" }
+        {
+          "label": "Browser (Frontend)",
+          "value": "browser"
+        },
+        {
+          "label": "Server (Local)",
+          "value": "server"
+        }
       ],
       "default": "browser"
     }
-  },
-  "dependencies": {
-    "python": []
   }
 }

@@ -155,7 +155,7 @@ AITuberFlow is a visual tool for building AI-powered virtual streamer (AITuber/V
 | **OBS Scene Switch** | Switch OBS scenes |
 | **OBS Source Toggle** | Show/hide OBS sources |
 
-> **Note:** OBS integration requires optional dependency installation. See [Optional Dependencies](#optional-dependencies).
+> **Note:** OBS integration requires enabling the WebSocket server in OBS.
 
 ---
 
@@ -190,9 +190,9 @@ git clone https://github.com/oboroge0/AITuberFlow.git
 cd AITuberFlow
 
 # Install dependencies
-make install
+npm install && npm run setup
 
-# Start development servers (frontend + TypeScript backend simultaneously)
+# Start development servers (frontend + backend simultaneously)
 npm run dev
 ```
 
@@ -204,17 +204,15 @@ The editor will be available at `http://localhost:3000`.
 # Frontend only
 npm run dev:web
 
-# TypeScript backend only
-npm run dev:api-ts
+# Backend only
+npm run dev:api
 ```
-
-> **💡 Tip**: On macOS/Linux, you can also use `make dev` (see Makefile)
 
 ---
 
 ## Detailed Setup
 
-### Backend (TypeScript - Recommended)
+### Backend
 
 ```bash
 cd apps/server-ts
@@ -227,13 +225,6 @@ bun run dev
 ```
 
 The backend will start at `http://localhost:8001`.
-
-> **To use the Python backend (legacy) instead:**
->
-> ```bash
-> cd apps/server
-> uv sync && cp .env.example .env && uv run python main.py
-> ```
 
 ### Frontend
 
@@ -331,12 +322,10 @@ Configure as a Browser Source in OBS with transparent background.
 AITuberFlow/
 ├── apps/
 │   ├── web/             # Next.js frontend
-│   ├── server-ts/       # Bun + Hono backend (recommended)
-│   ├── server/          # Python FastAPI backend (legacy)
+│   ├── server-ts/       # Bun + Hono backend
 │   └── desktop/         # Tauri v2 desktop app
 ├── packages/
-│   ├── sdk-ts/          # TypeScript plugin SDK
-│   └── sdk/             # Python plugin SDK (legacy)
+│   └── sdk-ts/          # TypeScript plugin SDK
 ├── plugins/             # Official plugins (32+)
 ├── templates/           # Workflow templates
 └── docs/                # Documentation
@@ -413,7 +402,6 @@ See [docs/api-reference.md](docs/api-reference.md) for the full API reference.
 
 ### OBS nodes not working
 
-- Ensure `obsws-python` is installed (see [Optional Dependencies](#optional-dependencies))
 - Enable WebSocket server in OBS (Tools → WebSocket Server Settings)
 - Check host, port, and password settings
 
@@ -434,8 +422,6 @@ Contributions are welcome! Please see [CONTRIBUTING.en.md](CONTRIBUTING.en.md) f
 ## License
 
 MIT License - See [LICENSE](LICENSE) for details.
-
-> **Note:** OBS integration uses `obsws-python` which is licensed under GPL-2.0. This dependency is optional and not included in the core package. If you install it, please be aware of GPL-2.0 requirements.
 
 ---
 

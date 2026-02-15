@@ -1,19 +1,11 @@
 # Dependencies
 node_modules/
-__pycache__/
-*.py[cod]
-*$py.class
-.Python
-venv/
-env/
-.venv/
 
 # Build outputs
 .next/
 out/
 dist/
 build/
-*.egg-info/
 
 # Database
 *.db
@@ -44,8 +36,6 @@ yarn-error.log*
 
 # Testing
 coverage/
-.pytest_cache/
-htmlcov/
 
 # TypeScript
 *.tsbuildinfo

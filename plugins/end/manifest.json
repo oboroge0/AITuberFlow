@@ -38,8 +38,5 @@
       "description": "Message to display when workflow ends",
       "default": "Workflow completed"
     }
-  },
-  "dependencies": {
-    "python": []
   }
 }

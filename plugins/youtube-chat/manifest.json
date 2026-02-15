@@ -37,7 +37,11 @@
       }
     ],
     "events": {
-      "emits": ["message.received", "message.superchat", "message.membership"],
+      "emits": [
+        "message.received",
+        "message.superchat",
+        "message.membership"
+      ],
       "listens": []
     }
   },
@@ -68,8 +72,5 @@
       "description": "Ignore messages from known bots",
       "default": true
     }
-  },
-  "dependencies": {
-    "python": ["httpx>=0.26.0"]
   }
 }

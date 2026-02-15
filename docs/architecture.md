@@ -7,6 +7,7 @@ This document provides a comprehensive overview of AITuberFlow's architecture, d
 - [System Overview](#system-overview)
 - [High-Level Architecture](#high-level-architecture)
 - [Backend Architecture](#backend-architecture)
+  - [Technology Stack](#technology-stack)
   - [Workflow Executor](#workflow-executor)
   - [Event Bus](#event-bus)
   - [API Endpoints](#api-endpoints)
@@ -72,7 +73,7 @@ graph TB
                             │ HTTP / WebSocket
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      Bun + Hono Backend                             │
+│                      Bun + Hono Backend                         │
 │  ┌─────────────┐  ┌─────────────────┐  ┌────────────────────┐  │
 │  │  Routers    │  │  Workflow       │  │  Event Bus         │  │
 │  │  (API)      │──│  Executor       │──│  (Real-time)       │  │
@@ -95,7 +96,7 @@ graph TB
 ```
 AITuberFlow/
 ├── apps/
-│   ├── server-ts/             # TypeScript Bun+Hono backend (recommended)
+│   ├── server-ts/             # TypeScript Bun+Hono backend
 │   │   ├── src/
 │   │   │   ├── engine/        # Workflow execution engine
 │   │   │   │   ├── executor.ts    # Core execution logic
@@ -116,11 +117,6 @@ AITuberFlow/
 │   │   │   └── index.ts       # Server entry point
 │   │   └── package.json
 │   │
-│   ├── server/                # Python FastAPI backend (legacy)
-│   │   ├── engine/            # Workflow execution engine
-│   │   ├── routers/           # API endpoints
-│   │   └── main.py            # Server entry point
-│   │
 │   └── web/                   # Next.js frontend
 │       ├── app/               # App Router pages
 │       │   ├── (editor)/      # Editor & Preview pages
@@ -134,26 +130,23 @@ AITuberFlow/
 │       └── lib/               # Utilities, types, API client
 │
 ├── packages/
-│   ├── sdk-ts/                # TypeScript Plugin SDK
-│   │   └── src/
-│   │       ├── base.ts        # BaseNode class
-│   │       ├── context.ts     # NodeContext, Event
-│   │       ├── types.ts       # Zod type definitions
-│   │       ├── errors.ts      # Error handling
-│   │       └── index.ts       # Exports
-│   └── sdk/                   # Python Plugin SDK (legacy)
-│       └── aituber_flow_sdk/
+│   └── sdk-ts/                # TypeScript Plugin SDK
+│       └── src/
+│           ├── base.ts        # BaseNode class
+│           ├── context.ts     # NodeContext, Event
+│           ├── types.ts       # Zod type definitions
+│           ├── errors.ts      # Error handling
+│           └── index.ts       # Exports
 │
 ├── plugins/                   # Node plugins (32+ official)
 │   ├── openai-llm/
 │   │   ├── manifest.json      # Node metadata & config
-│   │   └── node.py            # Node implementation
+│   │   └── node.ts            # Node implementation
 │   └── ...
 │
 ├── tests/                     # Test suites
 │   ├── engine/                # TypeScript engine tests (bun:test)
-│   ├── routes/                # TypeScript route tests (bun:test)
-│   └── unit/                  # Python unit tests (pytest)
+│   └── routes/                # TypeScript route tests (bun:test)
 │
 └── templates/                 # Workflow templates (JSON)
 ```
@@ -164,14 +157,15 @@ AITuberFlow/
 
 ### Technology Stack
 
-| Component | TypeScript (Recommended) | Python (Legacy) |
-|-----------|--------------------------|-----------------|
-| Runtime | Bun | Python 3.11+ |
-| Framework | Hono | FastAPI |
-| Database | bun:sqlite + Drizzle ORM | SQLite + SQLAlchemy |
-| WebSocket | Native WebSocket (Hono/Bun) | python-socketio |
-| Validation | Zod | Pydantic |
-| Plugin SDK | `@aituber-flow/sdk` | `aituber_flow_sdk` |
+| Component | Technology |
+|-----------|-----------|
+| Runtime | Bun |
+| Framework | Hono |
+| Database | bun:sqlite + Drizzle ORM |
+| WebSocket | Native WebSocket (Hono/Bun) |
+| Validation | Zod |
+| Package Manager | bun |
+| Plugin SDK | `@aituber-flow/sdk` |
 
 ### Workflow Executor
 
@@ -395,7 +389,7 @@ Each plugin resides in `plugins/{plugin-id}/` with two required files:
 ```
 plugins/openai-llm/
 ├── manifest.json    # Plugin metadata and configuration schema
-└── node.py          # Python implementation
+└── node.ts          # TypeScript implementation
 ```
 
 ### Manifest Schema
@@ -440,9 +434,6 @@ plugins/openai-llm/
         {"label": "GPT-4o", "value": "gpt-4o"}
       ]
     }
-  },
-  "dependencies": {
-    "python": ["openai>=1.0.0"]
   }
 }
 ```
@@ -483,7 +474,7 @@ stateDiagram-v2
 │  ┌──────────────────────────────────────┐                       │
 │  │         Execution Loop               │                       │
 │  │  ┌───────────┐    ┌───────────────┐ │                       │
-│  │  │ execute() │ or │  on_event()   │ │ ← Called per cycle    │
+│  │  │ execute() │ or │  onEvent()    │ │ ← Called per cycle    │
 │  │  └───────────┘    └───────────────┘ │                       │
 │  └──────────────────────────────────────┘                       │
 │       │                                                         │
@@ -496,7 +487,7 @@ stateDiagram-v2
 
 ### SDK Overview
 
-The TypeScript Plugin SDK (`packages/sdk-ts/src/`) provides base classes:
+The Plugin SDK (`packages/sdk-ts/src/`) provides base classes:
 
 ```typescript
 import { BaseNode, NodeContext, Event } from "@aituber-flow/sdk";
@@ -527,8 +518,6 @@ class MyNode extends BaseNode {
   }
 }
 ```
-
-> **Python SDK (Legacy)** is available at `packages/sdk/aituber_flow_sdk/` with the same lifecycle methods (`setup`, `execute`, `on_event`, `teardown`).
 
 #### Node Categories
 

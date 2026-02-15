@@ -7,17 +7,16 @@
 # Environment variables can be set in .env file at the project root
 
 services:
-  # Backend API Server
+  # Backend API Server (TypeScript / Bun)
   backend:
     build:
-      context: ./apps/server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/server-ts/Dockerfile
     container_name: aituberflow-backend
     ports:
-      - "${BACKEND_PORT:-8000}:8000"
+      - "${BACKEND_PORT:-8001}:8001"
     environment:
-      - PORT=8000
-      - DATABASE_URL=sqlite:///./data/aituber_flow.db
+      - PORT=8001
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
     volumes:
       # Persist database
@@ -27,7 +26,7 @@ services:
       # Mount templates directory
       - ./templates:/app/templates:ro
     healthcheck:
-      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health')"]
+      test: ["CMD", "bun", "-e", "fetch('http://localhost:8001/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -41,7 +40,7 @@ services:
       dockerfile: Dockerfile
       args:
         # NEXT_PUBLIC_* vars are inlined at build time, not runtime
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8001}
     container_name: aituberflow-frontend
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
