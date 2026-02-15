@@ -144,6 +144,7 @@
       "label": "LLM Model",
       "description": "Model to use for emotion analysis",
       "options": [],
+      "dynamic": true,
       "default": "gpt-4o-mini",
       "showWhen": {
         "key": "method",
