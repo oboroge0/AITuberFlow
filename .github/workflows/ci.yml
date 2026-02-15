@@ -34,7 +34,7 @@ jobs:
         run: npm run build
 
   backend-ts:
-    name: Backend (TypeScript) Check
+    name: Backend Check
     runs-on: ubuntu-latest
     defaults:
       run:
