@@ -5,6 +5,29 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
 [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [2.0.2] - 2026-02-16
+
+### 改善
+
+- **Emotion Analyzer の LLM モデル選択をプルダウンに変更** - テキスト入力からドロップダウンに改善し、LLM プロバイダーに応じたモデル一覧を動的に表示 (#80)
+- LLM モデルリストを共通定数に統合し、各 LLM ノードと Emotion Analyzer 間の二重管理を解消
+
+### 修正
+
+- Emotion Analyzer で LLM プロバイダー変更時にモデル選択がリセットされないバグを修正
+
+### 削除
+
+- **Python レガシーコードを完全削除** - Python バックエンド (`apps/server/`)、Python SDK (`packages/sdk/`)、全プラグインの `node.py`、Python テストを削除 (#78, #81)
+- `Makefile` を廃止し、全開発コマンドを `package.json` scripts に統一
+- CI から Python 関連ジョブを削除
+
+### 変更
+
+- `npm run dev:api-ts` → `npm run dev:api` にコマンド名を変更
+- `npm run create-node` コマンドを追加（Python 版 `create_node.py` の TypeScript 移植）
+- `docker-compose.yml` を TypeScript バックエンド (Bun + Hono) 用に更新
+
 ## [2.0.1] - 2026-02-15
 
 ### 修正
