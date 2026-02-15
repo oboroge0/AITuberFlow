@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { ServerWebSocket } from "bun";
 import { Hono } from "hono";
@@ -63,8 +64,14 @@ app.get(
 // Static file serving for desktop mode
 // When STATIC_DIR is set, serve the Next.js static export and provide SPA fallback
 if (STATIC_DIR) {
+  const indexExists = existsSync(join(STATIC_DIR, "index.html"));
+  console.log(`[static] STATIC_DIR=${STATIC_DIR} index.html=${indexExists ? "found" : "NOT FOUND"}`);
+
+  // Normalize path separators for cross-platform compatibility (Hono serveStatic)
+  const normalizedStaticDir = STATIC_DIR.replace(/\\/g, "/");
+
   // Serve static files from the export directory
-  app.use("/*", serveStatic({ root: STATIC_DIR }));
+  app.use("/*", serveStatic({ root: normalizedStaticDir }));
 
   // SPA fallback: serve the correct HTML shell for each route pattern
   // Next.js static export generates /editor/_.html, /preview/_.html, /overlay/_.html

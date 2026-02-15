@@ -17,6 +17,14 @@ fn navigate_to_server(app: &tauri::AppHandle, port: u16) {
 }
 
 fn resolve_resource_path(resource_dir: &Path, resource_name: &str) -> PathBuf {
+    // Production: Tauri bundles files preserving relative paths from src-tauri/,
+    // so "resources/web-dist/**/*" ends up at "{resource_dir}/resources/web-dist/".
+    let bundled_with_prefix = resource_dir.join("resources").join(resource_name);
+    if bundled_with_prefix.exists() {
+        return bundled_with_prefix;
+    }
+
+    // Also check without the prefix (in case Tauri flattens the structure).
     let bundled = resource_dir.join(resource_name);
     if bundled.exists() {
         return bundled;
