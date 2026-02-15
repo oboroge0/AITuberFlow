@@ -259,6 +259,7 @@ docs: プラグイン開発ガイドを更新
 以下のファイルのバージョンを更新:
 - `apps/web/package.json`
 - `apps/server-ts/package.json`
+- `apps/desktop/src-tauri/tauri.conf.json`
 - `CHANGELOG.md`（日付は `date +%Y-%m-%d` で確認）
 
 ### 3. コミット＆マージ
