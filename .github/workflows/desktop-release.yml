@@ -60,7 +60,9 @@ jobs:
         run: cd apps/web && npm ci
 
       - name: Build frontend (static export)
-        run: cd apps/web && BUILD_MODE=desktop npx next build
+        run: cd apps/web && npx next build
+        env:
+          BUILD_MODE: desktop
 
       # Build Bun server sidecar
       - name: Install server dependencies
