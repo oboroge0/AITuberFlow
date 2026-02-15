@@ -64,6 +64,10 @@ jobs:
         env:
           BUILD_MODE: desktop
 
+      # Install SDK dependencies (needed for copy-resources.js SDK bundling)
+      - name: Install SDK dependencies
+        run: cd packages/sdk-ts && bun install
+
       # Build Bun server sidecar
       - name: Install server dependencies
         run: cd apps/server-ts && bun install
@@ -71,7 +75,6 @@ jobs:
       - name: Build server sidecar
         run: |
           cd apps/server-ts
-          mkdir -p ../desktop/src-tauri/binaries
           bun build --compile --target=${{ matrix.bun-target }} src/index.ts --outfile=../desktop/src-tauri/binaries/server${{ matrix.sidecar-suffix }}
 
       # Copy resources into Tauri bundle
