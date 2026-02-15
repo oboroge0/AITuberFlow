@@ -39,7 +39,7 @@
       "resources/templates/**/*",
       "resources/web-dist/**/*"
     ],
-    "createUpdaterArtifacts": true,
+    "createUpdaterArtifacts": false,
     "macOS": {
       "minimumSystemVersion": "10.15"
     },
