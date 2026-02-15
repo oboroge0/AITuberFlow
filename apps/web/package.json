@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build",
-    "build:desktop": "BUILD_MODE=desktop next build",
+    "build:desktop": "cross-env BUILD_MODE=desktop next build",
     "start": "next start",
     "lint": "eslint ."
   },
@@ -29,6 +29,7 @@
     "@types/react-dom": "^18.2.18",
     "@types/uuid": "^9.0.7",
     "autoprefixer": "^10.4.17",
+    "cross-env": "^10.1.0",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.3",
     "eslint-plugin-react": "^7.37.5",

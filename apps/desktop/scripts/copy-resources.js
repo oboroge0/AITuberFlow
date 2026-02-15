@@ -9,9 +9,31 @@
 
 const { cpSync, mkdirSync, existsSync, rmSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
-const { execFileSync } = require("node:child_process");
+const { execFileSync, execSync } = require("node:child_process");
+const os = require("node:os");
 
 const ROOT = resolve(__dirname, "../../..");
+
+/** Resolve the bun binary path (handles PATH issues on Windows). */
+function findBun() {
+  try {
+    const cmd = process.platform === "win32" ? "where bun" : "which bun";
+    return execSync(cmd, { encoding: "utf-8" }).trim().split(/\r?\n/)[0];
+  } catch {
+    // Fallback to common install locations
+    const home = os.homedir();
+    const candidates = [
+      join(home, ".bun", "bin", "bun"),
+      join(home, ".bun", "bin", "bun.exe"),
+    ];
+    for (const c of candidates) {
+      if (existsSync(c)) return c;
+    }
+    return "bun"; // hope for the best
+  }
+}
+
+const BUN = findBun();
 const DEST = resolve(__dirname, "../src-tauri/resources");
 
 function copyDir(src, dest) {
@@ -39,7 +61,7 @@ function bundleSdkRuntime() {
   mkdirSync(sdkDir, { recursive: true });
 
   console.log(`[build] bundling SDK runtime: ${sdkEntry} -> ${sdkOutFile}`);
-  execFileSync("bun", ["build", sdkEntry, "--format=esm", "--outfile", sdkOutFile], {
+  execFileSync(BUN, ["build", sdkEntry, "--format=esm", "--outfile", sdkOutFile], {
     cwd: ROOT,
     stdio: "inherit",
   });
@@ -59,6 +81,68 @@ function bundleSdkRuntime() {
   return true;
 }
 
+/**
+ * Scan plugin source files for external npm imports and install them
+ * into resources/node_modules/ so that dynamically-imported plugins
+ * can resolve their dependencies at runtime.
+ */
+function installPluginDependencies() {
+  const { readFileSync, readdirSync } = require("node:fs");
+  const pluginsDir = join(ROOT, "plugins");
+  const serverPkg = JSON.parse(
+    readFileSync(join(ROOT, "apps", "server-ts", "package.json"), "utf-8"),
+  );
+  const serverDeps = serverPkg.dependencies || {};
+
+  // Collect external imports from all plugin node.ts files
+  const needed = new Set();
+  if (!existsSync(pluginsDir)) return;
+
+  for (const name of readdirSync(pluginsDir)) {
+    const nodeFile = join(pluginsDir, name, "node.ts");
+    if (!existsSync(nodeFile)) continue;
+    const src = readFileSync(nodeFile, "utf-8");
+    // Match: from "pkg" or from "@scope/pkg"
+    const re = /from\s+["']([^./][^"']*)["']/g;
+    let m;
+    while ((m = re.exec(src)) !== null) {
+      const pkg = m[1];
+      // Skip built-ins and SDK
+      if (pkg === "@aituber-flow/sdk") continue;
+      if (["fs", "path", "crypto", "os", "url", "stream", "events", "util", "child_process", "http", "https", "net", "buffer", "node:fs", "node:path", "node:crypto"].includes(pkg)) continue;
+      // Use version from server-ts/package.json if available
+      if (serverDeps[pkg]) {
+        needed.add(pkg);
+      }
+    }
+  }
+
+  if (needed.size === 0) {
+    console.log("[deps] No external plugin dependencies to install");
+    return;
+  }
+
+  // Create a minimal package.json in resources/ and run bun install
+  const depsObj = {};
+  for (const pkg of needed) {
+    depsObj[pkg] = serverDeps[pkg];
+  }
+  const resPkg = {
+    name: "aituber-flow-plugin-deps",
+    version: "0.0.0",
+    private: true,
+    dependencies: depsObj,
+  };
+
+  writeFileSync(join(DEST, "package.json"), `${JSON.stringify(resPkg, null, 2)}\n`);
+  console.log(`[deps] Installing plugin dependencies: ${[...needed].join(", ")}`);
+
+  execFileSync(BUN, ["install"], {
+    cwd: DEST,
+    stdio: "inherit",
+  });
+}
+
 const copies = [
   { src: join(ROOT, "plugins"), dest: join(DEST, "plugins") },
   { src: join(ROOT, "templates"), dest: join(DEST, "templates") },
@@ -72,5 +156,10 @@ for (const { src, dest } of copies) {
 // Provide a local runtime SDK module for plugin imports:
 // import { ... } from "@aituber-flow/sdk"
 bundleSdkRuntime();
+
+// Install external npm dependencies required by plugins.
+// These packages are dynamically imported at runtime and cannot be
+// bundled into the compiled sidecar binary.
+installPluginDependencies();
 
 console.log("Resource copy complete.");

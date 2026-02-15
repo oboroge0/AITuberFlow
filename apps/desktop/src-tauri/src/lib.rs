@@ -87,8 +87,8 @@ fn sanitize_export_filename(input: &str) -> String {
 }
 
 #[tauri::command]
-fn open_overlay_window(app: tauri::AppHandle, workflow_id: String) -> Result<(), String> {
-    let workflow_id = workflow_id.trim();
+async fn open_overlay_window(app: tauri::AppHandle, workflow_id: String) -> Result<(), String> {
+    let workflow_id = workflow_id.trim().to_string();
     if workflow_id.is_empty() || workflow_id == "_" {
         return Err("invalid workflow id".to_string());
     }
@@ -99,10 +99,10 @@ fn open_overlay_window(app: tauri::AppHandle, workflow_id: String) -> Result<(),
         .lock()
         .map_err(|_| "failed to read server port".to_string())?;
     let url = format!("http://localhost:{}/overlay/{}", port, workflow_id);
-    let parsed_url = url
+    let parsed_url: tauri::Url = url
         .parse()
         .map_err(|err| format!("invalid overlay url: {}", err))?;
-    let label = format!("overlay-{}", sanitize_window_label_suffix(workflow_id));
+    let label = format!("overlay-{}", sanitize_window_label_suffix(&workflow_id));
 
     if let Some(existing) = app.get_webview_window(&label) {
         existing

@@ -100,7 +100,7 @@ initDb();
 
 const parsedPort = process.env.PORT === undefined ? Number.NaN : Number(process.env.PORT);
 const port = Number.isFinite(parsedPort) ? parsedPort : 8001;
-console.log(`AITuberFlow server starting on port ${port}...`);
+console.log(`Started development server: http://localhost:${port}`);
 
 // Graceful shutdown handler
 process.on("SIGTERM", () => {
