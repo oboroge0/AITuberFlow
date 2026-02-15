@@ -1,6 +1,6 @@
 {
   "productName": "AITuberFlow",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "identifier": "com.aituberflow.app",
   "build": {
     "beforeBuildCommand": "",
@@ -39,7 +39,7 @@
       "resources/templates/**/*",
       "resources/web-dist/**/*"
     ],
-    "createUpdaterArtifacts": false,
+    "createUpdaterArtifacts": true,
     "macOS": {
       "minimumSystemVersion": "10.15"
     },
@@ -51,7 +51,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZCRTQ3M0NEMEZFQUY3QTQKUldTazkrb1B6WFBrYTBEa3hjd3N5RGlIOGFUbVNyMVo3c2QrVWRqTDRoSTlvSVJycG9KeDZudDgK",
       "endpoints": [
         "https://github.com/oboroge0/AITuberFlow/releases/latest/download/latest.json"
       ]
