@@ -20,7 +20,7 @@ jobs:
             rust-target: aarch64-apple-darwin
             bun-target: bun-darwin-arm64
             sidecar-suffix: '-aarch64-apple-darwin'
-          - platform: macos-13
+          - platform: macos-latest
             args: '--target x86_64-apple-darwin'
             rust-target: x86_64-apple-darwin
             bun-target: bun-darwin-x64
