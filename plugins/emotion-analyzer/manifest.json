@@ -43,7 +43,9 @@
       }
     ],
     "events": {
-      "emits": ["avatar.expression"]
+      "emits": [
+        "avatar.expression"
+      ]
     }
   },
   "config": {
@@ -52,8 +54,14 @@
       "label": "Analysis Method",
       "description": "Method to use for emotion detection",
       "options": [
-        { "label": "LLM-based (Recommended)", "value": "llm" },
-        { "label": "Rule-based (Keywords)", "value": "rule-based" }
+        {
+          "label": "LLM-based (Recommended)",
+          "value": "llm"
+        },
+        {
+          "label": "Rule-based (Keywords)",
+          "value": "rule-based"
+        }
       ],
       "default": "llm"
     },
@@ -68,45 +76,81 @@
       "label": "Language",
       "description": "Language for keyword matching (rule-based only)",
       "options": [
-        { "label": "Japanese", "value": "ja" },
-        { "label": "English", "value": "en" },
-        { "label": "Auto-detect", "value": "auto" }
+        {
+          "label": "Japanese",
+          "value": "ja"
+        },
+        {
+          "label": "English",
+          "value": "en"
+        },
+        {
+          "label": "Auto-detect",
+          "value": "auto"
+        }
       ],
       "default": "ja",
-      "showWhen": { "key": "method", "value": "rule-based" }
+      "showWhen": {
+        "key": "method",
+        "value": "rule-based"
+      }
     },
     "custom_mappings": {
       "type": "textarea",
       "label": "Custom Emotion Mappings (JSON)",
       "description": "Custom keyword to expression mappings",
       "default": "{}",
-      "showWhen": { "key": "method", "value": "rule-based" }
+      "showWhen": {
+        "key": "method",
+        "value": "rule-based"
+      }
     },
     "llm_provider": {
       "type": "select",
       "label": "LLM Provider",
       "description": "Provider for LLM-based analysis",
       "options": [
-        { "label": "OpenAI", "value": "openai" },
-        { "label": "Anthropic", "value": "anthropic" },
-        { "label": "Google", "value": "google" }
+        {
+          "label": "OpenAI",
+          "value": "openai"
+        },
+        {
+          "label": "Anthropic",
+          "value": "anthropic"
+        },
+        {
+          "label": "Google",
+          "value": "google"
+        }
       ],
       "default": "openai",
-      "showWhen": { "key": "method", "value": "llm" }
+      "showWhen": {
+        "key": "method",
+        "value": "llm"
+      }
     },
     "llm_api_key": {
       "type": "password",
       "label": "LLM API Key",
       "description": "API key for the selected LLM provider",
       "default": "",
-      "showWhen": { "key": "method", "value": "llm" }
+      "showWhen": {
+        "key": "method",
+        "value": "llm"
+      }
     },
     "llm_model": {
-      "type": "string",
+      "type": "select",
       "label": "LLM Model",
       "description": "Model to use for emotion analysis",
+      "options": [],
+      "dynamic": true,
       "default": "gpt-4o-mini",
-      "showWhen": { "key": "method", "value": "llm" }
+      "showWhen": {
+        "key": "method",
+        "value": "llm"
+      },
+      "dependsOn": "llm_provider"
     },
     "emit_events": {
       "type": "boolean",
