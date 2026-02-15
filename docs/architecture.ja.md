@@ -7,6 +7,7 @@
 - [システム概要](#システム概要)
 - [高レベルアーキテクチャ](#高レベルアーキテクチャ)
 - [バックエンドアーキテクチャ](#バックエンドアーキテクチャ)
+  - [技術スタック比較](#技術スタック比較)
   - [ワークフローエグゼキューター](#ワークフローエグゼキューター)
   - [イベントバス](#イベントバス)
   - [APIエンドポイント](#apiエンドポイント)
@@ -28,8 +29,8 @@
 AITuberFlowは、AITuber配信セットアップを作成するための**ビジュアルワークフローエディタ**です。クライアント・サーバーアーキテクチャに従っています：
 
 - **フロントエンド** (Next.js): ワークフローを構築・管理するビジュアルエディタ
-- **バックエンド** (FastAPI): ワークフロー実行エンジンとAPIサーバー
-- **プラグイン**: モジュラーなノード実装 (Python)
+- **バックエンド** (Bun + Hono): ワークフロー実行エンジンとAPIサーバー
+- **プラグイン**: モジュラーなノード実装
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -42,19 +43,19 @@ AITuberFlowは、AITuber配信セットアップを作成するための**ビジ
 │  │  └─────────────┘  └─────────────┘  └─────────────────┘  │  │
 │  └──────────────────────────────────────────────────────────┘  │
 └───────────────────────────┬─────────────────────────────────────┘
-                            │ HTTP / WebSocket
+                            │ HTTP / Native WebSocket
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      FastAPI バックエンド                        │
+│                    Bun + Hono バックエンド                       │
 │  ┌─────────────┐  ┌─────────────────┐  ┌────────────────────┐  │
-│  │  ルーター    │  │  ワークフロー    │  │  イベントバス      │  │
+│  │  ルート      │  │  ワークフロー    │  │  イベントバス      │  │
 │  │  (API)      │──│  エグゼキューター │──│  (リアルタイム)     │  │
 │  └─────────────┘  └─────────────────┘  └────────────────────┘  │
 │         │                  │                                     │
 │         ▼                  ▼                                     │
 │  ┌─────────────┐  ┌─────────────────┐                           │
-│  │  SQLite DB  │  │  プラグイン      │                           │
-│  │  (ストレージ) │  │  (32以上のノード) │                           │
+│  │  bun:sqlite │  │  プラグイン      │                           │
+│  │  + Drizzle  │  │  (32以上のノード) │                           │
 │  └─────────────┘  └─────────────────┘                           │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -68,76 +69,113 @@ AITuberFlowは、AITuber配信セットアップを作成するための**ビジ
 ```
 AITuberFlow/
 ├── apps/
-│   ├── server/              # Python FastAPI バックエンド
-│   │   ├── engine/          # ワークフロー実行エンジン
-│   │   │   ├── executor.py  # コア実行ロジック (~1,130行)
-│   │   │   └── event_bus.py # イベントpub/subシステム
-│   │   ├── routers/         # APIエンドポイント
-│   │   │   ├── workflows.py # ワークフローCRUD & 実行
-│   │   │   ├── plugins.py   # プラグイン管理
-│   │   │   ├── templates.py # ワークフローテンプレート
-│   │   │   └── integrations.py # VTube Studio等
-│   │   ├── models/          # Pydanticスキーマ
-│   │   ├── db/              # SQLAlchemyデータベース
-│   │   └── main.py          # サーバーエントリーポイント
+│   ├── server-ts/             # TypeScript Bun+Hono バックエンド (推奨)
+│   │   ├── src/
+│   │   │   ├── engine/        # ワークフロー実行エンジン
+│   │   │   │   ├── executor.ts    # コア実行ロジック
+│   │   │   │   ├── event-bus.ts   # イベントpub/subシステム
+│   │   │   │   ├── event-queue.ts # イベントキュー
+│   │   │   │   ├── plugin-loader.ts # 動的プラグイン読み込み
+│   │   │   │   └── task-registry.ts # バックグラウンドタスク管理
+│   │   │   ├── routes/        # APIエンドポイント
+│   │   │   │   ├── workflows.ts   # ワークフローCRUD & 実行
+│   │   │   │   ├── plugins.ts     # プラグイン管理
+│   │   │   │   ├── templates.ts   # ワークフローテンプレート
+│   │   │   │   └── integrations.ts # VTube Studio等
+│   │   │   ├── models/        # Zodスキーマ
+│   │   │   ├── db/            # Drizzle ORM + bun:sqlite
+│   │   │   ├── websocket/     # Native WebSocketハンドラー
+│   │   │   ├── state/         # キャラクター・ストリーム状態
+│   │   │   ├── integrations/  # 外部サービス連携
+│   │   │   └── index.ts       # サーバーエントリーポイント
+│   │   └── package.json
 │   │
-│   └── web/                 # Next.js フロントエンド
-│       ├── app/             # App Routerページ
-│       │   ├── (editor)/    # エディタ & プレビューページ
-│       │   └── (overlay)/   # OBSオーバーレイページ
-│       ├── components/      # Reactコンポーネント
-│       │   ├── editor/      # Canvas, Sidebar, CustomNode
-│       │   ├── avatar/      # VRMレンダリング, リップシンク
-│       │   └── panels/      # 設定, ログ, モーション
-│       ├── stores/          # Zustand状態管理
-│       ├── hooks/           # カスタムReactフック
-│       └── lib/             # ユーティリティ, 型, APIクライアント
+│   ├── server/                # Python FastAPI バックエンド (レガシー)
+│   │   ├── engine/            # ワークフロー実行エンジン
+│   │   ├── routers/           # APIエンドポイント
+│   │   └── main.py            # サーバーエントリーポイント
+│   │
+│   └── web/                   # Next.js フロントエンド
+│       ├── app/               # App Routerページ
+│       │   ├── (editor)/      # エディタ & プレビューページ
+│       │   └── (overlay)/     # OBSオーバーレイページ
+│       ├── components/        # Reactコンポーネント
+│       │   ├── editor/        # Canvas, Sidebar, CustomNode
+│       │   ├── avatar/        # VRMレンダリング, リップシンク
+│       │   └── panels/        # 設定, ログ, モーション
+│       ├── stores/            # Zustand状態管理
+│       ├── hooks/             # カスタムReactフック
+│       └── lib/               # ユーティリティ, 型, APIクライアント
 │
 ├── packages/
-│   └── sdk/                 # Python プラグインSDK
+│   ├── sdk-ts/                # TypeScript プラグインSDK
+│   │   └── src/
+│   │       ├── base.ts        # BaseNodeクラス
+│   │       ├── context.ts     # NodeContext, Event
+│   │       ├── types.ts       # Zod型定義
+│   │       ├── errors.ts      # エラーハンドリング
+│   │       └── index.ts       # エクスポート
+│   └── sdk/                   # Python プラグインSDK (レガシー)
 │       └── aituber_flow_sdk/
-│           ├── base.py      # BaseNodeクラス
-│           ├── context.py   # NodeContext, Event
-│           └── types.py     # 型定義
 │
-├── plugins/                 # ノードプラグイン (32以上の公式)
+├── plugins/                   # ノードプラグイン (32以上の公式)
 │   ├── openai-llm/
-│   │   ├── manifest.json    # ノードメタデータ & 設定
-│   │   └── node.py          # ノード実装
+│   │   ├── manifest.json      # ノードメタデータ & 設定
+│   │   └── node.py            # ノード実装
 │   └── ...
 │
-└── templates/               # ワークフローテンプレート (JSON)
+├── tests/                     # テストスイート
+│   ├── engine/                # TypeScriptエンジンテスト (bun:test)
+│   ├── routes/                # TypeScriptルートテスト (bun:test)
+│   └── unit/                  # Python単体テスト (pytest)
+│
+└── templates/                 # ワークフローテンプレート (JSON)
 ```
 
 ---
 
 ## バックエンドアーキテクチャ
 
+### 技術スタック比較
+
+| 項目 | TypeScript (推奨) | Python (レガシー) |
+|------|-------------------|-------------------|
+| Runtime | Bun | Python 3.11+ |
+| Framework | Hono | FastAPI |
+| Database | bun:sqlite + Drizzle ORM | SQLite + SQLAlchemy |
+| WebSocket | Native WebSocket (Hono/Bun) | python-socketio |
+| Validation | Zod | Pydantic |
+| Package Manager | bun | uv / pip |
+| Plugin SDK | `@aituber-flow/sdk` | `aituber_flow_sdk` |
+
 ### ワークフローエグゼキューター
 
-`WorkflowExecutor` (`apps/server/engine/executor.py`) はAITuberFlowの心臓部です。ワークフロー実行、ノードオーケストレーション、イベントハンドリングを管理します。
+`WorkflowExecutor` (`apps/server-ts/src/engine/executor.ts`) はAITuberFlowの心臓部です。ワークフロー実行、ノードオーケストレーション、イベントハンドリングを管理します。
 
 #### 主要クラス
 
-```python
-class NodeContext:
-    """ノードに実行コンテキストを提供します。"""
-    async def emit_event(event: Event) -> None    # イベントを発火
-    async def log(message: str, level: str) -> None  # フロントエンドにログを送信
-    def create_task(coroutine) -> Task            # バックグラウンドタスクを作成
-    def update_character(updates: dict) -> None   # キャラクター状態を更新
+```typescript
+class NodeContext {
+  /** ノードに実行コンテキストを提供します。 */
+  async emitEvent(event: Event): Promise<void>;    // イベントを発火
+  async log(message: string, level?: string): Promise<void>;  // フロントエンドにログを送信
+  createTask(promise: Promise<unknown>): void;     // バックグラウンドタスクを作成
+  updateCharacter(updates: Record<string, unknown>): void;  // キャラクター状態を更新
+}
 
-class EventQueue:
-    """イベント処理用のスレッドセーフなキュー。"""
-    async def put(event: Event) -> None
-    async def get() -> Event
-    def is_processing() -> bool
+class EventQueue {
+  /** イベント処理用のキュー。 */
+  async put(event: Event): Promise<void>;
+  async get(): Promise<Event>;
+  isProcessing(): boolean;
+}
 
-class WorkflowExecutor:
-    """ワークフロー実行をオーケストレーションします。"""
-    async def start_workflow(workflow_id: str, start_node_id: str) -> None
-    async def stop_workflow(workflow_id: str) -> None
-    def get_status(workflow_id: str) -> ExecutionStatus
+class WorkflowExecutor {
+  /** ワークフロー実行をオーケストレーションします。 */
+  async startWorkflow(workflowId: string, startNodeId: string): Promise<void>;
+  async stopWorkflow(workflowId: string): Promise<void>;
+  getStatus(workflowId: string): ExecutionStatus;
+}
 ```
 
 #### 実行モード
@@ -152,41 +190,49 @@ class WorkflowExecutor:
    - `event_filter` 設定を持つノードに使用
    - ノードは特定のイベントタイプに反応
 
-```python
-# リニア実行フロー
-async def _run_linear(self, workflow_id: str, start_node_id: str):
-    order = self._get_execution_order_from(workflow, start_node_id)
-    for node_id in order:
-        outputs = await self._execute_node(node_id, inputs)
-        # 下流ノードに出力を渡す
+```typescript
+// リニア実行フロー
+async _runLinear(workflowId: string, startNodeId: string) {
+  const order = this.getExecutionOrderFrom(workflow, startNodeId);
+  for (const nodeId of order) {
+    const outputs = await this.executeNode(nodeId, inputs);
+    // 下流ノードに出力を渡す
+  }
+}
 
-# イベント駆動実行フロー
-async def _run_event_driven(self, workflow_id: str, source_nodes: List[str]):
-    while self._workflows[workflow_id]["status"] == "running":
-        event = await event_queue.get()
-        for node in matching_nodes:
-            await self._execute_node_runtime(node, event)
+// イベント駆動実行フロー
+async _runEventDriven(workflowId: string, sourceNodes: string[]) {
+  while (this.workflows.get(workflowId)?.status === "running") {
+    const event = await eventQueue.get();
+    for (const node of matchingNodes) {
+      await this.executeNodeRuntime(node, event);
+    }
+  }
+}
 ```
 
 ### イベントバス
 
-`EventBus` (`apps/server/engine/event_bus.py`) はリアルタイム通信のためのpublish-subscribeシステムを提供します。
+`EventBus` (`apps/server-ts/src/engine/event-bus.ts`) はリアルタイム通信のためのpublish-subscribeシステムを提供します。
 
-```python
-class Event:
-    type: str           # 例: "avatar.expression", "audio.play"
-    payload: dict       # イベント固有のデータ
-    source: str         # 発生元ノードID (任意)
-    timestamp: datetime
+```typescript
+interface Event {
+  type: string;           // 例: "avatar.expression", "audio.play"
+  payload: Record<string, unknown>;  // イベント固有のデータ
+  source?: string;        // 発生元ノードID (任意)
+  timestamp: string;
+}
 
-class EventFilter:
-    type_pattern: str   # Globパターン, 例: "avatar.*"
-    conditions: dict    # ペイロード条件
+interface EventFilter {
+  typePattern: string;    // Globパターン, 例: "avatar.*"
+  conditions?: Record<string, unknown>;  // ペイロード条件
+}
 
-class EventBus:
-    async def emit(event: Event) -> None
-    def subscribe(filter: EventFilter, callback: Callable) -> str
-    def unsubscribe(subscription_id: str) -> None
+class EventBus {
+  async emit(event: Event): Promise<void>;
+  subscribe(typePattern: string, callback: (event: Event) => void): string;
+  unsubscribe(subscriptionId: string): void;
+}
 ```
 
 #### 主要イベント
@@ -202,7 +248,7 @@ class EventBus:
 
 ### APIエンドポイント
 
-#### ワークフロールーター (`/api/workflows`)
+#### ワークフロールート (`/api/workflows`)
 
 | メソッド | エンドポイント | 説明 |
 |--------|----------|-------------|
@@ -215,13 +261,13 @@ class EventBus:
 | POST | `/{id}/stop` | 実行停止 |
 | GET | `/{id}/status` | 実行ステータス取得 |
 
-#### プラグインルーター (`/api/plugins`)
+#### プラグインルート (`/api/plugins`)
 
 | メソッド | エンドポイント | 説明 |
 |--------|----------|-------------|
 | GET | `/` | 利用可能な全プラグイン一覧 |
 
-#### テンプレートルーター (`/api/templates`)
+#### テンプレートルート (`/api/templates`)
 
 | メソッド | エンドポイント | 説明 |
 |--------|----------|-------------|
@@ -393,7 +439,7 @@ plugins/openai-llm/
 │  ┌──────────────────────────────────────┐                       │
 │  │         実行ループ                    │                       │
 │  │  ┌───────────┐    ┌───────────────┐ │                       │
-│  │  │ execute() │ or │  on_event()   │ │ ← サイクルごとに呼び出し │
+│  │  │ execute() │ or │  onEvent()    │ │ ← サイクルごとに呼び出し │
 │  │  └───────────┘    └───────────────┘ │                       │
 │  └──────────────────────────────────────┘                       │
 │       │                                                         │
@@ -406,41 +452,48 @@ plugins/openai-llm/
 
 ### SDK概要
 
-プラグインSDK (`packages/sdk/aituber_flow_sdk/`) は基底クラスを提供します：
+TypeScript SDK (`packages/sdk-ts/src/`) は基底クラスを提供します：
 
-```python
-from aituber_flow_sdk import BaseNode, NodeContext, Event
+```typescript
+import { BaseNode, NodeContext, Event } from "@aituber-flow/sdk";
 
-class MyNode(BaseNode):
-    async def setup(self, config: dict, context: NodeContext) -> None:
-        """リソース、接続、キャッシュデータを初期化。"""
-        self.api_key = config.get("apiKey")
+class MyNode extends BaseNode {
+  async setup(config: Record<string, unknown>, context: NodeContext): Promise<void> {
+    /** リソース、接続、キャッシュデータを初期化。 */
+    this.apiKey = config.apiKey as string;
+  }
 
-    async def execute(self, inputs: dict, context: NodeContext) -> dict:
-        """入力を処理して出力を返す。"""
-        result = await self.process(inputs["prompt"])
-        await context.log(f"処理完了: {result[:50]}...")
-        return {"response": result}
+  async execute(inputs: Record<string, unknown>, context: NodeContext): Promise<Record<string, unknown>> {
+    /** 入力を処理して出力を返す。 */
+    const result = await this.process(inputs.prompt as string);
+    await context.log(`処理完了: ${result.slice(0, 50)}...`);
+    return { response: result };
+  }
 
-    async def on_event(self, event: Event, context: NodeContext) -> dict | None:
-        """受信イベントに反応（任意）。"""
-        if event.type == "chat.message":
-            return await self.execute({"prompt": event.payload["text"]}, context)
-        return None
+  async onEvent(event: Event, context: NodeContext): Promise<Record<string, unknown> | null> {
+    /** 受信イベントに反応（任意）。 */
+    if (event.type === "chat.message") {
+      return await this.execute({ prompt: event.payload.text }, context);
+    }
+    return null;
+  }
 
-    async def teardown(self) -> None:
-        """リソースをクリーンアップ。"""
-        pass
+  async teardown(): Promise<void> {
+    /** リソースをクリーンアップ。 */
+  }
+}
 ```
+
+> **Python SDK (レガシー)** は `packages/sdk/aituber_flow_sdk/` にあります。同じライフサイクルメソッド (`setup`, `execute`, `on_event`, `teardown`) を提供します。
 
 #### ノードカテゴリ
 
-| カテゴリ | 基底クラス | 目的 |
-|----------|------------|---------|
-| `input` | `InputNode` | データソース（入力なし、出力を生成） |
-| `process` | `ProcessNode` | データ変換 |
-| `output` | `OutputNode` | データシンク（入力を消費、出力なし） |
-| `control` | `BaseNode` | フロー制御（switch, loop, delay） |
+| カテゴリ | 目的 |
+|----------|---------|
+| `input` | データソース（入力なし、出力を生成） |
+| `process` | データ変換 |
+| `output` | データシンク（入力を消費、出力なし） |
+| `control` | フロー制御（switch, loop, delay） |
 
 ---
 
@@ -510,20 +563,20 @@ class MyNode(BaseNode):
 
 ## データベーススキーマ
 
-AITuberFlowはSQLAlchemy ORMを使用したSQLiteを使用します。
+TypeScriptバックエンドはDrizzle ORM + bun:sqliteを使用します。
 
 ### Workflows テーブル
 
 | カラム | 型 | 説明 |
 |--------|------|-------------|
-| `id` | STRING (PK) | 一意のワークフロー識別子 |
-| `name` | STRING | ワークフロー表示名 |
+| `id` | TEXT (PK) | 一意のワークフロー識別子 |
+| `name` | TEXT | ワークフロー表示名 |
 | `description` | TEXT | 任意の説明 |
 | `nodes_json` | TEXT | ノード定義のJSON配列 |
 | `connections_json` | TEXT | エッジ定義のJSON配列 |
 | `character_json` | TEXT | キャラクター設定のJSONオブジェクト |
-| `created_at` | DATETIME | 作成タイムスタンプ |
-| `updated_at` | DATETIME | 最終更新タイムスタンプ |
+| `created_at` | TEXT | 作成タイムスタンプ |
+| `updated_at` | TEXT | 最終更新タイムスタンプ |
 
 ### Node JSON構造
 
@@ -559,27 +612,29 @@ AITuberFlowはSQLAlchemy ORMを使用したSQLiteを使用します。
 
 ## リアルタイム通信
 
-AITuberFlowはリアルタイム双方向通信に**Socket.IO**を使用します。
+AITuberFlowはリアルタイム双方向通信に**Native WebSocket**を使用します（Socket.IOからの移行済み）。
 
-### WebSocketイベント
+### WebSocketメッセージプロトコル
+
+全メッセージはJSON形式で、`type` フィールドでメッセージの種類を識別します。
 
 #### クライアント → サーバー
 
-| イベント | ペイロード | 説明 |
+| タイプ | ペイロード | 説明 |
 |-------|---------|-------------|
-| `join` | `{workflow_id}` | ワークフロールームに参加 |
-| `leave` | `{workflow_id}` | ワークフロールームから退出 |
-| `workflow:start` | `{workflow_id, node_id}` | 実行開始 |
-| `workflow:stop` | `{workflow_id}` | 実行停止 |
-| `node:input` | `{workflow_id, node_id, data}` | ノードに入力を送信 |
+| `join` | `{workflowId}` | ワークフロールームに参加 |
+| `leave` | `{workflowId}` | ワークフロールームから退出 |
+| `workflow:start` | `{workflowId, nodeId}` | 実行開始 |
+| `workflow:stop` | `{workflowId}` | 実行停止 |
+| `node:input` | `{workflowId, nodeId, data}` | ノードに入力を送信 |
 
 #### サーバー → クライアント
 
-| イベント | ペイロード | 説明 |
+| タイプ | ペイロード | 説明 |
 |-------|---------|-------------|
-| `node:status` | `{node_id, status}` | ノードステータス変更 |
-| `node:log` | `{node_id, message, level}` | ノードログメッセージ |
-| `node:output` | `{node_id, outputs}` | ノード出力データ |
+| `node:status` | `{nodeId, status}` | ノードステータス変更 |
+| `node:log` | `{nodeId, message, level}` | ノードログメッセージ |
+| `node:output` | `{nodeId, outputs}` | ノード出力データ |
 | `event` | `{type, payload}` | ワークフローイベント（アバター、音声等） |
 | `workflow:status` | `{status, error?}` | ワークフローステータス変更 |
 
@@ -587,19 +642,11 @@ AITuberFlowはリアルタイム双方向通信に**Socket.IO**を使用しま�
 
 ```typescript
 // hooks/useWebSocket.ts
-const { socket, isConnected } = useWebSocket(workflowId);
+const { connectionStatus, avatarState } = useWebSocket(workflowId);
 
-useEffect(() => {
-  socket.on('node:log', (data) => {
-    addLog(data.node_id, data.message, data.level);
-  });
-
-  socket.on('event', (event) => {
-    if (event.type === 'avatar.expression') {
-      setExpression(event.payload.expression);
-    }
-  });
-}, [socket]);
+// Native WebSocketで接続し、JSONメッセージを送受信
+// 指数バックオフによる自動再接続
+// アバター状態・音声再生を自動管理
 ```
 
 ---
@@ -608,10 +655,10 @@ useEffect(() => {
 
 AITuberFlowにコントリビュートする際：
 
-1. **バックエンド変更**: コアロジックは `apps/server/engine/` に集中
+1. **バックエンド変更**: コアロジックは `apps/server-ts/src/engine/` に集中
 2. **フロントエンド変更**: コンポーネントは `apps/web/components/` に配置
 3. **新規ノード**: 上記の構造に従って `plugins/` にプラグインを作成
-4. **API変更**: `apps/server/routers/` のルーターを更新
+4. **API変更**: `apps/server-ts/src/routes/` のルートを更新
 
 詳細なガイドラインは [CONTRIBUTING.md](../CONTRIBUTING.md) を参照してください。
 

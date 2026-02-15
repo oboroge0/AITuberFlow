@@ -2,7 +2,18 @@
 
 This guide will help you set up and run AITuberFlow.
 
-## Easiest Way: GitHub Codespaces
+## Easiest Way: Desktop App
+
+Download the installer from [GitHub Releases](https://github.com/oboroge0/AITuberFlow/releases/latest) and run it.
+
+- **macOS**: DMG file (Apple Silicon / Intel)
+- **Windows**: NSIS installer (x64)
+
+The server starts automatically and the editor opens in the app window. No setup required!
+
+---
+
+## Alternative: GitHub Codespaces
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/oboroge0/AITuberFlow)
 
@@ -24,9 +35,10 @@ No local setup required!
 Before you begin, make sure you have the following installed:
 
 - **Node.js** 22 or higher
-- **Python** 3.11 or higher
+- **[Bun](https://bun.sh/)** 1.0 or higher (for TypeScript backend)
 - **npm** (comes with Node.js)
-- **[uv](https://docs.astral.sh/uv/)** (recommended) or pip
+
+> **Note:** If using the Python backend (legacy), you also need **Python** 3.11+ and **[uv](https://docs.astral.sh/uv/)**.
 
 ## Installation
 
@@ -37,40 +49,25 @@ git clone https://github.com/oboroge0/AITuberFlow.git
 cd AITuberFlow
 ```
 
-### 2. Set Up the Backend (using uv - Recommended)
+### 2. Set Up the Backend (TypeScript - Recommended)
 
 ```bash
-# Navigate to server directory
-cd apps/server
+# Navigate to TypeScript server directory
+cd apps/server-ts
 
-# Install dependencies (uv will create .venv automatically)
-uv sync
-
-# Create environment file
-cp .env.example .env
+# Install dependencies
+bun install
 ```
 
-### 2. Set Up the Backend (using pip)
-
-```bash
-# Navigate to server directory
-cd apps/server
-
-# Create a Python virtual environment
-python -m venv .venv
-
-# Activate the virtual environment
-# On Windows:
-.venv\Scripts\activate
-# On macOS/Linux:
-source .venv/bin/activate
-
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Create environment file
-cp .env.example .env
-```
+> **To use the Python backend (legacy) instead:**
+>
+> ```bash
+> cd apps/server
+> uv sync            # using uv
+> # or
+> pip install -r requirements.txt  # using pip
+> cp .env.example .env
+> ```
 
 ### 3. Set Up the Frontend
 
@@ -83,6 +80,16 @@ npm install
 
 # Create environment file
 cp .env.example .env.local
+```
+
+### Install Everything at Once
+
+```bash
+# From project root, install dependencies (TypeScript only)
+make install
+
+# Install everything (TypeScript + Python)
+make install-all
 ```
 
 ## Running the Application
@@ -153,19 +160,28 @@ docker compose down -v
 
 If you prefer to run the application without Docker:
 
-### Start the Backend Server
+#### Start the TypeScript Backend (Recommended)
 
 ```bash
-# From apps/server (using uv)
-uv run python main.py
-
-# Or with pip (venv activated)
-python main.py
+# From project root
+npm run dev:ts
 ```
 
-The server will start at `http://localhost:8001`. You can access the API documentation at `http://localhost:8001/docs`.
+This starts both the frontend and TypeScript backend simultaneously.
 
-### Start the Frontend Development Server
+To start services individually:
+
+```bash
+# TypeScript backend only (from apps/server-ts)
+bun run dev
+
+# Python backend only (legacy, from apps/server)
+uv run python main.py
+```
+
+The backend starts at `http://localhost:8001`.
+
+#### Start the Frontend Development Server
 
 ```bash
 # From apps/web (in a new terminal)
@@ -272,7 +288,13 @@ Share workflows with others using the sidebar buttons:
 - Data is stored in a Docker volume named `aituberflow-backend-data`
 - To reset: `docker compose down -v` (this deletes all data)
 
-### Backend won't start
+### TypeScript backend won't start
+
+- Verify Bun is installed: `bun --version` (should be 1.0+)
+- Install dependencies: `cd apps/server-ts && bun install`
+- Check if port 8001 is already in use: `lsof -i :8001`
+
+### Python backend won't start (legacy)
 
 - If using uv: Run `uv sync` to ensure dependencies are installed
 - If using pip: Make sure the virtual environment is activated and run `pip install -r requirements.txt`
@@ -295,6 +317,34 @@ Share workflows with others using the sidebar buttons:
 - Verify your API key is correct
 - Check that you have API credits available
 - Try a different model if rate limited
+
+## Building the Desktop App (Development)
+
+If you want to build the desktop app from source:
+
+### Prerequisites
+
+- **Node.js** 22+, **Bun** 1.0+, **Rust** (stable)
+- **Platform-specific**: Xcode CLI tools (macOS) or Visual Studio Build Tools (Windows)
+
+### Build Steps
+
+```bash
+# 1. Build frontend static export
+cd apps/web && npm ci && cross-env BUILD_MODE=desktop npx next build
+
+# 2. Build server sidecar
+cd apps/server-ts && bun install
+bun build --compile src/index.ts --outfile=../desktop/src-tauri/binaries/server
+
+# 3. Copy resources (plugins, templates, static frontend)
+node apps/desktop/scripts/copy-resources.js
+
+# 4. Build Tauri app
+cd apps/desktop && npm install && npx tauri build
+```
+
+The resulting installer will be in `apps/desktop/src-tauri/target/release/bundle/`.
 
 ## Next Steps
 

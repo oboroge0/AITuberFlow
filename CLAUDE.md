@@ -14,23 +14,59 @@ AITuberFlow is a visual workflow editor for creating AI VTuber streaming setups.
 ```
 AITuberFlow/
 ├── apps/
-│   ├── server/          # Python FastAPI backend
+│   ├── server/          # Python FastAPI backend (legacy)
 │   │   ├── engine/      # Workflow execution engine
 │   │   ├── routers/     # API endpoints
 │   │   └── main.py      # Server entry point
+│   ├── server-ts/       # TypeScript Bun+Hono backend (primary)
+│   │   ├── src/
+│   │   │   ├── engine/  # Workflow execution engine
+│   │   │   ├── routes/  # API endpoints
+│   │   │   ├── db/      # Drizzle ORM + bun:sqlite
+│   │   │   ├── websocket/ # Native WebSocket handler
+│   │   │   └── index.ts # Server entry point
+│   │   └── package.json
 │   └── web/             # Next.js frontend
 │       ├── app/         # Pages (editor, overlay)
 │       ├── components/  # React components
 │       └── stores/      # Zustand state management
 ├── packages/
-│   └── sdk/             # Python SDK for node development
-│       └── aituber_flow_sdk/
+│   ├── sdk/             # Python SDK for node development (legacy)
+│   │   └── aituber_flow_sdk/
+│   └── sdk-ts/          # TypeScript SDK for node development
+│       └── src/
 ├── plugins/             # Node plugins (each in own directory)
 │   ├── {node-name}/
 │   │   ├── manifest.json
-│   │   └── node.py
+│   │   └── node.py      # Python implementation (being migrated to TS)
+├── tests/               # Test suites
+│   ├── engine/          # TypeScript engine tests (bun:test)
+│   ├── routes/          # TypeScript route tests (bun:test)
+│   └── unit/            # Python unit tests (pytest)
 └── templates/           # Workflow templates (JSON)
 ```
+
+## Backend Options
+
+### TypeScript Backend (Primary - Recommended)
+
+| 項目 | 技術 |
+|------|------|
+| Runtime | Bun |
+| Framework | Hono |
+| Database | bun:sqlite + Drizzle ORM |
+| WebSocket | Native WebSocket (Hono/Bun) |
+| Validation | Zod |
+
+### Python Backend (Legacy)
+
+| 項目 | 技術 |
+|------|------|
+| Runtime | Python 3.11+ |
+| Framework | FastAPI |
+| Database | SQLite + SQLAlchemy |
+| WebSocket | python-socketio |
+| Validation | Pydantic |
 
 ## Node Development
 
@@ -40,7 +76,7 @@ Each node is a plugin in `plugins/{node-name}/`:
 - `manifest.json` - Node metadata, inputs, outputs, config schema
 - `node.py` - Python implementation extending `BaseNode`
 
-### BaseNode Methods
+### BaseNode Methods (Python)
 
 ```python
 class MyNode(BaseNode):
@@ -61,13 +97,48 @@ class MyNode(BaseNode):
         pass
 ```
 
+### BaseNode Methods (TypeScript SDK)
+
+```typescript
+import { BaseNode, NodeContext, Event } from "@aituber-flow/sdk";
+
+class MyNode extends BaseNode {
+  async setup(config: Record<string, unknown>, context: NodeContext): Promise<void> {
+    // Called once when workflow starts
+  }
+
+  async execute(inputs: Record<string, unknown>, context: NodeContext): Promise<Record<string, unknown>> {
+    // Called each time the node runs, returns outputs
+    return { outputId: value };
+  }
+
+  async onEvent(event: Event, context: NodeContext): Promise<Record<string, unknown> | null> {
+    // Handle WebSocket events (optional)
+    return null;
+  }
+
+  async teardown(): Promise<void> {
+    // Called when workflow stops
+  }
+}
+```
+
 ### NodeContext API
 
 ```python
+# Python
 await context.log(message, level="info")  # Log to frontend
 await context.emit_event(Event(type="event.name", payload={}))  # WebSocket event
 context.create_task(coroutine)  # Background task
 context.cancel_background_tasks()  # Cancel all tasks
+```
+
+```typescript
+// TypeScript
+await context.log(message, "info");  // Log to frontend
+await context.emitEvent({ type: "event.name", payload: {} });  // WebSocket event
+context.createTask(promise);  // Background task
+context.cancelBackgroundTasks();  // Cancel all tasks
 ```
 
 ### Frontend Registration (v1.2.0+)
@@ -101,11 +172,19 @@ context.cancel_background_tasks()  # Cancel all tasks
 Events enable real-time communication between nodes and frontend:
 
 ```python
-# Emit from node
+# Python
 await context.emit_event(Event(
     type="avatar.expression",
     payload={"expression": "happy", "intensity": 0.8}
 ))
+```
+
+```typescript
+// TypeScript
+await context.emitEvent({
+  type: "avatar.expression",
+  payload: { expression: "happy", intensity: 0.8 },
+});
 ```
 
 Common events:
@@ -125,7 +204,32 @@ OBS-compatible overlay at `/overlay/[workflowId]`:
 
 ## Commands
 
-Use `/create-node` to scaffold a new node plugin with all required files.
+```bash
+# Full stack (TypeScript backend + frontend) - recommended
+npm run dev
+
+# Full stack (Python backend + frontend) - legacy
+npm run dev:py
+
+# Individual services
+npm run dev:web         # Frontend only
+npm run dev:api-ts      # TypeScript backend only
+npm run dev:api         # Python backend only
+
+# Install dependencies (TypeScript only)
+make install
+
+# Install all dependencies (TypeScript + Python)
+make install-all
+
+# Run tests
+make test               # All tests (Python + TypeScript)
+make test-ts            # TypeScript tests only
+make test-py            # Python tests only
+
+# Lint
+make lint
+```
 
 ## Development Tips
 
@@ -139,11 +243,33 @@ Use `/create-node` to scaffold a new node plugin with all required files.
 ## Running the Project
 
 ```bash
-# Backend (from apps/server)
-uv run uvicorn main:app --reload --port 8000
+# TypeScript backend (recommended)
+cd apps/server-ts && bun run dev
 
-# Frontend (from apps/web)
-bun dev
+# Python backend (legacy)
+cd apps/server && uv run python main.py
+
+# Frontend
+cd apps/web && npm run dev
+
+# Or use the combined command
+npm run dev       # Frontend + TypeScript backend (default)
+npm run dev:py    # Frontend + Python backend (legacy)
+```
+
+Both backends serve on port **8001** by default. The frontend runs on port **3000**.
+
+## Testing
+
+```bash
+# TypeScript tests (bun:test)
+bun test tests/engine/ tests/routes/ --verbose
+
+# Python tests (pytest)
+cd apps/server && uv run pytest ../../tests/unit/ -v --tb=short
+
+# All tests
+make test
 ```
 
 ## Testing Workflows
@@ -205,7 +331,8 @@ docs: プラグイン開発ガイドを更新
 
 以下のファイルのバージョンを更新:
 - `apps/web/package.json`
-- `apps/server/pyproject.toml`
+- `apps/server-ts/package.json`
+- `apps/server/pyproject.toml` (legacy)
 - `CHANGELOG.md`（日付は `date +%Y-%m-%d` で確認）
 
 ### 3. コミット＆マージ
@@ -219,7 +346,7 @@ git commit -m "Release vX.X.X
 
 closes #XX, closes #YY
 
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
 # mainにマージ
 git checkout main

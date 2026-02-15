@@ -1,0 +1,98 @@
+name: Desktop Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: '--target aarch64-apple-darwin'
+            rust-target: aarch64-apple-darwin
+            bun-target: bun-darwin-arm64
+            sidecar-suffix: '-aarch64-apple-darwin'
+          - platform: macos-13
+            args: '--target x86_64-apple-darwin'
+            rust-target: x86_64-apple-darwin
+            bun-target: bun-darwin-x64
+            sidecar-suffix: '-x86_64-apple-darwin'
+          - platform: windows-latest
+            args: ''
+            rust-target: x86_64-pc-windows-msvc
+            bun-target: bun-windows-x64
+            sidecar-suffix: '-x86_64-pc-windows-msvc.exe'
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './apps/desktop/src-tauri -> target'
+
+      # Build frontend static export
+      - name: Install frontend dependencies
+        run: cd apps/web && npm ci
+
+      - name: Build frontend (static export)
+        run: cd apps/web && npx next build
+        env:
+          BUILD_MODE: desktop
+
+      # Build Bun server sidecar
+      - name: Install server dependencies
+        run: cd apps/server-ts && bun install
+
+      - name: Build server sidecar
+        run: |
+          cd apps/server-ts
+          mkdir -p ../desktop/src-tauri/binaries
+          bun build --compile --target=${{ matrix.bun-target }} src/index.ts --outfile=../desktop/src-tauri/binaries/server${{ matrix.sidecar-suffix }}
+
+      # Copy resources into Tauri bundle
+      - name: Copy resources
+        run: node apps/desktop/scripts/copy-resources.js
+
+      # Install Tauri CLI and build
+      - name: Install desktop dependencies
+        run: cd apps/desktop && npm install
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: apps/desktop
+          tagName: ${{ github.ref_name }}
+          releaseName: 'AITuberFlow ${{ github.ref_name }}'
+          releaseBody: 'See [CHANGELOG](https://github.com/oboroge0/AITuberFlow/blob/main/CHANGELOG.md) for details.'
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}

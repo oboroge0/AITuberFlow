@@ -28,8 +28,8 @@ This document provides a comprehensive overview of AITuberFlow's architecture, d
 AITuberFlow is a **visual workflow editor** for creating AI VTuber streaming setups. It follows a client-server architecture where:
 
 - **Frontend** (Next.js): Visual editor for building and managing workflows
-- **Backend** (FastAPI): Workflow execution engine and API server
-- **Plugins**: Modular node implementations (Python)
+- **Backend** (Bun + Hono): Workflow execution engine and API server
+- **Plugins**: Modular node implementations
 
 ```mermaid
 graph TB
@@ -41,7 +41,7 @@ graph TB
         end
     end
 
-    subgraph Server["FastAPI Backend"]
+    subgraph Server["Bun + Hono Backend"]
         Routers["API Routers"]
         Executor["Workflow Executor"]
         EventBus["Event Bus"]
@@ -72,7 +72,7 @@ graph TB
                             │ HTTP / WebSocket
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      FastAPI Backend                             │
+│                      Bun + Hono Backend                             │
 │  ┌─────────────┐  ┌─────────────────┐  ┌────────────────────┐  │
 │  │  Routers    │  │  Workflow       │  │  Event Bus         │  │
 │  │  (API)      │──│  Executor       │──│  (Real-time)       │  │
@@ -95,76 +95,112 @@ graph TB
 ```
 AITuberFlow/
 ├── apps/
-│   ├── server/              # Python FastAPI backend
-│   │   ├── engine/          # Workflow execution engine
-│   │   │   ├── executor.py  # Core execution logic (~1,130 lines)
-│   │   │   └── event_bus.py # Event pub/sub system
-│   │   ├── routers/         # API endpoints
-│   │   │   ├── workflows.py # Workflow CRUD & execution
-│   │   │   ├── plugins.py   # Plugin management
-│   │   │   ├── templates.py # Workflow templates
-│   │   │   └── integrations.py # VTube Studio, etc.
-│   │   ├── models/          # Pydantic schemas
-│   │   ├── db/              # SQLAlchemy database
-│   │   └── main.py          # Server entry point
+│   ├── server-ts/             # TypeScript Bun+Hono backend (recommended)
+│   │   ├── src/
+│   │   │   ├── engine/        # Workflow execution engine
+│   │   │   │   ├── executor.ts    # Core execution logic
+│   │   │   │   ├── event-bus.ts   # Event pub/sub system
+│   │   │   │   ├── event-queue.ts # Event queue
+│   │   │   │   ├── plugin-loader.ts # Dynamic plugin loading
+│   │   │   │   └── task-registry.ts # Background task management
+│   │   │   ├── routes/        # API endpoints
+│   │   │   │   ├── workflows.ts   # Workflow CRUD & execution
+│   │   │   │   ├── plugins.ts     # Plugin management
+│   │   │   │   ├── templates.ts   # Workflow templates
+│   │   │   │   └── integrations.ts # VTube Studio, etc.
+│   │   │   ├── models/        # Zod schemas
+│   │   │   ├── db/            # Drizzle ORM + bun:sqlite
+│   │   │   ├── websocket/     # Native WebSocket handler
+│   │   │   ├── state/         # Character & stream state
+│   │   │   ├── integrations/  # External service integrations
+│   │   │   └── index.ts       # Server entry point
+│   │   └── package.json
 │   │
-│   └── web/                 # Next.js frontend
-│       ├── app/             # App Router pages
-│       │   ├── (editor)/    # Editor & Preview pages
-│       │   └── (overlay)/   # OBS overlay page
-│       ├── components/      # React components
-│       │   ├── editor/      # Canvas, Sidebar, CustomNode
-│       │   ├── avatar/      # VRM rendering, lip-sync
-│       │   └── panels/      # Settings, Logs, Motions
-│       ├── stores/          # Zustand state management
-│       ├── hooks/           # Custom React hooks
-│       └── lib/             # Utilities, types, API client
+│   ├── server/                # Python FastAPI backend (legacy)
+│   │   ├── engine/            # Workflow execution engine
+│   │   ├── routers/           # API endpoints
+│   │   └── main.py            # Server entry point
+│   │
+│   └── web/                   # Next.js frontend
+│       ├── app/               # App Router pages
+│       │   ├── (editor)/      # Editor & Preview pages
+│       │   └── (overlay)/     # OBS overlay page
+│       ├── components/        # React components
+│       │   ├── editor/        # Canvas, Sidebar, CustomNode
+│       │   ├── avatar/        # VRM rendering, lip-sync
+│       │   └── panels/        # Settings, Logs, Motions
+│       ├── stores/            # Zustand state management
+│       ├── hooks/             # Custom React hooks
+│       └── lib/               # Utilities, types, API client
 │
 ├── packages/
-│   └── sdk/                 # Python Plugin SDK
+│   ├── sdk-ts/                # TypeScript Plugin SDK
+│   │   └── src/
+│   │       ├── base.ts        # BaseNode class
+│   │       ├── context.ts     # NodeContext, Event
+│   │       ├── types.ts       # Zod type definitions
+│   │       ├── errors.ts      # Error handling
+│   │       └── index.ts       # Exports
+│   └── sdk/                   # Python Plugin SDK (legacy)
 │       └── aituber_flow_sdk/
-│           ├── base.py      # BaseNode class
-│           ├── context.py   # NodeContext, Event
-│           └── types.py     # Type definitions
 │
-├── plugins/                 # Node plugins (32+ official)
+├── plugins/                   # Node plugins (32+ official)
 │   ├── openai-llm/
-│   │   ├── manifest.json    # Node metadata & config
-│   │   └── node.py          # Node implementation
+│   │   ├── manifest.json      # Node metadata & config
+│   │   └── node.py            # Node implementation
 │   └── ...
 │
-└── templates/               # Workflow templates (JSON)
+├── tests/                     # Test suites
+│   ├── engine/                # TypeScript engine tests (bun:test)
+│   ├── routes/                # TypeScript route tests (bun:test)
+│   └── unit/                  # Python unit tests (pytest)
+│
+└── templates/                 # Workflow templates (JSON)
 ```
 
 ---
 
 ## Backend Architecture
 
+### Technology Stack
+
+| Component | TypeScript (Recommended) | Python (Legacy) |
+|-----------|--------------------------|-----------------|
+| Runtime | Bun | Python 3.11+ |
+| Framework | Hono | FastAPI |
+| Database | bun:sqlite + Drizzle ORM | SQLite + SQLAlchemy |
+| WebSocket | Native WebSocket (Hono/Bun) | python-socketio |
+| Validation | Zod | Pydantic |
+| Plugin SDK | `@aituber-flow/sdk` | `aituber_flow_sdk` |
+
 ### Workflow Executor
 
-The `WorkflowExecutor` (`apps/server/engine/executor.py`) is the heart of AITuberFlow. It manages workflow execution, node orchestration, and event handling.
+The `WorkflowExecutor` (`apps/server-ts/src/engine/executor.ts`) is the heart of AITuberFlow. It manages workflow execution, node orchestration, and event handling.
 
 #### Key Classes
 
-```python
-class NodeContext:
-    """Provides execution context to nodes."""
-    async def emit_event(event: Event) -> None    # Emit events
-    async def log(message: str, level: str) -> None  # Send logs to frontend
-    def create_task(coroutine) -> Task            # Create background tasks
-    def update_character(updates: dict) -> None   # Update character state
+```typescript
+class NodeContext {
+  /** Provides execution context to nodes. */
+  async emitEvent(event: Event): Promise<void>;    // Emit events
+  async log(message: string, level?: string): Promise<void>;  // Send logs to frontend
+  createTask(promise: Promise<unknown>): void;     // Create background tasks
+  updateCharacter(updates: Record<string, unknown>): void;  // Update character state
+}
 
-class EventQueue:
-    """Thread-safe queue for event processing."""
-    async def put(event: Event) -> None
-    async def get() -> Event
-    def is_processing() -> bool
+class EventQueue {
+  /** Queue for event processing. */
+  async put(event: Event): Promise<void>;
+  async get(): Promise<Event>;
+  isProcessing(): boolean;
+}
 
-class WorkflowExecutor:
-    """Orchestrates workflow execution."""
-    async def start_workflow(workflow_id: str, start_node_id: str) -> None
-    async def stop_workflow(workflow_id: str) -> None
-    def get_status(workflow_id: str) -> ExecutionStatus
+class WorkflowExecutor {
+  /** Orchestrates workflow execution. */
+  async startWorkflow(workflowId: string, startNodeId: string): Promise<void>;
+  async stopWorkflow(workflowId: string): Promise<void>;
+  getStatus(workflowId: string): ExecutionStatus;
+}
 ```
 
 #### Execution Modes
@@ -179,41 +215,49 @@ The executor supports two execution modes:
    - Used for nodes with `event_filter` configuration
    - Nodes react to specific event types
 
-```python
-# Linear execution flow
-async def _run_linear(self, workflow_id: str, start_node_id: str):
-    order = self._get_execution_order_from(workflow, start_node_id)
-    for node_id in order:
-        outputs = await self._execute_node(node_id, inputs)
-        # Pass outputs to downstream nodes
+```typescript
+// Linear execution flow
+async _runLinear(workflowId: string, startNodeId: string) {
+  const order = this.getExecutionOrderFrom(workflow, startNodeId);
+  for (const nodeId of order) {
+    const outputs = await this.executeNode(nodeId, inputs);
+    // Pass outputs to downstream nodes
+  }
+}
 
-# Event-driven execution flow
-async def _run_event_driven(self, workflow_id: str, source_nodes: List[str]):
-    while self._workflows[workflow_id]["status"] == "running":
-        event = await event_queue.get()
-        for node in matching_nodes:
-            await self._execute_node_runtime(node, event)
+// Event-driven execution flow
+async _runEventDriven(workflowId: string, sourceNodes: string[]) {
+  while (this.workflows.get(workflowId)?.status === "running") {
+    const event = await eventQueue.get();
+    for (const node of matchingNodes) {
+      await this.executeNodeRuntime(node, event);
+    }
+  }
+}
 ```
 
 ### Event Bus
 
-The `EventBus` (`apps/server/engine/event_bus.py`) provides a publish-subscribe system for real-time communication.
+The `EventBus` (`apps/server-ts/src/engine/event-bus.ts`) provides a publish-subscribe system for real-time communication.
 
-```python
-class Event:
-    type: str           # e.g., "avatar.expression", "audio.play"
-    payload: dict       # Event-specific data
-    source: str         # Originating node ID (optional)
-    timestamp: datetime
+```typescript
+interface Event {
+  type: string;           // e.g., "avatar.expression", "audio.play"
+  payload: Record<string, unknown>;  // Event-specific data
+  source?: string;        // Originating node ID (optional)
+  timestamp: string;
+}
 
-class EventFilter:
-    type_pattern: str   # Glob pattern, e.g., "avatar.*"
-    conditions: dict    # Payload conditions
+interface EventFilter {
+  typePattern: string;    // Glob pattern, e.g., "avatar.*"
+  conditions?: Record<string, unknown>;  // Payload conditions
+}
 
-class EventBus:
-    async def emit(event: Event) -> None
-    def subscribe(filter: EventFilter, callback: Callable) -> str
-    def unsubscribe(subscription_id: str) -> None
+class EventBus {
+  async emit(event: Event): Promise<void>;
+  subscribe(typePattern: string, callback: (event: Event) => void): string;
+  unsubscribe(subscriptionId: string): void;
+}
 ```
 
 #### Common Events
@@ -452,41 +496,48 @@ stateDiagram-v2
 
 ### SDK Overview
 
-The Plugin SDK (`packages/sdk/aituber_flow_sdk/`) provides base classes:
+The TypeScript Plugin SDK (`packages/sdk-ts/src/`) provides base classes:
 
-```python
-from aituber_flow_sdk import BaseNode, NodeContext, Event
+```typescript
+import { BaseNode, NodeContext, Event } from "@aituber-flow/sdk";
 
-class MyNode(BaseNode):
-    async def setup(self, config: dict, context: NodeContext) -> None:
-        """Initialize resources, connections, cached data."""
-        self.api_key = config.get("apiKey")
+class MyNode extends BaseNode {
+  async setup(config: Record<string, unknown>, context: NodeContext): Promise<void> {
+    /** Initialize resources, connections, cached data. */
+    this.apiKey = config.apiKey as string;
+  }
 
-    async def execute(self, inputs: dict, context: NodeContext) -> dict:
-        """Process inputs and return outputs."""
-        result = await self.process(inputs["prompt"])
-        await context.log(f"Processed: {result[:50]}...")
-        return {"response": result}
+  async execute(inputs: Record<string, unknown>, context: NodeContext): Promise<Record<string, unknown>> {
+    /** Process inputs and return outputs. */
+    const result = await this.process(inputs.prompt as string);
+    await context.log(`Processed: ${result.slice(0, 50)}...`);
+    return { response: result };
+  }
 
-    async def on_event(self, event: Event, context: NodeContext) -> dict | None:
-        """React to incoming events (optional)."""
-        if event.type == "chat.message":
-            return await self.execute({"prompt": event.payload["text"]}, context)
-        return None
+  async onEvent(event: Event, context: NodeContext): Promise<Record<string, unknown> | null> {
+    /** React to incoming events (optional). */
+    if (event.type === "chat.message") {
+      return await this.execute({ prompt: event.payload.text }, context);
+    }
+    return null;
+  }
 
-    async def teardown(self) -> None:
-        """Clean up resources."""
-        pass
+  async teardown(): Promise<void> {
+    /** Clean up resources. */
+  }
+}
 ```
+
+> **Python SDK (Legacy)** is available at `packages/sdk/aituber_flow_sdk/` with the same lifecycle methods (`setup`, `execute`, `on_event`, `teardown`).
 
 #### Node Categories
 
-| Category | Base Class | Purpose |
-|----------|------------|---------|
-| `input` | `InputNode` | Data sources (no inputs, generates outputs) |
-| `process` | `ProcessNode` | Data transformation |
-| `output` | `OutputNode` | Data sinks (consumes inputs, no outputs) |
-| `control` | `BaseNode` | Flow control (switch, loop, delay) |
+| Category | Purpose |
+|----------|---------|
+| `input` | Data sources (no inputs, generates outputs) |
+| `process` | Data transformation |
+| `output` | Data sinks (consumes inputs, no outputs) |
+| `control` | Flow control (switch, loop, delay) |
 
 ---
 
@@ -591,7 +642,7 @@ Frontend                          Backend
 
 ## Database Schema
 
-AITuberFlow uses SQLite with SQLAlchemy ORM.
+The TypeScript backend uses bun:sqlite with Drizzle ORM.
 
 ### Workflows Table
 
@@ -640,27 +691,29 @@ AITuberFlow uses SQLite with SQLAlchemy ORM.
 
 ## Real-time Communication
 
-AITuberFlow uses **Socket.IO** for real-time bidirectional communication.
+AITuberFlow uses **Native WebSocket** for real-time bidirectional communication (migrated from Socket.IO).
 
-### WebSocket Events
+### WebSocket Message Protocol
+
+All messages are JSON-encoded with a `type` field to identify the message kind.
 
 #### Client → Server
 
-| Event | Payload | Description |
-|-------|---------|-------------|
-| `join` | `{workflow_id}` | Join workflow room |
-| `leave` | `{workflow_id}` | Leave workflow room |
-| `workflow:start` | `{workflow_id, node_id}` | Start execution |
-| `workflow:stop` | `{workflow_id}` | Stop execution |
-| `node:input` | `{workflow_id, node_id, data}` | Send input to node |
+| Type | Payload | Description |
+|------|---------|-------------|
+| `join` | `{workflowId}` | Join workflow room |
+| `leave` | `{workflowId}` | Leave workflow room |
+| `workflow:start` | `{workflowId, nodeId}` | Start execution |
+| `workflow:stop` | `{workflowId}` | Stop execution |
+| `node:input` | `{workflowId, nodeId, data}` | Send input to node |
 
 #### Server → Client
 
-| Event | Payload | Description |
-|-------|---------|-------------|
-| `node:status` | `{node_id, status}` | Node status change |
-| `node:log` | `{node_id, message, level}` | Node log message |
-| `node:output` | `{node_id, outputs}` | Node output data |
+| Type | Payload | Description |
+|------|---------|-------------|
+| `node:status` | `{nodeId, status}` | Node status change |
+| `node:log` | `{nodeId, message, level}` | Node log message |
+| `node:output` | `{nodeId, outputs}` | Node output data |
 | `event` | `{type, payload}` | Workflow event (avatar, audio, etc.) |
 | `workflow:status` | `{status, error?}` | Workflow status change |
 
@@ -668,19 +721,11 @@ AITuberFlow uses **Socket.IO** for real-time bidirectional communication.
 
 ```typescript
 // hooks/useWebSocket.ts
-const { socket, isConnected } = useWebSocket(workflowId);
+const { connectionStatus, avatarState } = useWebSocket(workflowId);
 
-useEffect(() => {
-  socket.on('node:log', (data) => {
-    addLog(data.node_id, data.message, data.level);
-  });
-
-  socket.on('event', (event) => {
-    if (event.type === 'avatar.expression') {
-      setExpression(event.payload.expression);
-    }
-  });
-}, [socket]);
+// Connects via native WebSocket with JSON message protocol
+// Auto-reconnection with exponential backoff
+// Manages avatar state and audio playback automatically
 ```
 
 ---
@@ -689,10 +734,10 @@ useEffect(() => {
 
 When contributing to AITuberFlow:
 
-1. **Backend changes**: Focus on `apps/server/engine/` for core logic
+1. **Backend changes**: Focus on `apps/server-ts/src/engine/` for core logic
 2. **Frontend changes**: Components are in `apps/web/components/`
 3. **New nodes**: Create plugins in `plugins/` following the structure above
-4. **API changes**: Update routers in `apps/server/routers/`
+4. **API changes**: Update routes in `apps/server-ts/src/routes/`
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for detailed guidelines.
 

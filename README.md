@@ -30,9 +30,10 @@ AITuberFlowは、AIを活用したバーチャル配信者（AITuber）のパイ
 
 ### 主な特徴
 
+- **デスクトップアプリ** - macOS / Windows 対応のネイティブアプリ（Tauri v2）
 - **ビジュアルエディタ** - 直感的なドラッグ＆ドロップ操作
 - **プラグインシステム** - 機能を自由に拡張可能
-- **リアルタイム実行** - WebSocketによるライブログ表示
+- **リアルタイム実行** - ネイティブWebSocketによるライブログ表示
 - **複数LLM対応** - OpenAI, Anthropic Claude, Google Gemini, Ollama
 - **複数TTS対応** - VOICEVOX, COEIROINK, Style-Bert-VITS2
 - **制御フロー** - Start, End, Loop, ForEach, Switchノードで複雑なフローを構築
@@ -75,12 +76,13 @@ AITuberFlowは、AIを活用したバーチャル配信者（AITuber）のパイ
   <img src="https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
 </p>
 <p align="center">
-  <img src="https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
-  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Bun-1.x-f9f1e1?style=for-the-badge&logo=bun&logoColor=black" alt="Bun">
+  <img src="https://img.shields.io/badge/Hono-4-E36002?style=for-the-badge&logo=hono&logoColor=white" alt="Hono">
   <img src="https://img.shields.io/badge/SQLite-3-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite">
-  <img src="https://img.shields.io/badge/Socket.IO-4-010101?style=for-the-badge&logo=socket.io&logoColor=white" alt="Socket.IO">
+  <img src="https://img.shields.io/badge/Drizzle_ORM-0.38-C5F74F?style=for-the-badge&logo=drizzle&logoColor=black" alt="Drizzle ORM">
 </p>
 <p align="center">
+  <img src="https://img.shields.io/badge/Tauri-2-24C8D8?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri">
   <img src="https://img.shields.io/badge/Three.js-r170-000000?style=for-the-badge&logo=three.js&logoColor=white" alt="Three.js">
   <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
 </p>
@@ -95,11 +97,19 @@ AITuberFlowは、AIを活用したバーチャル配信者（AITuber）のパイ
 
 ブラウザ上でワンクリックで開発環境を構築できます。ローカル環境のセットアップ不要！
 
+### デスクトップアプリで始める
+
+[GitHub Releases](https://github.com/oboroge0/AITuberFlow/releases/latest) からインストーラーをダウンロードして実行するだけ！
+
+- **macOS**: DMG ファイル（Apple Silicon / Intel 対応）
+- **Windows**: NSIS インストーラー
+
+起動すると自動的にサーバーが立ち上がり、エディタが表示されます。
+
 ### 必要な環境（ローカル開発）
 
 - **Node.js** 22以上
-- **Python** 3.11以上
-- **uv** （推奨）[インストール方法](https://docs.astral.sh/uv/)
+- **[Bun](https://bun.sh/)** 1.0以上
 - **VOICEVOX** （音声合成を使用する場合）
 
 ### セットアップ
@@ -110,10 +120,9 @@ git clone https://github.com/oboroge0/AITuberFlow.git
 cd AITuberFlow
 
 # 依存関係をインストール
-npm install
-npm run install:all
+make install
 
-# 開発サーバーを起動（フロントエンド + バックエンド同時起動）
+# 開発サーバーを起動（フロントエンド + TypeScriptバックエンド同時起動）
 npm run dev
 ```
 
@@ -125,8 +134,8 @@ npm run dev
 # フロントエンドのみ
 npm run dev:web
 
-# バックエンドのみ
-npm run dev:api
+# TypeScript バックエンドのみ
+npm run dev:api-ts
 ```
 
 > **💡 ヒント**: macOS/Linuxでは `make dev` も使えます（Makefile参照）
@@ -293,91 +302,42 @@ OBSのブラウザソースとして透過背景で設定できます。
 ```
 AITuberFlow/
 ├── apps/
-│   ├── web/           # Next.js フロントエンド
-│   └── server/        # FastAPI バックエンド
+│   ├── web/             # Next.js フロントエンド
+│   ├── server-ts/       # Bun + Hono バックエンド（推奨）
+│   ├── server/          # Python FastAPI バックエンド（レガシー）
+│   └── desktop/         # Tauri v2 デスクトップアプリ
 ├── packages/
-│   └── sdk/           # プラグインSDK
-├── plugins/           # 公式プラグイン
-│   ├── start/         # 制御フロー
-│   ├── end/
-│   ├── loop/
-│   ├── foreach/
-│   ├── manual-input/  # 入力
-│   ├── youtube-chat/
-│   ├── twitch-chat/
-│   ├── timer/
-│   ├── openai-llm/    # LLM
-│   ├── anthropic-llm/
-│   ├── google-llm/
-│   ├── ollama-llm/
-│   ├── voicevox-tts/  # TTS
-│   ├── coeiroink-tts/
-│   ├── sbv2-tts/
-│   ├── avatar-configuration/  # アバター
-│   ├── motion-trigger/
-│   ├── lip-sync/
-│   ├── emotion-analyzer/
-│   ├── obs-scene-switch/  # OBS
-│   ├── obs-source-toggle/
-│   ├── console-output/    # 出力
-│   ├── audio-player/
-│   ├── subtitle-display/
-│   ├── http-request/      # ユーティリティ
-│   ├── text-transform/
-│   ├── random/
-│   ├── variable/
-│   ├── switch/
-│   └── delay/
-├── templates/         # ワークフローテンプレート
-└── docs/              # ドキュメント
+│   ├── sdk-ts/          # TypeScript プラグインSDK
+│   └── sdk/             # Python プラグインSDK（レガシー）
+├── plugins/             # 公式プラグイン（32+）
+├── templates/           # ワークフローテンプレート
+└── docs/                # ドキュメント
 ```
 
 ---
 
 ## 詳細なセットアップ
 
-### バックエンド
-
-#### uv を使用する場合（推奨）
+### バックエンド（TypeScript - 推奨）
 
 ```bash
-cd apps/server
-
-# 依存関係のインストールと仮想環境の作成を一括で実行
-uv sync
-
-# 環境設定ファイルをコピー
-cp .env.example .env
-
-# サーバーを起動
-uv run python main.py
-```
-
-#### pip を使用する場合
-
-```bash
-cd apps/server
-
-# 仮想環境を作成
-python -m venv .venv
-
-# 仮想環境を有効化
-# Windows:
-.venv\Scripts\activate
-# macOS/Linux:
-source .venv/bin/activate
+cd apps/server-ts
 
 # 依存関係をインストール
-pip install -r requirements.txt
-
-# 環境設定ファイルをコピー
-cp .env.example .env
+bun install
 
 # サーバーを起動
-python main.py
+bun run dev
 ```
 
 バックエンドは `http://localhost:8001` で起動します。
+
+> **Python バックエンド（レガシー）を使用する場合:**
+>
+> ```bash
+> cd apps/server
+> uv sync && cp .env.example .env && uv run python main.py
+> ```
 
 ### フロントエンド
 
@@ -386,9 +346,6 @@ cd apps/web
 
 # 依存関係をインストール
 npm install
-
-# 環境設定ファイルをコピー
-cp .env.example .env.local
 
 # 開発サーバーを起動
 npm run dev
@@ -402,62 +359,43 @@ npm run dev
 
 デフォルトでは `http://localhost:50021` に接続します。
 
-### オプション依存関係
-
-#### OBS連携
-
-OBS連携は `obsws-python` を使用します（GPL-2.0ライセンス）。オプション依存関係として提供されています：
-
-```bash
-cd apps/server
-
-# uv を使用する場合
-uv pip install obsws-python
-
-# pip を使用する場合
-pip install obsws-python
-```
-
 ---
 
 ## プラグイン開発
 
 独自のノードを作成できます。
 
-```python
-from aituber_flow_sdk import BaseNode, NodeContext, Event
+```typescript
+import { BaseNode, NodeContext } from "@aituber-flow/sdk";
 
-class MyCustomNode(BaseNode):
-    async def setup(self, config: dict, context: NodeContext) -> None:
-        """初期化処理"""
-        self.my_setting = config.get("mySetting", "default")
+class MyCustomNode extends BaseNode {
+  async setup(config: Record<string, unknown>, context: NodeContext): Promise<void> {
+    // 初期化処理
+  }
 
-    async def execute(self, inputs: dict, context: NodeContext) -> dict:
-        """メイン処理"""
-        input_text = inputs.get("text", "")
+  async execute(inputs: Record<string, unknown>, context: NodeContext): Promise<Record<string, unknown>> {
+    const inputText = (inputs.text as string) || "";
 
-        # ログを出力
-        await context.log(f"処理中: {input_text}")
+    // ログを出力
+    await context.log(`処理中: ${inputText}`);
 
-        # 結果を返す
-        return {"output": f"処理結果: {input_text}"}
+    // 結果を返す
+    return { output: `処理結果: ${inputText}` };
+  }
 
-    async def teardown(self) -> None:
-        """終了処理"""
-        pass
+  async teardown(): Promise<void> {
+    // 終了処理
+  }
+}
 ```
 
-詳細は `packages/sdk/README.md` を参照してください。
+詳細は [CLAUDE.md](CLAUDE.md) の「Node Development」セクションを参照してください。
 
 ---
 
 ## API ドキュメント
 
-バックエンド起動後、Swagger UIを確認できます：
-- ローカル開発時: `http://localhost:8001/docs`
-- Docker使用時: `http://localhost:8000/docs`
-
-詳細なAPIリファレンスは [docs/api-reference.md](docs/api-reference.md) を参照してください。
+詳細なAPIリファレンスは [docs/api-reference.ja.md](docs/api-reference.ja.md) を参照してください。
 
 ### 主要なエンドポイント
 
@@ -523,8 +461,10 @@ MIT License - 詳細は [LICENSE](LICENSE) を参照してください。
 ## 謝辞
 
 - [React Flow](https://reactflow.dev/) - ノードエディタライブラリ
+- [Hono](https://hono.dev/) - 軽量Webフレームワーク
+- [Bun](https://bun.sh/) - 高速JavaScriptランタイム
+- [Tauri](https://tauri.app/) - デスクトップアプリフレームワーク
 - [VOICEVOX](https://voicevox.hiroshiba.jp/) - 無料の音声合成エンジン
-- [FastAPI](https://fastapi.tiangolo.com/) - Python Webフレームワーク
 - [Next.js](https://nextjs.org/) - React フレームワーク
 - [@pixiv/three-vrm](https://github.com/pixiv/three-vrm) - VRMモデルレンダリング
 

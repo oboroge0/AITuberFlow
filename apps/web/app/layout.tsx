@@ -1,10 +1,5 @@
-import type { Metadata } from 'next';
 import './globals.css';
-
-export const metadata: Metadata = {
-  title: 'AITuberFlow',
-  description: 'Build AI-powered virtual streamers with a visual workflow editor',
-};
+import ToastContainer from '@/components/ui/ToastContainer';
 
 /**
  * Root Layout
@@ -20,7 +15,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning>{children}</body>
+      <head>
+        <title>AITuberFlow</title>
+        <meta name="description" content="Build AI-powered virtual streamers with a visual workflow editor" />
+      </head>
+      <body suppressHydrationWarning>
+        {children}
+        <ToastContainer />
+      </body>
     </html>
   );
 }

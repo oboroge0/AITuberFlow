@@ -2,14 +2,33 @@
   "name": "aituber-flow",
   "private": true,
   "scripts": {
-    "dev": "concurrently -k -n web,api -c cyan,magenta \"npm run dev:web\" \"npm run dev:api\"",
+    "dev": "concurrently -k -n web,api-ts -c cyan,green \"npm run dev:web\" \"npm run dev:api-ts\"",
     "dev:web": "cd apps/web && npm run dev",
+    "dev:api-ts": "cd apps/server-ts && bun run dev",
     "dev:api": "cd apps/server && uv run python main.py",
-    "install:all": "cd apps/web && npm install && cd ../server && uv sync",
+    "dev:ts": "concurrently -k -n web,api-ts -c cyan,green \"npm run dev:web\" \"npm run dev:api-ts\"",
+    "dev:py": "concurrently -k -n web,api -c cyan,magenta \"npm run dev:web\" \"npm run dev:api\"",
+    "install:ts": "cd apps/web && npm install && cd ../server-ts && bun install && cd ../../packages/sdk-ts && bun install && cd ../../apps/desktop && npm install",
+    "install:all": "npm run install:ts && cd apps/server && uv sync",
+    "test": "bun test tests/engine/ tests/routes/ --verbose",
     "lint": "cd apps/web && npm run lint",
-    "build": "cd apps/web && npm run build"
+    "build": "cd apps/web && npm run build",
+    "build:desktop": "cd apps/desktop && npm run prepare-runtime",
+    "dev:desktop": "cd apps/desktop && npm run dev"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.1",
+    "@google/generative-ai": "^0.21.0",
+    "discord.js": "^14.25.1",
+    "obs-websocket-js": "^5.0.7",
+    "openai": "^4.104.0",
+    "tmi.js": "^1.8.5"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "@hono/zod-validator": "^0.4.0",
+    "concurrently": "^9.1.2",
+    "drizzle-orm": "^0.38.0",
+    "hono": "^4.7.0",
+    "zod": "^3.24.0"
   }
 }

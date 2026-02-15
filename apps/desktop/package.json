@@ -1,0 +1,16 @@
+{
+  "name": "@aituber-flow/desktop",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "prepare-runtime": "cd ../web && npm run build:desktop && cd ../desktop && node scripts/build-sidecar.js && node scripts/copy-resources.js",
+    "dev": "npm run prepare-runtime && tauri dev",
+    "build": "npm run prepare-runtime && tauri build",
+    "build-sidecar": "node scripts/build-sidecar.js",
+    "copy-resources": "node scripts/copy-resources.js",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { PluginManifest, CategoryDefinition, PluginCategory } from '@/lib/types';
+import { getApiBaseUrl } from '@/lib/runtimeEndpoints';
 
 // Default categories (fallback if API fails)
 const DEFAULT_CATEGORIES: CategoryDefinition[] = [
@@ -35,7 +36,7 @@ interface PluginState {
   getPluginOutputs: (id: string) => PluginManifest['node']['outputs'];
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+const API_BASE = getApiBaseUrl();
 
 export const usePluginStore = create<PluginState>((set, get) => ({
   plugins: [],

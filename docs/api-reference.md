@@ -2,9 +2,7 @@
 
 This document describes all API endpoints and WebSocket events for the AITuberFlow backend server.
 
-**Base URL:** `http://localhost:8000`
-
-**Interactive Docs:** `http://localhost:8000/docs` (Swagger UI)
+**Base URL:** `http://localhost:8001` (local development) / `http://localhost:8000` (Docker)
 
 ## Table of Contents
 
@@ -27,8 +25,7 @@ Returns basic server information.
 ```json
 {
   "name": "AITuberFlow API",
-  "version": "0.1.0",
-  "docs": "/docs"
+  "version": "2.0.0"
 }
 ```
 
@@ -40,7 +37,7 @@ Health check endpoint for monitoring and container orchestration.
 ```json
 {
   "status": "healthy",
-  "version": "0.1.0"
+  "version": "2.0.0"
 }
 ```
 
@@ -526,18 +523,24 @@ Serves an uploaded animation file.
 
 ## WebSocket Events
 
-AITuberFlow uses Socket.IO for real-time communication.
+AITuberFlow uses native WebSocket for real-time communication.
 
-**Connection URL:** `ws://localhost:8000/ws/socket.io`
+**Connection URL:** `ws://localhost:8001/ws` (local) / `ws://localhost:8000/ws` (Docker)
 
-### Client Events (Sent by Client)
+All messages are JSON-encoded with a `type` field and optional `payload` field.
+
+### Client Messages (Sent by Client)
 
 #### join
 
 Join a workflow room to receive updates.
 
 ```javascript
-socket.emit('join', { workflowId: 'workflow-uuid' });
+const ws = new WebSocket('ws://localhost:8001/ws');
+ws.send(JSON.stringify({
+  type: 'join',
+  payload: { workflowId: 'workflow-uuid' }
+}));
 ```
 
 #### leave
@@ -545,7 +548,10 @@ socket.emit('join', { workflowId: 'workflow-uuid' });
 Leave a workflow room.
 
 ```javascript
-socket.emit('leave', { workflowId: 'workflow-uuid' });
+ws.send(JSON.stringify({
+  type: 'leave',
+  payload: { workflowId: 'workflow-uuid' }
+}));
 ```
 
 #### workflow_start
@@ -553,7 +559,10 @@ socket.emit('leave', { workflowId: 'workflow-uuid' });
 Start workflow execution.
 
 ```javascript
-socket.emit('workflow_start', { workflowId: 'workflow-uuid' });
+ws.send(JSON.stringify({
+  type: 'workflow_start',
+  payload: { workflowId: 'workflow-uuid' }
+}));
 ```
 
 #### workflow_stop
@@ -561,7 +570,10 @@ socket.emit('workflow_start', { workflowId: 'workflow-uuid' });
 Stop workflow execution.
 
 ```javascript
-socket.emit('workflow_stop', { workflowId: 'workflow-uuid' });
+ws.send(JSON.stringify({
+  type: 'workflow_stop',
+  payload: { workflowId: 'workflow-uuid' }
+}));
 ```
 
 #### node_input
@@ -569,116 +581,120 @@ socket.emit('workflow_stop', { workflowId: 'workflow-uuid' });
 Send input data to a node.
 
 ```javascript
-socket.emit('node_input', {
-  workflowId: 'workflow-uuid',
-  nodeId: 'node-uuid',
-  data: { text: 'Hello' }
-});
+ws.send(JSON.stringify({
+  type: 'node_input',
+  payload: {
+    workflowId: 'workflow-uuid',
+    nodeId: 'node-uuid',
+    data: { text: 'Hello' }
+  }
+}));
 ```
 
-### Server Events (Received by Client)
+### Server Messages (Received by Client)
+
+All messages are received via `ws.onmessage` and parsed from JSON:
+
+```javascript
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  switch (data.type) {
+    case 'execution.started': // ...
+    case 'log': // ...
+  }
+};
+```
 
 #### execution.started
 
-Emitted when workflow execution starts.
+Sent when workflow execution starts.
 
-```javascript
-socket.on('execution.started', () => {
-  console.log('Workflow started');
-});
+```json
+{ "type": "execution.started" }
 ```
 
 #### execution.stopped
 
-Emitted when workflow execution stops.
+Sent when workflow execution stops.
 
-```javascript
-socket.on('execution.stopped', (data) => {
-  console.log('Workflow stopped:', data.reason);
-});
+```json
+{ "type": "execution.stopped", "reason": "user" }
+```
+
+#### execution.error
+
+Sent when a workflow execution error occurs.
+
+```json
+{ "type": "execution.error", "error": "Error message", "nodeId": "node-uuid" }
 ```
 
 #### log
 
-Emitted when a node logs a message.
+Sent when a node logs a message.
 
-```javascript
-socket.on('log', (data) => {
-  // data: { nodeId, message, level, timestamp }
-  console.log(`[${data.level}] ${data.nodeId}: ${data.message}`);
-});
+```json
+{ "type": "log", "nodeId": "node-uuid", "message": "Processing...", "level": "info" }
 ```
 
 #### node.status
 
-Emitted when a node's status changes.
+Sent when a node's status changes.
 
-```javascript
-socket.on('node.status', (data) => {
-  // data: { nodeId, status, data, timestamp }
-  // status: 'running' | 'completed' | 'error'
-});
+```json
+{ "type": "node.status", "nodeId": "node-uuid", "status": "running", "data": {} }
 ```
+
+Status values: `idle` | `running` | `completed` | `error`
 
 #### audio
 
-Emitted when audio is generated.
+Sent when audio is generated.
 
-```javascript
-socket.on('audio', (data) => {
-  // data: { filename, duration, text }
-  const audioUrl = `/api/integrations/audio/${data.filename}`;
-});
+```json
+{ "type": "audio", "filename": "output_12345.wav", "text": "Hello world" }
 ```
+
+Audio files can be fetched from `GET /api/integrations/audio/{filename}`.
 
 #### avatar.expression
 
-Emitted when avatar expression changes.
+Sent when avatar expression changes.
 
-```javascript
-socket.on('avatar.expression', (data) => {
-  // data: { expression: 'happy'|'sad'|..., intensity: 0.0-1.0 }
-});
+```json
+{ "type": "avatar.expression", "expression": "happy", "intensity": 0.8 }
 ```
 
 #### avatar.mouth
 
-Emitted for lip-sync mouth movements.
+Sent for lip-sync mouth movements.
 
-```javascript
-socket.on('avatar.mouth', (data) => {
-  // data: { value: 0.0-1.0, viseme?: string }
-});
+```json
+{ "type": "avatar.mouth", "value": 0.5 }
 ```
 
 #### avatar.motion
 
-Emitted when avatar animation should play.
+Sent when avatar animation should play.
 
-```javascript
-socket.on('avatar.motion', (data) => {
-  // data: { motion: 'wave'|'nod'|... }
-});
+```json
+{ "type": "avatar.motion", "motion_url": "/api/integrations/animations/file/wave.fbx" }
 ```
 
 #### avatar.update
 
-Emitted for avatar configuration updates.
+Sent for general avatar state updates.
 
-```javascript
-socket.on('avatar.update', (payload) => {
-  // General avatar update payload
-});
+```json
+{ "type": "avatar.update", "expression": "neutral", "mouthOpen": 0 }
 ```
 
 #### subtitle
 
-Emitted when subtitle text should be displayed.
+Sent when subtitle text should be displayed.
 
-```javascript
-socket.on('subtitle', (data) => {
-  // data: { text: 'Subtitle text' }
-});
+```json
+{ "type": "subtitle", "text": "Subtitle text" }
 ```
 
 ---
