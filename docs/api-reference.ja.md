@@ -2,9 +2,7 @@
 
 このドキュメントでは、AITuberFlowバックエンドサーバーのすべてのAPIエンドポイントとWebSocketイベントについて説明します。
 
-**ベースURL:** `http://localhost:8000`（Docker）/ `http://localhost:8001`（ローカル開発）
-
-**インタラクティブドキュメント:** `http://localhost:8000/docs` (Swagger UI)
+**ベースURL:** `http://localhost:8001`（ローカル開発）/ `http://localhost:8000`（Docker）
 
 ## 目次
 
@@ -27,8 +25,7 @@
 ```json
 {
   "name": "AITuberFlow API",
-  "version": "1.0.0",
-  "docs": "/docs"
+  "version": "2.0.0"
 }
 ```
 
@@ -40,7 +37,7 @@
 ```json
 {
   "status": "healthy",
-  "version": "1.0.0"
+  "version": "2.0.0"
 }
 ```
 
@@ -526,26 +523,35 @@ VRMモデルまたは画像ファイルをアップロードします。
 
 ## WebSocketイベント
 
-AITuberFlowはリアルタイム通信にSocket.IOを使用します。
+AITuberFlowはリアルタイム通信にネイティブWebSocketを使用します。
 
-**接続URL:** `ws://localhost:8000/ws/socket.io`
+**接続URL:** `ws://localhost:8001/ws`（ローカル）/ `ws://localhost:8000/ws`（Docker）
 
-### クライアントイベント（クライアントから送信）
+すべてのメッセージは `type` フィールドとオプションの `payload` フィールドを持つJSON形式です。
+
+### クライアントメッセージ（クライアントから送信）
 
 #### join
 
-ワークフロームに参加して更新を受信します。
+ワークフロールームに参加して更新を受信します。
 
 ```javascript
-socket.emit('join', { workflowId: 'workflow-uuid' });
+const ws = new WebSocket('ws://localhost:8001/ws');
+ws.send(JSON.stringify({
+  type: 'join',
+  payload: { workflowId: 'workflow-uuid' }
+}));
 ```
 
 #### leave
 
-ワークフロームームから退出します。
+ワークフロールームから退出します。
 
 ```javascript
-socket.emit('leave', { workflowId: 'workflow-uuid' });
+ws.send(JSON.stringify({
+  type: 'leave',
+  payload: { workflowId: 'workflow-uuid' }
+}));
 ```
 
 #### workflow_start
@@ -553,7 +559,10 @@ socket.emit('leave', { workflowId: 'workflow-uuid' });
 ワークフロー実行を開始します。
 
 ```javascript
-socket.emit('workflow_start', { workflowId: 'workflow-uuid' });
+ws.send(JSON.stringify({
+  type: 'workflow_start',
+  payload: { workflowId: 'workflow-uuid' }
+}));
 ```
 
 #### workflow_stop
@@ -561,7 +570,10 @@ socket.emit('workflow_start', { workflowId: 'workflow-uuid' });
 ワークフロー実行を停止します。
 
 ```javascript
-socket.emit('workflow_stop', { workflowId: 'workflow-uuid' });
+ws.send(JSON.stringify({
+  type: 'workflow_stop',
+  payload: { workflowId: 'workflow-uuid' }
+}));
 ```
 
 #### node_input
@@ -569,116 +581,120 @@ socket.emit('workflow_stop', { workflowId: 'workflow-uuid' });
 ノードに入力データを送信します。
 
 ```javascript
-socket.emit('node_input', {
-  workflowId: 'workflow-uuid',
-  nodeId: 'node-uuid',
-  data: { text: 'こんにちは' }
-});
+ws.send(JSON.stringify({
+  type: 'node_input',
+  payload: {
+    workflowId: 'workflow-uuid',
+    nodeId: 'node-uuid',
+    data: { text: 'こんにちは' }
+  }
+}));
 ```
 
-### サーバーイベント（クライアントが受信）
+### サーバーメッセージ（クライアントが受信）
+
+すべてのメッセージは `ws.onmessage` で受信し、JSONからパースします：
+
+```javascript
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  switch (data.type) {
+    case 'execution.started': // ...
+    case 'log': // ...
+  }
+};
+```
 
 #### execution.started
 
-ワークフロー実行が開始されたときに発火します。
+ワークフロー実行が開始されたときに送信されます。
 
-```javascript
-socket.on('execution.started', () => {
-  console.log('ワークフロー開始');
-});
+```json
+{ "type": "execution.started" }
 ```
 
 #### execution.stopped
 
-ワークフロー実行が停止したときに発火します。
+ワークフロー実行が停止したときに送信されます。
 
-```javascript
-socket.on('execution.stopped', (data) => {
-  console.log('ワークフロー停止:', data.reason);
-});
+```json
+{ "type": "execution.stopped", "reason": "user" }
+```
+
+#### execution.error
+
+ワークフロー実行エラーが発生したときに送信されます。
+
+```json
+{ "type": "execution.error", "error": "エラーメッセージ", "nodeId": "node-uuid" }
 ```
 
 #### log
 
-ノードがメッセージをログ出力したときに発火します。
+ノードがメッセージをログ出力したときに送信されます。
 
-```javascript
-socket.on('log', (data) => {
-  // data: { nodeId, message, level, timestamp }
-  console.log(`[${data.level}] ${data.nodeId}: ${data.message}`);
-});
+```json
+{ "type": "log", "nodeId": "node-uuid", "message": "処理中...", "level": "info" }
 ```
 
 #### node.status
 
-ノードのステータスが変更されたときに発火します。
+ノードのステータスが変更されたときに送信されます。
 
-```javascript
-socket.on('node.status', (data) => {
-  // data: { nodeId, status, data, timestamp }
-  // status: 'running' | 'completed' | 'error'
-});
+```json
+{ "type": "node.status", "nodeId": "node-uuid", "status": "running", "data": {} }
 ```
+
+ステータス値: `idle` | `running` | `completed` | `error`
 
 #### audio
 
-音声が生成されたときに発火します。
+音声が生成されたときに送信されます。
 
-```javascript
-socket.on('audio', (data) => {
-  // data: { filename, duration, text }
-  const audioUrl = `/api/integrations/audio/${data.filename}`;
-});
+```json
+{ "type": "audio", "filename": "output_12345.wav", "text": "こんにちは" }
 ```
+
+音声ファイルは `GET /api/integrations/audio/{filename}` で取得できます。
 
 #### avatar.expression
 
-アバターの表情が変更されたときに発火します。
+アバターの表情が変更されたときに送信されます。
 
-```javascript
-socket.on('avatar.expression', (data) => {
-  // data: { expression: 'happy'|'sad'|..., intensity: 0.0-1.0 }
-});
+```json
+{ "type": "avatar.expression", "expression": "happy", "intensity": 0.8 }
 ```
 
 #### avatar.mouth
 
-リップシンクの口の動きで発火します。
+リップシンクの口の動きで送信されます。
 
-```javascript
-socket.on('avatar.mouth', (data) => {
-  // data: { value: 0.0-1.0, viseme?: string }
-});
+```json
+{ "type": "avatar.mouth", "value": 0.5 }
 ```
 
 #### avatar.motion
 
-アバターアニメーションを再生する必要があるときに発火します。
+アバターアニメーションを再生する必要があるときに送信されます。
 
-```javascript
-socket.on('avatar.motion', (data) => {
-  // data: { motion: 'wave'|'nod'|... }
-});
+```json
+{ "type": "avatar.motion", "motion_url": "/api/integrations/animations/file/wave.fbx" }
 ```
 
 #### avatar.update
 
-アバター設定が更新されたときに発火します。
+アバター状態の更新時に送信されます。
 
-```javascript
-socket.on('avatar.update', (payload) => {
-  // 一般的なアバター更新ペイロード
-});
+```json
+{ "type": "avatar.update", "expression": "neutral", "mouthOpen": 0 }
 ```
 
 #### subtitle
 
-字幕テキストを表示する必要があるときに発火します。
+字幕テキストを表示する必要があるときに送信されます。
 
-```javascript
-socket.on('subtitle', (data) => {
-  // data: { text: '字幕テキスト' }
-});
+```json
+{ "type": "subtitle", "text": "字幕テキスト" }
 ```
 
 ---

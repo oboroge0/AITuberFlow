@@ -2,7 +2,18 @@
 
 このガイドでは、AITuberFlowをセットアップして実行する方法を説明します。
 
-## 最も簡単な方法: GitHub Codespaces
+## 最も簡単な方法: デスクトップアプリ
+
+[GitHub Releases](https://github.com/oboroge0/AITuberFlow/releases/latest) からインストーラーをダウンロードして実行するだけ！
+
+- **macOS**: DMG ファイル（Apple Silicon / Intel 対応）
+- **Windows**: NSIS インストーラー (x64)
+
+起動すると自動的にサーバーが立ち上がり、アプリウィンドウにエディタが表示されます。セットアップ不要！
+
+---
+
+## 代替方法: GitHub Codespaces
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/oboroge0/AITuberFlow)
 
@@ -306,6 +317,34 @@ npm run dev
 - APIキーが正しいことを確認
 - APIクレジットがあることを確認
 - レート制限がかかっている場合は別のモデルを試す
+
+## デスクトップアプリのビルド（開発者向け）
+
+ソースからデスクトップアプリをビルドする場合：
+
+### 前提条件
+
+- **Node.js** 22+、**Bun** 1.0+、**Rust**（stable）
+- **プラットフォーム固有**: Xcode CLI ツール (macOS) または Visual Studio Build Tools (Windows)
+
+### ビルド手順
+
+```bash
+# 1. フロントエンドの静的エクスポート
+cd apps/web && npm ci && cross-env BUILD_MODE=desktop npx next build
+
+# 2. サーバーサイドカーのビルド
+cd apps/server-ts && bun install
+bun build --compile src/index.ts --outfile=../desktop/src-tauri/binaries/server
+
+# 3. リソースのコピー（プラグイン、テンプレート、静的フロントエンド）
+node apps/desktop/scripts/copy-resources.js
+
+# 4. Tauri アプリのビルド
+cd apps/desktop && npm install && npx tauri build
+```
+
+ビルドされたインストーラーは `apps/desktop/src-tauri/target/release/bundle/` にあります。
 
 ## 次のステップ
 

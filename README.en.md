@@ -30,9 +30,10 @@ AITuberFlow is a visual tool for building AI-powered virtual streamer (AITuber/V
 
 ### Key Features
 
+- **Desktop App** - Native app for macOS / Windows (Tauri v2)
 - **Visual Editor** - Intuitive drag-and-drop interface
 - **Plugin System** - Extensible architecture for custom nodes
-- **Real-time Execution** - Live logs via WebSocket
+- **Real-time Execution** - Live logs via native WebSocket
 - **Multiple LLM Support** - OpenAI, Anthropic Claude, Google Gemini, Ollama
 - **Multiple TTS Support** - VOICEVOX, COEIROINK, Style-Bert-VITS2
 - **Control Flow** - Start, End, Loop, ForEach, Switch nodes for complex workflows
@@ -75,12 +76,13 @@ AITuberFlow is a visual tool for building AI-powered virtual streamer (AITuber/V
   <img src="https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
 </p>
 <p align="center">
-  <img src="https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
-  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Bun-1.x-f9f1e1?style=for-the-badge&logo=bun&logoColor=black" alt="Bun">
+  <img src="https://img.shields.io/badge/Hono-4-E36002?style=for-the-badge&logo=hono&logoColor=white" alt="Hono">
   <img src="https://img.shields.io/badge/SQLite-3-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite">
-  <img src="https://img.shields.io/badge/Socket.IO-4-010101?style=for-the-badge&logo=socket.io&logoColor=white" alt="Socket.IO">
+  <img src="https://img.shields.io/badge/Drizzle_ORM-0.38-C5F74F?style=for-the-badge&logo=drizzle&logoColor=black" alt="Drizzle ORM">
 </p>
 <p align="center">
+  <img src="https://img.shields.io/badge/Tauri-2-24C8D8?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri">
   <img src="https://img.shields.io/badge/Three.js-r170-000000?style=for-the-badge&logo=three.js&logoColor=white" alt="Three.js">
   <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
 </p>
@@ -165,11 +167,19 @@ AITuberFlow is a visual tool for building AI-powered virtual streamer (AITuber/V
 
 Set up a development environment in your browser with one click. No local setup required!
 
+### Desktop App (Easiest)
+
+Download the installer from [GitHub Releases](https://github.com/oboroge0/AITuberFlow/releases/latest) and run it!
+
+- **macOS**: DMG file (Apple Silicon / Intel)
+- **Windows**: NSIS installer
+
+The server starts automatically and the editor opens right away.
+
 ### Requirements (Local Development)
 
 - **Node.js** 22 or higher
-- **Python** 3.11 or higher
-- **uv** (recommended) [Installation](https://docs.astral.sh/uv/)
+- **[Bun](https://bun.sh/)** 1.0 or higher
 - **VOICEVOX** (optional, for voice synthesis)
 
 ### Setup
@@ -180,10 +190,9 @@ git clone https://github.com/oboroge0/AITuberFlow.git
 cd AITuberFlow
 
 # Install dependencies
-npm install
-npm run install:all
+make install
 
-# Start development servers (frontend + backend simultaneously)
+# Start development servers (frontend + TypeScript backend simultaneously)
 npm run dev
 ```
 
@@ -195,8 +204,8 @@ The editor will be available at `http://localhost:3000`.
 # Frontend only
 npm run dev:web
 
-# Backend only
-npm run dev:api
+# TypeScript backend only
+npm run dev:api-ts
 ```
 
 > **💡 Tip**: On macOS/Linux, you can also use `make dev` (see Makefile)
@@ -205,52 +214,28 @@ npm run dev:api
 
 ## Detailed Setup
 
-### 1. Backend Setup
-
-#### Using uv (Recommended)
-
-[uv](https://docs.astral.sh/uv/) is a fast Python package manager.
+### Backend (TypeScript - Recommended)
 
 ```bash
-cd apps/server
-
-# Install dependencies and create virtual environment
-uv sync
-
-# Copy environment config
-cp .env.example .env
-
-# Start the server
-uv run python main.py
-```
-
-#### Using pip
-
-```bash
-cd apps/server
-
-# Create virtual environment
-python -m venv .venv
-
-# Activate virtual environment
-# Windows:
-.venv\Scripts\activate
-# macOS/Linux:
-source .venv/bin/activate
+cd apps/server-ts
 
 # Install dependencies
-pip install -r requirements.txt
-
-# Copy environment config
-cp .env.example .env
+bun install
 
 # Start the server
-python main.py
+bun run dev
 ```
 
 The backend will start at `http://localhost:8001`.
 
-### 2. Frontend Setup
+> **To use the Python backend (legacy) instead:**
+>
+> ```bash
+> cd apps/server
+> uv sync && cp .env.example .env && uv run python main.py
+> ```
+
+### Frontend
 
 ```bash
 cd apps/web
@@ -258,36 +243,17 @@ cd apps/web
 # Install dependencies
 npm install
 
-# Copy environment config
-cp .env.example .env.local
-
 # Start development server
 npm run dev
 ```
 
 The frontend will start at `http://localhost:3000`.
 
-### 3. VOICEVOX (Optional)
+### VOICEVOX (Optional)
 
 For voice synthesis, install and start [VOICEVOX](https://voicevox.hiroshiba.jp/).
 
 By default, it connects to `http://localhost:50021`.
-
-### Optional Dependencies
-
-#### OBS Integration
-
-OBS integration uses `obsws-python` which has a GPL-2.0 license. It's provided as an optional dependency:
-
-```bash
-cd apps/server
-
-# Using uv
-uv pip install obsws-python
-
-# Using pip
-pip install obsws-python
-```
 
 ---
 
@@ -364,43 +330,16 @@ Configure as a Browser Source in OBS with transparent background.
 ```
 AITuberFlow/
 ├── apps/
-│   ├── web/           # Next.js frontend
-│   └── server/        # FastAPI backend
+│   ├── web/             # Next.js frontend
+│   ├── server-ts/       # Bun + Hono backend (recommended)
+│   ├── server/          # Python FastAPI backend (legacy)
+│   └── desktop/         # Tauri v2 desktop app
 ├── packages/
-│   └── sdk/           # Plugin SDK
-├── plugins/           # Official plugins
-│   ├── start/         # Control flow
-│   ├── end/
-│   ├── loop/
-│   ├── foreach/
-│   ├── manual-input/  # Input
-│   ├── youtube-chat/
-│   ├── twitch-chat/
-│   ├── timer/
-│   ├── openai-llm/    # LLM
-│   ├── anthropic-llm/
-│   ├── google-llm/
-│   ├── ollama-llm/
-│   ├── voicevox-tts/  # TTS
-│   ├── coeiroink-tts/
-│   ├── sbv2-tts/
-│   ├── avatar-configuration/  # Avatar
-│   ├── motion-trigger/
-│   ├── lip-sync/
-│   ├── emotion-analyzer/
-│   ├── obs-scene-switch/  # OBS
-│   ├── obs-source-toggle/
-│   ├── console-output/    # Output
-│   ├── audio-player/
-│   ├── subtitle-display/
-│   ├── http-request/      # Utility
-│   ├── text-transform/
-│   ├── random/
-│   ├── variable/
-│   ├── switch/
-│   └── delay/
-├── templates/         # Workflow templates
-└── docs/              # Documentation
+│   ├── sdk-ts/          # TypeScript plugin SDK
+│   └── sdk/             # Python plugin SDK (legacy)
+├── plugins/             # Official plugins (32+)
+├── templates/           # Workflow templates
+└── docs/                # Documentation
 ```
 
 ---
@@ -409,36 +348,37 @@ AITuberFlow/
 
 Create your own custom nodes:
 
-```python
-from aituber_flow_sdk import BaseNode, NodeContext, Event
+```typescript
+import { BaseNode, NodeContext } from "@aituber-flow/sdk";
 
-class MyCustomNode(BaseNode):
-    async def setup(self, config: dict, context: NodeContext) -> None:
-        """Initialization"""
-        self.my_setting = config.get("mySetting", "default")
+class MyCustomNode extends BaseNode {
+  async setup(config: Record<string, unknown>, context: NodeContext): Promise<void> {
+    // Initialization
+  }
 
-    async def execute(self, inputs: dict, context: NodeContext) -> dict:
-        """Main processing"""
-        input_text = inputs.get("text", "")
+  async execute(inputs: Record<string, unknown>, context: NodeContext): Promise<Record<string, unknown>> {
+    const inputText = (inputs.text as string) || "";
 
-        # Log output
-        await context.log(f"Processing: {input_text}")
+    // Log output
+    await context.log(`Processing: ${inputText}`);
 
-        # Return result
-        return {"output": f"Result: {input_text}"}
+    // Return result
+    return { output: `Result: ${inputText}` };
+  }
 
-    async def teardown(self) -> None:
-        """Cleanup"""
-        pass
+  async teardown(): Promise<void> {
+    // Cleanup
+  }
+}
 ```
 
-See `packages/sdk/README.md` for details.
+See the "Node Development" section in [CLAUDE.md](CLAUDE.md) for details.
 
 ---
 
 ## API Documentation
 
-After starting the backend, access Swagger UI at `http://localhost:8001/docs`.
+See [docs/api-reference.md](docs/api-reference.md) for the full API reference.
 
 ### Main Endpoints
 
@@ -502,8 +442,10 @@ MIT License - See [LICENSE](LICENSE) for details.
 ## Acknowledgments
 
 - [React Flow](https://reactflow.dev/) - Node editor library
+- [Hono](https://hono.dev/) - Lightweight web framework
+- [Bun](https://bun.sh/) - Fast JavaScript runtime
+- [Tauri](https://tauri.app/) - Desktop app framework
 - [VOICEVOX](https://voicevox.hiroshiba.jp/) - Free voice synthesis engine
-- [FastAPI](https://fastapi.tiangolo.com/) - Python web framework
 - [Next.js](https://nextjs.org/) - React framework
 - [@pixiv/three-vrm](https://github.com/pixiv/three-vrm) - VRM model rendering
 

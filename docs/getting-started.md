@@ -2,7 +2,18 @@
 
 This guide will help you set up and run AITuberFlow.
 
-## Easiest Way: GitHub Codespaces
+## Easiest Way: Desktop App
+
+Download the installer from [GitHub Releases](https://github.com/oboroge0/AITuberFlow/releases/latest) and run it.
+
+- **macOS**: DMG file (Apple Silicon / Intel)
+- **Windows**: NSIS installer (x64)
+
+The server starts automatically and the editor opens in the app window. No setup required!
+
+---
+
+## Alternative: GitHub Codespaces
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/oboroge0/AITuberFlow)
 
@@ -306,6 +317,34 @@ Share workflows with others using the sidebar buttons:
 - Verify your API key is correct
 - Check that you have API credits available
 - Try a different model if rate limited
+
+## Building the Desktop App (Development)
+
+If you want to build the desktop app from source:
+
+### Prerequisites
+
+- **Node.js** 22+, **Bun** 1.0+, **Rust** (stable)
+- **Platform-specific**: Xcode CLI tools (macOS) or Visual Studio Build Tools (Windows)
+
+### Build Steps
+
+```bash
+# 1. Build frontend static export
+cd apps/web && npm ci && cross-env BUILD_MODE=desktop npx next build
+
+# 2. Build server sidecar
+cd apps/server-ts && bun install
+bun build --compile src/index.ts --outfile=../desktop/src-tauri/binaries/server
+
+# 3. Copy resources (plugins, templates, static frontend)
+node apps/desktop/scripts/copy-resources.js
+
+# 4. Build Tauri app
+cd apps/desktop && npm install && npx tauri build
+```
+
+The resulting installer will be in `apps/desktop/src-tauri/target/release/bundle/`.
 
 ## Next Steps
 
