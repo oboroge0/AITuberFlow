@@ -795,7 +795,7 @@ function getNodeCategory(type: string): 'input' | 'process' | 'output' | 'contro
 
 function getNodeInputs(type: string, config?: Record<string, unknown>): PortDefinition[] {
   // For LLM nodes with prompt builder, generate dynamic inputs from promptSections
-  if (type === 'openai-llm' && config?.promptSections) {
+  if ((type === 'openai-llm' || type === 'minimax-llm') && config?.promptSections) {
     const sections = config.promptSections as PromptSection[];
     const inputSections = sections.filter(s => s.type === 'input');
     if (inputSections.length > 0) {
@@ -844,6 +844,7 @@ function getNodeInputs(type: string, config?: Record<string, unknown>): PortDefi
     'anthropic-llm': [{ id: 'prompt', label: 'Prompt', type: 'string' }],
     'google-llm': [{ id: 'prompt', label: 'Prompt', type: 'string' }],
     'ollama-llm': [{ id: 'prompt', label: 'Prompt', type: 'string' }],
+    'minimax-llm': [{ id: 'prompt', label: 'Prompt', type: 'string' }],
     // Control
     'switch': [
       { id: 'value', label: 'Value', type: 'any' },
@@ -924,6 +925,7 @@ function getNodeOutputs(type: string): PortDefinition[] {
     'anthropic-llm': [{ id: 'response', label: 'Response', type: 'string' }],
     'google-llm': [{ id: 'response', label: 'Response', type: 'string' }],
     'ollama-llm': [{ id: 'response', label: 'Response', type: 'string' }],
+    'minimax-llm': [{ id: 'response', label: 'Response', type: 'string' }],
     // Control
     'switch': [
       { id: 'true', label: 'True', type: 'any' },

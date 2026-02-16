@@ -683,6 +683,13 @@ const LLM_MODEL_OPTIONS: Record<string, { label: string; value: string }[]> = {
     { label: "Gemini 2.5 Pro", value: "gemini-2.5-pro-preview-05-06" },
     { label: "Gemini 2.5 Flash", value: "gemini-2.5-flash-preview-05-20" },
   ],
+  minimax: [
+    { label: "MiniMax-M2.5", value: "MiniMax-M2.5" },
+    { label: "MiniMax-M2.5-highspeed", value: "MiniMax-M2.5-highspeed" },
+    { label: "MiniMax-M2.1", value: "MiniMax-M2.1" },
+    { label: "MiniMax-M2.1-highspeed", value: "MiniMax-M2.1-highspeed" },
+    { label: "MiniMax-M2", value: "MiniMax-M2" },
+  ],
 };
 
 // Simplified node config schemas
@@ -896,6 +903,57 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         type: "number",
         label: "Temperature",
         placeholder: "0.7",
+      },
+    ],
+  },
+  "minimax-llm": {
+    label: "MiniMax",
+    fields: [
+      {
+        key: "apiKey",
+        type: "password",
+        label: "API Key",
+        placeholder: "sk-...",
+      },
+      {
+        key: "model",
+        type: "select",
+        label: "Model",
+        options: LLM_MODEL_OPTIONS.minimax,
+      },
+      {
+        key: "systemPrompt",
+        type: "textarea",
+        label: "System Prompt",
+        placeholder: "Enter character settings...",
+      },
+      {
+        key: "promptSections",
+        type: "prompt-builder",
+        label: "Prompt Builder",
+      },
+      {
+        key: "temperature",
+        type: "number",
+        label: "Temperature (0.01-1.0)",
+        placeholder: "1.0",
+      },
+      {
+        key: "maxTokens",
+        type: "number",
+        label: "Max Tokens",
+        placeholder: "1024",
+      },
+      {
+        key: "reasoning",
+        type: "select",
+        label: "Reasoning Effort",
+        options: [
+          { label: "None", value: "none" },
+          { label: "Low", value: "low" },
+          { label: "Medium", value: "medium" },
+          { label: "High", value: "high" },
+        ],
       },
     ],
   },

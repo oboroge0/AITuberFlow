@@ -1,0 +1,132 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "minimax-llm",
+  "name": "MiniMax LLM",
+  "version": "1.0.0",
+  "description": "Generate text using MiniMax M2.5 models. Supports advanced reasoning and high-speed inference.",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
+  },
+  "license": "MIT",
+  "category": "llm",
+  "ui": {
+    "label": "MiniMax",
+    "icon": "Cpu",
+    "color": "#FFD700",
+    "bgColor": "rgba(255, 215, 0, 0.1)",
+    "statusText": "Model: MiniMax-M2.5"
+  },
+  "node": {
+    "inputs": [
+      {
+        "id": "prompt",
+        "type": "string",
+        "description": "The input prompt to send to the model"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "response",
+        "type": "string",
+        "description": "The generated response from the model"
+      }
+    ],
+    "events": {
+      "emits": [
+        "response.generated"
+      ],
+      "listens": []
+    }
+  },
+  "config": {
+    "apiKey": {
+      "type": "password",
+      "label": "API Key",
+      "description": "Your MiniMax API key",
+      "required": true
+    },
+    "model": {
+      "type": "select",
+      "label": "Model",
+      "description": "The MiniMax model to use",
+      "default": "MiniMax-M2.5",
+      "options": [
+        {
+          "label": "MiniMax-M2.5 (Recommended)",
+          "value": "MiniMax-M2.5"
+        },
+        {
+          "label": "MiniMax-M2.5-highspeed",
+          "value": "MiniMax-M2.5-highspeed"
+        },
+        {
+          "label": "MiniMax-M2.1",
+          "value": "MiniMax-M2.1"
+        },
+        {
+          "label": "MiniMax-M2.1-highspeed",
+          "value": "MiniMax-M2.1-highspeed"
+        },
+        {
+          "label": "MiniMax-M2",
+          "value": "MiniMax-M2"
+        }
+      ]
+    },
+    "systemPrompt": {
+      "type": "textarea",
+      "label": "System Prompt",
+      "description": "The system message that sets the AI's behavior",
+      "default": "You are a helpful assistant."
+    },
+    "temperature": {
+      "type": "number",
+      "label": "Temperature",
+      "description": "Controls randomness. Range: (0.0, 1.0]. Recommended: 1.0",
+      "default": 1.0,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "maxTokens": {
+      "type": "number",
+      "label": "Max Tokens",
+      "description": "Maximum number of tokens in the response",
+      "default": 1024,
+      "min": 1,
+      "max": 8192
+    },
+    "reasoning": {
+      "type": "select",
+      "label": "Reasoning Effort",
+      "description": "Enable reasoning for complex tasks (M2.5 series only)",
+      "default": "none",
+      "options": [
+        {
+          "label": "None",
+          "value": "none"
+        },
+        {
+          "label": "Low",
+          "value": "low"
+        },
+        {
+          "label": "Medium",
+          "value": "medium"
+        },
+        {
+          "label": "High",
+          "value": "high"
+        }
+      ],
+      "showWhen": {
+        "field": "model",
+        "operator": "in",
+        "value": [
+          "MiniMax-M2.5",
+          "MiniMax-M2.5-highspeed"
+        ]
+      }
+    }
+  }
+}
