@@ -1,7 +1,7 @@
 /**
  * MiniMax LLM Node
  *
- * Generates text using MiniMax's M2.5 models.
+ * Generates text using MiniMax M2.5 models.
  * Compatible with OpenAI SDK.
  */
 
@@ -16,7 +16,7 @@ interface PromptSection {
 
 export default class MiniMaxLLMNode extends BaseNode {
   private static readonly DEMO_RESPONSE =
-    "これはデモモードの応答です。実際のLLMを使用するにはAPIキーを設定してください。";
+    "This is demo mode. Set API key to use real LLM.";
 
   private static readonly REASONING_MODELS = new Set([
     "MiniMax-M2.5",
@@ -45,10 +45,7 @@ export default class MiniMaxLLMNode extends BaseNode {
     this.promptSections = config.promptSections ?? null;
 
     if (!this.apiKey) {
-      await context.log(
-        "[デモモード] MiniMax APIキー未設定 - 定型文応答を返します",
-        "warning",
-      );
+      await context.log("[Demo Mode] No API key set", "warning");
     } else {
       this.client = new OpenAI({
         apiKey: this.apiKey,
@@ -91,39 +88,19 @@ export default class MiniMaxLLMNode extends BaseNode {
   }
 
   private stripThinkingContent(content: string): string {
-    // Remove thinking tags and content - using template literal to avoid encoding issues
     const thinkStart = "<think>";
-    const thinkEnd = "</";
+    const thinkEnd = "</think>";
     
-    let result = "";
-    let current = 0;
-    const lowerContent = content.toLowerCase();
-    const thinkStartLower = thinkStart.toLowerCase();
+    let result = content;
     
-    let idx = lowerContent.indexOf(thinkStartLower);
-    while (idx !== -1) {
-      result = result + content.substring(current, idx);
+    while (true) {
+      const startIdx = result.indexOf(thinkStart);
+      if (startIdx === -1) break;
       
-      // Find the closing tag
-      const closingStart = idx + thinkStart.length;
-      const endIdx = lowerContent.indexOf(thinkEnd, closingStart);
+      const endIdx = result.indexOf(thinkEnd, startIdx + thinkStart.length);
+      if (endIdx === -1) break;
       
-      if (endIdx !== -1) {
-        current = endIdx + thinkEnd.length;
-      } else {
-        current = content.length;
-        break;
-      }
-      
-      idx = lowerContent.indexOf(thinkStartLower, current);
-    }
-    
-    if (current < content.length) {
-      result = result + content.substring(current);
-    }
-    
-    if (result === "") {
-      result = content;
+      result = result.substring(0, startIdx) + result.substring(endIdx + thinkEnd.length);
     }
     
     return result.trim();
@@ -134,7 +111,7 @@ export default class MiniMaxLLMNode extends BaseNode {
     context: NodeContext,
   ): Promise<Record<string, any>> {
     if (!this.client) {
-      await context.log("[デモモード] 定型文応答を返します", "info");
+      await context.log("[Demo Mode] Returning demo response", "info");
       return { response: MiniMaxLLMNode.DEMO_RESPONSE };
     }
 
@@ -189,7 +166,7 @@ export default class MiniMaxLLMNode extends BaseNode {
       return { response: result };
     } catch (error: unknown) {
       if (error instanceof OpenAI.APIConnectionError) {
-        const errorMsg = getErrorMessage(ErrorCode.LLM_CONNECTION_FAILED, "ja", {
+        const errorMsg = getErrorMessage(ErrorCode.LLM_CONNECTION_FAILED, "en", {
           provider: "MiniMax",
         });
         await context.log(errorMsg, "error");
@@ -197,7 +174,7 @@ export default class MiniMaxLLMNode extends BaseNode {
       }
 
       if (error instanceof OpenAI.RateLimitError) {
-        const errorMsg = getErrorMessage(ErrorCode.LLM_RATE_LIMIT, "ja", {
+        const errorMsg = getErrorMessage(ErrorCode.LLM_RATE_LIMIT, "en", {
           provider: "MiniMax",
         });
         await context.log(errorMsg, "error");
@@ -205,7 +182,7 @@ export default class MiniMaxLLMNode extends BaseNode {
       }
 
       if (error instanceof OpenAI.APIError) {
-        const errorMsg = getErrorMessage(ErrorCode.LLM_API_ERROR, "ja", {
+        const errorMsg = getErrorMessage(ErrorCode.LLM_API_ERROR, "en", {
           provider: "MiniMax",
           error: error.message,
         });
