@@ -334,9 +334,10 @@ export class WorkflowExecutor {
       };
       runtimes.set(node.id, runtime);
 
-      if (instance?.setup) {
+      const pluginInstance = instance as Record<string, any> | null;
+      if (pluginInstance?.setup) {
         try {
-          await instance.setup(node.config ?? {}, context);
+          await pluginInstance.setup(node.config ?? {}, context);
         } catch (err) {
           await this.log(workflowId, node.id, `Node setup error: ${err}`, "error");
         }

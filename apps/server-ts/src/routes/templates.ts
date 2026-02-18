@@ -41,8 +41,8 @@ app.get("/", async (c) => {
         name_ja: template.name_ja ?? template.name ?? stem,
         description: template.description ?? "",
         description_ja: template.description_ja ?? template.description ?? "",
-        nodeCount: (template.nodes ?? []).length,
-        connectionCount: (template.connections ?? []).length,
+        nodeCount: (template.nodes as unknown[] ?? []).length,
+        connectionCount: (template.connections as unknown[] ?? []).length,
       });
     }
   } catch {
