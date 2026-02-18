@@ -5,6 +5,23 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
 [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [2.0.3] - 2026-02-19
+
+### 改善
+
+- **型安全性の強化** - バックエンド全体で `any` 型を `unknown` / `Record<string, unknown>` に置換し、型安全性を向上 (#85)
+- **WAV 音声ユーティリティを SDK に共通化** - VOICEVOX / COEIROINK / Style-Bert-VITS2 の3つの TTS プラグインで重複していた `getWavDuration` 関数を `@aituber-flow/sdk` に統合 (#67)
+- **エディタの実行状態同期** - エディタ起動時にサーバーからワークフロー実行状態を取得し、再生ボタンの状態を正しく反映 (#68)
+- **LLM プラグインのモデル一覧を更新** - OpenAI (GPT-5 / GPT-4.1 / Codex / o3 / o4-mini)、Anthropic (Claude 4)、Google (Gemini 3 / 2.5) の最新モデルを追加 (#79)
+- OpenAI プラグインで o3 / o3-mini / o4-mini の reasoning_effort 設定をサポート
+- OpenAI API キーの設定タイプを `password` に変更（マスク表示）
+- Anthropic プラグインの説明を Claude 4 対応に更新
+- NodeSettings の数値入力で空欄時に NaN が送信されるバグを修正
+
+### テスト
+
+- **SDK テストカバレッジを大幅拡充** - audio-utils / errors / context / types の4モジュールに対するテストを新規追加（テスト数 67 → 135、+68） (#69)
+
 ## [2.0.2] - 2026-02-16
 
 ### 改善
