@@ -11,6 +11,7 @@ import { z } from "zod";
 import { db as defaultDb } from "../db/database";
 import { workflows } from "../db/schema";
 import type { WorkflowExecutor } from "../engine/executor";
+import type { WorkflowResponse } from "../models/workflow";
 import type { WSBroadcaster } from "../websocket/handler";
 
 const app = new Hono();
@@ -62,22 +63,11 @@ function stripApiKeys(nodes: Record<string, unknown>[]): Record<string, unknown>
 
 type WorkflowRow = typeof workflows.$inferSelect;
 
-interface WorkflowResponse {
-  id: string;
-  name: string;
-  description: string | null;
-  nodes: unknown[];
-  connections: unknown[];
-  character: Record<string, unknown>;
-  createdAt: string;
-  updatedAt: string;
-}
-
 function workflowToResponse(row: WorkflowRow): WorkflowResponse {
   return {
     id: row.id,
     name: row.name,
-    description: row.description,
+    description: row.description ?? undefined,
     nodes: JSON.parse(row.nodesJson || "[]"),
     connections: JSON.parse(row.connectionsJson || "[]"),
     character: JSON.parse(

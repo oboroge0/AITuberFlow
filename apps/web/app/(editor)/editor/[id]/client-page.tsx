@@ -235,6 +235,8 @@ export default function EditorPage() {
       const statusResponse = await api.getWorkflowStatus(workflowId);
       if (statusResponse.data) {
         setExecuting(statusResponse.data.status === 'running');
+      } else if (statusResponse.error) {
+        console.warn(`Could not sync execution state: ${statusResponse.error}`);
       }
 
       // Check for import success message from sessionStorage
