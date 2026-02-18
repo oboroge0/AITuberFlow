@@ -478,7 +478,7 @@ describe("Workflow Export / Import", () => {
 
     expect(imported.id).toBeDefined();
     expect(imported.name).toBe("Imported Workflow");
-    expect(imported.description).toBeNull();
+    expect(imported.description).toBeUndefined();
     expect(imported.nodes).toEqual([]);
     expect(imported.connections).toEqual([]);
     expect(imported.character).toEqual({
