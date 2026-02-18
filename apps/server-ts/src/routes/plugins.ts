@@ -31,7 +31,7 @@ function resolvePluginDir(pluginId: string): string | null {
   return pluginDir;
 }
 
-async function loadPluginManifest(pluginDir: string): Promise<Record<string, any> | null> {
+async function loadPluginManifest(pluginDir: string): Promise<Record<string, unknown> | null> {
   const manifestPath = join(pluginDir, "manifest.json");
   try {
     const file = Bun.file(manifestPath);
@@ -42,8 +42,8 @@ async function loadPluginManifest(pluginDir: string): Promise<Record<string, any
   }
 }
 
-async function getAllPlugins(): Promise<Record<string, any>[]> {
-  const plugins: Record<string, any>[] = [];
+async function getAllPlugins(): Promise<Record<string, unknown>[]> {
+  const plugins: Record<string, unknown>[] = [];
 
   try {
     const entries = await readdir(PLUGINS_DIR, { withFileTypes: true });

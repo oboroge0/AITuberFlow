@@ -13,7 +13,7 @@ const app = new Hono();
 
 const TEMPLATES_DIR = process.env.TEMPLATES_DIR || join(getProjectRoot(), "templates");
 
-async function loadTemplate(templatePath: string): Promise<Record<string, any> | null> {
+async function loadTemplate(templatePath: string): Promise<Record<string, unknown> | null> {
   try {
     const file = Bun.file(templatePath);
     if (!(await file.exists())) return null;
@@ -25,7 +25,7 @@ async function loadTemplate(templatePath: string): Promise<Record<string, any> |
 
 // List all templates
 app.get("/", async (c) => {
-  const templates: Record<string, any>[] = [];
+  const templates: Record<string, unknown>[] = [];
 
   try {
     const entries = await readdir(TEMPLATES_DIR);
@@ -41,8 +41,8 @@ app.get("/", async (c) => {
         name_ja: template.name_ja ?? template.name ?? stem,
         description: template.description ?? "",
         description_ja: template.description_ja ?? template.description ?? "",
-        nodeCount: (template.nodes ?? []).length,
-        connectionCount: (template.connections ?? []).length,
+        nodeCount: Array.isArray(template.nodes) ? template.nodes.length : 0,
+        connectionCount: Array.isArray(template.connections) ? template.connections.length : 0,
       });
     }
   } catch {

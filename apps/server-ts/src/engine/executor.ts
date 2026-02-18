@@ -20,7 +20,7 @@ import { TaskRegistry } from "./task-registry";
 interface NodeData {
   id: string;
   type: string;
-  config?: Record<string, any>;
+  config?: Record<string, unknown>;
   eventFilters?: EventFilterDef[];
   event_filters?: EventFilterDef[];
   position?: { x: number; y: number };
@@ -37,7 +37,7 @@ interface WorkflowData {
   name?: string;
   nodes: NodeData[];
   connections: ConnectionData[];
-  character: Record<string, any>;
+  character: Record<string, unknown>;
 }
 
 interface EventFilterDef {
@@ -52,7 +52,7 @@ type EventCallback = (event: Event) => Promise<void>;
 type StatusCallback = (
   nodeId: string,
   status: string,
-  data?: Record<string, any> | null,
+  data?: Record<string, unknown> | null,
 ) => Promise<void>;
 
 // ─── NodeContext (executor-internal) ─────────────────────────────
@@ -60,7 +60,7 @@ type StatusCallback = (
 export class NodeContext {
   workflowId: string;
   nodeId: string;
-  character: Record<string, any>;
+  character: Record<string, unknown>;
   private eventBus: EventBus | null;
   private logCallback: LogCallback | null;
   private taskRegistry: TaskRegistry | null;
@@ -70,7 +70,7 @@ export class NodeContext {
   constructor(opts: {
     workflowId: string;
     nodeId: string;
-    character: Record<string, any>;
+    character: Record<string, unknown>;
     eventBus?: EventBus | null;
     logCallback?: LogCallback | null;
     taskRegistry?: TaskRegistry | null;
@@ -202,14 +202,14 @@ export class WorkflowCycleError extends Error {
 // ─── Executor ────────────────────────────────────────────────────
 
 export class WorkflowExecutor {
-  private runningWorkflows = new Map<string, Record<string, any>>();
+  private runningWorkflows = new Map<string, Record<string, unknown>>();
   private eventBuses = new Map<string, EventBus>();
   private logCallbacks = new Map<string, LogCallback>();
   private eventCallbacks = new Map<string, EventCallback>();
   private statusCallbacks = new Map<string, StatusCallback>();
   private nodeInstances = new Map<string, Map<string, NodeRuntime>>();
   private eventQueues = new Map<string, EventQueue>();
-  private sourceNodes = new Map<string, Map<string, any>>();
+  private sourceNodes = new Map<string, Map<string, unknown>>();
   private queueProcessors = new Map<string, AbortController>();
   private taskRegistries = new Map<string, TaskRegistry>();
   private vtsWorkflows = new Set<string>();
@@ -236,7 +236,7 @@ export class WorkflowExecutor {
 
   // ─── Status ───────────────────────
 
-  getStatus(workflowId: string): Record<string, any> {
+  getStatus(workflowId: string): Record<string, unknown> {
     const status = this.runningWorkflows.get(workflowId);
     if (!status) return { status: "idle" };
 
@@ -334,9 +334,10 @@ export class WorkflowExecutor {
       };
       runtimes.set(node.id, runtime);
 
-      if (instance?.setup) {
+      const pluginInstance = instance as Record<string, any> | null;
+      if (pluginInstance?.setup) {
         try {
-          await instance.setup(node.config ?? {}, context);
+          await pluginInstance.setup(node.config ?? {}, context);
         } catch (err) {
           await this.log(workflowId, node.id, `Node setup error: ${err}`, "error");
         }

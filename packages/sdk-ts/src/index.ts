@@ -39,6 +39,9 @@ export type {
   StreamContext,
 } from "./types";
 
+// Audio utilities
+export { getWavDuration } from "./audio-utils";
+
 // Error system
 export {
   ErrorCode,

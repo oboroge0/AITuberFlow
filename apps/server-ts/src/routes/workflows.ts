@@ -11,6 +11,7 @@ import { z } from "zod";
 import { db as defaultDb } from "../db/database";
 import { workflows } from "../db/schema";
 import type { WorkflowExecutor } from "../engine/executor";
+import type { WorkflowResponse } from "../models/workflow";
 import type { WSBroadcaster } from "../websocket/handler";
 
 const app = new Hono();
@@ -37,20 +38,20 @@ export function setWSBroadcaster(broadcaster: WSBroadcaster): void {
 const createWorkflowBody = z.object({
   name: z.string({ required_error: "name is required" }),
   description: z.string().optional(),
-  nodes: z.array(z.any()).default([]),
-  connections: z.array(z.any()).default([]),
-  character: z.record(z.any()).optional(),
+  nodes: z.array(z.record(z.string(), z.unknown())).default([]),
+  connections: z.array(z.record(z.string(), z.unknown())).default([]),
+  character: z.record(z.string(), z.unknown()).optional(),
 });
 
 // ─── Helpers ──────────────────────────────
 
 const SENSITIVE_KEYS = ["apiKey", "api_key", "password", "secret", "token", "apiSecret"];
 
-function stripApiKeys(nodes: any[]): any[] {
+function stripApiKeys(nodes: Record<string, unknown>[]): Record<string, unknown>[] {
   return nodes.map((node) => {
     const copy = { ...node };
     if (copy.config && typeof copy.config === "object") {
-      const configCopy = { ...copy.config };
+      const configCopy = { ...(copy.config as Record<string, unknown>) };
       for (const key of SENSITIVE_KEYS) {
         if (key in configCopy) configCopy[key] = "";
       }
@@ -60,11 +61,13 @@ function stripApiKeys(nodes: any[]): any[] {
   });
 }
 
-function workflowToResponse(row: any): Record<string, any> {
+type WorkflowRow = typeof workflows.$inferSelect;
+
+function workflowToResponse(row: WorkflowRow): WorkflowResponse {
   return {
     id: row.id,
     name: row.name,
-    description: row.description,
+    description: row.description ?? undefined,
     nodes: JSON.parse(row.nodesJson || "[]"),
     connections: JSON.parse(row.connectionsJson || "[]"),
     character: JSON.parse(
@@ -137,7 +140,7 @@ app.put("/:id", async (c) => {
   const [existing] = await _db.select().from(workflows).where(eq(workflows.id, id));
   if (!existing) return c.json({ detail: "Workflow not found" }, 404);
 
-  const updates: Record<string, any> = { updatedAt: nowISO() };
+  const updates: Partial<WorkflowRow> = { updatedAt: nowISO() };
   if (body.name !== undefined) updates.name = body.name;
   if (body.description !== undefined) updates.description = body.description;
   if (body.nodes !== undefined) updates.nodesJson = JSON.stringify(body.nodes);

@@ -20,7 +20,7 @@ export const SOURCE_NODE_TYPES = new Set(["twitch-chat", "youtube-chat", "discor
  * Load a plugin's node class from its node.ts file.
  * Returns an instance of the node, or null if not found.
  */
-export async function loadPlugin(nodeType: string): Promise<any | null> {
+export async function loadPlugin(nodeType: string): Promise<unknown> {
   const pluginPath = join(PLUGINS_DIR, nodeType, "node.ts");
 
   try {

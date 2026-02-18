@@ -25,6 +25,12 @@ export default class OpenAILLMNode extends BaseNode {
     "gpt-5.2",
     "gpt-5-mini",
     "gpt-5-nano",
+    "gpt-5.2-codex",
+    "gpt-5.1-codex",
+    "gpt-5.1-codex-mini",
+    "o3",
+    "o3-mini",
+    "o4-mini",
   ]);
 
   private client: OpenAI | null = null;

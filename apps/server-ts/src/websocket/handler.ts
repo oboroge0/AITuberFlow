@@ -14,7 +14,7 @@ import type { WorkflowExecutor } from "../engine/executor";
 
 interface WSMessage {
   type: string;
-  payload?: any;
+  payload?: Record<string, unknown>;
 }
 
 interface ClientInfo {
@@ -81,7 +81,7 @@ export class WSBroadcaster {
   }
 
   /** Send a message to all clients in a workflow room. */
-  broadcast(workflowId: string, type: string, payload: any): void {
+  broadcast(workflowId: string, type: string, payload: Record<string, unknown>): void {
     const room = `workflow:${workflowId}`;
     const clientIds = this.rooms.get(room);
     if (!clientIds) return;
@@ -210,7 +210,7 @@ export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
 
         switch (msg.type) {
           case "join": {
-            const workflowId = msg.payload?.workflowId;
+            const workflowId = msg.payload?.workflowId as string | undefined;
             if (workflowId) {
               wsBroadcaster.joinRoom(clientId, `workflow:${workflowId}`);
               setupWorkflowCallbacks(workflowId);
@@ -220,7 +220,7 @@ export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
           }
 
           case "leave": {
-            const workflowId = msg.payload?.workflowId;
+            const workflowId = msg.payload?.workflowId as string | undefined;
             if (workflowId) {
               wsBroadcaster.leaveRoom(clientId, `workflow:${workflowId}`);
               console.log(`Client ${clientId} left workflow: ${workflowId}`);
@@ -229,7 +229,7 @@ export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
           }
 
           case "workflow_start": {
-            const workflowId = msg.payload?.workflowId;
+            const workflowId = msg.payload?.workflowId as string | undefined;
             if (workflowId) {
               console.warn(
                 `Received workflow_start via WebSocket for ${workflowId}. Use HTTP /api/workflows/:id/start.`,
@@ -247,7 +247,7 @@ export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
           }
 
           case "workflow_stop": {
-            const workflowId = msg.payload?.workflowId;
+            const workflowId = msg.payload?.workflowId as string | undefined;
             if (workflowId && executor) {
               void executor
                 .stopWorkflow(workflowId)
@@ -264,7 +264,9 @@ export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
           }
 
           case "node_input": {
-            const { workflowId, nodeId, data } = msg.payload ?? {};
+            const workflowId = msg.payload?.workflowId as string | undefined;
+            const nodeId = msg.payload?.nodeId as string | undefined;
+            const data = msg.payload?.data;
             if (workflowId && nodeId) {
               wsBroadcaster.broadcast(workflowId, "log", {
                 nodeId,
