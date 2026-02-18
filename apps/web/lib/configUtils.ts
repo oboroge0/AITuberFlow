@@ -1,0 +1,86 @@
+import type { ConfigField, NodeField, ShowWhenCondition } from './types';
+
+/**
+ * Normalize manifest options to NodeField format.
+ * Handles both string[] shorthand and { label, value }[] format.
+ */
+function normalizeOptions(
+  options?: ConfigField['options']
+): { label: string; value: string | number }[] | undefined {
+  if (!options) return undefined;
+  return options.map((opt) => {
+    if (typeof opt === 'string') {
+      return { label: opt, value: opt };
+    }
+    return { label: opt.label, value: opt.value as string | number };
+  });
+}
+
+/**
+ * Map manifest ConfigField.type to NodeField.type.
+ */
+function mapFieldType(manifestType: ConfigField['type']): NodeField['type'] {
+  switch (manifestType) {
+    case 'string':
+      return 'text';
+    case 'boolean':
+      return 'checkbox';
+    case 'number':
+    case 'textarea':
+    case 'select':
+    case 'password':
+    case 'prompt-builder':
+    case 'input-list':
+    case 'expression-list':
+    case 'animation-file':
+    case 'model-file':
+    case 'png-expression-map':
+      return manifestType;
+    default:
+      return 'text';
+  }
+}
+
+/**
+ * Convert manifest config (Record<string, ConfigField>) to NodeField[].
+ */
+export function manifestConfigToNodeFields(
+  config: Record<string, ConfigField>
+): NodeField[] {
+  return Object.entries(config).map(([key, field]) => ({
+    key,
+    type: mapFieldType(field.type),
+    label: field.label,
+    placeholder: field.placeholder ?? field.description,
+    options: normalizeOptions(field.options),
+    dynamic: field.dynamic,
+    dependsOn: field.dependsOn,
+    accept: field.accept,
+    showWhen: field.showWhen,
+  }));
+}
+
+/**
+ * Evaluate a showWhen condition against the current config.
+ * Supports both legacy { key, value } and operator-based { field, operator, value } formats.
+ */
+export function evaluateShowWhen(
+  condition: ShowWhenCondition | undefined,
+  config: Record<string, unknown>
+): boolean {
+  if (!condition) return true;
+
+  let fieldKey: string;
+  let expectedValues: string[];
+
+  if ('key' in condition) {
+    fieldKey = condition.key;
+    expectedValues = Array.isArray(condition.value) ? condition.value : [condition.value];
+  } else {
+    fieldKey = condition.field;
+    expectedValues = Array.isArray(condition.value) ? condition.value : [condition.value];
+  }
+
+  const currentValue = String(config[fieldKey] ?? '');
+  return expectedValues.includes(currentValue);
+}

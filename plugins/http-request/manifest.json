@@ -57,7 +57,7 @@
       "options": ["GET", "POST", "PUT", "DELETE", "PATCH"]
     },
     "headers": {
-      "type": "string",
+      "type": "textarea",
       "label": "Headers (JSON)",
       "description": "Request headers as JSON",
       "default": "{}"

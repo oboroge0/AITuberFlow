@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import { usePluginStore } from '@/stores/pluginStore';
 
 interface DataPreviewPopupProps {
   x: number;
@@ -47,6 +48,7 @@ export default function DataPreviewPopup({
   onClose,
 }: DataPreviewPopupProps) {
   const popupRef = useRef<HTMLDivElement>(null);
+  const { getPluginOutputs } = usePluginStore();
 
   // Close on click outside
   useEffect(() => {
@@ -102,7 +104,11 @@ export default function DataPreviewPopup({
 
   // Get available fields - from runtime data or node schema
   const runtimeFields = getFieldsFromData(data);
-  const schemaFields = nodeOutputFields[sourceNodeType] || [];
+  // Use plugin store first, fall back to hardcoded map
+  const pluginOutputs = getPluginOutputs(sourceNodeType);
+  const schemaFields = pluginOutputs.length > 0
+    ? pluginOutputs.map(o => o.id)
+    : (nodeOutputFields[sourceNodeType] || []);
 
   const hasData = data !== null && data !== undefined;
   const hasRuntimeFields = runtimeFields.length > 0;

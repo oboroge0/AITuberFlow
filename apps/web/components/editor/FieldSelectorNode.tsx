@@ -3,6 +3,7 @@
 import React, { memo, useCallback, useMemo } from 'react';
 import { Handle, Position, type Node as ReactFlowNode } from '@xyflow/react';
 import { useWorkflowStore } from '@/stores/workflowStore';
+import { usePluginStore } from '@/stores/pluginStore';
 
 export interface FieldSelectorNodeData extends Record<string, unknown> {
   label: string;
@@ -48,6 +49,7 @@ interface FieldSelectorNodeProps {
 
 function FieldSelectorNode({ id, data, selected }: FieldSelectorNodeProps) {
   const { nodeStatuses, selectNode, updateNode, connections, nodes } = useWorkflowStore();
+  const { getPluginOutputs } = usePluginStore();
   const status = nodeStatuses[id];
 
   const color = '#8B5CF6';
@@ -76,7 +78,11 @@ function FieldSelectorNode({ id, data, selected }: FieldSelectorNodeProps) {
           }
         }
       } else {
-        const schemaFields = nodeOutputFields[sourceNode.type] || [];
+        // Use plugin store first, fall back to hardcoded map
+        const pluginOutputs = getPluginOutputs(sourceNode.type);
+        const schemaFields = pluginOutputs.length > 0
+          ? pluginOutputs.map(o => o.id)
+          : (nodeOutputFields[sourceNode.type] || []);
         for (const field of schemaFields) {
           if (!seenFields.has(field)) {
             seenFields.add(field);
@@ -87,7 +93,7 @@ function FieldSelectorNode({ id, data, selected }: FieldSelectorNodeProps) {
     }
 
     return fields;
-  }, [id, connections, nodes]);
+  }, [id, connections, nodes, getPluginOutputs]);
 
   const selectedFields = data.config?.selectedFields || [];
 

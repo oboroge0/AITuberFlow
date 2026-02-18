@@ -125,6 +125,10 @@
       "description": "The system message that sets the AI's behavior",
       "default": "You are a helpful assistant."
     },
+    "promptSections": {
+      "type": "prompt-builder",
+      "label": "Prompt Builder"
+    },
     "temperature": {
       "type": "number",
       "label": "Temperature",

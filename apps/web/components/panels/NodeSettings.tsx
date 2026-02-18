@@ -3,31 +3,10 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useWorkflowStore } from "@/stores/workflowStore";
 import { useTranslation } from "@/stores/localeStore";
+import { usePluginStore } from "@/stores/pluginStore";
 import api, { VoicevoxSpeaker, AnimationInfo, ModelInfo } from "@/lib/api";
-
-interface NodeField {
-  key: string;
-  type:
-    | "text"
-    | "number"
-    | "textarea"
-    | "select"
-    | "checkbox"
-    | "animation-file"
-    | "model-file"
-    | "prompt-builder"
-    | "input-list"
-    | "expression-list"
-    | "password"
-    | "png-expression-map";
-  label: string;
-  placeholder?: string;
-  options?: { label: string; value: string | number }[];
-  dynamic?: boolean; // For dynamically loaded options
-  dependsOn?: string; // Field key that this field depends on for dynamic options
-  accept?: string; // For file inputs
-  showWhen?: { key: string; value: string | string[] }; // Conditional display
-}
+import { manifestConfigToNodeFields, evaluateShowWhen } from "@/lib/configUtils";
+import type { NodeField } from "@/lib/types";
 
 // Prompt section for structured prompt building
 export interface PromptSection {
@@ -1838,6 +1817,8 @@ export default function NodeSettings() {
     }
   }, []);
 
+  const { getPluginById } = usePluginStore();
+
   useEffect(() => {
     if (selectedNode) {
       setLocalConfig(selectedNode.config || {});
@@ -1849,27 +1830,38 @@ export default function NodeSettings() {
         fetchVoicevoxSpeakers(host);
       }
 
-      // Fetch animations if this is an avatar-related node with animation field
-      if (
-        selectedNode.type === "avatar-display" ||
-        selectedNode.type === "avatar-configuration" ||
-        selectedNode.type === "motion-trigger"
-      ) {
-        fetchAnimations();
-      }
-
-      // Fetch models if this is an avatar-configuration node
-      if (selectedNode.type === "avatar-configuration") {
-        fetchModels();
+      // Fetch animations/models based on manifest config field types
+      const pluginConfig = getPluginById(selectedNode.type)?.config;
+      if (pluginConfig) {
+        const configFields = Object.values(pluginConfig);
+        if (configFields.some((f) => f.type === "animation-file")) {
+          fetchAnimations();
+        }
+        if (configFields.some((f) => f.type === "model-file")) {
+          fetchModels();
+        }
       }
     }
-  }, [selectedNode, fetchVoicevoxSpeakers, fetchAnimations, fetchModels]);
+  }, [selectedNode, fetchVoicevoxSpeakers, fetchAnimations, fetchModels, getPluginById]);
 
   if (!selectedNode) {
     return null;
   }
 
-  const schema = nodeConfigs[selectedNode.type];
+  // Dynamic schema resolution: plugin store first, nodeConfigs fallback
+  const plugin = getPluginById(selectedNode.type);
+  const manifestFields = plugin?.config
+    ? manifestConfigToNodeFields(plugin.config)
+    : [];
+  const fields: NodeField[] =
+    manifestFields.length > 0
+      ? manifestFields
+      : nodeConfigs[selectedNode.type]?.fields ?? [];
+  const schemaLabel =
+    plugin?.ui?.label ??
+    plugin?.name ??
+    nodeConfigs[selectedNode.type]?.label ??
+    selectedNode.type;
 
   const handleChange = (key: string, value: unknown) => {
     const newConfig = { ...localConfig, [key]: value };
@@ -1945,28 +1937,35 @@ export default function NodeSettings() {
         );
 
       case "select":
-        if (
-          field.dynamic &&
-          field.key === "llm_model" &&
-          selectedNode.type === "emotion-analyzer"
-        ) {
-          const provider = localConfig.llm_provider as string;
-          const modelOptions = LLM_MODEL_OPTIONS[provider] || [];
+        // Handle dynamic LLM model select (e.g., emotion-analyzer)
+        if (field.dynamic && field.dependsOn) {
+          const dependsOnValue = localConfig[field.dependsOn] as string;
+          // Try plugin store first: provider "openai" → plugin "openai-llm"
+          const providerPluginId = `${dependsOnValue}-llm`;
+          const providerPlugin = getPluginById(providerPluginId);
+          const dynamicModelOptions = providerPlugin?.config?.model?.options;
+          // Fall back to hardcoded LLM_MODEL_OPTIONS
+          const modelOptions: { label: string; value: string | number }[] =
+            dynamicModelOptions
+              ? (dynamicModelOptions as { label: string; value: string | number }[])
+              : LLM_MODEL_OPTIONS[dependsOnValue] || [];
 
-          return (
-            <select
-              value={value as string}
-              onChange={(e) => handleChange(field.key, e.target.value)}
-              style={inputStyle}
-            >
-              <option value="">Select a model...</option>
-              {modelOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          );
+          if (modelOptions.length > 0) {
+            return (
+              <select
+                value={value as string}
+                onChange={(e) => handleChange(field.key, e.target.value)}
+                style={inputStyle}
+              >
+                <option value="">Select a model...</option>
+                {modelOptions.map((opt) => (
+                  <option key={String(opt.value)} value={String(opt.value)}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            );
+          }
         }
 
         // Handle dynamic VOICEVOX speaker options
@@ -2449,46 +2448,19 @@ export default function NodeSettings() {
     }
   };
 
+  // Convert kebab-case/snake_case to camelCase for i18n key derivation
+  const toPluginCamel = (id: string) =>
+    id.replace(/[-_]([a-z0-9])/g, (_, c: string) => c.toUpperCase());
+
   // Helper to get translated label for a node type
   const getNodeLabel = (nodeType: string): string => {
-    const keyMap: Record<string, string> = {
-      start: "nodeConfig.start.label",
-      end: "nodeConfig.end.label",
-      loop: "nodeConfig.loop.label",
-      foreach: "nodeConfig.foreach.label",
-      "youtube-chat": "nodeConfig.youtubeChat.label",
-      "twitch-chat": "nodeConfig.twitchChat.label",
-      "discord-chat": "nodeConfig.discordChat.label",
-      "openai-llm": "nodeConfig.openaiLlm.label",
-      "anthropic-llm": "nodeConfig.anthropicLlm.label",
-      "google-llm": "nodeConfig.googleLlm.label",
-      "ollama-llm": "nodeConfig.ollamaLlm.label",
-      "voicevox-tts": "nodeConfig.voicevoxTts.label",
-      "coeiroink-tts": "nodeConfig.coeiroinkTts.label",
-      "sbv2-tts": "nodeConfig.sbv2Tts.label",
-      "manual-input": "nodeConfig.manualInput.label",
-      "console-output": "nodeConfig.consoleOutput.label",
-      switch: "nodeConfig.switch.label",
-      delay: "nodeConfig.delay.label",
-      "http-request": "nodeConfig.httpRequest.label",
-      "text-transform": "nodeConfig.textTransform.label",
-      random: "nodeConfig.random.label",
-      timer: "nodeConfig.timer.label",
-      variable: "nodeConfig.variable.label",
-      "avatar-configuration": "nodeConfig.avatarConfiguration.label",
-      "motion-trigger": "nodeConfig.motionTrigger.label",
-      "emotion-analyzer": "nodeConfig.emotionAnalyzer.label",
-      "lip-sync": "nodeConfig.lipSync.label",
-      "avatar-display": "nodeConfig.avatarDisplay.label",
-      "audio-player": "nodeConfig.audioPlayer.label",
-      "subtitle-display": "nodeConfig.subtitleDisplay.label",
-      "data-formatter": "nodeConfig.dataFormatter.label",
-      "donation-alert": "nodeConfig.donationAlert.label",
-      "obs-scene-switch": "nodeConfig.obsSceneSwitch.label",
-      "obs-source-toggle": "nodeConfig.obsSourceToggle.label",
-    };
-    const key = keyMap[nodeType];
-    return key ? t(key) : schema?.label || nodeType;
+    // Auto-derive i18n key from node type
+    const derivedKey = `nodeConfig.${toPluginCamel(nodeType)}.label`;
+    const derived = t(derivedKey);
+    if (derived !== derivedKey) return derived;
+
+    // Fall back to plugin store label, then nodeConfigs, then raw type
+    return schemaLabel;
   };
 
   // Helper to get translated label for a field
@@ -2497,52 +2469,8 @@ export default function NodeSettings() {
     fieldKey: string,
     fallbackLabel: string,
   ): string => {
-    // Map node types to translation key prefixes
-    const nodeKeyMap: Record<string, string> = {
-      start: "start",
-      end: "end",
-      loop: "loop",
-      foreach: "foreach",
-      "youtube-chat": "youtubeChat",
-      "twitch-chat": "twitchChat",
-      "discord-chat": "discordChat",
-      "openai-llm": "openaiLlm",
-      "anthropic-llm": "anthropicLlm",
-      "google-llm": "googleLlm",
-      "ollama-llm": "ollamaLlm",
-      "voicevox-tts": "voicevoxTts",
-      "coeiroink-tts": "coeiroinkTts",
-      "sbv2-tts": "sbv2Tts",
-      "manual-input": "manualInput",
-      "console-output": "consoleOutput",
-      switch: "switch",
-      delay: "delay",
-      "http-request": "httpRequest",
-      "text-transform": "textTransform",
-      random: "random",
-      timer: "timer",
-      variable: "variable",
-      "avatar-configuration": "avatarConfiguration",
-      "motion-trigger": "motionTrigger",
-      "emotion-analyzer": "emotionAnalyzer",
-      "lip-sync": "lipSync",
-      "avatar-display": "avatarDisplay",
-      "audio-player": "audioPlayer",
-      "subtitle-display": "subtitleDisplay",
-      "data-formatter": "dataFormatter",
-      "donation-alert": "donationAlert",
-      "obs-scene-switch": "obsSceneSwitch",
-      "obs-source-toggle": "obsSourceToggle",
-    };
-
-    // Convert snake_case field key to camelCase
-    const toCamelCase = (str: string) =>
-      str.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
-
-    const nodePrefix = nodeKeyMap[nodeType];
-    if (!nodePrefix) return fallbackLabel;
-
-    const fieldKeyCamel = toCamelCase(fieldKey);
+    const nodePrefix = toPluginCamel(nodeType);
+    const fieldKeyCamel = toPluginCamel(fieldKey);
     const translationKey = `nodeConfig.${nodePrefix}.${fieldKeyCamel}`;
     const translated = t(translationKey);
 
@@ -2567,16 +2495,9 @@ export default function NodeSettings() {
         </div>
 
         {/* Config Fields */}
-        {schema?.fields.map((field) => {
-          // Check showWhen condition
-          if (field.showWhen) {
-            const conditionValue = localConfig[field.showWhen.key];
-            const expectedValues = Array.isArray(field.showWhen.value)
-              ? field.showWhen.value
-              : [field.showWhen.value];
-            if (!expectedValues.includes(conditionValue as string)) {
-              return null;
-            }
+        {fields.map((field) => {
+          if (!evaluateShowWhen(field.showWhen, localConfig)) {
+            return null;
           }
           return (
             <div key={field.key} className="mb-3">

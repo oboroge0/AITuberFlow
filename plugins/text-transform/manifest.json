@@ -46,10 +46,14 @@
       "options": ["template", "uppercase", "lowercase", "trim", "replace", "split_first", "split_last", "length", "prefix", "suffix"]
     },
     "template": {
-      "type": "string",
+      "type": "textarea",
       "label": "Template",
       "description": "Template string. Use {{text}} for input text.",
       "default": "{{text}}"
+    },
+    "templateInputs": {
+      "type": "input-list",
+      "label": "Template Inputs"
     },
     "find": {
       "type": "string",

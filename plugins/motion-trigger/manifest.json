@@ -70,10 +70,11 @@
       "default": 0.8
     },
     "motion_url": {
-      "type": "string",
-      "label": "Motion URL/Path",
+      "type": "animation-file",
+      "label": "Motion Animation",
       "description": "Path to Mixamo FBX animation file (e.g., /animations/wave.fbx)",
-      "default": ""
+      "default": "",
+      "accept": ".fbx"
     },
     "motion": {
       "type": "string",

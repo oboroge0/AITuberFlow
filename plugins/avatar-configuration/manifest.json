@@ -48,40 +48,48 @@
       "default": "vrm"
     },
     "model_url": {
-      "type": "string",
-      "label": "Model URL/Path",
+      "type": "model-file",
+      "label": "3D Model",
       "description": "URL or path to VRM model file",
-      "default": "/models/avatar.vrm"
+      "default": "/models/avatar.vrm",
+      "accept": ".vrm",
+      "showWhen": { "key": "renderer", "value": "vrm" }
+    },
+    "idle_animation": {
+      "type": "animation-file",
+      "label": "Idle Animation",
+      "description": "Path to idle animation file (Mixamo FBX)",
+      "default": "",
+      "accept": ".fbx",
+      "showWhen": { "key": "renderer", "value": "vrm" }
     },
     "vtube_port": {
       "type": "number",
       "label": "VTube Studio Port",
       "description": "Port for VTube Studio API connection",
-      "default": 8001
+      "default": 8001,
+      "showWhen": { "key": "renderer", "value": "vtube-studio" }
     },
     "vtube_mouth_param": {
       "type": "string",
       "label": "VTS Mouth Parameter",
       "description": "VTube Studio parameter ID for mouth control (e.g., MouthOpen, MouthOpenY)",
-      "default": "MouthOpen"
+      "default": "MouthOpen",
+      "showWhen": { "key": "renderer", "value": "vtube-studio" }
     },
     "vtube_expression_map": {
       "type": "textarea",
       "label": "VTS Expression Hotkey Map (JSON)",
       "description": "Map expressions to VTube Studio hotkey IDs. Format: {\"happy\": \"HotkeyID\", ...}",
-      "default": "{\"happy\": \"Happy\", \"sad\": \"Sad\", \"angry\": \"Angry\", \"surprised\": \"Surprised\", \"relaxed\": \"Relaxed\", \"neutral\": \"Neutral\"}"
+      "default": "{\"happy\": \"Happy\", \"sad\": \"Sad\", \"angry\": \"Angry\", \"surprised\": \"Surprised\", \"relaxed\": \"Relaxed\", \"neutral\": \"Neutral\"}",
+      "showWhen": { "key": "renderer", "value": "vtube-studio" }
     },
     "png_config": {
-      "type": "textarea",
-      "label": "PNG Configuration (JSON)",
+      "type": "png-expression-map",
+      "label": "PNG Expression Mapping",
       "description": "Configuration for PNG avatar expressions",
-      "default": "{\"baseUrl\": \"/images/avatar/\", \"expressions\": {}}"
-    },
-    "idle_animation": {
-      "type": "string",
-      "label": "Idle Animation URL",
-      "description": "Path to idle animation file (Mixamo FBX)",
-      "default": ""
+      "default": "{\"baseUrl\": \"/images/avatar/\", \"expressions\": {}}",
+      "showWhen": { "key": "renderer", "value": "png" }
     }
   }
 }

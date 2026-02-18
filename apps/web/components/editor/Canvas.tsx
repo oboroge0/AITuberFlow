@@ -237,9 +237,39 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
       return workflowNodes.map((node) => {
         // Get inputs from plugin store or fall back to dynamic input logic
         const pluginInputs = getPluginInputs(node.type);
-        const nodeInputs = pluginInputs.length > 0
+        let nodeInputs = pluginInputs.length > 0
           ? pluginInputs.map(p => ({ id: p.id, label: formatPortLabel(p.id), type: p.type as PortType }))
           : getNodeInputs(node.type, node.config);
+
+        // Dynamic port generation based on manifest config field types
+        const pluginForPorts = getPluginById(node.type);
+        if (pluginForPorts?.config && node.config) {
+          for (const [fieldKey, fieldDef] of Object.entries(pluginForPorts.config)) {
+            if (fieldDef.type === 'prompt-builder' && node.config[fieldKey]) {
+              const sections = node.config[fieldKey] as PromptSection[];
+              const inputSections = sections.filter(s => s.type === 'input');
+              if (inputSections.length > 0) {
+                nodeInputs = inputSections.map(section => ({
+                  id: section.content,
+                  label: formatPortLabel(section.content),
+                  type: 'string' as PortType,
+                }));
+              }
+              break;
+            }
+            if (fieldDef.type === 'input-list' && node.config[fieldKey]) {
+              const inputs = node.config[fieldKey] as string[];
+              if (inputs.length > 0) {
+                nodeInputs = inputs.map(name => ({
+                  id: name,
+                  label: formatPortLabel(name),
+                  type: 'string' as PortType,
+                }));
+              }
+              break;
+            }
+          }
+        }
 
         // Get outputs from plugin store or fall back to static definitions
         const pluginOutputs = getPluginOutputs(node.type);
