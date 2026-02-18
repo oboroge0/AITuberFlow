@@ -14,7 +14,7 @@ import type { WorkflowExecutor } from "../engine/executor";
 
 interface WSMessage {
   type: string;
-  payload?: any;
+  payload?: Record<string, unknown>;
 }
 
 interface ClientInfo {
@@ -81,7 +81,7 @@ export class WSBroadcaster {
   }
 
   /** Send a message to all clients in a workflow room. */
-  broadcast(workflowId: string, type: string, payload: any): void {
+  broadcast(workflowId: string, type: string, payload: Record<string, unknown>): void {
     const room = `workflow:${workflowId}`;
     const clientIds = this.rooms.get(room);
     if (!clientIds) return;

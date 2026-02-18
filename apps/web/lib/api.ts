@@ -106,6 +106,10 @@ class ApiClient {
     });
   }
 
+  async getWorkflowStatus(id: string): Promise<ApiResponse<{ workflowId: string; status: string; startedAt: string | null; error: string | null }>> {
+    return this.request(`/api/workflows/${id}/status`);
+  }
+
   // Plugin endpoints
   async listPlugins(): Promise<ApiResponse<PluginManifest[]>> {
     return this.request<PluginManifest[]>('/api/plugins');

@@ -189,48 +189,38 @@ export interface Expression {
 }
 
 // Default expressions for emotion analyzer
+// NOTE: Authoritative source with full keyword lists is in plugins/emotion-analyzer/node.ts.
+// This UI-side copy is used for the "Load Defaults" button in expression list editor.
 const DEFAULT_EXPRESSIONS: Expression[] = [
   {
     id: "neutral",
     label: "Neutral",
     description: "Default calm state, no strong emotion",
-    keywords_ja: [],
-    keywords_en: [],
   },
   {
     id: "happy",
     label: "Happy",
     description: "Joy, excitement, gratitude, amusement, laughter",
-    keywords_ja: ["嬉しい", "楽しい", "笑", "www", "草"],
-    keywords_en: ["happy", "joy", "lol", "haha", "yay"],
   },
   {
     id: "sad",
     label: "Sad",
-    description: "Sadness, disappointment, loneliness, regret",
-    keywords_ja: ["悲しい", "辛い", "泣"],
-    keywords_en: ["sad", "sorry", "cry"],
+    description: "Sadness, disappointment, loneliness, regret, apology",
   },
   {
     id: "angry",
     label: "Angry",
-    description: "Anger, frustration, irritation, annoyance",
-    keywords_ja: ["怒", "むかつく", "イライラ"],
-    keywords_en: ["angry", "mad", "hate"],
+    description: "Anger, frustration, irritation, annoyance, displeasure",
   },
   {
     id: "surprised",
     label: "Surprised",
-    description: "Surprise, shock, amazement, disbelief",
-    keywords_ja: ["驚", "びっくり", "すごい", "やばい"],
-    keywords_en: ["wow", "omg", "surprised"],
+    description: "Surprise, shock, amazement, disbelief, astonishment",
   },
   {
     id: "relaxed",
     label: "Relaxed",
-    description: "Calm, peaceful, comfortable, relieved",
-    keywords_ja: ["落ち着", "リラックス", "癒し"],
-    keywords_en: ["calm", "relax", "chill"],
+    description: "Calm, peaceful, comfortable, relieved, content",
   },
 ];
 

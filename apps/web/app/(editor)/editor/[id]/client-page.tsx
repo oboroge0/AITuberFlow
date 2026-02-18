@@ -231,6 +231,12 @@ export default function EditorPage() {
         },
       });
 
+      // Sync execution state with server
+      const statusResponse = await api.getWorkflowStatus(workflowId);
+      if (statusResponse.data) {
+        setExecuting(statusResponse.data.status === 'running');
+      }
+
       // Check for import success message from sessionStorage
       const importSuccessName = sessionStorage.getItem(IMPORT_SUCCESS_KEY);
       if (importSuccessName) {
