@@ -1926,7 +1926,7 @@ export default function NodeSettings() {
             type="number"
             value={value as number}
             onChange={(e) =>
-              handleChange(field.key, parseFloat(e.target.value))
+              handleChange(field.key, e.target.value === "" ? undefined : parseFloat(e.target.value))
             }
             placeholder={field.placeholder}
             style={inputStyle}

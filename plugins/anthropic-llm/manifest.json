@@ -3,7 +3,7 @@
   "id": "anthropic-llm",
   "name": "Claude (Anthropic)",
   "version": "1.0.0",
-  "description": "Generate text using Anthropic's Claude models. Supports Claude 3 family.",
+  "description": "Generate text using Anthropic's Claude models. Supports Claude 3 and Claude 4 families.",
   "author": {
     "name": "AITuberFlow",
     "url": "https://github.com/oboroge0/AITuberFlow"
