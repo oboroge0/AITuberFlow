@@ -53,7 +53,12 @@
     },
     "templateInputs": {
       "type": "input-list",
-      "label": "Template Inputs"
+      "label": "Template Inputs",
+      "description": "Named input ports that become template variables (e.g., {{name}})",
+      "showWhen": {
+        "key": "operation",
+        "value": "template"
+      }
     },
     "find": {
       "type": "string",

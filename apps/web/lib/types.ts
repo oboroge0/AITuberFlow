@@ -151,7 +151,7 @@ export interface ConfigField {
 
 export type ShowWhenCondition =
   | { key: string; value: string | string[] }
-  | { field: string; operator: string; value: string | string[] };
+  | { field: string; operator?: string; value: string | string[] };
 
 export interface NodeField {
   key: string;
@@ -171,6 +171,10 @@ export interface NodeField {
   label: string;
   placeholder?: string;
   options?: { label: string; value: string | number }[];
+  min?: number;
+  max?: number;
+  required?: boolean;
+  defaultValue?: unknown;
   dynamic?: boolean;
   dependsOn?: string;
   accept?: string;

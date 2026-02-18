@@ -1937,8 +1937,8 @@ export default function NodeSettings() {
         );
 
       case "select":
-        // Handle dynamic LLM model select (e.g., emotion-analyzer)
-        if (field.dynamic && field.dependsOn) {
+        // Handle dynamic LLM model select (e.g., emotion-analyzer model field)
+        if (field.dynamic && field.dependsOn && field.key === "model") {
           const dependsOnValue = localConfig[field.dependsOn] as string;
           // Try plugin store first: provider "openai" → plugin "openai-llm"
           const providerPluginId = `${dependsOnValue}-llm`;

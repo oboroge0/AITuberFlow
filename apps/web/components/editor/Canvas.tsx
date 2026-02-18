@@ -242,10 +242,10 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
           : getNodeInputs(node.type, node.config);
 
         // Dynamic port generation based on manifest config field types
-        const pluginForPorts = getPluginById(node.type);
-        if (pluginForPorts?.config && node.config) {
-          for (const [fieldKey, fieldDef] of Object.entries(pluginForPorts.config)) {
-            if (fieldDef.type === 'prompt-builder' && node.config[fieldKey]) {
+        const plugin = getPluginById(node.type);
+        if (plugin?.config && node.config) {
+          for (const [fieldKey, fieldDef] of Object.entries(plugin.config)) {
+            if (fieldDef.type === 'prompt-builder' && Array.isArray(node.config[fieldKey])) {
               const sections = node.config[fieldKey] as PromptSection[];
               const inputSections = sections.filter(s => s.type === 'input');
               if (inputSections.length > 0) {
@@ -257,7 +257,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
               }
               break;
             }
-            if (fieldDef.type === 'input-list' && node.config[fieldKey]) {
+            if (fieldDef.type === 'input-list' && Array.isArray(node.config[fieldKey])) {
               const inputs = node.config[fieldKey] as string[];
               if (inputs.length > 0) {
                 nodeInputs = inputs.map(name => ({
@@ -284,7 +284,6 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         const reactFlowNodeType = node.type === 'field-selector' ? 'field-selector' : 'custom';
 
         // Get category from plugin or fall back to legacy function
-        const plugin = getPluginById(node.type);
         const category = plugin?.category
           ? mapPluginCategoryToLegacy(plugin.category)
           : getNodeCategory(node.type);
@@ -823,36 +822,10 @@ function getNodeCategory(type: string): 'input' | 'process' | 'output' | 'contro
   return categories[type] || 'process';
 }
 
-function getNodeInputs(type: string, config?: Record<string, unknown>): PortDefinition[] {
-  // For LLM nodes with prompt builder, generate dynamic inputs from promptSections
-  if (type === 'openai-llm' && config?.promptSections) {
-    const sections = config.promptSections as PromptSection[];
-    const inputSections = sections.filter(s => s.type === 'input');
-    if (inputSections.length > 0) {
-      // Generate dynamic input ports from prompt sections
-      return inputSections.map(section => ({
-        id: section.content, // The input port name
-        label: section.content.replace(/_/g, ' '), // Convert underscores to spaces for display
-        type: 'string' as PortType,
-      }));
-    }
-    // If promptSections exists but has no inputs, still use default prompt
-    return [{ id: 'prompt', label: 'Prompt', type: 'string' }];
-  }
-
-  // For text-transform with templateInputs, generate dynamic inputs
-  if (type === 'text-transform' && config?.templateInputs) {
-    const templateInputs = config.templateInputs as string[];
-    if (templateInputs.length > 0) {
-      return templateInputs.map(inputName => ({
-        id: inputName,
-        label: inputName.replace(/_/g, ' '),
-        type: 'string' as PortType,
-      }));
-    }
-    // Fall back to default text input
-    return [{ id: 'text', label: 'Text', type: 'string' }];
-  }
+function getNodeInputs(type: string, _config?: Record<string, unknown>): PortDefinition[] {
+  // Dynamic port generation (prompt-builder, input-list) is now handled
+  // generically in the flowNodes useMemo via manifest config field types.
+  // This function only provides static fallback definitions.
 
   const inputs: Record<string, PortDefinition[]> = {
     // Control flow

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { usePluginStore } from '@/stores/pluginStore';
+import { nodeOutputFields } from '@/lib/nodeOutputFields';
 
 interface DataPreviewPopupProps {
   x: number;
@@ -14,27 +15,6 @@ interface DataPreviewPopupProps {
   onFieldsChange?: (fields: string[]) => void;
   onClose: () => void;
 }
-
-// Known output fields for each node type (used when no runtime data is available)
-const nodeOutputFields: Record<string, string[]> = {
-  'twitch-chat': ['text', 'author', 'message'],
-  'youtube-chat': ['text', 'author', 'message'],
-  'manual-input': ['text'],
-  'openai-llm': ['response'],
-  'anthropic-llm': ['response'],
-  'google-llm': ['response'],
-  'ollama-llm': ['response'],
-  'timer': ['tick', 'count'],
-  'http-request': ['response', 'status', 'headers'],
-  'text-transform': ['result'],
-  'field-selector': ['output'],
-  'random': ['value'],
-  'variable': ['value'],
-  'switch': ['value', 'data'],
-  'delay': ['output'],
-  'loop': ['index', 'value'],
-  'foreach': ['item', 'index'],
-};
 
 export default function DataPreviewPopup({
   x,

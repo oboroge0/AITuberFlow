@@ -53,6 +53,10 @@ export function manifestConfigToNodeFields(
     label: field.label,
     placeholder: field.placeholder ?? field.description,
     options: normalizeOptions(field.options),
+    min: field.min,
+    max: field.max,
+    required: field.required,
+    defaultValue: field.default,
     dynamic: field.dynamic,
     dependsOn: field.dependsOn,
     accept: field.accept,
@@ -72,6 +76,7 @@ export function evaluateShowWhen(
 
   let fieldKey: string;
   let expectedValues: string[];
+  let operator = 'in'; // default: check if value is in the list
 
   if ('key' in condition) {
     fieldKey = condition.key;
@@ -79,8 +84,20 @@ export function evaluateShowWhen(
   } else {
     fieldKey = condition.field;
     expectedValues = Array.isArray(condition.value) ? condition.value : [condition.value];
+    operator = condition.operator ?? 'in';
   }
 
   const currentValue = String(config[fieldKey] ?? '');
-  return expectedValues.includes(currentValue);
+
+  switch (operator) {
+    case 'eq':
+    case '===':
+      return expectedValues[0] === currentValue;
+    case 'neq':
+    case '!==':
+      return expectedValues[0] !== currentValue;
+    case 'in':
+    default:
+      return expectedValues.includes(currentValue);
+  }
 }

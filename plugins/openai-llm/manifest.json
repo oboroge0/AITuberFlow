@@ -127,7 +127,8 @@
     },
     "promptSections": {
       "type": "prompt-builder",
-      "label": "Prompt Builder"
+      "label": "Prompt Builder",
+      "description": "Build complex prompts by combining static text, system prompt, and dynamic input sections"
     },
     "temperature": {
       "type": "number",

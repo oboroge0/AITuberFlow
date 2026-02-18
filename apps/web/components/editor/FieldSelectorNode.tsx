@@ -4,6 +4,7 @@ import React, { memo, useCallback, useMemo } from 'react';
 import { Handle, Position, type Node as ReactFlowNode } from '@xyflow/react';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { usePluginStore } from '@/stores/pluginStore';
+import { nodeOutputFields } from '@/lib/nodeOutputFields';
 
 export interface FieldSelectorNodeData extends Record<string, unknown> {
   label: string;
@@ -17,29 +18,6 @@ export interface FieldSelectorNodeData extends Record<string, unknown> {
 }
 
 export type FieldSelectorNodeType = ReactFlowNode<FieldSelectorNodeData>;
-
-// Known output fields for each node type
-const nodeOutputFields: Record<string, string[]> = {
-  'twitch-chat': ['text', 'author', 'message'],
-  'youtube-chat': ['text', 'author', 'message'],
-  'manual-input': ['text'],
-  'openai-llm': ['response'],
-  'anthropic-llm': ['response'],
-  'google-llm': ['response'],
-  'ollama-llm': ['response'],
-  'timer': ['tick', 'count'],
-  'http-request': ['response', 'status', 'headers'],
-  'text-transform': ['result'],
-  'data-formatter': ['formatted', 'parsed'],
-  'field-selector': ['output'],
-  'template-editor': ['output'],
-  'random': ['value'],
-  'variable': ['value'],
-  'switch': ['value', 'data'],
-  'delay': ['output'],
-  'loop': ['index', 'value'],
-  'foreach': ['item', 'index'],
-};
 
 interface FieldSelectorNodeProps {
   id: string;
