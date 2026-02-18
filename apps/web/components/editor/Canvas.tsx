@@ -247,7 +247,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
           for (const [fieldKey, fieldDef] of Object.entries(plugin.config)) {
             if (fieldDef.type === 'prompt-builder' && Array.isArray(node.config[fieldKey])) {
               const sections = node.config[fieldKey] as PromptSection[];
-              const inputSections = sections.filter(s => s.type === 'input');
+              const inputSections = sections.filter(s => s.type === 'input' && s.content);
               if (inputSections.length > 0) {
                 nodeInputs = inputSections.map(section => ({
                   id: section.content,
@@ -258,7 +258,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
               break;
             }
             if (fieldDef.type === 'input-list' && Array.isArray(node.config[fieldKey])) {
-              const inputs = node.config[fieldKey] as string[];
+              const inputs = (node.config[fieldKey] as string[]).filter(name => name);
               if (inputs.length > 0) {
                 nodeInputs = inputs.map(name => ({
                   id: name,

@@ -1817,7 +1817,7 @@ export default function NodeSettings() {
     }
   }, []);
 
-  const { getPluginById } = usePluginStore();
+  const { getPluginById, isLoaded: isPluginsLoaded } = usePluginStore();
 
   useEffect(() => {
     if (selectedNode) {
@@ -1842,7 +1842,7 @@ export default function NodeSettings() {
         }
       }
     }
-  }, [selectedNode, fetchVoicevoxSpeakers, fetchAnimations, fetchModels, getPluginById]);
+  }, [selectedNode, fetchVoicevoxSpeakers, fetchAnimations, fetchModels, getPluginById, isPluginsLoaded]);
 
   if (!selectedNode) {
     return null;
@@ -1916,11 +1916,14 @@ export default function NodeSettings() {
         return (
           <input
             type="number"
-            value={value as number}
+            value={value ?? field.defaultValue ?? ("" as unknown as number)}
             onChange={(e) =>
               handleChange(field.key, e.target.value === "" ? undefined : parseFloat(e.target.value))
             }
             placeholder={field.placeholder}
+            min={field.min}
+            max={field.max}
+            required={field.required}
             style={inputStyle}
           />
         );
@@ -1937,8 +1940,8 @@ export default function NodeSettings() {
         );
 
       case "select":
-        // Handle dynamic LLM model select (e.g., emotion-analyzer model field)
-        if (field.dynamic && field.dependsOn && field.key === "model") {
+        // Handle dynamic LLM model select (e.g., emotion-analyzer llm_model field)
+        if (field.dynamic && field.dependsOn && field.key.includes("model")) {
           const dependsOnValue = localConfig[field.dependsOn] as string;
           // Try plugin store first: provider "openai" → plugin "openai-llm"
           const providerPluginId = `${dependsOnValue}-llm`;

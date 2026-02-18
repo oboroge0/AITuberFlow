@@ -12,7 +12,10 @@ function normalizeOptions(
     if (typeof opt === 'string') {
       return { label: opt, value: opt };
     }
-    return { label: opt.label, value: opt.value as string | number };
+    const v = opt.value;
+    const normalizedValue: string | number =
+      typeof v === 'string' || typeof v === 'number' ? v : String(v ?? '');
+    return { label: opt.label, value: normalizedValue };
   });
 }
 
@@ -96,8 +99,12 @@ export function evaluateShowWhen(
     case 'neq':
     case '!==':
       return expectedValues[0] !== currentValue;
+    case 'not-in':
+      return !expectedValues.includes(currentValue);
     case 'in':
+      return expectedValues.includes(currentValue);
     default:
+      console.warn(`[evaluateShowWhen] Unsupported operator: "${operator}", falling back to "in"`);
       return expectedValues.includes(currentValue);
   }
 }
