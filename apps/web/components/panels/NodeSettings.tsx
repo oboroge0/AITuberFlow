@@ -1916,7 +1916,7 @@ export default function NodeSettings() {
         return (
           <input
             type="number"
-            value={value ?? field.defaultValue ?? ("" as unknown as number)}
+            value={(value ?? field.defaultValue ?? "") as number}
             onChange={(e) =>
               handleChange(field.key, e.target.value === "" ? undefined : parseFloat(e.target.value))
             }
