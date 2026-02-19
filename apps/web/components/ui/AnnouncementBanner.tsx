@@ -54,6 +54,7 @@ export default function AnnouncementBanner() {
             </div>
             <button
               onClick={() => dismiss(announcement.id)}
+              aria-label="Dismiss"
               className="flex-shrink-0 w-6 h-6 rounded flex items-center justify-center
                 text-white/40 hover:text-white hover:bg-white/10 transition-colors"
             >

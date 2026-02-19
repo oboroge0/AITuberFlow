@@ -30,6 +30,7 @@ export default function HomePage() {
     version: string;
     body?: string;
   } | null>(null);
+  const updateObjRef = useRef<unknown>(null);
   const [updateDismissed, setUpdateDismissed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const deleteConfirmTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -53,9 +54,7 @@ export default function HomePage() {
   // Fetch announcements (web + desktop)
   useEffect(() => {
     fetchAnnouncements().then((data) => {
-      if (data.length > 0) {
-        setAnnouncements(data);
-      }
+      setAnnouncements(data);
     });
   }, [setAnnouncements]);
 
@@ -69,6 +68,7 @@ export default function HomePage() {
         const { check } = await import('@tauri-apps/plugin-updater');
         const update = await check();
         if (update) {
+          updateObjRef.current = update;
           setUpdateInfo({
             version: update.version,
             body: update.body || undefined,
@@ -579,12 +579,13 @@ export default function HomePage() {
       </footer>
 
       {/* Update modal (desktop only) */}
-      {updateInfo && !updateDismissed && (
+      {updateInfo != null && !updateDismissed && updateObjRef.current != null ? (
         <UpdateModal
           updateInfo={updateInfo}
+          updateObj={updateObjRef.current}
           onClose={() => setUpdateDismissed(true)}
         />
-      )}
+      ) : null}
     </div>
   );
 }

@@ -27,7 +27,13 @@ export const useAnnouncementStore = create<AnnouncementState>()(
       announcements: [],
       dismissedIds: [],
 
-      setAnnouncements: (announcements) => set({ announcements }),
+      setAnnouncements: (announcements) =>
+        set((state) => ({
+          announcements,
+          dismissedIds: state.dismissedIds.filter((id) =>
+            announcements.some((a) => a.id === id)
+          ),
+        })),
 
       dismiss: (id) =>
         set((state) => ({
@@ -58,7 +64,15 @@ export async function fetchAnnouncements(): Promise<Announcement[]> {
     if (!response.ok) return [];
     const data = await response.json();
     if (!Array.isArray(data)) return [];
-    return data;
+    return data.filter(
+      (item): item is Announcement =>
+        typeof item.id === 'string' &&
+        typeof item.type === 'string' &&
+        item.title &&
+        typeof item.title.en === 'string' &&
+        item.message &&
+        typeof item.message.en === 'string'
+    );
   } catch {
     return [];
   }

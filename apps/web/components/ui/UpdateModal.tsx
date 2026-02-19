@@ -1,9 +1,20 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from '@/stores/localeStore';
 
 type UpdateStatus = 'available' | 'downloading' | 'error';
+
+interface DownloadEvent {
+  event: string;
+  data: { contentLength?: number; chunkLength?: number };
+}
+
+interface TauriUpdate {
+  version: string;
+  body?: string;
+  downloadAndInstall: (cb?: (event: DownloadEvent) => void) => Promise<void>;
+}
 
 interface UpdateInfo {
   version: string;
@@ -12,10 +23,11 @@ interface UpdateInfo {
 
 interface UpdateModalProps {
   updateInfo: UpdateInfo;
+  updateObj: unknown;
   onClose: () => void;
 }
 
-export default function UpdateModal({ updateInfo, onClose }: UpdateModalProps) {
+export default function UpdateModal({ updateInfo, updateObj, onClose }: UpdateModalProps) {
   const { t } = useTranslation();
   const [status, setStatus] = useState<UpdateStatus>('available');
   const [progress, setProgress] = useState({ downloaded: 0, total: 0 });
@@ -23,37 +35,43 @@ export default function UpdateModal({ updateInfo, onClose }: UpdateModalProps) {
 
   const currentVersion = process.env.NEXT_PUBLIC_APP_VERSION || 'unknown';
 
+  // Escape key handler
+  useEffect(() => {
+    if (status !== 'available') return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [status, onClose]);
+
   const handleUpdate = useCallback(async () => {
     try {
       setStatus('downloading');
       setErrorMessage(null);
 
-      const { check } = await import('@tauri-apps/plugin-updater');
       const { relaunch } = await import('@tauri-apps/plugin-process');
+      const update = updateObj as TauriUpdate;
 
-      const update = await check();
-      if (update) {
-        await update.downloadAndInstall((event) => {
-          if (event.event === 'Started') {
-            setProgress({
-              downloaded: 0,
-              total: (event.data as { contentLength?: number }).contentLength || 0,
-            });
-          } else if (event.event === 'Progress') {
-            setProgress((prev) => ({
-              ...prev,
-              downloaded:
-                prev.downloaded +
-                ((event.data as { chunkLength?: number }).chunkLength || 0),
-            }));
-          }
-        });
-        await relaunch();
-      }
+      await update.downloadAndInstall((event) => {
+        if (event.event === 'Started') {
+          setProgress({
+            downloaded: 0,
+            total: event.data.contentLength || 0,
+          });
+        } else if (event.event === 'Progress') {
+          setProgress((prev) => ({
+            ...prev,
+            downloaded: prev.downloaded + (event.data.chunkLength || 0),
+          }));
+        }
+      });
+      await relaunch();
     } catch (err) {
       setStatus('error');
       setErrorMessage(err instanceof Error ? err.message : String(err));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- updateObj is stable (ref from parent)
   }, []);
 
   const progressPercent =
