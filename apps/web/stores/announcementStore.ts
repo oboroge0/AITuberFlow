@@ -66,22 +66,28 @@ export const useAnnouncementStore = create<AnnouncementState>()(
   )
 );
 
-export async function fetchAnnouncements(): Promise<Announcement[]> {
+export async function fetchAnnouncements(): Promise<Announcement[] | null> {
   try {
     const response = await fetch(ANNOUNCEMENTS_URL, { cache: 'no-store' });
-    if (!response.ok) return [];
+    if (!response.ok) return null;
     const data = await response.json();
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data)) return null;
     return data.filter(
       (item): item is Announcement =>
         typeof item.id === 'string' &&
-        typeof item.type === 'string' &&
+        (item.type === 'info' || item.type === 'warning' || item.type === 'critical') &&
         item.title &&
         typeof item.title.en === 'string' &&
+        typeof item.title.ja === 'string' &&
         item.message &&
-        typeof item.message.en === 'string'
+        typeof item.message.en === 'string' &&
+        typeof item.message.ja === 'string' &&
+        typeof item.date === 'string' &&
+        (item.targetVersions === undefined ||
+          (Array.isArray(item.targetVersions) &&
+            item.targetVersions.every((v: unknown) => typeof v === 'string')))
     );
   } catch {
-    return [];
+    return null;
   }
 }

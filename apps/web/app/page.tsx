@@ -54,7 +54,7 @@ export default function HomePage() {
   // Fetch announcements (web + desktop)
   useEffect(() => {
     fetchAnnouncements().then((data) => {
-      setAnnouncements(data);
+      if (data !== null) setAnnouncements(data);
     });
   }, [setAnnouncements]);
 
