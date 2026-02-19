@@ -4,7 +4,7 @@ import type { ConfigField, NodeField, ShowWhenCondition } from './types';
  * Normalize manifest options to NodeField format.
  * Handles both string[] shorthand and { label, value }[] format.
  */
-function normalizeOptions(
+export function normalizeOptions(
   options?: ConfigField['options']
 ): { label: string; value: string | number }[] | undefined {
   if (!options) return undefined;

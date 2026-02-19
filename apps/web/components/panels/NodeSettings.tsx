@@ -5,7 +5,7 @@ import { useWorkflowStore } from "@/stores/workflowStore";
 import { useTranslation } from "@/stores/localeStore";
 import { usePluginStore } from "@/stores/pluginStore";
 import api, { VoicevoxSpeaker, AnimationInfo, ModelInfo } from "@/lib/api";
-import { manifestConfigToNodeFields, evaluateShowWhen } from "@/lib/configUtils";
+import { manifestConfigToNodeFields, evaluateShowWhen, normalizeOptions } from "@/lib/configUtils";
 import type { NodeField } from "@/lib/types";
 
 // Prompt section for structured prompt building
@@ -1682,6 +1682,10 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
   },
 };
 
+// Convert kebab-case/snake_case to camelCase for i18n key derivation
+const toPluginCamel = (id: string) =>
+  id.replace(/[-_]([a-z0-9])/g, (_, c: string) => c.toUpperCase());
+
 export default function NodeSettings() {
   const { selectedNodeId, nodes, updateNode, removeNode } = useWorkflowStore();
   const { t } = useTranslation();
@@ -1887,7 +1891,7 @@ export default function NodeSettings() {
   };
 
   const renderField = (field: NodeField) => {
-    const value = localConfig[field.key] ?? "";
+    const value = field.key in localConfig ? localConfig[field.key] : undefined;
 
     const inputStyle = {
       width: "100%",
@@ -1905,7 +1909,7 @@ export default function NodeSettings() {
         return (
           <input
             type="text"
-            value={value as string}
+            value={(value ?? field.defaultValue ?? "") as string}
             onChange={(e) => handleChange(field.key, e.target.value)}
             placeholder={field.placeholder}
             style={inputStyle}
@@ -1931,7 +1935,7 @@ export default function NodeSettings() {
       case "textarea":
         return (
           <textarea
-            value={value as string}
+            value={(value ?? field.defaultValue ?? "") as string}
             onChange={(e) => handleChange(field.key, e.target.value)}
             placeholder={field.placeholder}
             rows={3}
@@ -1946,17 +1950,17 @@ export default function NodeSettings() {
           // Try plugin store first: provider "openai" → plugin "openai-llm"
           const providerPluginId = `${dependsOnValue}-llm`;
           const providerPlugin = getPluginById(providerPluginId);
-          const dynamicModelOptions = providerPlugin?.config?.model?.options;
+          const dynamicModelOptions = normalizeOptions(providerPlugin?.config?.model?.options);
           // Fall back to hardcoded LLM_MODEL_OPTIONS
           const modelOptions: { label: string; value: string | number }[] =
-            dynamicModelOptions
-              ? (dynamicModelOptions as { label: string; value: string | number }[])
+            dynamicModelOptions && dynamicModelOptions.length > 0
+              ? dynamicModelOptions
               : LLM_MODEL_OPTIONS[dependsOnValue] || [];
 
           if (modelOptions.length > 0) {
             return (
               <select
-                value={value as string}
+                value={(value ?? "") as string}
                 onChange={(e) => handleChange(field.key, e.target.value)}
                 style={inputStyle}
               >
@@ -2017,7 +2021,7 @@ export default function NodeSettings() {
           }
           return (
             <select
-              value={value as string}
+              value={(value ?? "") as string}
               onChange={(e) =>
                 handleChange(field.key, parseInt(e.target.value, 10))
               }
@@ -2036,7 +2040,7 @@ export default function NodeSettings() {
         // Regular select
         return (
           <select
-            value={value as string}
+            value={(value ?? "") as string}
             onChange={(e) => handleChange(field.key, e.target.value)}
             style={inputStyle}
           >
@@ -2067,7 +2071,7 @@ export default function NodeSettings() {
         return (
           <div className="space-y-2">
             {/* Current value display */}
-            {value && (
+            {typeof value === "string" && value && (
               <div className="flex items-center justify-between p-2 rounded bg-emerald-500/10 border border-emerald-500/30">
                 <span className="text-xs text-emerald-400 truncate flex-1">
                   {(value as string).split("/").pop()}
@@ -2116,7 +2120,7 @@ export default function NodeSettings() {
             {/* Existing animations dropdown */}
             {animations.length > 0 && (
               <select
-                value={value as string}
+                value={(value ?? "") as string}
                 onChange={(e) => handleChange(field.key, e.target.value)}
                 style={inputStyle}
               >
@@ -2148,7 +2152,7 @@ export default function NodeSettings() {
         return (
           <div className="space-y-2">
             {/* Current value display */}
-            {value && (
+            {typeof value === "string" && value && (
               <div className="flex items-center justify-between p-2 rounded bg-purple-500/10 border border-purple-500/30">
                 <span className="text-xs text-purple-400 truncate flex-1">
                   {(value as string).split("/").pop()}
@@ -2197,7 +2201,7 @@ export default function NodeSettings() {
             {/* Existing models dropdown */}
             {models.length > 0 && (
               <select
-                value={value as string}
+                value={(value ?? "") as string}
                 onChange={(e) => handleChange(field.key, e.target.value)}
                 style={inputStyle}
               >
@@ -2414,7 +2418,7 @@ export default function NodeSettings() {
       case "password":
         return (
           <PasswordField
-            value={value as string}
+            value={(value ?? "") as string}
             onChange={(newValue) => handleChange(field.key, newValue)}
             placeholder={field.placeholder}
             style={inputStyle}
@@ -2450,10 +2454,6 @@ export default function NodeSettings() {
         return null;
     }
   };
-
-  // Convert kebab-case/snake_case to camelCase for i18n key derivation
-  const toPluginCamel = (id: string) =>
-    id.replace(/[-_]([a-z0-9])/g, (_, c: string) => c.toUpperCase());
 
   // Helper to get translated label for a node type
   const getNodeLabel = (nodeType: string): string => {
