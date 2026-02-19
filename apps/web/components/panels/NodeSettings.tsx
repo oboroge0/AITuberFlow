@@ -1834,17 +1834,17 @@ export default function NodeSettings() {
         fetchVoicevoxSpeakers(host);
       }
 
-      // Fetch animations/models based on manifest config field types
+      // Fetch animations/models based on manifest config or nodeConfigs field types
       const pluginConfig = getPluginById(selectedNode.type)?.config;
-      if (pluginConfig) {
-        const configFields = Object.values(pluginConfig);
-        if (configFields.some((f) => f.type === "animation-file")) {
-          fetchAnimations();
-        }
-        if (configFields.some((f) => f.type === "model-file")) {
-          fetchModels();
-        }
-      }
+      const fallbackFields = nodeConfigs[selectedNode.type]?.fields;
+      const hasAnimationField = pluginConfig
+        ? Object.values(pluginConfig).some((f) => f.type === "animation-file")
+        : fallbackFields?.some((f) => f.type === "animation-file");
+      const hasModelField = pluginConfig
+        ? Object.values(pluginConfig).some((f) => f.type === "model-file")
+        : fallbackFields?.some((f) => f.type === "model-file");
+      if (hasAnimationField) fetchAnimations();
+      if (hasModelField) fetchModels();
     }
   }, [selectedNode, fetchVoicevoxSpeakers, fetchAnimations, fetchModels, getPluginById, isPluginsLoaded]);
 
@@ -1945,7 +1945,7 @@ export default function NodeSettings() {
 
       case "select":
         // Handle dynamic LLM model select (e.g., emotion-analyzer llm_model field)
-        if (field.dynamic && field.dependsOn && field.key.includes("model")) {
+        if (field.dynamic && field.dependsOn && (field.key === "model" || field.key === "llm_model")) {
           const dependsOnValue = localConfig[field.dependsOn] as string;
           // Try plugin store first: provider "openai" → plugin "openai-llm"
           const providerPluginId = `${dependsOnValue}-llm`;
@@ -2057,7 +2057,7 @@ export default function NodeSettings() {
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
-              checked={!!value}
+              checked={(value ?? field.defaultValue ?? false) as boolean}
               onChange={(e) => handleChange(field.key, e.target.checked)}
               className="w-4 h-4 rounded border-white/20 bg-black/30 text-emerald-500 focus:ring-emerald-500"
             />
@@ -2463,7 +2463,8 @@ export default function NodeSettings() {
     if (derived !== derivedKey) return derived;
 
     // Fall back to plugin store label, then nodeConfigs, then raw type
-    return schemaLabel;
+    const p = getPluginById(nodeType);
+    return p?.ui?.label ?? p?.name ?? nodeConfigs[nodeType]?.label ?? nodeType;
   };
 
   // Helper to get translated label for a field
