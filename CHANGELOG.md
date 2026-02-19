@@ -5,6 +5,15 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
 [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [2.2.0] - 2026-02-20
+
+### 追加
+
+- **デスクトップ自動アップデーター** - 起動時に新バージョンをチェックし、モーダルからダウンロード・インストール・再起動が可能に (#94)
+- **お知らせシステム** - GitHub リポジトリの `announcements.json` から開発者のお知らせをバナー表示。critical/warning/info の3段階、多言語対応、バージョン指定表示に対応
+- `tauri-plugin-process` を追加（再起動機能用）
+- `updater:default` / `process:allow-restart` capabilities を追加
+
 ## [2.1.0] - 2026-02-19
 
 ### 改善
