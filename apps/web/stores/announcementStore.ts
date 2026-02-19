@@ -21,6 +21,20 @@ interface AnnouncementState {
 const ANNOUNCEMENTS_URL =
   'https://raw.githubusercontent.com/oboroge0/AITuberFlow/main/announcements.json';
 
+export function filterVisibleAnnouncements(
+  announcements: Announcement[],
+  dismissedIds: string[],
+  version: string
+): Announcement[] {
+  return announcements.filter((a) => {
+    if (dismissedIds.includes(a.id)) return false;
+    if (a.targetVersions && a.targetVersions.length > 0) {
+      if (!a.targetVersions.includes(version)) return false;
+    }
+    return true;
+  });
+}
+
 export const useAnnouncementStore = create<AnnouncementState>()(
   persist(
     (set, get) => ({
@@ -42,13 +56,7 @@ export const useAnnouncementStore = create<AnnouncementState>()(
 
       getVisible: (version) => {
         const { announcements, dismissedIds } = get();
-        return announcements.filter((a) => {
-          if (dismissedIds.includes(a.id)) return false;
-          if (a.targetVersions && a.targetVersions.length > 0) {
-            if (!a.targetVersions.includes(version)) return false;
-          }
-          return true;
-        });
+        return filterVisibleAnnouncements(announcements, dismissedIds, version);
       },
     }),
     {

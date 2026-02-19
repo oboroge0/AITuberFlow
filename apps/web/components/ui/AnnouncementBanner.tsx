@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useAnnouncementStore } from '@/stores/announcementStore';
+import { useAnnouncementStore, filterVisibleAnnouncements } from '@/stores/announcementStore';
 import { useTranslation } from '@/stores/localeStore';
 
 const typeStyles: Record<string, { bg: string; border: string; text: string }> = {
@@ -24,11 +24,12 @@ const typeStyles: Record<string, { bg: string; border: string; text: string }> =
 
 export default function AnnouncementBanner() {
   const { locale } = useTranslation();
+  const announcements = useAnnouncementStore((s) => s.announcements);
+  const dismissedIds = useAnnouncementStore((s) => s.dismissedIds);
   const dismiss = useAnnouncementStore((s) => s.dismiss);
-  const getVisible = useAnnouncementStore((s) => s.getVisible);
 
   const appVersion = process.env.NEXT_PUBLIC_APP_VERSION || '0.0.0';
-  const visible = getVisible(appVersion);
+  const visible = filterVisibleAnnouncements(announcements, dismissedIds, appVersion);
 
   if (visible.length === 0) return null;
 
