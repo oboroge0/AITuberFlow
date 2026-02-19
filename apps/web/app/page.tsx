@@ -7,6 +7,12 @@ import api, { TemplateSummary, WorkflowExport } from '@/lib/api';
 import { Workflow } from '@/lib/types';
 import { useTranslation } from '@/stores/localeStore';
 import { toast } from '@/stores/toastStore';
+import UpdateModal from '@/components/ui/UpdateModal';
+import AnnouncementBanner from '@/components/ui/AnnouncementBanner';
+import {
+  useAnnouncementStore,
+  fetchAnnouncements,
+} from '@/stores/announcementStore';
 
 type TauriInternals = {
   invoke?: (command: string, args?: Record<string, unknown>) => Promise<unknown>;
@@ -20,8 +26,14 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [updateInfo, setUpdateInfo] = useState<{
+    version: string;
+    body?: string;
+  } | null>(null);
+  const [updateDismissed, setUpdateDismissed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const deleteConfirmTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const setAnnouncements = useAnnouncementStore((s) => s.setAnnouncements);
 
   const getTauriInternals = () =>
     (window as Window & { __TAURI_INTERNALS__?: TauriInternals }).__TAURI_INTERNALS__;
@@ -36,6 +48,36 @@ export default function HomePage() {
         clearTimeout(deleteConfirmTimerRef.current);
       }
     };
+  }, []);
+
+  // Fetch announcements (web + desktop)
+  useEffect(() => {
+    fetchAnnouncements().then((data) => {
+      if (data.length > 0) {
+        setAnnouncements(data);
+      }
+    });
+  }, [setAnnouncements]);
+
+  // Check for updates (desktop only)
+  useEffect(() => {
+    const tauri = getTauriInternals();
+    if (typeof tauri?.invoke !== 'function') return;
+
+    (async () => {
+      try {
+        const { check } = await import('@tauri-apps/plugin-updater');
+        const update = await check();
+        if (update) {
+          setUpdateInfo({
+            version: update.version,
+            body: update.body || undefined,
+          });
+        }
+      } catch (err) {
+        console.warn('[updater] check failed:', err);
+      }
+    })();
   }, []);
 
   const loadData = async () => {
@@ -308,6 +350,7 @@ export default function HomePage() {
       {/* Main content */}
       <main className="relative z-10 flex-1 min-h-0 overflow-y-auto">
         <div className="max-w-6xl mx-auto px-6 py-8 pb-24">
+        <AnnouncementBanner />
         {loading ? (
           <div className="text-center py-12">
             <div
@@ -534,6 +577,14 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Update modal (desktop only) */}
+      {updateInfo && !updateDismissed && (
+        <UpdateModal
+          updateInfo={updateInfo}
+          onClose={() => setUpdateDismissed(true)}
+        />
+      )}
     </div>
   );
 }
