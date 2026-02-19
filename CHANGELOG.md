@@ -5,6 +5,17 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
 [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [2.1.0] - 2026-02-19
+
+### 改善
+
+- **プラグイン設定の動的レンダリング** - `manifest.json` の `config` セクションからノード設定UIを自動生成するよう変更。新規プラグイン追加時にフロントエンドのコード変更が不要に (#93)
+- `configUtils.ts` を新規追加: manifest config → NodeField 変換、showWhen 条件評価ユーティリティ
+- `nodeOutputFields.ts` を新規追加: FieldSelectorNode / DataPreviewPopup で共有するフォールバック定数
+- `ConfigField` / `NodeField` / `ShowWhenCondition` 型を拡張（min, max, required, defaultValue, operator 等）
+- Canvas.tsx の動的ポート生成を manifest config field 型（prompt-builder, input-list）で汎用化
+- openai-llm, text-transform, avatar-configuration, motion-trigger, voicevox-tts, http-request の manifest.json を更新
+
 ## [2.0.3] - 2026-02-19
 
 ### 改善
