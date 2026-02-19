@@ -1697,10 +1697,10 @@ export default function NodeSettings() {
   const [voicevoxError, setVoicevoxError] = useState<string | null>(null);
   const [animations, setAnimations] = useState<AnimationInfo[]>([]);
   const [animationUploading, setAnimationUploading] = useState(false);
-  const animationInputRef = useRef<HTMLInputElement>(null);
+  const animationInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [modelUploading, setModelUploading] = useState(false);
-  const modelInputRef = useRef<HTMLInputElement>(null);
+  const modelInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [avatarImages, setAvatarImages] = useState<string[]>([]);
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
@@ -1861,11 +1861,7 @@ export default function NodeSettings() {
     manifestFields.length > 0
       ? manifestFields
       : nodeConfigs[selectedNode.type]?.fields ?? [];
-  const schemaLabel =
-    plugin?.ui?.label ??
-    plugin?.name ??
-    nodeConfigs[selectedNode.type]?.label ??
-    selectedNode.type;
+
 
   const handleChange = (key: string, value: unknown) => {
     const newConfig = { ...localConfig, [key]: value };
@@ -1960,7 +1956,7 @@ export default function NodeSettings() {
           if (modelOptions.length > 0) {
             return (
               <select
-                value={(value ?? "") as string}
+                value={(value ?? field.defaultValue ?? "") as string}
                 onChange={(e) => handleChange(field.key, e.target.value)}
                 style={inputStyle}
               >
@@ -2021,7 +2017,7 @@ export default function NodeSettings() {
           }
           return (
             <select
-              value={(value ?? "") as string}
+              value={(value ?? field.defaultValue ?? "") as string}
               onChange={(e) =>
                 handleChange(field.key, parseInt(e.target.value, 10))
               }
@@ -2040,7 +2036,7 @@ export default function NodeSettings() {
         // Regular select
         return (
           <select
-            value={(value ?? "") as string}
+            value={(value ?? field.defaultValue ?? "") as string}
             onChange={(e) => handleChange(field.key, e.target.value)}
             style={inputStyle}
           >
@@ -2089,7 +2085,7 @@ export default function NodeSettings() {
             <div className="flex gap-2">
               <input
                 type="file"
-                ref={animationInputRef}
+                ref={(el) => { animationInputRefs.current[field.key] = el; }}
                 accept={field.accept || ".fbx"}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
@@ -2101,7 +2097,7 @@ export default function NodeSettings() {
                 className="hidden"
               />
               <button
-                onClick={() => animationInputRef.current?.click()}
+                onClick={() => animationInputRefs.current[field.key]?.click()}
                 disabled={animationUploading}
                 style={{
                   ...inputStyle,
@@ -2120,7 +2116,7 @@ export default function NodeSettings() {
             {/* Existing animations dropdown */}
             {animations.length > 0 && (
               <select
-                value={(value ?? "") as string}
+                value={(value ?? field.defaultValue ?? "") as string}
                 onChange={(e) => handleChange(field.key, e.target.value)}
                 style={inputStyle}
               >
@@ -2170,7 +2166,7 @@ export default function NodeSettings() {
             <div className="flex gap-2">
               <input
                 type="file"
-                ref={modelInputRef}
+                ref={(el) => { modelInputRefs.current[field.key] = el; }}
                 accept={field.accept || ".vrm"}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
@@ -2182,7 +2178,7 @@ export default function NodeSettings() {
                 className="hidden"
               />
               <button
-                onClick={() => modelInputRef.current?.click()}
+                onClick={() => modelInputRefs.current[field.key]?.click()}
                 disabled={modelUploading}
                 style={{
                   ...inputStyle,
@@ -2201,7 +2197,7 @@ export default function NodeSettings() {
             {/* Existing models dropdown */}
             {models.length > 0 && (
               <select
-                value={(value ?? "") as string}
+                value={(value ?? field.defaultValue ?? "") as string}
                 onChange={(e) => handleChange(field.key, e.target.value)}
                 style={inputStyle}
               >
@@ -2418,7 +2414,7 @@ export default function NodeSettings() {
       case "password":
         return (
           <PasswordField
-            value={(value ?? "") as string}
+            value={(value ?? field.defaultValue ?? "") as string}
             onChange={(newValue) => handleChange(field.key, newValue)}
             placeholder={field.placeholder}
             style={inputStyle}
