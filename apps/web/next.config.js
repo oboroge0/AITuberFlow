@@ -1,8 +1,14 @@
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const packageJson = require('./package.json');
 const isDesktop = process.env.BUILD_MODE === 'desktop';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+
+  env: {
+    NEXT_PUBLIC_APP_VERSION: packageJson.version,
+  },
   // Desktop: static export (no Node.js needed), Web: standalone for Docker
   output: isDesktop ? 'export' : 'standalone',
 

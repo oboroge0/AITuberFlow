@@ -406,5 +406,14 @@
       "edit": "Edit",
       "loadDefaults": "Load Defaults"
     }
+  },
+  "update": {
+    "title": "Update Available",
+    "downloading": "Downloading update...",
+    "error": "Update failed",
+    "now": "Update Now",
+    "later": "Later",
+    "close": "Close",
+    "retry": "Retry"
   }
 }
