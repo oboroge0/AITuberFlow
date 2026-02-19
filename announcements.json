@@ -10,7 +10,7 @@
       "ja": "v2.2.0 から自動アップデート機能が追加されました。お手数ですが GitHub Releases から最新版を手動でダウンロードしてください。今後はアプリ内で自動更新が届きます。",
       "en": "Auto-update is now available starting from v2.2.0. Please manually download the latest version from GitHub Releases. Future updates will be delivered automatically."
     },
-    "targetVersions": ["2.0.0", "2.0.1", "2.0.2", "2.0.3", "2.1.0"],
+    "targetVersions": ["2.0.0", "2.0.1", "2.0.2", "2.0.3", "2.1.0", "2.2.0"],
     "date": "2026-02-20"
   }
 ]

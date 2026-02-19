@@ -574,6 +574,7 @@ export default function HomePage() {
               </svg>
               {t('support.dm')} (@oboroge9)
             </a>
+            <span className="text-gray-600">v{process.env.NEXT_PUBLIC_APP_VERSION}</span>
           </div>
         </div>
       </footer>
