@@ -125,6 +125,11 @@
       "description": "The system message that sets the AI's behavior",
       "default": "You are a helpful assistant."
     },
+    "promptSections": {
+      "type": "prompt-builder",
+      "label": "Prompt Builder",
+      "description": "Build complex prompts by combining static text, system prompt, and dynamic input sections"
+    },
     "temperature": {
       "type": "number",
       "label": "Temperature",

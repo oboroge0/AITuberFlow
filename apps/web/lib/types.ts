@@ -122,14 +122,63 @@ export interface PortDefinition {
 }
 
 export interface ConfigField {
-  type: 'string' | 'number' | 'boolean' | 'select' | 'textarea';
+  type:
+    | 'string'
+    | 'number'
+    | 'boolean'
+    | 'select'
+    | 'textarea'
+    | 'password'
+    | 'prompt-builder'
+    | 'input-list'
+    | 'expression-list'
+    | 'animation-file'
+    | 'model-file'
+    | 'png-expression-map';
   label: string;
   description?: string;
   required?: boolean;
-  default?: any;
-  options?: { label: string; value: any }[];
+  default?: unknown;
+  options?: { label: string; value: unknown }[] | string[];
   min?: number;
   max?: number;
+  placeholder?: string;
+  accept?: string;
+  dynamic?: boolean;
+  dependsOn?: string;
+  showWhen?: ShowWhenCondition;
+}
+
+export type ShowWhenCondition =
+  | { key: string; value: string | string[] }
+  | { field: string; operator?: string; value: string | string[] };
+
+export interface NodeField {
+  key: string;
+  type:
+    | 'text'
+    | 'number'
+    | 'textarea'
+    | 'select'
+    | 'checkbox'
+    | 'animation-file'
+    | 'model-file'
+    | 'prompt-builder'
+    | 'input-list'
+    | 'expression-list'
+    | 'password'
+    | 'png-expression-map';
+  label: string;
+  placeholder?: string;
+  options?: { label: string; value: string | number }[];
+  min?: number;
+  max?: number;
+  required?: boolean;
+  defaultValue?: unknown;
+  dynamic?: boolean;
+  dependsOn?: string;
+  accept?: string;
+  showWhen?: ShowWhenCondition;
 }
 
 // Execution types

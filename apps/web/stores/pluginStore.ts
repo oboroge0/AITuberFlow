@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { PluginManifest, CategoryDefinition, PluginCategory } from '@/lib/types';
+import { PluginManifest, CategoryDefinition, PluginCategory, ConfigField } from '@/lib/types';
 import { getApiBaseUrl } from '@/lib/runtimeEndpoints';
 
 // Default categories (fallback if API fails)
@@ -34,6 +34,7 @@ interface PluginState {
   getPluginIcon: (id: string) => string;
   getPluginInputs: (id: string) => PluginManifest['node']['inputs'];
   getPluginOutputs: (id: string) => PluginManifest['node']['outputs'];
+  getPluginConfig: (id: string) => Record<string, ConfigField> | undefined;
 }
 
 const API_BASE = getApiBaseUrl();
@@ -110,5 +111,10 @@ export const usePluginStore = create<PluginState>((set, get) => ({
   getPluginOutputs: (id: string) => {
     const plugin = get().getPluginById(id);
     return plugin?.node?.outputs ?? [];
+  },
+
+  getPluginConfig: (id: string) => {
+    const plugin = get().getPluginById(id);
+    return plugin?.config;
   },
 }));

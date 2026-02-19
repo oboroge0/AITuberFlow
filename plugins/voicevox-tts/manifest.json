@@ -59,12 +59,12 @@
       "default": "http://localhost:50021"
     },
     "speaker": {
-      "type": "number",
-      "label": "Speaker ID",
-      "description": "VOICEVOX speaker/character ID (e.g., 1=四国めたん, 3=ずんだもん)",
+      "type": "select",
+      "label": "Speaker",
+      "description": "VOICEVOX speaker/character",
       "default": 1,
-      "min": 0,
-      "max": 100
+      "dynamic": true,
+      "dependsOn": "host"
     },
     "speedScale": {
       "type": "number",
