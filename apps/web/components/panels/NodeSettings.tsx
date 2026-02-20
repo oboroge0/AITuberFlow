@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useWorkflowStore } from "@/stores/workflowStore";
 import { useTranslation } from "@/stores/localeStore";
 import { usePluginStore } from "@/stores/pluginStore";
 import api, { VoicevoxSpeaker, AnimationInfo, ModelInfo } from "@/lib/api";
 import { manifestConfigToNodeFields, evaluateShowWhen, normalizeOptions } from "@/lib/configUtils";
 import { useSettingsStore } from "@/stores/settingsStore";
+import { LLM_MODEL_OPTIONS } from "@/lib/constants";
 import type { NodeField } from "@/lib/types";
 
 // Prompt section for structured prompt building
@@ -629,42 +630,7 @@ const GLOBAL_SETTINGS_MAP: Record<string, Record<string, string>> = {
   "sbv2-tts": { host: "sbv2.host" },
 };
 
-// Shared LLM model options (used by both LLM nodes and emotion-analyzer)
-const LLM_MODEL_OPTIONS: Record<string, { label: string; value: string }[]> = {
-  openai: [
-    { label: "GPT-5.2", value: "gpt-5.2" },
-    { label: "GPT-5.2 Codex", value: "gpt-5.2-codex" },
-    { label: "GPT-5.1", value: "gpt-5.1" },
-    { label: "GPT-5.1 Codex", value: "gpt-5.1-codex" },
-    { label: "GPT-5.1 Codex Mini", value: "gpt-5.1-codex-mini" },
-    { label: "GPT-5", value: "gpt-5" },
-    { label: "GPT-5 Mini", value: "gpt-5-mini" },
-    { label: "GPT-5 Nano", value: "gpt-5-nano" },
-    { label: "GPT-4.1", value: "gpt-4.1" },
-    { label: "GPT-4.1 Mini", value: "gpt-4.1-mini" },
-    { label: "GPT-4.1 Nano", value: "gpt-4.1-nano" },
-    { label: "o4 Mini", value: "o4-mini" },
-    { label: "o3", value: "o3" },
-    { label: "o3 Mini", value: "o3-mini" },
-    { label: "GPT-4o", value: "gpt-4o" },
-    { label: "GPT-4o Mini", value: "gpt-4o-mini" },
-  ],
-  anthropic: [
-    { label: "Claude Opus 4", value: "claude-opus-4-20250514" },
-    { label: "Claude Sonnet 4", value: "claude-sonnet-4-20250514" },
-    { label: "Claude 3.7 Sonnet", value: "claude-3-7-sonnet-20250219" },
-    { label: "Claude 3.5 Sonnet", value: "claude-3-5-sonnet-20241022" },
-    { label: "Claude 3.5 Haiku", value: "claude-3-5-haiku-20241022" },
-    { label: "Claude 3 Opus", value: "claude-3-opus-20240229" },
-    { label: "Claude 3 Haiku", value: "claude-3-haiku-20240307" },
-  ],
-  google: [
-    { label: "Gemini 3 Pro Preview", value: "gemini-3-pro-preview" },
-    { label: "Gemini 3 Flash Preview", value: "gemini-3-flash-preview" },
-    { label: "Gemini 2.5 Pro", value: "gemini-2.5-pro-preview-05-06" },
-    { label: "Gemini 2.5 Flash", value: "gemini-2.5-flash-preview-05-20" },
-  ],
-};
+// LLM_MODEL_OPTIONS imported from @/lib/constants
 
 // Simplified node config schemas
 const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
@@ -1882,6 +1848,26 @@ export default function NodeSettings() {
       ? manifestFields
       : nodeConfigs[selectedNode.type]?.fields ?? [];
 
+  // Split fields into overridable (have global setting) and normal
+  // Classification is based on global mapping existence, not local config value,
+  // so typing into an override field doesn't move it between lists.
+  const { normalFields, overridableFields } = useMemo(() => {
+    const globalMapping = GLOBAL_SETTINGS_MAP[selectedNode.type];
+    const normal: NodeField[] = [];
+    const overridable: NodeField[] = [];
+
+    for (const field of fields) {
+      if (!evaluateShowWhen(field.showWhen, localConfig)) continue;
+      const globalKey = globalMapping?.[field.key];
+      const globalValue = globalKey ? globalSettingsValues[globalKey] : undefined;
+      if (globalKey && globalValue) {
+        overridable.push(field);
+      } else {
+        normal.push(field);
+      }
+    }
+    return { normalFields: normal, overridableFields: overridable };
+  }, [fields, localConfig, globalSettingsValues, selectedNode.type]);
 
   const handleChange = (key: string, value: unknown) => {
     const newConfig = { ...localConfig, [key]: value };
@@ -2515,84 +2501,59 @@ export default function NodeSettings() {
         </div>
 
         {/* Config Fields */}
-        {(() => {
-          const globalMapping = GLOBAL_SETTINGS_MAP[selectedNode.type];
-          // Split fields into global-overridable (hidden by default) and normal
-          const normalFields: NodeField[] = [];
-          const overridableFields: NodeField[] = [];
+        {normalFields.map((field) => (
+          <div key={field.key} className="mb-3">
+            <label className="block text-[11px] text-white/60 mb-1">
+              {getFieldLabel(selectedNode.type, field.key, field.label)}
+            </label>
+            {renderField(field)}
+          </div>
+        ))}
 
-          for (const field of fields) {
-            if (!evaluateShowWhen(field.showWhen, localConfig)) continue;
-            const globalKey = globalMapping?.[field.key];
-            const globalValue = globalKey ? globalSettingsValues[globalKey] : undefined;
-            const fieldValue = localConfig[field.key];
-            const fieldIsEmpty = fieldValue === undefined || fieldValue === null || fieldValue === "";
-            if (globalKey && globalValue && fieldIsEmpty) {
-              overridableFields.push(field);
-            } else {
-              normalFields.push(field);
-            }
-          }
+        {/* Global settings banner (collapsed) */}
+        {overridableFields.length > 0 && !showOverrides && (
+          <div className="mb-3 p-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5">
+            <div className="flex items-center gap-2 text-[11px] text-emerald-400">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+              <span>{t("globalSettings.usingGlobal")}</span>
+            </div>
+            <button
+              onClick={() => setShowOverrides(true)}
+              className="mt-1.5 text-[10px] text-white/40 hover:text-white/60 transition-colors"
+            >
+              {t("globalSettings.override")}
+            </button>
+          </div>
+        )}
 
-          return (
-            <>
-              {/* Global settings banner */}
-              {overridableFields.length > 0 && !showOverrides && (
-                <div className="mb-3 p-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5">
-                  <div className="flex items-center gap-2 text-[11px] text-emerald-400">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="3" />
-                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                    </svg>
-                    <span>{t("globalSettings.usingGlobal")}</span>
-                  </div>
-                  <button
-                    onClick={() => setShowOverrides(true)}
-                    className="mt-1.5 text-[10px] text-white/40 hover:text-white/60 transition-colors"
-                  >
-                    {t("globalSettings.override")}
-                  </button>
-                </div>
-              )}
-
-              {/* Normal fields (always visible) */}
-              {normalFields.map((field) => (
-                <div key={field.key} className="mb-3">
-                  <label className="block text-[11px] text-white/60 mb-1">
-                    {getFieldLabel(selectedNode.type, field.key, field.label)}
-                  </label>
-                  {renderField(field)}
-                </div>
-              ))}
-
-              {/* Overridable fields (collapsed by default) */}
-              {showOverrides && overridableFields.length > 0 && (
-                <div className="mt-2 pt-2 border-t border-white/10">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] text-white/40">{t("globalSettings.override")}</span>
-                    <button
-                      onClick={() => setShowOverrides(false)}
-                      className="text-[10px] text-white/30 hover:text-white/50 transition-colors"
-                    >
-                      {t("globalSettings.collapse")}
-                    </button>
-                  </div>
-                  {overridableFields.map((field) => (
-                    <div key={field.key} className="mb-3">
-                      <label className="block text-[11px] text-white/60 mb-1">
-                        {getFieldLabel(selectedNode.type, field.key, field.label)}
-                        <span className="ml-1 text-emerald-400 text-[10px]">
-                          ({t("globalSettings.usingGlobal")})
-                        </span>
-                      </label>
-                      {renderField(field)}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          );
-        })()}
+        {/* Overridable fields (expanded) */}
+        {showOverrides && overridableFields.length > 0 && (
+          <div className="mt-2 pt-2 border-t border-white/10">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] text-white/40">{t("globalSettings.override")}</span>
+              <button
+                onClick={() => setShowOverrides(false)}
+                className="text-[10px] text-white/30 hover:text-white/50 transition-colors"
+              >
+                {t("globalSettings.collapse")}
+              </button>
+            </div>
+            {overridableFields.map((field) => (
+              <div key={field.key} className="mb-3">
+                <label className="block text-[11px] text-white/60 mb-1">
+                  {getFieldLabel(selectedNode.type, field.key, field.label)}
+                  <span className="ml-1 text-emerald-400 text-[10px]">
+                    ({t("globalSettings.usingGlobal")})
+                  </span>
+                </label>
+                {renderField(field)}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Delete Button */}
         <button

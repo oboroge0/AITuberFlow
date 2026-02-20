@@ -313,6 +313,7 @@ export default function HomePage() {
               onClick={() => setShowSettings(true)}
               className="px-3 py-2 rounded-lg text-white/60 text-sm transition-colors hover:bg-white/10"
               title={t('globalSettings.title')}
+              aria-label={t('globalSettings.title')}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="3" />

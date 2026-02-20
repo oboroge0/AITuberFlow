@@ -4,6 +4,7 @@ import api from '@/lib/api';
 interface SettingsStore {
   settings: Record<string, string>;
   loaded: boolean;
+  error: string | null;
   fetchSettings: () => Promise<void>;
   updateSettings: (newSettings: Record<string, string>) => Promise<boolean>;
   getSetting: (key: string) => string | undefined;
@@ -12,11 +13,18 @@ interface SettingsStore {
 export const useSettingsStore = create<SettingsStore>((set, get) => ({
   settings: {},
   loaded: false,
+  error: null,
 
   fetchSettings: async () => {
-    const res = await api.getSettings();
-    if (res.data) {
-      set({ settings: res.data, loaded: true });
+    try {
+      const res = await api.getSettings();
+      if (res.data) {
+        set({ settings: res.data, loaded: true, error: null });
+      } else {
+        set({ loaded: true, error: res.error || 'Failed to fetch settings' });
+      }
+    } catch (e) {
+      set({ loaded: true, error: e instanceof Error ? e.message : 'Failed to fetch settings' });
     }
   },
 

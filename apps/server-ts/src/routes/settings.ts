@@ -33,16 +33,18 @@ app.put("/", zValidator("json", updateSettingsBody), async (c) => {
   const body = c.req.valid("json");
   const now = new Date().toISOString();
 
-  for (const [key, value] of Object.entries(body)) {
-    _db
-      .insert(globalSettings)
-      .values({ key, value, updatedAt: now })
-      .onConflictDoUpdate({
-        target: globalSettings.key,
-        set: { value, updatedAt: now },
-      })
-      .run();
-  }
+  _db.transaction((tx) => {
+    for (const [key, value] of Object.entries(body)) {
+      tx
+        .insert(globalSettings)
+        .values({ key, value, updatedAt: now })
+        .onConflictDoUpdate({
+          target: globalSettings.key,
+          set: { value, updatedAt: now },
+        })
+        .run();
+    }
+  });
 
   return c.json({ success: true });
 });

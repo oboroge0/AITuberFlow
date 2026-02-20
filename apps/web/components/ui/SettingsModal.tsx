@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from '@/stores/localeStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { toast } from '@/stores/toastStore';
+import { LLM_MODEL_OPTIONS } from '@/lib/constants';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -110,29 +111,10 @@ function TextInput({
   );
 }
 
-const OPENAI_MODELS = [
-  { label: 'GPT-5.2', value: 'gpt-5.2' },
-  { label: 'GPT-5.1', value: 'gpt-5.1' },
-  { label: 'GPT-5', value: 'gpt-5' },
-  { label: 'GPT-5 Mini', value: 'gpt-5-mini' },
-  { label: 'GPT-4.1', value: 'gpt-4.1' },
-  { label: 'GPT-4.1 Mini', value: 'gpt-4.1-mini' },
-  { label: 'GPT-4o', value: 'gpt-4o' },
-  { label: 'GPT-4o Mini', value: 'gpt-4o-mini' },
-];
-
-const ANTHROPIC_MODELS = [
-  { label: 'Claude Opus 4', value: 'claude-opus-4-20250514' },
-  { label: 'Claude Sonnet 4', value: 'claude-sonnet-4-20250514' },
-  { label: 'Claude 3.7 Sonnet', value: 'claude-3-7-sonnet-20250219' },
-  { label: 'Claude 3.5 Sonnet', value: 'claude-3-5-sonnet-20241022' },
-  { label: 'Claude 3.5 Haiku', value: 'claude-3-5-haiku-20241022' },
-];
-
-const GOOGLE_MODELS = [
-  { label: 'Gemini 2.5 Pro', value: 'gemini-2.5-pro-preview-05-06' },
-  { label: 'Gemini 2.5 Flash', value: 'gemini-2.5-flash-preview-05-20' },
-];
+// Model lists from shared constants
+const OPENAI_MODELS = LLM_MODEL_OPTIONS.openai;
+const ANTHROPIC_MODELS = LLM_MODEL_OPTIONS.anthropic;
+const GOOGLE_MODELS = LLM_MODEL_OPTIONS.google;
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
   const { t } = useTranslation();
