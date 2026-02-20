@@ -6,6 +6,7 @@ import { useTranslation } from "@/stores/localeStore";
 import { usePluginStore } from "@/stores/pluginStore";
 import api, { VoicevoxSpeaker, AnimationInfo, ModelInfo } from "@/lib/api";
 import { manifestConfigToNodeFields, evaluateShowWhen, normalizeOptions } from "@/lib/configUtils";
+import { useSettingsStore } from "@/stores/settingsStore";
 import type { NodeField } from "@/lib/types";
 
 // Prompt section for structured prompt building
@@ -616,6 +617,17 @@ function PngExpressionMapField({
     </div>
   );
 }
+
+// Global settings field mapping (mirrors server-side GLOBAL_SETTINGS_MAP)
+const GLOBAL_SETTINGS_MAP: Record<string, Record<string, string>> = {
+  "openai-llm": { apiKey: "openai.apiKey", model: "openai.model" },
+  "anthropic-llm": { apiKey: "anthropic.apiKey", model: "anthropic.model" },
+  "google-llm": { apiKey: "google.apiKey", model: "google.model" },
+  "ollama-llm": { host: "ollama.host", model: "ollama.model" },
+  "voicevox-tts": { host: "voicevox.host" },
+  "coeiroink-tts": { host: "coeiroink.host" },
+  "sbv2-tts": { host: "sbv2.host" },
+};
 
 // Shared LLM model options (used by both LLM nodes and emotion-analyzer)
 const LLM_MODEL_OPTIONS: Record<string, { label: string; value: string }[]> = {
@@ -1689,6 +1701,8 @@ const toPluginCamel = (id: string) =>
 export default function NodeSettings() {
   const { selectedNodeId, nodes, updateNode, removeNode } = useWorkflowStore();
   const { t } = useTranslation();
+  const { settings: globalSettingsValues, loaded: globalSettingsLoaded, fetchSettings: fetchGlobalSettings } = useSettingsStore();
+  const [showOverrides, setShowOverrides] = useState(false);
   const [localConfig, setLocalConfig] = useState<Record<string, unknown>>({});
   const [voicevoxSpeakers, setVoicevoxSpeakers] = useState<VoicevoxSpeaker[]>(
     [],
@@ -1704,6 +1718,11 @@ export default function NodeSettings() {
   const [avatarImages, setAvatarImages] = useState<string[]>([]);
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
+
+  // Fetch global settings if not loaded
+  useEffect(() => {
+    if (!globalSettingsLoaded) fetchGlobalSettings();
+  }, [globalSettingsLoaded, fetchGlobalSettings]);
 
   // Fetch animations list
   const fetchAnimations = useCallback(async () => {
@@ -1826,6 +1845,7 @@ export default function NodeSettings() {
   useEffect(() => {
     if (selectedNode) {
       setLocalConfig(selectedNode.config || {});
+      setShowOverrides(false);
 
       // Fetch VOICEVOX speakers if this is a voicevox-tts node
       if (selectedNode.type === "voicevox-tts") {
@@ -2495,19 +2515,84 @@ export default function NodeSettings() {
         </div>
 
         {/* Config Fields */}
-        {fields.map((field) => {
-          if (!evaluateShowWhen(field.showWhen, localConfig)) {
-            return null;
+        {(() => {
+          const globalMapping = GLOBAL_SETTINGS_MAP[selectedNode.type];
+          // Split fields into global-overridable (hidden by default) and normal
+          const normalFields: NodeField[] = [];
+          const overridableFields: NodeField[] = [];
+
+          for (const field of fields) {
+            if (!evaluateShowWhen(field.showWhen, localConfig)) continue;
+            const globalKey = globalMapping?.[field.key];
+            const globalValue = globalKey ? globalSettingsValues[globalKey] : undefined;
+            const fieldValue = localConfig[field.key];
+            const fieldIsEmpty = fieldValue === undefined || fieldValue === null || fieldValue === "";
+            if (globalKey && globalValue && fieldIsEmpty) {
+              overridableFields.push(field);
+            } else {
+              normalFields.push(field);
+            }
           }
+
           return (
-            <div key={field.key} className="mb-3">
-              <label className="block text-[11px] text-white/60 mb-1">
-                {getFieldLabel(selectedNode.type, field.key, field.label)}
-              </label>
-              {renderField(field)}
-            </div>
+            <>
+              {/* Global settings banner */}
+              {overridableFields.length > 0 && !showOverrides && (
+                <div className="mb-3 p-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5">
+                  <div className="flex items-center gap-2 text-[11px] text-emerald-400">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="3" />
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                    </svg>
+                    <span>{t("globalSettings.usingGlobal")}</span>
+                  </div>
+                  <button
+                    onClick={() => setShowOverrides(true)}
+                    className="mt-1.5 text-[10px] text-white/40 hover:text-white/60 transition-colors"
+                  >
+                    {t("globalSettings.override")}
+                  </button>
+                </div>
+              )}
+
+              {/* Normal fields (always visible) */}
+              {normalFields.map((field) => (
+                <div key={field.key} className="mb-3">
+                  <label className="block text-[11px] text-white/60 mb-1">
+                    {getFieldLabel(selectedNode.type, field.key, field.label)}
+                  </label>
+                  {renderField(field)}
+                </div>
+              ))}
+
+              {/* Overridable fields (collapsed by default) */}
+              {showOverrides && overridableFields.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-white/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] text-white/40">{t("globalSettings.override")}</span>
+                    <button
+                      onClick={() => setShowOverrides(false)}
+                      className="text-[10px] text-white/30 hover:text-white/50 transition-colors"
+                    >
+                      {t("globalSettings.collapse")}
+                    </button>
+                  </div>
+                  {overridableFields.map((field) => (
+                    <div key={field.key} className="mb-3">
+                      <label className="block text-[11px] text-white/60 mb-1">
+                        {getFieldLabel(selectedNode.type, field.key, field.label)}
+                        <span className="ml-1 text-emerald-400 text-[10px]">
+                          ({t("globalSettings.usingGlobal")})
+                        </span>
+                      </label>
+                      {renderField(field)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           );
-        })}
+        })()}
 
         {/* Delete Button */}
         <button

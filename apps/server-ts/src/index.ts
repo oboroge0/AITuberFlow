@@ -10,6 +10,7 @@ import { initDb } from "./db/database";
 import { WorkflowExecutor } from "./engine/executor";
 import { integrationRoutes } from "./routes/integrations";
 import { pluginRoutes } from "./routes/plugins";
+import { settingsRoutes } from "./routes/settings";
 import { templateRoutes } from "./routes/templates";
 import { setExecutor, setWSBroadcaster, workflowRoutes } from "./routes/workflows";
 import { createWebSocketHandler, setExecutorForWS, wsBroadcaster } from "./websocket/handler";
@@ -53,6 +54,7 @@ app.route("/api/workflows", workflowRoutes);
 app.route("/api/plugins", pluginRoutes);
 app.route("/api/templates", templateRoutes);
 app.route("/api/integrations", integrationRoutes);
+app.route("/api/settings", settingsRoutes);
 
 // WebSocket endpoint
 const wsHandler = createWebSocketHandler();

@@ -8,6 +8,8 @@
  * Ported from Python apps/server/engine/executor.py (1173 lines).
  */
 
+import { db } from "../db/database";
+import { globalSettings } from "../db/schema";
 import { vtsClient } from "../integrations/vtube-studio";
 import type { Event } from "./event-bus";
 import { EventBus, EventFilter } from "./event-bus";
@@ -199,6 +201,52 @@ export class WorkflowCycleError extends Error {
   }
 }
 
+// ─── Global Settings ─────────────────────────────────────────────
+
+/**
+ * Maps node types to their config fields and corresponding global setting keys.
+ * When a node's config field is empty, the global setting value is used instead.
+ */
+const GLOBAL_SETTINGS_MAP: Record<string, Record<string, string>> = {
+  "openai-llm": { apiKey: "openai.apiKey", model: "openai.model" },
+  "anthropic-llm": { apiKey: "anthropic.apiKey", model: "anthropic.model" },
+  "google-llm": { apiKey: "google.apiKey", model: "google.model" },
+  "ollama-llm": { host: "ollama.host", model: "ollama.model" },
+  "voicevox-tts": { host: "voicevox.host" },
+  "coeiroink-tts": { host: "coeiroink.host" },
+  "sbv2-tts": { host: "sbv2.host" },
+};
+
+function loadGlobalSettings(): Record<string, string> {
+  const rows = db.select().from(globalSettings).all();
+  const result: Record<string, string> = {};
+  for (const row of rows) {
+    result[row.key] = row.value;
+  }
+  return result;
+}
+
+function mergeGlobalSettings(
+  nodeType: string,
+  config: Record<string, unknown>,
+  settings: Record<string, string>,
+): Record<string, unknown> {
+  const mapping = GLOBAL_SETTINGS_MAP[nodeType];
+  if (!mapping) return config;
+
+  const merged = { ...config };
+  for (const [configField, settingsKey] of Object.entries(mapping)) {
+    const currentValue = merged[configField];
+    if (
+      (currentValue === undefined || currentValue === null || currentValue === "") &&
+      settings[settingsKey]
+    ) {
+      merged[configField] = settings[settingsKey];
+    }
+  }
+  return merged;
+}
+
 // ─── Executor ────────────────────────────────────────────────────
 
 export class WorkflowExecutor {
@@ -317,6 +365,7 @@ export class WorkflowExecutor {
     workflowId: string,
     nodes: NodeData[],
     character: Record<string, any>,
+    settings: Record<string, string>,
   ): Promise<void> {
     const runtimes = new Map<string, NodeRuntime>();
     this.nodeInstances.set(workflowId, runtimes);
@@ -324,11 +373,12 @@ export class WorkflowExecutor {
     for (const node of nodes) {
       const context = this.createNodeContext(workflowId, node.id, character);
       const instance = await loadPlugin(node.type);
+      const mergedConfig = mergeGlobalSettings(node.type, node.config ?? {}, settings);
 
       const runtime: NodeRuntime = {
         nodeId: node.id,
         nodeType: node.type,
-        config: node.config ?? {},
+        config: mergedConfig,
         instance,
         context,
       };
@@ -337,7 +387,7 @@ export class WorkflowExecutor {
       const pluginInstance = instance as Record<string, any> | null;
       if (pluginInstance?.setup) {
         try {
-          await pluginInstance.setup(node.config ?? {}, context);
+          await pluginInstance.setup(mergedConfig, context);
         } catch (err) {
           await this.log(workflowId, node.id, `Node setup error: ${err}`, "error");
         }
@@ -522,7 +572,8 @@ export class WorkflowExecutor {
         return;
       }
 
-      await this.initializeNodes(workflowId, nodes, character);
+      const settings = loadGlobalSettings();
+      await this.initializeNodes(workflowId, nodes, character, settings);
 
       const sourceNodes = nodes.filter((n) => SOURCE_NODE_TYPES.has(n.type));
       const regularNodes = nodes.filter((n) => !SOURCE_NODE_TYPES.has(n.type));

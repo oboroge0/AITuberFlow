@@ -415,5 +415,20 @@
     "later": "Later",
     "close": "Close",
     "retry": "Retry"
+  },
+  "globalSettings": {
+    "title": "Global Settings",
+    "description": "Settings shared across all workflows",
+    "llmProviders": "LLM Providers",
+    "ttsEngines": "TTS Engines",
+    "apiKey": "API Key",
+    "model": "Model",
+    "host": "Host",
+    "save": "Save",
+    "saved": "Settings saved",
+    "saveError": "Failed to save settings",
+    "usingGlobal": "Using Global Settings",
+    "override": "Override with node settings",
+    "collapse": "Collapse"
   }
 }
