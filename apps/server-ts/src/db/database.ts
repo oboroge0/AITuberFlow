@@ -22,8 +22,17 @@ const CREATE_TABLE_SQL = `
   )
 `;
 
+const CREATE_GLOBAL_SETTINGS_SQL = `
+  CREATE TABLE IF NOT EXISTS global_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )
+`;
+
 export function initDb(): void {
   sqlite.exec(CREATE_TABLE_SQL);
+  sqlite.exec(CREATE_GLOBAL_SETTINGS_SQL);
 }
 
 // ─── JSON helpers ───────────────────────────────────────────────

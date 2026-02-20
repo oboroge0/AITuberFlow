@@ -211,6 +211,18 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // Global settings endpoints
+  async getSettings(): Promise<ApiResponse<Record<string, string>>> {
+    return this.request<Record<string, string>>('/api/settings');
+  }
+
+  async updateSettings(settings: Record<string, string>): Promise<ApiResponse<{ success: boolean }>> {
+    return this.request<{ success: boolean }>('/api/settings', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    });
+  }
 }
 
 export interface TemplateSummary {

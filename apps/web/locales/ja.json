@@ -415,5 +415,20 @@
     "later": "あとで",
     "close": "閉じる",
     "retry": "再試行"
+  },
+  "globalSettings": {
+    "title": "グローバル設定",
+    "description": "全ワークフローで共有される設定",
+    "llmProviders": "LLMプロバイダー",
+    "ttsEngines": "音声合成エンジン",
+    "apiKey": "APIキー",
+    "model": "モデル",
+    "host": "ホスト",
+    "save": "保存",
+    "saved": "設定を保存しました",
+    "saveError": "設定の保存に失敗しました",
+    "usingGlobal": "グローバル設定を使用",
+    "override": "個別設定で上書き",
+    "collapse": "閉じる"
   }
 }

@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const workflows = sqliteTable("workflows", {
   id: text("id").primaryKey(),
@@ -10,5 +10,11 @@ export const workflows = sqliteTable("workflows", {
     '{"name": "AI Assistant", "personality": "Friendly and helpful"}',
   ),
   createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const globalSettings = sqliteTable("global_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
   updatedAt: text("updated_at").notNull(),
 });

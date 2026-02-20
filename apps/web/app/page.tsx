@@ -8,6 +8,7 @@ import { Workflow } from '@/lib/types';
 import { useTranslation } from '@/stores/localeStore';
 import { toast } from '@/stores/toastStore';
 import UpdateModal from '@/components/ui/UpdateModal';
+import SettingsModal from '@/components/ui/SettingsModal';
 import AnnouncementBanner from '@/components/ui/AnnouncementBanner';
 import {
   useAnnouncementStore,
@@ -32,6 +33,7 @@ export default function HomePage() {
   } | null>(null);
   const updateObjRef = useRef<unknown>(null);
   const [updateDismissed, setUpdateDismissed] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const deleteConfirmTimerRef = useRef<NodeJS.Timeout | null>(null);
   const setAnnouncements = useAnnouncementStore((s) => s.setAnnouncements);
@@ -306,6 +308,18 @@ export default function HomePage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* Global settings */}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="px-3 py-2 rounded-lg text-white/60 text-sm transition-colors hover:bg-white/10"
+              title={t('globalSettings.title')}
+              aria-label={t('globalSettings.title')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+            </button>
             {/* Language switcher */}
             <button
               onClick={() => setLocale(locale === 'ja' ? 'en' : 'ja')}
@@ -587,6 +601,11 @@ export default function HomePage() {
           onClose={() => setUpdateDismissed(true)}
         />
       ) : null}
+
+      {/* Global settings modal */}
+      {showSettings && (
+        <SettingsModal onClose={() => setShowSettings(false)} />
+      )}
     </div>
   );
 }
