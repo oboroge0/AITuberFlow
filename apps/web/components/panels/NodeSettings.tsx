@@ -1834,24 +1834,23 @@ export default function NodeSettings() {
     }
   }, [selectedNode, fetchVoicevoxSpeakers, fetchAnimations, fetchModels, getPluginById, isPluginsLoaded]);
 
-  if (!selectedNode) {
-    return null;
-  }
-
   // Dynamic schema resolution: plugin store first, nodeConfigs fallback
-  const plugin = getPluginById(selectedNode.type);
+  const plugin = getPluginById(selectedNode?.type ?? "");
   const manifestFields = plugin?.config
     ? manifestConfigToNodeFields(plugin.config)
     : [];
-  const fields: NodeField[] =
-    manifestFields.length > 0
+  const fields: NodeField[] = useMemo(() => {
+    if (!selectedNode) return [];
+    return manifestFields.length > 0
       ? manifestFields
       : nodeConfigs[selectedNode.type]?.fields ?? [];
+  }, [selectedNode, manifestFields]);
 
   // Split fields into overridable (have global setting) and normal
   // Classification is based on global mapping existence, not local config value,
   // so typing into an override field doesn't move it between lists.
   const { normalFields, overridableFields } = useMemo(() => {
+    if (!selectedNode) return { normalFields: [], overridableFields: [] };
     const globalMapping = GLOBAL_SETTINGS_MAP[selectedNode.type];
     const normal: NodeField[] = [];
     const overridable: NodeField[] = [];
@@ -1867,7 +1866,11 @@ export default function NodeSettings() {
       }
     }
     return { normalFields: normal, overridableFields: overridable };
-  }, [fields, localConfig, globalSettingsValues, selectedNode.type]);
+  }, [fields, localConfig, globalSettingsValues, selectedNode]);
+
+  if (!selectedNode) {
+    return null;
+  }
 
   const handleChange = (key: string, value: unknown) => {
     const newConfig = { ...localConfig, [key]: value };
