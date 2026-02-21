@@ -23,6 +23,9 @@ interface ClientInfo {
   ws: WSContext<ServerWebSocket<any>>;
 }
 
+/** Maximum allowed WebSocket message size (1 MB). */
+const MAX_WS_MESSAGE_SIZE = 1 * 1024 * 1024;
+
 // ─── Broadcaster ──────────────────────────
 
 export class WSBroadcaster {
@@ -91,16 +94,20 @@ export class WSBroadcaster {
     const { type: _discardedType, ...safePayload } = payloadObj;
     const message = JSON.stringify({ type, ...safePayload });
 
+    const failedClientIds: string[] = [];
     for (const clientId of clientIds) {
       const client = this.clients.get(clientId);
       if (client) {
         try {
           client.ws.send(message);
         } catch {
-          // Client disconnected
-          this.removeClient(clientId);
+          // Client disconnected — defer removal to avoid modifying Set during iteration
+          failedClientIds.push(clientId);
         }
       }
+    }
+    for (const id of failedClientIds) {
+      this.removeClient(id);
     }
   }
 
@@ -182,6 +189,11 @@ let clientCounter = 0;
 
 function parseMessageData(data: WSMessageReceive): WSMessage {
   if (typeof data === "string") {
+    if (data.length > MAX_WS_MESSAGE_SIZE) {
+      throw new Error(
+        `Message too large: ${data.length} bytes (max: ${MAX_WS_MESSAGE_SIZE})`,
+      );
+    }
     return JSON.parse(data) as WSMessage;
   }
 
@@ -190,6 +202,11 @@ function parseMessageData(data: WSMessageReceive): WSMessage {
   }
 
   const bytes = new Uint8Array(data);
+  if (bytes.byteLength > MAX_WS_MESSAGE_SIZE) {
+    throw new Error(
+      `Message too large: ${bytes.byteLength} bytes (max: ${MAX_WS_MESSAGE_SIZE})`,
+    );
+  }
   return JSON.parse(new TextDecoder().decode(bytes)) as WSMessage;
 }
 
@@ -279,7 +296,16 @@ export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
           }
         }
       } catch (err) {
-        console.warn("Failed to parse WebSocket message:", err);
+        const message = err instanceof Error ? err.message : String(err);
+        console.warn("Failed to parse WebSocket message:", message);
+        try {
+          ws.send(JSON.stringify({ type: "error", message }));
+          if (message.startsWith("Message too large")) {
+            ws.close(1009, "Message too large");
+          }
+        } catch {
+          // Client already disconnected
+        }
       }
     },
 

@@ -5,7 +5,7 @@
  */
 
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { db as defaultDb } from "../db/database";
@@ -118,9 +118,7 @@ app.post("/", zValidator("json", createWorkflowBody), async (c) => {
 
 // List workflows
 app.get("/", async (c) => {
-  const rows = await _db.select().from(workflows);
-  // Sort by updatedAt descending
-  rows.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  const rows = await _db.select().from(workflows).orderBy(desc(workflows.updatedAt));
   return c.json(rows.map(workflowToResponse));
 });
 
@@ -135,7 +133,12 @@ app.get("/:id", async (c) => {
 // Update workflow
 app.put("/:id", async (c) => {
   const id = c.req.param("id");
-  const body = await c.req.json();
+  let body;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON in request body" }, 400);
+  }
 
   const [existing] = await _db.select().from(workflows).where(eq(workflows.id, id));
   if (!existing) return c.json({ detail: "Workflow not found" }, 404);
@@ -212,7 +215,12 @@ app.get("/:id/export", async (c) => {
 
 // Import workflow
 app.post("/import", async (c) => {
-  const data = await c.req.json();
+  let data;
+  try {
+    data = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON in request body" }, 400);
+  }
   const id = generateId();
   const now = nowISO();
 
