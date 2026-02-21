@@ -261,6 +261,7 @@ export class WorkflowExecutor {
   private queueProcessors = new Map<string, AbortController>();
   private taskRegistries = new Map<string, TaskRegistry>();
   private vtsWorkflows = new Set<string>();
+  private workflowLocks = new Map<string, Promise<void>>();
 
   // ─── Callbacks ────────────────────
 
@@ -439,6 +440,28 @@ export class WorkflowExecutor {
     return false;
   }
 
+  // ─── Workflow Lock ──────────────
+
+  private async withWorkflowLock<T>(workflowId: string, fn: () => Promise<T>): Promise<T> {
+    // Wait for any existing operation on this workflow to complete
+    while (this.workflowLocks.has(workflowId)) {
+      await this.workflowLocks.get(workflowId);
+    }
+
+    let resolve: () => void;
+    const lock = new Promise<void>((r) => {
+      resolve = r;
+    });
+    this.workflowLocks.set(workflowId, lock);
+
+    try {
+      return await fn();
+    } finally {
+      this.workflowLocks.delete(workflowId);
+      resolve!();
+    }
+  }
+
   // ─── Workflow Start/Stop ──────────
 
   async startWorkflow(
@@ -446,79 +469,95 @@ export class WorkflowExecutor {
     workflowData: WorkflowData,
     startNodeId?: string | null,
   ): Promise<void> {
-    if (this.runningWorkflows.has(workflowId)) {
-      console.log(`Workflow ${workflowId} is already running, restarting...`);
-      await this.stopWorkflow(workflowId);
-    }
+    await this.withWorkflowLock(workflowId, async () => {
+      if (this.runningWorkflows.has(workflowId)) {
+        console.log(`Workflow ${workflowId} is already running, restarting...`);
+        // Preserve callbacks before stop clears them so event forwarding
+        // continues after restart without requiring the WS client to re-join
+        const savedEventCallback = this.eventCallbacks.get(workflowId);
+        const savedLogCallback = this.logCallbacks.get(workflowId);
+        const savedStatusCallback = this.statusCallbacks.get(workflowId);
+        await this.stopWorkflowInternal(workflowId);
+        if (savedEventCallback) this.eventCallbacks.set(workflowId, savedEventCallback);
+        if (savedLogCallback) this.logCallbacks.set(workflowId, savedLogCallback);
+        if (savedStatusCallback) this.statusCallbacks.set(workflowId, savedStatusCallback);
+      }
 
-    // Create event bus
-    const eventBus = new EventBus();
-    await eventBus.start();
-    this.eventBuses.set(workflowId, eventBus);
+      // Create event bus
+      const eventBus = new EventBus();
+      await eventBus.start();
+      this.eventBuses.set(workflowId, eventBus);
 
-    // Create task registry
-    this.taskRegistries.set(workflowId, new TaskRegistry());
+      // Create task registry
+      this.taskRegistries.set(workflowId, new TaskRegistry());
 
-    // Create event queue
-    this.eventQueues.set(workflowId, new EventQueue(100));
+      // Create event queue
+      this.eventQueues.set(workflowId, new EventQueue(100));
 
-    // Check VTube Studio
-    await this.setupVtsIfNeeded(workflowId, workflowData);
+      // Check VTube Studio
+      await this.setupVtsIfNeeded(workflowId, workflowData);
 
-    // Subscribe to events and forward
-    const eventCallback = this.eventCallbacks.get(workflowId);
-    if (eventCallback) {
-      const forwardEvent = async (event: Event) => {
-        if (
-          event.type.startsWith("audio.") ||
-          event.type.startsWith("avatar.") ||
-          event.type === "subtitle"
-        ) {
-          await eventCallback(event);
-        }
+      // Subscribe to events and forward
+      const eventCallback = this.eventCallbacks.get(workflowId);
+      if (eventCallback) {
+        const forwardEvent = async (event: Event) => {
+          if (
+            event.type.startsWith("audio.") ||
+            event.type.startsWith("avatar.") ||
+            event.type === "subtitle"
+          ) {
+            await eventCallback(event);
+          }
 
-        // VTube Studio forwarding
-        if (this.vtsWorkflows.has(workflowId) && vtsClient.isConnected) {
-          if (event.type === "avatar.mouth") {
-            const value = (event.payload.value as number) ?? 0;
-            await vtsClient.setMouthOpen(value);
-          } else if (event.type === "avatar.expression") {
-            const expression = event.payload.expression as string;
-            if (expression) {
-              await vtsClient.triggerExpression(expression);
+          // VTube Studio forwarding
+          if (this.vtsWorkflows.has(workflowId) && vtsClient.isConnected) {
+            if (event.type === "avatar.mouth") {
+              const value = (event.payload.value as number) ?? 0;
+              await vtsClient.setMouthOpen(value);
+            } else if (event.type === "avatar.expression") {
+              const expression = event.payload.expression as string;
+              if (expression) {
+                await vtsClient.triggerExpression(expression);
+              }
             }
           }
-        }
-      };
+        };
 
-      eventBus.subscribe("audio.*", forwardEvent);
-      eventBus.subscribe("avatar.*", forwardEvent);
-      eventBus.subscribe("subtitle", forwardEvent);
-    }
+        eventBus.subscribe("audio.*", forwardEvent);
+        eventBus.subscribe("avatar.*", forwardEvent);
+        eventBus.subscribe("subtitle", forwardEvent);
+      }
 
-    // Filter subgraph if start node specified
-    let data = workflowData;
-    if (startNodeId) {
-      data = this.filterSubgraph(workflowData, startNodeId);
-      console.log(`Filtered workflow to subgraph starting from node: ${startNodeId}`);
-    }
+      // Filter subgraph if start node specified
+      let data = workflowData;
+      if (startNodeId) {
+        data = this.filterSubgraph(workflowData, startNodeId);
+        console.log(`Filtered workflow to subgraph starting from node: ${startNodeId}`);
+      }
 
-    // Track running state
-    this.runningWorkflows.set(workflowId, {
-      status: "running",
-      started_at: new Date(),
-      workflow_data: data,
+      // Track running state
+      this.runningWorkflows.set(workflowId, {
+        status: "running",
+        started_at: new Date(),
+        workflow_data: data,
+      });
+
+      // Start execution in background (non-blocking)
+      this.executeWorkflow(workflowId, data).catch((err) => {
+        console.error("Workflow execution error:", err);
+      });
+
+      console.log(`Started workflow: ${workflowId}`);
     });
-
-    // Start execution in background (non-blocking)
-    this.executeWorkflow(workflowId, data).catch((err) => {
-      console.error("Workflow execution error:", err);
-    });
-
-    console.log(`Started workflow: ${workflowId}`);
   }
 
   async stopWorkflow(workflowId: string): Promise<void> {
+    await this.withWorkflowLock(workflowId, async () => {
+      await this.stopWorkflowInternal(workflowId);
+    });
+  }
+
+  private async stopWorkflowInternal(workflowId: string): Promise<void> {
     if (!this.runningWorkflows.has(workflowId)) return;
 
     // Stop queue processor

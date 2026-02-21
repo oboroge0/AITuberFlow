@@ -110,6 +110,8 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     copySelectedNodes,
     pasteNodes,
     nodeStatuses,
+    reachableNodeIds: reachableNodes,
+    hasStartNode,
   } = useWorkflowStore();
 
   const { nodeDisplayMode, setNodeDisplayMode } = useUIPreferencesStore();
@@ -163,62 +165,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, redo, copySelectedNodes, pasteNodes, onSave]);
 
-  // Calculate which nodes are reachable from Start nodes
-  const { reachableNodes, hasStartNode } = useMemo(() => {
-    // Build adjacency list
-    const adjacency: Record<string, string[]> = {};
-    workflowNodes.forEach((n) => {
-      adjacency[n.id] = [];
-    });
-
-    connections.forEach((conn) => {
-      const fromId = conn.from.nodeId;
-      const toId = conn.to.nodeId;
-      if (fromId && toId && adjacency[fromId]) {
-        adjacency[fromId].push(toId);
-      }
-    });
-
-    // Find Start nodes
-    const startNodes = workflowNodes.filter((n) => n.type === 'start').map((n) => n.id);
-    const hasStart = startNodes.length > 0;
-
-    // If no Start node, all nodes with no incoming connections are entry points
-    let entryPoints: string[];
-    if (hasStart) {
-      entryPoints = startNodes;
-    } else {
-      // Find nodes with no incoming connections
-      const incomingCount: Record<string, number> = {};
-      workflowNodes.forEach((n) => {
-        incomingCount[n.id] = 0;
-      });
-      connections.forEach((conn) => {
-        if (incomingCount[conn.to.nodeId] !== undefined) {
-          incomingCount[conn.to.nodeId]++;
-        }
-      });
-      entryPoints = Object.entries(incomingCount)
-        .filter(([, count]) => count === 0)
-        .map(([id]) => id);
-    }
-
-    // BFS to find all reachable nodes
-    const reachable = new Set<string>();
-    const queue = [...entryPoints];
-    while (queue.length > 0) {
-      const nodeId = queue.shift()!;
-      if (reachable.has(nodeId)) continue;
-      reachable.add(nodeId);
-      (adjacency[nodeId] || []).forEach((neighbor) => {
-        if (!reachable.has(neighbor)) {
-          queue.push(neighbor);
-        }
-      });
-    }
-
-    return { reachableNodes: reachable, hasStartNode: hasStart };
-  }, [workflowNodes, connections]);
+  // Reachable nodes are now computed in the Zustand store (workflowStore)
 
   // Convert workflow nodes to React Flow nodes
   const flowNodes: Node[] = useMemo(
