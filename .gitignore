@@ -9,6 +9,9 @@ build/
 
 # Database
 *.db
+*.db-shm
+*.db-wal
+*.db-journal
 *.sqlite
 *.sqlite3
 
@@ -39,6 +42,10 @@ coverage/
 
 # TypeScript
 *.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
 
 # Misc
 .vercel

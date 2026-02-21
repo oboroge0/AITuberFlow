@@ -290,15 +290,19 @@ git push origin main
 git push origin vX.X.X
 ```
 
-### 5. GitHubリリースノート作成
+### 5. GitHubリリース（CI自動）
 
-- URL: `https://github.com/oboroge0/AITuberFlow/releases/new?tag=vX.X.X`
-- CHANGELOGからコピーして整形
-- 絵文字を追加（✨新機能、🚀改善、🐛修正）
+タグをpushすると、CI（`.github/workflows/release.yml`）が自動的にGitHubリリースを作成する。
+
+- `softprops/action-gh-release` が CHANGELOG.md からリリースノートを抽出して公開
+- デスクトップビルド（`.github/workflows/desktop-build.yml`）もタグpushで自動実行され、成果物がリリースに添付される
+
+**⚠️ `gh release create` で手動リリースを作成しないこと。CIと競合してエラーになる。**
 
 ### 6. 最終確認
 
 - [ ] タグが正しいコミットを指している
 - [ ] マイルストーンのissueがクローズされている
+- [ ] CIのリリースワークフローが成功している
 - [ ] リリースノートが公開されている
-- [ ] ZIPダウンロードで最新のREADMEが含まれている
+- [ ] デスクトップビルドの成果物がリリースに添付されている
