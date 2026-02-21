@@ -1,6 +1,6 @@
 {
   "productName": "AITuberFlow",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "identifier": "com.aituberflow.app",
   "build": {
     "beforeBuildCommand": "",

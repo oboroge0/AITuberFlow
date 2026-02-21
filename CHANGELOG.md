@@ -5,6 +5,21 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
 [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [2.2.3] - 2026-02-22
+
+### 修正
+
+- ワークフロー開始/停止にロック機構を追加し、同時起動の競合を防止 (#98)
+- WebSocketブロードキャスト中のクライアントSet変更による未定義動作を修正 (#99)
+- WebSocketメッセージにサイズ制限（1MB）を追加し、DoS攻撃を防止 (#100)
+- APIルートで不正JSONリクエスト時に400エラーを返すように修正 (#101)
+- ワークフローリスタート時のコールバック消失を修正（イベント転送が停止する問題）
+
+### 改善
+
+- ワークフロー一覧のソートをDB側のORDER BYに移行 (#114)
+- 到達可能ノード計算をZustandストアに移動し、ズーム/パン時の不要な再計算を排除 (#113)
+
 ## [2.2.2] - 2026-02-21
 
 ### 追加
@@ -461,6 +476,10 @@
 - 基本的なワークフローエディタ機能
 - コアプラグインの実装
 
+[2.2.3]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.2.3
+[2.2.2]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.2.2
+[2.2.1]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.2.1
+[2.2.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.2.0
 [2.0.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.0.0
 [1.3.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.3.0
 [1.2.5]: https://github.com/oboroge0/AITuberFlow/releases/tag/v1.2.5
