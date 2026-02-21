@@ -472,7 +472,15 @@ export class WorkflowExecutor {
     await this.withWorkflowLock(workflowId, async () => {
       if (this.runningWorkflows.has(workflowId)) {
         console.log(`Workflow ${workflowId} is already running, restarting...`);
+        // Preserve callbacks before stop clears them so event forwarding
+        // continues after restart without requiring the WS client to re-join
+        const savedEventCallback = this.eventCallbacks.get(workflowId);
+        const savedLogCallback = this.logCallbacks.get(workflowId);
+        const savedStatusCallback = this.statusCallbacks.get(workflowId);
         await this.stopWorkflowInternal(workflowId);
+        if (savedEventCallback) this.eventCallbacks.set(workflowId, savedEventCallback);
+        if (savedLogCallback) this.logCallbacks.set(workflowId, savedLogCallback);
+        if (savedStatusCallback) this.statusCallbacks.set(workflowId, savedStatusCallback);
       }
 
       // Create event bus
