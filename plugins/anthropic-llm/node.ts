@@ -4,7 +4,7 @@
  * Generates text using Anthropic's Claude models.
  */
 
-import { BaseNode, NodeContext } from "@aituber-flow/sdk";
+import { BaseNode, NodeContext, handleLLMError } from "@aituber-flow/sdk";
 import Anthropic from "@anthropic-ai/sdk";
 
 export default class AnthropicLLMNode extends BaseNode {
@@ -33,6 +33,7 @@ export default class AnthropicLLMNode extends BaseNode {
         "warning",
       );
     } else {
+      this.client = new Anthropic({ apiKey: this.apiKey });
       await context.log(`Claude configured: ${this.model}`);
     }
   }
@@ -48,8 +49,8 @@ export default class AnthropicLLMNode extends BaseNode {
       return { response: "" };
     }
 
-    // Auto demo mode when API key is not set
-    if (!this.apiKey) {
+    // Auto demo mode when client is not initialized (no API key)
+    if (!this.client) {
       await context.log("[デモモード] 定型文応答を返します", "info");
       return { response: AnthropicLLMNode.DEMO_RESPONSE };
     }
@@ -57,9 +58,7 @@ export default class AnthropicLLMNode extends BaseNode {
     try {
       await context.log(`Calling Claude API (${this.model})...`);
 
-      const client = new Anthropic({ apiKey: this.apiKey });
-
-      const message = await client.messages.create({
+      const message = await this.client.messages.create({
         model: this.model,
         max_tokens: this.maxTokens,
         system: this.systemPrompt,
@@ -73,13 +72,12 @@ export default class AnthropicLLMNode extends BaseNode {
 
       return { response };
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      await context.log(`Claude API error: ${message}`, "error");
-      return { response: `Error: ${message}` };
+      const result = await handleLLMError(error, "Anthropic", context);
+      return { response: result.response };
     }
   }
 
   async teardown(): Promise<void> {
-    // No cleanup needed
+    this.client = null;
   }
 }

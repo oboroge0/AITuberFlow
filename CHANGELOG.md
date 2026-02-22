@@ -5,6 +5,18 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
 [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [2.2.4] - 2026-02-22
+
+### 追加
+
+- **ノード検索機能（Ctrl+F）** - キャンバス上でノードを名前やタイプで検索し、マッチにナビゲーション。マッチノードはハイライト表示、非マッチは半透明に (#109)
+- **ノードの折りたたみ/展開** - シェブロンボタンまたはダブルクリックでノードをコンパクト表示に。接続は維持され、状態はブラウザに保存 (#112)
+
+### 改善
+
+- **LLMプラグインのエラーハンドリング統一** - OpenAI・Anthropic・Google・Ollamaの4プラグインで共通のエラー分類（接続/レート制限/認証/API）とローカライズされたメッセージを使用 (#106)
+- Anthropic LLMノードのクライアント初期化をsetup()に移動し、execute()毎の再作成を排除
+
 ## [2.2.3] - 2026-02-22
 
 ### 修正
@@ -476,6 +488,7 @@
 - 基本的なワークフローエディタ機能
 - コアプラグインの実装
 
+[2.2.4]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.2.4
 [2.2.3]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.2.3
 [2.2.2]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.2.2
 [2.2.1]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.2.1

@@ -4,7 +4,7 @@
  * Generates text responses using OpenAI's GPT models.
  */
 
-import { BaseNode, NodeContext, createEvent, ErrorCode, getErrorMessage } from "@aituber-flow/sdk";
+import { BaseNode, NodeContext, createEvent, handleLLMError } from "@aituber-flow/sdk";
 import type { Event } from "@aituber-flow/sdk";
 import OpenAI from "openai";
 
@@ -163,34 +163,8 @@ export default class OpenAILLMNode extends BaseNode {
 
       return { response: result };
     } catch (error: unknown) {
-      if (error instanceof OpenAI.APIConnectionError) {
-        const errorMsg = getErrorMessage(ErrorCode.LLM_CONNECTION_FAILED, "ja", {
-          provider: "OpenAI",
-        });
-        await context.log(errorMsg, "error");
-        return { response: "Error: Connection failed" };
-      }
-
-      if (error instanceof OpenAI.RateLimitError) {
-        const errorMsg = getErrorMessage(ErrorCode.LLM_RATE_LIMIT, "ja", {
-          provider: "OpenAI",
-        });
-        await context.log(errorMsg, "error");
-        return { response: "Error: Rate limit exceeded" };
-      }
-
-      if (error instanceof OpenAI.APIError) {
-        const errorMsg = getErrorMessage(ErrorCode.LLM_API_ERROR, "ja", {
-          provider: "OpenAI",
-          error: error.message,
-        });
-        await context.log(errorMsg, "error");
-        return { response: `Error: ${error.message}` };
-      }
-
-      const message = error instanceof Error ? error.message : String(error);
-      await context.log(`Unexpected error: ${message}`, "error");
-      return { response: `Error: ${message}` };
+      const result = await handleLLMError(error, "OpenAI", context);
+      return { response: result.response };
     }
   }
 

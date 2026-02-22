@@ -51,3 +51,7 @@ export {
   getErrorMessage,
   formatErrorWithAction,
 } from "./errors";
+
+// LLM error utilities
+export { handleLLMError, classifyLLMError } from "./llm-utils";
+export type { LLMErrorCategory, LLMErrorResult } from "./llm-utils";

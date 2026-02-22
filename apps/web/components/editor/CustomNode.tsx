@@ -4,7 +4,7 @@ import React, { memo, useState, useRef } from 'react';
 import { Handle, Position, type Node } from '@xyflow/react';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { usePluginStore } from '@/stores/pluginStore';
-import { useUIPreferencesStore, type NodeDisplayMode } from '@/stores/uiPreferencesStore';
+import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 import { useLocaleStore } from '@/stores/localeStore';
 import { type PortDefinition, PORT_TYPE_COLORS } from '@/lib/portTypes';
 import { renderIcon } from '@/lib/icons';
@@ -19,6 +19,8 @@ export interface CustomNodeData extends Record<string, unknown> {
   isReachable?: boolean;  // Whether this node is reachable from Start
   isEntryPoint?: boolean; // Whether this node can start execution (no inputs)
   onPlayClick?: () => void; // Callback when play button is clicked
+  isSearchMatch?: boolean;  // Whether this node matches the current search
+  isSearchDimmed?: boolean; // Whether this node should be dimmed (search active but not matching)
 }
 
 export type CustomNodeType = Node<CustomNodeData>;
@@ -43,14 +45,29 @@ const DEFAULT_BG_COLOR = 'rgba(107, 114, 128, 0.1)';
 const DEFAULT_ICON = 'Box';
 const DEFAULT_STATUS = 'Ready';
 
+// Chevron SVG components
+const ChevronDown = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <polyline points="6 9 12 15 18 9"/>
+  </svg>
+);
+
+const ChevronRight = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <polyline points="9 18 15 12 9 6"/>
+  </svg>
+);
+
 function CustomNode({ id, data, selected }: CustomNodeProps) {
   const { nodeStatuses, selectNode } = useWorkflowStore();
   const { getPluginColor, getPluginBgColor, getPluginIcon, getPluginById } = usePluginStore();
-  const { nodeDisplayMode } = useUIPreferencesStore();
+  const { nodeDisplayMode, collapsedNodeIds, toggleNodeCollapse } = useUIPreferencesStore();
   const { getNodeDesc } = useLocaleStore();
   const [showTooltip, setShowTooltip] = useState(false);
   const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const status = nodeStatuses[id];
+
+  const collapsed = collapsedNodeIds.includes(id);
 
   // Get visual config from plugin store (with fallbacks)
   const plugin = getPluginById(data.type);
@@ -63,6 +80,16 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
   // Check if node is an entry point
   const isEntryPoint = data.isEntryPoint === true;
+
+  // Search highlight styles
+  const searchStyle: React.CSSProperties = {};
+  if (data.isSearchMatch) {
+    searchStyle.boxShadow = `0 0 20px ${config.color}80, 0 0 40px ${config.color}40`;
+    searchStyle.border = `2px solid ${config.color}`;
+  }
+  if (data.isSearchDimmed) {
+    searchStyle.opacity = 0.3;
+  }
 
   // Tooltip show/hide with delay
   const handleMouseEnter = () => {
@@ -82,6 +109,16 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     selectNode(id);
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleNodeCollapse(id);
+  };
+
+  const handleCollapseToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleNodeCollapse(id);
   };
 
   const handlePlayClick = (e: React.MouseEvent) => {
@@ -111,16 +148,21 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   };
 
   // Get dimensions based on display mode
-  const getNodeStyle = () => {
-    const baseStyle = {
+  const getNodeStyle = (): React.CSSProperties => {
+    const baseStyle: React.CSSProperties = {
       background: config.bgColor,
       border: `2px solid ${selected ? config.color : 'rgba(255,255,255,0.1)'}`,
       borderRadius: '12px',
       boxShadow: selected
         ? `0 0 20px ${config.color}40, 0 4px 20px rgba(0,0,0,0.3)`
         : '0 4px 20px rgba(0,0,0,0.2)',
-      transition: 'box-shadow 0.2s, border-color 0.2s',
+      transition: 'box-shadow 0.2s, border-color 0.2s, opacity 0.2s',
+      ...searchStyle,
     };
+
+    if (collapsed) {
+      return { ...baseStyle, padding: '8px 12px', minWidth: '120px' };
+    }
 
     switch (nodeDisplayMode) {
       case 'simple':
@@ -131,6 +173,17 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         return { ...baseStyle, padding: '12px 16px', minWidth: '180px' };
     }
   };
+
+  // Collapse toggle button
+  const CollapseButton = ({ className }: { className?: string }) => (
+    <button
+      onClick={handleCollapseToggle}
+      className={`text-white/40 hover:text-white/80 transition-colors flex-shrink-0 ${className ?? ''}`}
+      title={collapsed ? '展開する' : '折りたたむ'}
+    >
+      {collapsed ? <ChevronRight /> : <ChevronDown />}
+    </button>
+  );
 
   // Play button component
   const PlayButton = () => (
@@ -231,11 +284,100 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     ) : null;
   };
 
+  // ============ COLLAPSED MODE ============
+  if (collapsed) {
+    return (
+      <div
+        onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className="relative"
+        style={getNodeStyle()}
+      >
+        <Tooltip />
+        <PlayButton />
+
+        {/* Input handles (kept for edge connections) */}
+        {data.inputs && data.inputs.length > 0 && (
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 flex flex-col gap-1">
+            {data.inputs.map((input) => (
+              <Handle
+                key={input.id}
+                type="target"
+                position={Position.Left}
+                id={input.id}
+                style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  background: PORT_TYPE_COLORS[input.type] || '#374151',
+                  border: '2px solid #1F2937',
+                  position: 'relative',
+                  opacity: 0.6,
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Output handles (kept for edge connections) */}
+        {data.outputs && data.outputs.length > 0 && (
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 flex flex-col gap-1">
+            {data.outputs.map((output) => (
+              <Handle
+                key={output.id}
+                type="source"
+                position={Position.Right}
+                id={output.id}
+                style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  background: PORT_TYPE_COLORS[output.type] || config.color,
+                  border: '2px solid #1F2937',
+                  position: 'relative',
+                  opacity: 0.6,
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Compact header with collapse toggle */}
+        <div className="flex items-center gap-2">
+          <CollapseButton />
+          <div
+            style={{
+              width: '20px',
+              height: '20px',
+              borderRadius: '4px',
+              background: config.color,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              flexShrink: 0,
+            }}
+          >
+            {config.icon}
+          </div>
+          <span className="font-semibold text-[11px] text-white truncate">
+            {data.label}
+          </span>
+        </div>
+
+        <StatusIndicator />
+      </div>
+    );
+  }
+
   // ============ SIMPLE MODE ============
   if (nodeDisplayMode === 'simple') {
     return (
       <div
         onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         className="relative"
@@ -290,6 +432,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
         {/* Compact header - icon and label only */}
         <div className="flex items-center gap-2">
+          <CollapseButton />
           <div
             style={{
               width: '24px',
@@ -320,6 +463,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     return (
       <div
         onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         className="relative"
@@ -333,6 +477,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           className="flex items-center gap-2 px-3 py-2"
           style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}
         >
+          <CollapseButton />
           <div
             style={{
               width: '24px',
@@ -435,6 +580,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   return (
     <div
       onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className="relative"
@@ -445,6 +591,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
       {/* Header */}
       <div className="flex items-center gap-2 mb-2">
+        <CollapseButton />
         <div
           style={{
             width: '28px',

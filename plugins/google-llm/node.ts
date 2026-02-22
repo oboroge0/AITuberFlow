@@ -4,7 +4,7 @@
  * Generates text using Google's Gemini models.
  */
 
-import { BaseNode, NodeContext } from "@aituber-flow/sdk";
+import { BaseNode, NodeContext, handleLLMError } from "@aituber-flow/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default class GoogleLLMNode extends BaseNode {
@@ -73,9 +73,8 @@ export default class GoogleLLMNode extends BaseNode {
 
       return { response: result };
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      await context.log(`Gemini API error: ${message}`, "error");
-      return { response: `Error: ${message}` };
+      const result = await handleLLMError(error, "Google", context);
+      return { response: result.response };
     }
   }
 
