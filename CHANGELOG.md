@@ -488,6 +488,7 @@
 - 基本的なワークフローエディタ機能
 - コアプラグインの実装
 
+[2.2.4]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.2.4
 [2.2.3]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.2.3
 [2.2.2]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.2.2
 [2.2.1]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.2.1
