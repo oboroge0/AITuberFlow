@@ -26,6 +26,7 @@ import CustomNode, { type CustomNodeData } from './CustomNode';
 import FieldSelectorNode from './FieldSelectorNode';
 import ContextMenu, { type ContextMenuItem } from './ContextMenu';
 import DataPreviewPopup from './DataPreviewPopup';
+import SearchPanel from './SearchPanel';
 import { getNodeTypes, type SidebarNodeType } from './Sidebar';
 import { type PortType, type PortDefinition } from '@/lib/portTypes';
 import { useUIPreferencesStore, type NodeDisplayMode } from '@/stores/uiPreferencesStore';
@@ -114,21 +115,29 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     hasStartNode,
   } = useWorkflowStore();
 
-  const { nodeDisplayMode, setNodeDisplayMode } = useUIPreferencesStore();
+  const { nodeDisplayMode, setNodeDisplayMode, searchVisible, searchQuery } = useUIPreferencesStore();
   const { getPluginColor, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs } = usePluginStore();
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Ignore if typing in an input field
+      const isCtrlOrCmd = event.ctrlKey || event.metaKey;
+
+      // Allow Ctrl+F even when typing in search input
+      if (isCtrlOrCmd && event.key === 'f') {
+        event.preventDefault();
+        const { searchVisible: visible, setSearchVisible: setVisible } = useUIPreferencesStore.getState();
+        setVisible(!visible);
+        return;
+      }
+
+      // Ignore other shortcuts if typing in an input field
       if (
         event.target instanceof HTMLInputElement ||
         event.target instanceof HTMLTextAreaElement
       ) {
         return;
       }
-
-      const isCtrlOrCmd = event.ctrlKey || event.metaKey;
 
       // Ctrl+Z: Undo
       if (isCtrlOrCmd && event.key === 'z' && !event.shiftKey) {
@@ -166,6 +175,20 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
   }, [undo, redo, copySelectedNodes, pasteNodes, onSave]);
 
   // Reachable nodes are now computed in the Zustand store (workflowStore)
+
+  // Compute search match node IDs
+  const searchMatchIds = useMemo(() => {
+    if (!searchVisible || !searchQuery.trim()) return new Set<string>();
+    const query = searchQuery.toLowerCase();
+    return new Set(
+      workflowNodes
+        .filter((node) => {
+          const label = getPluginLabel(node.type).toLowerCase();
+          return label.includes(query) || node.type.toLowerCase().includes(query);
+        })
+        .map((node) => node.id)
+    );
+  }, [searchVisible, searchQuery, workflowNodes, getPluginLabel]);
 
   // Convert workflow nodes to React Flow nodes
   const flowNodes: Node[] = useMemo(
@@ -249,12 +272,14 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
             isReachable,
             isEntryPoint,
             onPlayClick: () => onRunWorkflow?.(node.id),
+            isSearchMatch: searchMatchIds.has(node.id),
+            isSearchDimmed: searchMatchIds.size > 0 && !searchMatchIds.has(node.id),
           } as CustomNodeData,
           selected: node.id === selectedNodeId,
         };
       });
     },
-    [workflowNodes, selectedNodeId, reachableNodes, hasStartNode, onRunWorkflow, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs]
+    [workflowNodes, selectedNodeId, reachableNodes, hasStartNode, onRunWorkflow, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs, searchMatchIds]
   );
 
   // Convert workflow connections to React Flow edges with gradient style
@@ -637,6 +662,9 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
           showInteractive={true}
         />
       </ReactFlow>
+
+      {/* Search Panel */}
+      <SearchPanel />
 
       {/* Display Mode Toggle */}
       <div className="absolute top-4 right-4 flex gap-1 bg-gray-800/95 rounded-lg p-1 border border-white/10 shadow-lg z-10">
