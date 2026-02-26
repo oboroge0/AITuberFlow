@@ -93,22 +93,23 @@ export default class CoeiroinkTTSNode extends BaseNode {
     context: NodeContext,
   ): Promise<Record<string, any>> {
     const text = (inputs.text as string) ?? "";
+    const emptyResult = { audio: "", audioUrl: "", filename: "", duration: 0 };
 
     if (!text) {
       await context.log("No text provided", "warning");
-      return { audio: "", filename: "", duration: 0 };
+      return emptyResult;
     }
 
     // Demo mode: skip TTS if connection is unavailable
     if (this.demoMode && !this.connectionAvailable) {
       const preview = text.length > 30 ? text.slice(0, 30) + "..." : text;
       await context.log(`[デモモード] TTS スキップ: ${preview}`, "info");
-      return { audio: "", filename: "", duration: 0 };
+      return emptyResult;
     }
 
     if (!this.speakerUuid) {
       await context.log("Speaker UUID not configured", "error");
-      return { audio: "", filename: "", duration: 0 };
+      return emptyResult;
     }
 
     try {
@@ -131,7 +132,7 @@ export default class CoeiroinkTTSNode extends BaseNode {
       if (!prosodyResponse.ok) {
         const error = await prosodyResponse.text();
         await context.log(`Prosody estimation failed: ${error}`, "error");
-        return { audio: "" };
+        return emptyResult;
       }
 
       const prosody = await prosodyResponse.json();
@@ -157,7 +158,7 @@ export default class CoeiroinkTTSNode extends BaseNode {
       if (!synthResponse.ok) {
         const error = await synthResponse.text();
         await context.log(`Synthesis failed: ${error}`, "error");
-        return { audio: "" };
+        return emptyResult;
       }
 
       // Save audio file
@@ -188,7 +189,7 @@ export default class CoeiroinkTTSNode extends BaseNode {
       return { audio: filepath, audioUrl, filename, duration };
     } catch (e) {
       await context.log(`COEIROINK error: ${String(e)}`, "error");
-      return { audio: "" };
+      return emptyResult;
     }
   }
 

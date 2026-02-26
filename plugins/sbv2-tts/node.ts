@@ -94,17 +94,18 @@ export default class SBV2TTSNode extends BaseNode {
     context: NodeContext,
   ): Promise<Record<string, any>> {
     const text = (inputs.text as string) ?? "";
+    const emptyResult = { audio: "", audioUrl: "", filename: "", duration: 0 };
 
     if (!text) {
       await context.log("No text provided", "warning");
-      return { audio: "", filename: "", duration: 0 };
+      return emptyResult;
     }
 
     // Demo mode: skip TTS if connection is unavailable
     if (this.demoMode && !this.connectionAvailable) {
       const preview = text.length > 30 ? text.slice(0, 30) + "..." : text;
       await context.log(`[デモモード] TTS スキップ: ${preview}`, "info");
-      return { audio: "", filename: "", duration: 0 };
+      return emptyResult;
     }
 
     try {
@@ -133,7 +134,7 @@ export default class SBV2TTSNode extends BaseNode {
       if (!response.ok) {
         const error = await response.text();
         await context.log(`Synthesis failed: ${error}`, "error");
-        return { audio: "", filename: "", duration: 0 };
+        return emptyResult;
       }
 
       // Save audio file
@@ -165,10 +166,10 @@ export default class SBV2TTSNode extends BaseNode {
     } catch (e) {
       if (e instanceof Error && (e.name === "AbortError" || e.name === "TimeoutError")) {
         await context.log("Style-Bert-VITS2 request timed out", "error");
-        return { audio: "", filename: "", duration: 0 };
+        return emptyResult;
       }
       await context.log(`Style-Bert-VITS2 error: ${String(e)}`, "error");
-      return { audio: "", filename: "", duration: 0 };
+      return emptyResult;
     }
   }
 
