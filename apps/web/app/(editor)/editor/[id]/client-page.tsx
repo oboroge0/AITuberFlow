@@ -18,6 +18,7 @@ import api from '@/lib/api';
 import { DEFAULT_MODEL_URL } from '@/lib/constants';
 import { resolveWorkflowId } from '@/lib/routeParams';
 import { getApiBaseUrl } from '@/lib/runtimeEndpoints';
+import { getErrorMessage, handleSilentError } from '@/lib/errorHandler';
 
 const API_BASE = getApiBaseUrl();
 
@@ -190,7 +191,7 @@ export default function EditorPage() {
         await tauri.invoke('open_overlay_window', { workflowId });
         return;
       } catch (error) {
-        console.error('Failed to open overlay window via Tauri command:', error);
+        handleSilentError(error, 'Failed to open overlay window via Tauri command');
       }
     }
 
@@ -204,7 +205,7 @@ export default function EditorPage() {
       await navigator.clipboard.writeText(url);
       toast.success('OBS用オーバーレイURLをコピーしました');
     } catch (error) {
-      console.error('Failed to copy overlay url:', error);
+      handleSilentError(error, 'Failed to copy overlay URL');
       toast.error('URLコピーに失敗しました');
     }
   }, [workflowId]);
@@ -495,7 +496,7 @@ export default function EditorPage() {
         // Use window.location.href to force a full page reload
         window.location.href = `/editor/${response.data.id}`;
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        const errorMessage = getErrorMessage(err);
         toast.error(`インポートに失敗: ${errorMessage}`);
         addLog({ level: 'error', message: `Import failed: ${errorMessage}` });
       }

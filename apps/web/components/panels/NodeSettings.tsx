@@ -9,6 +9,7 @@ import { manifestConfigToNodeFields, evaluateShowWhen, normalizeOptions } from "
 import { useSettingsStore } from "@/stores/settingsStore";
 import { LLM_MODEL_OPTIONS } from "@/lib/constants";
 import type { NodeField } from "@/lib/types";
+import { handleError, handleSilentError } from "@/lib/errorHandler";
 
 // Prompt section for structured prompt building
 export interface PromptSection {
@@ -1698,7 +1699,7 @@ export default function NodeSettings() {
         setAnimations(response.data.animations);
       }
     } catch (err) {
-      console.error("Failed to fetch animations:", err);
+      handleSilentError(err, "Failed to fetch animations");
     }
   }, []);
 
@@ -1710,7 +1711,7 @@ export default function NodeSettings() {
         setModels(response.data.models);
       }
     } catch (err) {
-      console.error("Failed to fetch models:", err);
+      handleSilentError(err, "Failed to fetch models");
     }
   }, []);
 
@@ -1730,10 +1731,10 @@ export default function NodeSettings() {
           // Refresh the animations list
           fetchAnimations();
         } else if (response.error) {
-          alert(`Upload failed: ${response.error}`);
+          handleError(response.error, "Upload failed");
         }
       } catch (err) {
-        alert("Failed to upload animation file");
+        handleError(err, "Failed to upload animation file");
       } finally {
         setAnimationUploading(false);
       }
@@ -1757,10 +1758,10 @@ export default function NodeSettings() {
           // Refresh the models list
           fetchModels();
         } else if (response.error) {
-          alert(`Upload failed: ${response.error}`);
+          handleError(response.error, "Upload failed");
         }
       } catch (err) {
-        alert("Failed to upload model file");
+        handleError(err, "Failed to upload model file");
       } finally {
         setModelUploading(false);
       }
@@ -1776,10 +1777,10 @@ export default function NodeSettings() {
         if (response.data) {
           return response.data.url;
         } else if (response.error) {
-          alert(`Upload failed: ${response.error}`);
+          handleError(response.error, "Upload failed");
         }
       } catch (err) {
-        alert("Failed to upload image");
+        handleError(err, "Failed to upload image");
       }
       return null;
     },

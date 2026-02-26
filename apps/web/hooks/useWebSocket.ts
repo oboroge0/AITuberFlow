@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { AvatarState } from '@/components/avatar';
 import { getApiBaseUrl, getWsBaseUrl } from '@/lib/runtimeEndpoints';
+import { getErrorMessage } from '@/lib/errorHandler';
 
 const WS_URL = getWsBaseUrl();
 const API_URL = getApiBaseUrl();
@@ -205,7 +206,7 @@ export function useWebSocket(workflowId: string | null) {
               console.error('Failed to play audio:', err);
               addLog({
                 level: 'warning',
-                message: `Audio playback failed: ${err.message}`,
+                message: `Audio playback failed: ${getErrorMessage(err)}`,
               });
             });
           }

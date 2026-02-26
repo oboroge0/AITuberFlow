@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
+import { getErrorMessage } from '@/lib/errorHandler';
 
 interface SettingsStore {
   settings: Record<string, string>;
@@ -24,7 +25,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         set({ loaded: true, error: res.error || 'Failed to fetch settings' });
       }
     } catch (e) {
-      set({ loaded: true, error: e instanceof Error ? e.message : 'Failed to fetch settings' });
+      set({ loaded: true, error: getErrorMessage(e, 'Failed to fetch settings') });
     }
   },
 

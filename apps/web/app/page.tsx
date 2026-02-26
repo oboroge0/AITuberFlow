@@ -7,6 +7,7 @@ import api, { TemplateSummary, WorkflowExport } from '@/lib/api';
 import { Workflow } from '@/lib/types';
 import { useTranslation } from '@/stores/localeStore';
 import { toast } from '@/stores/toastStore';
+import { getErrorMessage } from '@/lib/errorHandler';
 import UpdateModal from '@/components/ui/UpdateModal';
 import SettingsModal from '@/components/ui/SettingsModal';
 import AnnouncementBanner from '@/components/ui/AnnouncementBanner';
@@ -200,7 +201,7 @@ export default function HomePage() {
           });
           toast.success(`保存しました: ${String(savedPath)}`);
         } catch (invokeError) {
-          setError(invokeError instanceof Error ? invokeError.message : '保存に失敗しました');
+          setError(getErrorMessage(invokeError, '保存に失敗しました'));
         }
         return;
       }
@@ -250,7 +251,7 @@ export default function HomePage() {
         setError(response.error);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid JSON file');
+      setError(getErrorMessage(err, 'Invalid JSON file'));
     }
 
     if (fileInputRef.current) {
