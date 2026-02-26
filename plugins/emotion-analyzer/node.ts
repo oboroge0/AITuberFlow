@@ -105,7 +105,7 @@ export default class EmotionAnalyzerNode extends BaseNode {
   async setup(config: Record<string, any>, context: NodeContext): Promise<void> {
     this.method = config.method ?? "llm";
     this.language = config.language ?? "ja";
-    this.emitEvents = config.emit_events ?? true;
+    this.emitEvents = config.emitEvents ?? true;
 
     // Load expressions (use defaults if empty)
     const expressionsConfig: Expression[] = config.expressions ?? [];
@@ -116,7 +116,7 @@ export default class EmotionAnalyzerNode extends BaseNode {
     }
 
     // Load custom mappings for rule-based
-    const customMappingsStr: string = config.custom_mappings ?? "{}";
+    const customMappingsStr: string = config.customMappings ?? "{}";
     try {
       this.customMappings = customMappingsStr ? JSON.parse(customMappingsStr) : {};
     } catch {
@@ -125,9 +125,9 @@ export default class EmotionAnalyzerNode extends BaseNode {
     }
 
     // LLM settings
-    this.llmProvider = config.llm_provider ?? "openai";
-    this.llmApiKey = config.llm_api_key ?? "";
-    this.llmModel = config.llm_model ?? "gpt-4o-mini";
+    this.llmProvider = config.llmProvider ?? "openai";
+    this.llmApiKey = config.llmApiKey ?? "";
+    this.llmModel = config.llmModel ?? "gpt-4o-mini";
 
     const exprIds = this.expressions.map((e) => e.id ?? e.label ?? "unknown");
     await context.log(`Emotion Analyzer initialized with expressions: ${JSON.stringify(exprIds)}`);

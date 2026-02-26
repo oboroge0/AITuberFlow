@@ -37,7 +37,7 @@ export default class OBSSceneSwitchNode extends BaseNode {
     this.host = config.host ?? "localhost";
     this.port = config.port ?? 4455;
     this.password = config.password ?? "";
-    this.sceneName = config.scene_name ?? "";
+    this.sceneName = config.sceneName ?? "";
 
     await context.log(`OBS Scene Switch configured: ${this.host}:${this.port}`);
 
@@ -58,7 +58,7 @@ export default class OBSSceneSwitchNode extends BaseNode {
     context: NodeContext,
   ): Promise<Record<string, any>> {
     if (!OBS_AVAILABLE) {
-      return { success: false, current_scene: "", scenes: [] };
+      return { success: false, currentScene: "", scenes: [] };
     }
 
     if (!this.client) {
@@ -69,16 +69,16 @@ export default class OBSSceneSwitchNode extends BaseNode {
         await this.client.connect(url, this.password || undefined);
       } catch (e) {
         await context.log(`Failed to connect to OBS: ${e}`, "error");
-        return { success: false, current_scene: "", scenes: [] };
+        return { success: false, currentScene: "", scenes: [] };
       }
     }
 
     // Get target scene name (input overrides config)
-    const targetScene: string = inputs.scene_name ?? this.sceneName;
+    const targetScene: string = inputs.sceneName ?? this.sceneName;
 
     if (!targetScene) {
       await context.log("No scene name specified", "warning");
-      return { success: false, current_scene: "", scenes: [] };
+      return { success: false, currentScene: "", scenes: [] };
     }
 
     try {
@@ -94,7 +94,7 @@ export default class OBSSceneSwitchNode extends BaseNode {
       const current = await this.client.call("GetCurrentProgramScene");
       const currentScene: string = current.currentProgramSceneName;
 
-      return { success: true, current_scene: currentScene, scenes };
+      return { success: true, currentScene: currentScene, scenes };
     } catch (e) {
       await context.log(`Failed to switch scene: ${e}`, "error");
 
@@ -105,11 +105,11 @@ export default class OBSSceneSwitchNode extends BaseNode {
         const current = await this.client.call("GetCurrentProgramScene");
         return {
           success: false,
-          current_scene: current.currentProgramSceneName,
+          currentScene: current.currentProgramSceneName,
           scenes,
         };
       } catch {
-        return { success: false, current_scene: "", scenes: [] };
+        return { success: false, currentScene: "", scenes: [] };
       }
     }
   }

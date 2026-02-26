@@ -152,22 +152,22 @@ export default function OverlayPage() {
           if (avatarNode?.config) {
             // Parse VTube Studio expression map if it's a string
             let expressionMap: Record<string, string> | undefined;
-            if (avatarNode.config.vtube_expression_map) {
+            if (avatarNode.config.vtubeExpressionMap) {
               try {
-                expressionMap = typeof avatarNode.config.vtube_expression_map === 'string'
-                  ? JSON.parse(avatarNode.config.vtube_expression_map)
-                  : avatarNode.config.vtube_expression_map;
+                expressionMap = typeof avatarNode.config.vtubeExpressionMap === 'string'
+                  ? JSON.parse(avatarNode.config.vtubeExpressionMap)
+                  : avatarNode.config.vtubeExpressionMap;
               } catch {
-                console.warn('Failed to parse vtube_expression_map');
+                console.warn('Failed to parse vtubeExpressionMap');
               }
             }
 
             setAvatarConfig({
               renderer: avatarNode.config.renderer || 'vrm',
-              modelUrl: avatarNode.config.model_url,
-              animationUrl: avatarNode.config.idle_animation,
-              vtubePort: avatarNode.config.vtube_port || 8001,
-              vtubeMouthParam: avatarNode.config.vtube_mouth_param,
+              modelUrl: avatarNode.config.modelUrl,
+              animationUrl: avatarNode.config.idleAnimation,
+              vtubePort: avatarNode.config.vtubePort || 8001,
+              vtubeMouthParam: avatarNode.config.vtubeMouthParam,
               vtubeExpressionMap: expressionMap,
             });
           }
@@ -214,7 +214,7 @@ export default function OverlayPage() {
             break;
 
           case 'avatar.motion': {
-            const motionUrl = rest.motion_url || rest.motion;
+            const motionUrl = rest.motionUrl || rest.motion;
             if (motionUrl) {
               setAvatarState((prev) => ({ ...prev, motion: motionUrl }));
             }
@@ -226,24 +226,24 @@ export default function OverlayPage() {
             break;
 
           case 'avatar.update': {
-            if (rest.renderer || rest.model_url || rest.idle_animation || rest.vtube_port || rest.vtube_mouth_param || rest.vtube_expression_map) {
+            if (rest.renderer || rest.modelUrl || rest.idleAnimation || rest.vtubePort || rest.vtubeMouthParam || rest.vtubeExpressionMap) {
               let expressionMap: Record<string, string> | undefined;
-              if (rest.vtube_expression_map) {
+              if (rest.vtubeExpressionMap) {
                 try {
-                  expressionMap = typeof rest.vtube_expression_map === 'string'
-                    ? JSON.parse(rest.vtube_expression_map)
-                    : rest.vtube_expression_map;
+                  expressionMap = typeof rest.vtubeExpressionMap === 'string'
+                    ? JSON.parse(rest.vtubeExpressionMap)
+                    : rest.vtubeExpressionMap;
                 } catch {
-                  console.warn('Failed to parse vtube_expression_map');
+                  console.warn('Failed to parse vtubeExpressionMap');
                 }
               }
 
               setAvatarConfig((prev) => ({
                 renderer: rest.renderer || prev.renderer,
-                modelUrl: rest.model_url || prev.modelUrl,
-                animationUrl: rest.idle_animation || prev.animationUrl,
-                vtubePort: rest.vtube_port || prev.vtubePort,
-                vtubeMouthParam: rest.vtube_mouth_param || prev.vtubeMouthParam,
+                modelUrl: rest.modelUrl || prev.modelUrl,
+                animationUrl: rest.idleAnimation || prev.animationUrl,
+                vtubePort: rest.vtubePort || prev.vtubePort,
+                vtubeMouthParam: rest.vtubeMouthParam || prev.vtubeMouthParam,
                 vtubeExpressionMap: expressionMap || prev.vtubeExpressionMap,
               }));
             }

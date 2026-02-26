@@ -39,8 +39,8 @@ export default class OBSSourceToggleNode extends BaseNode {
     this.host = config.host ?? "localhost";
     this.port = config.port ?? 4455;
     this.password = config.password ?? "";
-    this.sceneName = config.scene_name ?? "";
-    this.sourceName = config.source_name ?? "";
+    this.sceneName = config.sceneName ?? "";
+    this.sourceName = config.sourceName ?? "";
     this.action = config.action ?? "toggle";
 
     await context.log(`OBS Source Toggle configured: ${this.sourceName} (${this.action})`);
@@ -62,7 +62,7 @@ export default class OBSSourceToggleNode extends BaseNode {
     context: NodeContext,
   ): Promise<Record<string, any>> {
     if (!OBS_AVAILABLE) {
-      return { success: false, visible: false, source_name: this.sourceName };
+      return { success: false, visible: false, sourceName: this.sourceName };
     }
 
     if (!this.client) {
@@ -73,13 +73,13 @@ export default class OBSSourceToggleNode extends BaseNode {
         await this.client.connect(url, this.password || undefined);
       } catch (e) {
         await context.log(`Failed to connect to OBS: ${e}`, "error");
-        return { success: false, visible: false, source_name: this.sourceName };
+        return { success: false, visible: false, sourceName: this.sourceName };
       }
     }
 
     if (!this.sourceName) {
       await context.log("No source name specified", "warning");
-      return { success: false, visible: false, source_name: "" };
+      return { success: false, visible: false, sourceName: "" };
     }
 
     try {
@@ -98,7 +98,7 @@ export default class OBSSourceToggleNode extends BaseNode {
           `Source '${this.sourceName}' not found in scene '${sceneName}'`,
           "error",
         );
-        return { success: false, visible: false, source_name: this.sourceName };
+        return { success: false, visible: false, sourceName: this.sourceName };
       }
 
       // Get current visibility
@@ -134,10 +134,10 @@ export default class OBSSourceToggleNode extends BaseNode {
       const actionWord = targetVisible ? "shown" : "hidden";
       await context.log(`Source '${this.sourceName}' ${actionWord}`);
 
-      return { success: true, visible: targetVisible, source_name: this.sourceName };
+      return { success: true, visible: targetVisible, sourceName: this.sourceName };
     } catch (e) {
       await context.log(`Failed to toggle source: ${e}`, "error");
-      return { success: false, visible: false, source_name: this.sourceName };
+      return { success: false, visible: false, sourceName: this.sourceName };
     }
   }
 

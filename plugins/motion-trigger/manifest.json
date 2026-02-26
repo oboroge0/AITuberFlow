@@ -37,7 +37,7 @@
         "description": "The expression intensity"
       },
       {
-        "id": "motion_url",
+        "id": "motionUrl",
         "type": "string",
         "description": "URL/path to the motion FBX file"
       },
@@ -69,7 +69,7 @@
       "description": "Intensity of the expression (0.0 - 1.0)",
       "default": 0.8
     },
-    "motion_url": {
+    "motionUrl": {
       "type": "animation-file",
       "label": "Motion Animation",
       "description": "Path to Mixamo FBX animation file (e.g., /animations/wave.fbx)",
@@ -82,7 +82,7 @@
       "description": "Motion/animation name to trigger (use motion_url instead)",
       "default": ""
     },
-    "emit_events": {
+    "emitEvents": {
       "type": "boolean",
       "label": "Emit Avatar Events",
       "description": "Emit avatar.expression and avatar.motion events via WebSocket",

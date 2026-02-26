@@ -220,7 +220,7 @@ export function useWebSocket(workflowId: string | null) {
           break;
 
         case 'avatar.motion': {
-          const motionUrl = rest.motion_url || rest.motion;
+          const motionUrl = rest.motionUrl || rest.motion;
           if (motionUrl) {
             setAvatarState((prev) => ({ ...prev, motion: motionUrl }));
           }

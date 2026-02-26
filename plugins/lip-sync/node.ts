@@ -18,8 +18,8 @@ export default class LipSyncNode extends BaseNode {
     this.sensitivity = Number(config.sensitivity ?? 5.0);
     this.smoothing = Number(config.smoothing ?? 0.3);
     this.threshold = Number(config.threshold ?? 0.02);
-    this.emitRealtime = config.emit_realtime ?? true;
-    this.frameRate = Number(config.frame_rate ?? 30);
+    this.emitRealtime = config.emitRealtime ?? true;
+    this.frameRate = Number(config.frameRate ?? 30);
   }
 
   async execute(
@@ -49,7 +49,7 @@ export default class LipSyncNode extends BaseNode {
 
     if (!audio && !audioUrl) {
       await context.log("No audio input provided", "warning");
-      return { mouth_values: [], duration: 0.0, audio: "" };
+      return { mouthValues: [], duration: 0.0, audio: "" };
     }
 
     // If audioUrl is provided, load the audio from file
@@ -59,7 +59,7 @@ export default class LipSyncNode extends BaseNode {
     }
 
     if (!audio) {
-      return { mouth_values: [], duration: 0.0, audio: originalPath ?? "" };
+      return { mouthValues: [], duration: 0.0, audio: originalPath ?? "" };
     }
 
     // Analyze audio
@@ -69,7 +69,7 @@ export default class LipSyncNode extends BaseNode {
       [mouthValues, duration] = this.analyzeAudio(audio);
     } catch (e) {
       await context.log(`Error analyzing audio: ${e}`, "error");
-      return { mouth_values: [], duration: 0.0, audio: originalPath ?? "" };
+      return { mouthValues: [], duration: 0.0, audio: originalPath ?? "" };
     }
 
     await context.log(
@@ -84,7 +84,7 @@ export default class LipSyncNode extends BaseNode {
     }
 
     return {
-      mouth_values: mouthValues,
+      mouthValues,
       duration,
       audio: originalPath ?? "",
     };

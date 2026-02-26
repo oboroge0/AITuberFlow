@@ -308,11 +308,11 @@ export class WorkflowExecutor {
 
     if (avatarConfig.renderer !== "vtube-studio") return;
 
-    const port = (avatarConfig.vtube_port as number) ?? 8001;
-    const mouthParam = (avatarConfig.vtube_mouth_param as string) ?? "MouthOpen";
+    const port = (avatarConfig.vtubePort as number) ?? 8001;
+    const mouthParam = (avatarConfig.vtubeMouthParam as string) ?? "MouthOpen";
 
     let expressionMap: Record<string, string> | undefined;
-    const rawMap = avatarConfig.vtube_expression_map;
+    const rawMap = avatarConfig.vtubeExpressionMap;
     if (rawMap) {
       try {
         expressionMap = typeof rawMap === "string" ? JSON.parse(rawMap) : rawMap;
