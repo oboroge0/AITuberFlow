@@ -132,6 +132,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const getStatusText = () => {
     if (status?.status === 'running') return 'Processing...';
     if (status?.status === 'error') return 'Error occurred';
+    if (status?.status === 'warning') return 'Warning';
     if (status?.status === 'completed') return 'Completed';
 
     // Show config-based status
@@ -205,10 +206,11 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     ) : null
   );
 
-  // Error badge state for showing error details on hover
+  // Error/warning badge state for showing details on hover
   const [showErrorTooltip, setShowErrorTooltip] = useState(false);
+  const [showWarningTooltip, setShowWarningTooltip] = useState(false);
 
-  // Status indicator component with enhanced error badge
+  // Status indicator component with enhanced error/warning badge
   const StatusIndicator = () => (
     <>
       {status?.status === 'running' && (
@@ -219,6 +221,42 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       {status?.status === 'completed' && (
         <div className="absolute -top-1 -right-1">
           <span className="w-3 h-3 rounded-full bg-green-400 block" />
+        </div>
+      )}
+      {status?.status === 'warning' && (
+        <div
+          className="absolute -top-2 -right-2"
+          onMouseEnter={() => setShowWarningTooltip(true)}
+          onMouseLeave={() => setShowWarningTooltip(false)}
+        >
+          {/* Warning badge with exclamation mark */}
+          <div
+            className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center cursor-help"
+            style={{
+              border: '2px solid #1F2937',
+              boxShadow: '0 2px 8px rgba(245, 158, 11, 0.5)',
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <circle cx="12" cy="16" r="1.5" fill="white" />
+            </svg>
+          </div>
+
+          {/* Warning tooltip */}
+          {showWarningTooltip && status?.data?.validationIssue && (
+            <div
+              className="absolute right-0 top-full mt-1 z-50 pointer-events-none"
+              style={{ minWidth: '200px', maxWidth: '300px' }}
+            >
+              <div className="bg-amber-900/95 backdrop-blur-sm border border-amber-500/50 rounded-lg p-2 shadow-xl">
+                <div className="text-[10px] font-semibold text-amber-200 mb-1">Warning</div>
+                <div className="text-[11px] text-white/90 leading-relaxed break-words">
+                  {status.data.validationIssue}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
       {status?.status === 'error' && (
@@ -242,7 +280,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           </div>
 
           {/* Error tooltip */}
-          {showErrorTooltip && status?.data?.error && (
+          {showErrorTooltip && (status?.data?.error || status?.data?.validationIssue) && (
             <div
               className="absolute right-0 top-full mt-1 z-50 pointer-events-none"
               style={{ minWidth: '200px', maxWidth: '300px' }}
@@ -250,7 +288,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               <div className="bg-red-900/95 backdrop-blur-sm border border-red-500/50 rounded-lg p-2 shadow-xl">
                 <div className="text-[10px] font-semibold text-red-200 mb-1">Error</div>
                 <div className="text-[11px] text-white/90 leading-relaxed break-words">
-                  {status.data.error}
+                  {status.data.error || status.data.validationIssue}
                 </div>
               </div>
             </div>

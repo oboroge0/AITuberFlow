@@ -373,6 +373,14 @@ export default function EditorPage() {
       connections: currentData.connections,
     });
 
+    if (validationResponse.error) {
+      toast.warning(`バリデーションをスキップしました: ${validationResponse.error}`);
+      addLog({
+        level: 'warning',
+        message: `バリデーションAPI呼び出しに失敗しました: ${validationResponse.error}`,
+      });
+    }
+
     if (validationResponse.data) {
       const { errors, warnings } = validationResponse.data;
 
@@ -388,7 +396,7 @@ export default function EditorPage() {
 
       // Highlight nodes with issues
       for (const issue of [...errors, ...warnings]) {
-        setNodeStatus(issue.nodeId, issue.level === 'error' ? 'error' : 'idle', {
+        setNodeStatus(issue.nodeId, issue.level === 'error' ? 'error' : 'warning', {
           validationIssue: issue.message,
         });
       }

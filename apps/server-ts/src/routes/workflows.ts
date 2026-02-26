@@ -246,20 +246,32 @@ app.post("/import", async (c) => {
 });
 
 // Validate workflow before execution
+const validateWorkflowBody = z
+  .object({
+    nodes: z.array(z.record(z.string(), z.unknown())).optional(),
+    connections: z.array(z.record(z.string(), z.unknown())).optional(),
+  })
+  .optional();
+
 app.post("/:id/validate", async (c) => {
   const id = c.req.param("id");
   const [existing] = await _db.select().from(workflows).where(eq(workflows.id, id));
   if (!existing) return c.json({ detail: "Workflow not found" }, 404);
 
-  let body: any = {};
+  let body: z.infer<typeof validateWorkflowBody> = {};
   try {
-    body = await c.req.json();
+    const rawBody = await c.req.json();
+    const parsed = validateWorkflowBody.safeParse(rawBody);
+    if (!parsed.success) {
+      return c.json({ error: "Invalid request body", details: parsed.error.format() }, 400);
+    }
+    body = parsed.data ?? {};
   } catch {
     // No body provided - use saved workflow data
   }
 
-  const nodes = body.nodes ?? JSON.parse(existing.nodesJson || "[]");
-  const connections = body.connections ?? JSON.parse(existing.connectionsJson || "[]");
+  const nodes = body?.nodes ?? JSON.parse(existing.nodesJson || "[]");
+  const connections = body?.connections ?? JSON.parse(existing.connectionsJson || "[]");
 
   const issues = await validateWorkflow({ nodes, connections });
   const errors = issues.filter((i) => i.level === "error");

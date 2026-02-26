@@ -192,7 +192,7 @@ export interface ExecutionLog {
 
 export interface NodeStatus {
   nodeId: string;
-  status: 'idle' | 'running' | 'completed' | 'error';
+  status: 'idle' | 'running' | 'completed' | 'error' | 'warning';
   data?: any;
 }
 

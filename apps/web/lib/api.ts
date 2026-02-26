@@ -307,19 +307,6 @@ export interface AnimationInfo {
   type: string;
 }
 
-export interface ModelUploadResult {
-  success: boolean;
-  filename: string;
-  url: string;
-  size: number;
-}
-
-export interface ModelInfo {
-  filename: string;
-  url: string;
-  size: number;
-}
-
 export interface ValidationIssue {
   nodeId: string;
   nodeName: string;

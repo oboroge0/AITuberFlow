@@ -139,12 +139,13 @@ function loadGlobalSettings(): Record<string, string> {
 // ─── Validation Functions ────────────────────────────────────────
 
 /**
- * Check required config fields that are not set on nodes.
+ * Core logic for checking required config fields.
+ * Shared by both async and sync validation paths.
  */
-async function checkRequiredConfig(
+function checkRequiredConfigCore(
   nodes: NodeData[],
   manifests: Map<string, PluginManifest | null>,
-): Promise<ValidationIssue[]> {
+): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   for (const node of nodes) {
@@ -170,6 +171,16 @@ async function checkRequiredConfig(
   }
 
   return issues;
+}
+
+/**
+ * Check required config fields that are not set on nodes.
+ */
+async function checkRequiredConfig(
+  nodes: NodeData[],
+  manifests: Map<string, PluginManifest | null>,
+): Promise<ValidationIssue[]> {
+  return checkRequiredConfigCore(nodes, manifests);
 }
 
 /**
@@ -266,8 +277,16 @@ function checkUnreachableNodes(
   }
 
   if (entryPoints.length === 0) {
-    // No entry points at all - all nodes are unreachable
-    return [];
+    // No entry points at all - warn the user
+    return [
+      {
+        nodeId: nodes[0].id,
+        nodeName: "Workflow",
+        level: "warning",
+        message:
+          "エントリーポイントが見つかりません。Startノードまたはソースノードを追加してください",
+      },
+    ];
   }
 
   // BFS to find reachable nodes
@@ -477,28 +496,8 @@ export function validateWorkflowSync(
 
   const issues: ValidationIssue[] = [];
 
-  // 1. Required config fields (sync version)
-  for (const node of nodes) {
-    const manifest = manifests.get(node.type);
-    if (!manifest?.config) continue;
-
-    for (const [key, fieldDef] of Object.entries(manifest.config)) {
-      if (!fieldDef.required) continue;
-
-      const value = node.config?.[key];
-      const isEmpty =
-        value === undefined || value === null || value === "";
-
-      if (isEmpty) {
-        issues.push({
-          nodeId: node.id,
-          nodeName: manifest.name || node.type,
-          level: "error",
-          message: `必須フィールド「${fieldDef.label || key}」が設定されていません`,
-        });
-      }
-    }
-  }
+  // 1. Required config fields (using shared core logic)
+  issues.push(...checkRequiredConfigCore(nodes, manifests));
 
   // 2. Unconnected required input ports
   issues.push(...checkUnconnectedInputs(nodes, connections, manifests));
