@@ -4,7 +4,7 @@
  * Generates text using Ollama local LLM server.
  */
 
-import { BaseNode, NodeContext, handleLLMError } from "@aituber-flow/sdk";
+import { BaseNode, NodeContext, createEvent, handleLLMError } from "@aituber-flow/sdk";
 
 interface OllamaGenerateResponse {
   response: string;
@@ -111,6 +111,15 @@ export default class OllamaLLMNode extends BaseNode {
       const data = (await response.json()) as OllamaGenerateResponse;
       const result = data.response ?? "";
       await context.log(`Response received (${result.length} chars)`);
+
+      // Emit event for response generated
+      await context.emitEvent(
+        createEvent("response.generated", {
+          text: result,
+          model: this.model,
+        }),
+      );
+
       return { response: result };
     } catch (error: unknown) {
       const result = await handleLLMError(error, "Ollama", context);

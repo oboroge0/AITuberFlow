@@ -146,18 +146,22 @@ export default class SBV2TTSNode extends BaseNode {
 
       const duration = getWavDuration(audioData);
 
-      await context.log(`Audio generated: ${filename}`);
+      const audioUrl = `/api/integrations/audio/${filename}`;
+
+      await context.log(`Audio generated: ${duration.toFixed(2)}s`);
 
       // Emit audio event
       await context.emitEvent(
         createEvent("audio.generated", {
+          audio: filepath,
+          audioUrl,
           filename,
-          text,
           duration,
+          text,
         }),
       );
 
-      return { audio: filepath, filename, duration };
+      return { audio: filepath, audioUrl, filename, duration };
     } catch (e) {
       if (e instanceof Error && (e.name === "AbortError" || e.name === "TimeoutError")) {
         await context.log("Style-Bert-VITS2 request timed out", "error");

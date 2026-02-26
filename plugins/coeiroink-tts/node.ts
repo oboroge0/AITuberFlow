@@ -170,18 +170,22 @@ export default class CoeiroinkTTSNode extends BaseNode {
 
       const duration = getWavDuration(audioData);
 
-      await context.log(`Audio generated: ${filename}`);
+      const audioUrl = `/api/integrations/audio/${filename}`;
+
+      await context.log(`Audio generated: ${duration.toFixed(2)}s`);
 
       // Emit audio event
       await context.emitEvent(
         createEvent("audio.generated", {
+          audio: filepath,
+          audioUrl,
           filename,
-          text,
           duration,
+          text,
         }),
       );
 
-      return { audio: filepath, filename, duration };
+      return { audio: filepath, audioUrl, filename, duration };
     } catch (e) {
       await context.log(`COEIROINK error: ${String(e)}`, "error");
       return { audio: "" };

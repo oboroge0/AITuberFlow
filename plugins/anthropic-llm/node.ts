@@ -4,7 +4,7 @@
  * Generates text using Anthropic's Claude models.
  */
 
-import { BaseNode, NodeContext, handleLLMError } from "@aituber-flow/sdk";
+import { BaseNode, NodeContext, createEvent, handleLLMError } from "@aituber-flow/sdk";
 import Anthropic from "@anthropic-ai/sdk";
 
 export default class AnthropicLLMNode extends BaseNode {
@@ -69,6 +69,14 @@ export default class AnthropicLLMNode extends BaseNode {
       const response =
         firstBlock.type === "text" ? firstBlock.text : "";
       await context.log(`Response received (${response.length} chars)`);
+
+      // Emit event for response generated
+      await context.emitEvent(
+        createEvent("response.generated", {
+          text: response,
+          model: this.model,
+        }),
+      );
 
       return { response };
     } catch (error: unknown) {
