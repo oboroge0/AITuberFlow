@@ -79,7 +79,7 @@
     "motion": {
       "type": "string",
       "label": "Motion Name (Legacy)",
-      "description": "Motion/animation name to trigger (use motion_url instead)",
+      "description": "Motion/animation name to trigger (use motionUrl instead)",
       "default": ""
     },
     "emitEvents": {

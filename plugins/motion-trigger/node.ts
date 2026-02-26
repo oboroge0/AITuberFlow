@@ -2,7 +2,7 @@
  * Motion Trigger Node - Trigger avatar expressions and motions
  *
  * Designed to output to Avatar Controller for centralized avatar control.
- * Can also emit events directly if emit_events is enabled.
+ * Can also emit events directly if emitEvents is enabled.
  */
 
 import { BaseNode, NodeContext, createEvent } from "@aituber-flow/sdk";
@@ -17,9 +17,9 @@ export default class MotionTriggerNode extends BaseNode {
   async setup(config: Record<string, any>, context: NodeContext): Promise<void> {
     this.expression = config.expression ?? "";
     this.intensity = Number(config.intensity ?? 0.8);
-    this.motionUrl = config.motionUrl ?? "";
+    this.motionUrl = config.motionUrl ?? config.motion_url ?? "";
     this.motion = config.motion ?? ""; // Legacy support
-    this.emitEvents = config.emitEvents ?? true;
+    this.emitEvents = config.emitEvents ?? config.emit_events ?? true;
 
     const motionDesc = this.motionUrl || this.motion || "none";
     await context.log(
@@ -57,7 +57,7 @@ export default class MotionTriggerNode extends BaseNode {
         );
       }
 
-      // Emit motion event if configured (motion_url takes priority)
+      // Emit motion event if configured (motionUrl takes priority)
       if (this.motionUrl) {
         await context.emitEvent(
           createEvent("avatar.motion", { motionUrl: this.motionUrl }),

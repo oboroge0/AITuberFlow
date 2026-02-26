@@ -14,12 +14,12 @@ import { BaseNode, NodeContext, createEvent } from "@aituber-flow/sdk";
 export default class AvatarConfigurationNode extends BaseNode {
   async setup(config: Record<string, any>, context: NodeContext): Promise<void> {
     const renderer = config.renderer ?? "vrm";
-    const modelUrl = config.modelUrl ?? "/models/avatar.vrm";
-    const idleAnimation = config.idleAnimation ?? "";
-    const vtubePort = config.vtubePort ?? 8001;
-    const vtubeMouthParam = config.vtubeMouthParam ?? "MouthOpen";
-    const vtubeExpressionMap = config.vtubeExpressionMap ?? "{}";
-    const pngConfig = config.pngConfig ?? "{}";
+    const modelUrl = config.modelUrl ?? config.model_url ?? "/models/avatar.vrm";
+    const idleAnimation = config.idleAnimation ?? config.idle_animation ?? "";
+    const vtubePort = config.vtubePort ?? config.vtube_port ?? 8001;
+    const vtubeMouthParam = config.vtubeMouthParam ?? config.vtube_mouth_param ?? "MouthOpen";
+    const vtubeExpressionMap = config.vtubeExpressionMap ?? config.vtube_expression_map ?? "{}";
+    const pngConfig = config.pngConfig ?? config.png_config ?? "{}";
 
     await context.log(`Avatar Configuration: renderer=${renderer}, model=${modelUrl}`);
 

@@ -152,11 +152,12 @@ export default function OverlayPage() {
           if (avatarNode?.config) {
             // Parse VTube Studio expression map if it's a string
             let expressionMap: Record<string, string> | undefined;
-            if (avatarNode.config.vtubeExpressionMap) {
+            const rawExprMap = avatarNode.config.vtubeExpressionMap ?? avatarNode.config.vtube_expression_map;
+            if (rawExprMap) {
               try {
-                expressionMap = typeof avatarNode.config.vtubeExpressionMap === 'string'
-                  ? JSON.parse(avatarNode.config.vtubeExpressionMap)
-                  : avatarNode.config.vtubeExpressionMap;
+                expressionMap = typeof rawExprMap === 'string'
+                  ? JSON.parse(rawExprMap)
+                  : rawExprMap;
               } catch {
                 console.warn('Failed to parse vtubeExpressionMap');
               }
@@ -164,10 +165,10 @@ export default function OverlayPage() {
 
             setAvatarConfig({
               renderer: avatarNode.config.renderer || 'vrm',
-              modelUrl: avatarNode.config.modelUrl,
-              animationUrl: avatarNode.config.idleAnimation,
-              vtubePort: avatarNode.config.vtubePort || 8001,
-              vtubeMouthParam: avatarNode.config.vtubeMouthParam,
+              modelUrl: avatarNode.config.modelUrl || avatarNode.config.model_url,
+              animationUrl: avatarNode.config.idleAnimation || avatarNode.config.idle_animation,
+              vtubePort: avatarNode.config.vtubePort ?? avatarNode.config.vtube_port ?? 8001,
+              vtubeMouthParam: avatarNode.config.vtubeMouthParam || avatarNode.config.vtube_mouth_param,
               vtubeExpressionMap: expressionMap,
             });
           }
@@ -247,7 +248,15 @@ export default function OverlayPage() {
                 vtubeExpressionMap: expressionMap || prev.vtubeExpressionMap,
               }));
             }
-            setAvatarState((prev) => ({ ...prev, ...rest }));
+            // Whitelist known avatar state fields instead of spreading arbitrary data
+            setAvatarState((prev) => {
+              const updated: Partial<AvatarState> = {};
+              if (rest.expression !== undefined) updated.expression = rest.expression;
+              if (rest.mouthOpen !== undefined) updated.mouthOpen = rest.mouthOpen;
+              if (rest.motion !== undefined) updated.motion = rest.motion;
+              if (rest.lookAt !== undefined) updated.lookAt = rest.lookAt;
+              return { ...prev, ...updated };
+            });
             break;
           }
 

@@ -37,7 +37,7 @@ export default class OBSSceneSwitchNode extends BaseNode {
     this.host = config.host ?? "localhost";
     this.port = config.port ?? 4455;
     this.password = config.password ?? "";
-    this.sceneName = config.sceneName ?? "";
+    this.sceneName = config.sceneName ?? config.scene_name ?? "";
 
     await context.log(`OBS Scene Switch configured: ${this.host}:${this.port}`);
 

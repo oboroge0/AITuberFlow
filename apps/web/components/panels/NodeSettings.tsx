@@ -1664,6 +1664,74 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
 const toPluginCamel = (id: string) =>
   id.replace(/[-_]([a-z0-9])/g, (_, c: string) => c.toUpperCase());
 
+/**
+ * Maps old snake_case config keys to new camelCase keys per node type.
+ * Used to normalize legacy configs saved before the camelCase migration.
+ */
+const LEGACY_KEY_MAP: Record<string, Record<string, string>> = {
+  "avatar-configuration": {
+    model_url: "modelUrl",
+    idle_animation: "idleAnimation",
+    vtube_port: "vtubePort",
+    vtube_mouth_param: "vtubeMouthParam",
+    vtube_expression_map: "vtubeExpressionMap",
+    png_config: "pngConfig",
+  },
+  "motion-trigger": {
+    motion_url: "motionUrl",
+    emit_events: "emitEvents",
+  },
+  "emotion-analyzer": {
+    llm_provider: "llmProvider",
+    llm_api_key: "llmApiKey",
+    llm_model: "llmModel",
+    custom_mappings: "customMappings",
+    emit_events: "emitEvents",
+  },
+  "lip-sync": {
+    emit_realtime: "emitRealtime",
+    frame_rate: "frameRate",
+  },
+  "audio-player": {
+    output_device: "outputDevice",
+    wait_for_completion: "waitForCompletion",
+  },
+  "subtitle-display": {
+    font_size: "fontSize",
+    font_color: "fontColor",
+    background_color: "backgroundColor",
+    show_speaker: "showSpeaker",
+  },
+  "obs-scene-switch": {
+    scene_name: "sceneName",
+  },
+  "obs-source-toggle": {
+    scene_name: "sceneName",
+    source_name: "sourceName",
+  },
+};
+
+/**
+ * Normalize legacy snake_case config keys to camelCase.
+ * Preserves any camelCase keys that already exist (they take priority).
+ */
+function normalizeLegacyConfig(
+  nodeType: string,
+  config: Record<string, unknown>,
+): Record<string, unknown> {
+  const keyMap = LEGACY_KEY_MAP[nodeType];
+  if (!keyMap) return config;
+
+  const normalized = { ...config };
+  for (const [oldKey, newKey] of Object.entries(keyMap)) {
+    if (oldKey in normalized && !(newKey in normalized)) {
+      normalized[newKey] = normalized[oldKey];
+      delete normalized[oldKey];
+    }
+  }
+  return normalized;
+}
+
 export default function NodeSettings() {
   const { selectedNodeId, nodes, updateNode, removeNode } = useWorkflowStore();
   const { t } = useTranslation();
@@ -1810,7 +1878,7 @@ export default function NodeSettings() {
 
   useEffect(() => {
     if (selectedNode) {
-      setLocalConfig(selectedNode.config || {});
+      setLocalConfig(normalizeLegacyConfig(selectedNode.type, selectedNode.config || {}));
       setShowOverrides(false);
 
       // Fetch VOICEVOX speakers if this is a voicevox-tts node

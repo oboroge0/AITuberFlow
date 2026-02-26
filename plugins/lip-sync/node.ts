@@ -18,8 +18,8 @@ export default class LipSyncNode extends BaseNode {
     this.sensitivity = Number(config.sensitivity ?? 5.0);
     this.smoothing = Number(config.smoothing ?? 0.3);
     this.threshold = Number(config.threshold ?? 0.02);
-    this.emitRealtime = config.emitRealtime ?? true;
-    this.frameRate = Number(config.frameRate ?? 30);
+    this.emitRealtime = config.emitRealtime ?? config.emit_realtime ?? true;
+    this.frameRate = Number(config.frameRate ?? config.frame_rate ?? 30);
   }
 
   async execute(

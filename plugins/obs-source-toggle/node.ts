@@ -39,8 +39,8 @@ export default class OBSSourceToggleNode extends BaseNode {
     this.host = config.host ?? "localhost";
     this.port = config.port ?? 4455;
     this.password = config.password ?? "";
-    this.sceneName = config.sceneName ?? "";
-    this.sourceName = config.sourceName ?? "";
+    this.sceneName = config.sceneName ?? config.scene_name ?? "";
+    this.sourceName = config.sourceName ?? config.source_name ?? "";
     this.action = config.action ?? "toggle";
 
     await context.log(`OBS Source Toggle configured: ${this.sourceName} (${this.action})`);
