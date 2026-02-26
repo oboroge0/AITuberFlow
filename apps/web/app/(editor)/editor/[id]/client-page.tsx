@@ -149,7 +149,7 @@ export default function EditorPage() {
   // Handle motion selection from library
   const handleMotionSelect = useCallback((motion: Motion) => {
     updateAvatarState({ motion: motion.url });
-    emit('avatar.motion', { motion_url: motion.url });
+    emit('avatar.motion', { motionUrl: motion.url });
   }, [emit, updateAvatarState]);
 
   // Handle expression change from presets
