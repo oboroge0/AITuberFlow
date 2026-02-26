@@ -187,9 +187,9 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
           if (String(value).toLowerCase().includes(query)) return true;
         } else if (Array.isArray(value)) {
           for (const item of value) {
-            if (typeof item === 'string') {
-              if (item.toLowerCase().includes(query)) return true;
-            } else if (item && typeof item === 'object') {
+            if (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean') {
+              if (String(item).toLowerCase().includes(query)) return true;
+            } else if (item !== null && typeof item === 'object') {
               if (configMatchesQuery(item as Record<string, unknown>, query)) return true;
             }
           }
