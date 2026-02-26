@@ -110,6 +110,16 @@ class ApiClient {
     return this.request(`/api/workflows/${id}/status`);
   }
 
+  async validateWorkflow(
+    id: string,
+    data?: { nodes: any[]; connections: any[] }
+  ): Promise<ApiResponse<ValidationResult>> {
+    return this.request<ValidationResult>(`/api/workflows/${id}/validate`, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
   // Plugin endpoints
   async listPlugins(): Promise<ApiResponse<PluginManifest[]>> {
     return this.request<PluginManifest[]>('/api/plugins');
@@ -308,6 +318,20 @@ export interface ModelInfo {
   filename: string;
   url: string;
   size: number;
+}
+
+export interface ValidationIssue {
+  nodeId: string;
+  nodeName: string;
+  level: 'error' | 'warning';
+  message: string;
+}
+
+export interface ValidationResult {
+  valid: boolean;
+  errors: ValidationIssue[];
+  warnings: ValidationIssue[];
+  issues: ValidationIssue[];
 }
 
 export const api = new ApiClient(API_BASE);

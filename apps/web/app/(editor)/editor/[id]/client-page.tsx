@@ -118,6 +118,7 @@ export default function EditorPage() {
     nodes,
     connections,
     character,
+    setNodeStatus,
   } = useWorkflowStore();
 
   // Handle name editing
@@ -362,14 +363,59 @@ export default function EditorPage() {
 
   const handleStart = async (startNodeId?: string) => {
     clearLogs();
+
+    // Get current workflow data from store (not saved version)
+    const currentData = getWorkflowData();
+
+    // Run validation before starting
+    const validationResponse = await api.validateWorkflow(workflowId, {
+      nodes: currentData.nodes,
+      connections: currentData.connections,
+    });
+
+    if (validationResponse.data) {
+      const { errors, warnings } = validationResponse.data;
+
+      // Show warnings as toasts
+      for (const warning of warnings) {
+        toast.warning(`${warning.nodeName}: ${warning.message}`);
+        addLog({
+          level: 'warning',
+          message: `[${warning.nodeName}] ${warning.message}`,
+          nodeId: warning.nodeId,
+        });
+      }
+
+      // Highlight nodes with issues
+      for (const issue of [...errors, ...warnings]) {
+        setNodeStatus(issue.nodeId, issue.level === 'error' ? 'error' : 'idle', {
+          validationIssue: issue.message,
+        });
+      }
+
+      // If there are errors, block execution
+      if (errors.length > 0) {
+        for (const error of errors) {
+          toast.error(`${error.nodeName}: ${error.message}`);
+          addLog({
+            level: 'error',
+            message: `[${error.nodeName}] ${error.message}`,
+            nodeId: error.nodeId,
+          });
+        }
+        addLog({
+          level: 'error',
+          message: `バリデーションエラー: ${errors.length}件のエラーが見つかりました。修正してから再実行してください。`,
+        });
+        return;
+      }
+    }
+
     if (startNodeId) {
       addLog({ level: 'info', message: `▶ Starting from node: ${startNodeId}` });
     } else {
       addLog({ level: 'info', message: '▶ Starting workflow...' });
     }
-
-    // Get current workflow data from store (not saved version)
-    const currentData = getWorkflowData();
 
     const response = await api.startWorkflow(workflowId, {
       nodes: currentData.nodes,
