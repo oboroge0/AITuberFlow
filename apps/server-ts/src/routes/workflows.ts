@@ -11,6 +11,7 @@ import { z } from "zod";
 import { db as defaultDb } from "../db/database";
 import { workflows } from "../db/schema";
 import type { WorkflowExecutor } from "../engine/executor";
+import { validateWorkflow } from "../engine/validator";
 import type { WorkflowResponse } from "../models/workflow";
 import type { WSBroadcaster } from "../websocket/handler";
 
@@ -242,6 +243,46 @@ app.post("/import", async (c) => {
 
   const [row] = await _db.select().from(workflows).where(eq(workflows.id, id));
   return c.json(workflowToResponse(row));
+});
+
+// Validate workflow before execution
+const validateWorkflowBody = z
+  .object({
+    nodes: z.array(z.record(z.string(), z.unknown())).optional(),
+    connections: z.array(z.record(z.string(), z.unknown())).optional(),
+  })
+  .optional();
+
+app.post("/:id/validate", async (c) => {
+  const id = c.req.param("id");
+  const [existing] = await _db.select().from(workflows).where(eq(workflows.id, id));
+  if (!existing) return c.json({ detail: "Workflow not found" }, 404);
+
+  let body: z.infer<typeof validateWorkflowBody> = {};
+  try {
+    const rawBody = await c.req.json();
+    const parsed = validateWorkflowBody.safeParse(rawBody);
+    if (!parsed.success) {
+      return c.json({ error: "Invalid request body", details: parsed.error.format() }, 400);
+    }
+    body = parsed.data ?? {};
+  } catch {
+    // No body provided - use saved workflow data
+  }
+
+  const nodes = body?.nodes ?? JSON.parse(existing.nodesJson || "[]");
+  const connections = body?.connections ?? JSON.parse(existing.connectionsJson || "[]");
+
+  const issues = await validateWorkflow({ nodes, connections });
+  const errors = issues.filter((i) => i.level === "error");
+  const warnings = issues.filter((i) => i.level === "warning");
+
+  return c.json({
+    valid: errors.length === 0,
+    errors,
+    warnings,
+    issues,
+  });
 });
 
 // Start workflow execution
