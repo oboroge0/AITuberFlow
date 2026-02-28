@@ -12,7 +12,7 @@
 import { join } from "node:path";
 import { db } from "../db/database";
 import { globalSettings } from "../db/schema";
-import { getPluginsDir } from "./plugin-loader";
+import { getPluginsDir, SOURCE_NODE_TYPES } from "./plugin-loader";
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -85,9 +85,6 @@ const GLOBAL_SETTINGS_MAP: Record<string, Record<string, string>> = {
 
 /** Node types that use API keys (not local-only services) */
 const API_KEY_NODE_TYPES = new Set(["openai-llm", "anthropic-llm", "google-llm"]);
-
-/** Source node types that run continuously */
-const SOURCE_NODE_TYPES = new Set(["twitch-chat", "youtube-chat", "discord-chat", "timer"]);
 
 // ─── Manifest Cache ──────────────────────────────────────────────
 

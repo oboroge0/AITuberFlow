@@ -384,6 +384,11 @@ export default function EditorPage() {
     if (validationResponse.data) {
       const { errors, warnings } = validationResponse.data;
 
+      // Clear previous validation highlights
+      for (const node of currentData.nodes) {
+        setNodeStatus(node.id, 'idle', {});
+      }
+
       // Show warnings as toasts
       for (const warning of warnings) {
         toast.warning(`${warning.nodeName}: ${warning.message}`);
