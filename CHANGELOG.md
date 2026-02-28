@@ -5,6 +5,18 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
 [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [2.3.0] - 2026-03-01
+
+### 追加
+
+- **ワークフロー実行前バリデーション** - 実行ボタン押下時にワークフローを自動検証し、エラーがあれば実行をブロック (#108)
+  - 必須設定フィールドの未入力チェック
+  - 未接続の入力ポート検出
+  - エントリーポイントから到達不能なノードの検出
+  - 循環参照の検出
+  - APIキー未設定の警告（グローバル設定のフォールバック考慮）
+  - エラー/警告のあるノードをエディタ上でハイライト表示
+
 ## [2.2.4] - 2026-02-22
 
 ### 追加
@@ -488,6 +500,7 @@
 - 基本的なワークフローエディタ機能
 - コアプラグインの実装
 
+[2.3.0]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.3.0
 [2.2.4]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.2.4
 [2.2.3]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.2.3
 [2.2.2]: https://github.com/oboroge0/AITuberFlow/releases/tag/v2.2.2
