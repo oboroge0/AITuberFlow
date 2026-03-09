@@ -268,6 +268,40 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
       },
     ],
   },
+  "groq-llm": {
+    label: "LLM (Groq)",
+    fields: [
+      {
+        key: "apiKey",
+        type: "password",
+        label: "API Key",
+        placeholder: "gsk_...",
+      },
+      {
+        key: "model",
+        type: "select",
+        label: "Model",
+        options: LLM_MODEL_OPTIONS.groq,
+      },
+      {
+        key: "systemPrompt",
+        type: "textarea",
+        label: "System Prompt",
+        placeholder: "Enter character settings...",
+      },
+      {
+        key: "promptSections",
+        type: "prompt-builder",
+        label: "Prompt Builder",
+      },
+      {
+        key: "temperature",
+        type: "number",
+        label: "Temperature",
+        placeholder: "0.7",
+      },
+    ],
+  },
   "voicevox-tts": {
     label: "TTS (VOICEVOX)",
     fields: [
