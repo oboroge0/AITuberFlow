@@ -33,7 +33,9 @@
       }
     ],
     "events": {
-      "emits": [],
+      "emits": [
+        "response.generated"
+      ],
       "listens": []
     }
   },
