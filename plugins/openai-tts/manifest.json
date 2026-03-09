@@ -1,0 +1,116 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "openai-tts",
+  "name": "OpenAI TTS",
+  "version": "1.0.0",
+  "description": "Convert text to speech using OpenAI TTS API. Supports multiple voices and models including gpt-4o-mini-tts.",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
+  },
+  "license": "MIT",
+  "category": "tts",
+  "ui": {
+    "label": "OpenAI TTS",
+    "icon": "AudioLines",
+    "color": "#10B981",
+    "bgColor": "rgba(16, 185, 129, 0.1)",
+    "statusText": "Engine: OpenAI"
+  },
+  "node": {
+    "inputs": [
+      {
+        "id": "text",
+        "type": "string",
+        "description": "Text to convert to speech"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "audio",
+        "type": "string",
+        "description": "Path to generated audio file"
+      },
+      {
+        "id": "filename",
+        "type": "string",
+        "description": "Generated audio filename"
+      },
+      {
+        "id": "duration",
+        "type": "number",
+        "description": "Audio duration in seconds"
+      }
+    ],
+    "events": {
+      "emits": [
+        "audio.generated",
+        "audio.playing",
+        "audio.finished"
+      ],
+      "listens": []
+    }
+  },
+  "config": {
+    "apiKey": {
+      "type": "password",
+      "label": "API Key",
+      "description": "Your OpenAI API key",
+      "required": true
+    },
+    "model": {
+      "type": "select",
+      "label": "Model",
+      "description": "TTS model to use",
+      "default": "tts-1",
+      "options": [
+        { "label": "TTS-1 (Standard)", "value": "tts-1" },
+        { "label": "TTS-1 HD (High Quality)", "value": "tts-1-hd" },
+        { "label": "GPT-4o Mini TTS", "value": "gpt-4o-mini-tts" }
+      ]
+    },
+    "voice": {
+      "type": "select",
+      "label": "Voice",
+      "description": "Voice to use for speech",
+      "default": "alloy",
+      "options": [
+        { "label": "Alloy", "value": "alloy" },
+        { "label": "Ash", "value": "ash" },
+        { "label": "Ballad", "value": "ballad" },
+        { "label": "Coral", "value": "coral" },
+        { "label": "Echo", "value": "echo" },
+        { "label": "Fable", "value": "fable" },
+        { "label": "Nova", "value": "nova" },
+        { "label": "Onyx", "value": "onyx" },
+        { "label": "Sage", "value": "sage" },
+        { "label": "Shimmer", "value": "shimmer" }
+      ]
+    },
+    "speed": {
+      "type": "number",
+      "label": "Speed",
+      "description": "Speech speed (0.25-4.0)",
+      "default": 1,
+      "min": 0.25,
+      "max": 4
+    },
+    "instructions": {
+      "type": "textarea",
+      "label": "Instructions",
+      "description": "Voice style instructions (gpt-4o-mini-tts only)",
+      "default": "",
+      "showWhen": {
+        "field": "model",
+        "operator": "equals",
+        "value": "gpt-4o-mini-tts"
+      }
+    },
+    "outputDir": {
+      "type": "string",
+      "label": "Output Directory",
+      "description": "Directory to save audio files (optional)",
+      "default": ""
+    }
+  }
+}

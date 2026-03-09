@@ -1,0 +1,108 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "aivis-tts",
+  "name": "AivisSpeech TTS",
+  "version": "1.0.0",
+  "description": "Convert text to speech using AivisSpeech engine (VOICEVOX-compatible API). Requires AivisSpeech running locally.",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
+  },
+  "license": "MIT",
+  "category": "tts",
+  "ui": {
+    "label": "AivisSpeech",
+    "icon": "Volume2",
+    "color": "#8B5CF6",
+    "bgColor": "rgba(139, 92, 246, 0.1)",
+    "statusText": "Engine: AivisSpeech"
+  },
+  "node": {
+    "inputs": [
+      {
+        "id": "text",
+        "type": "string",
+        "description": "Text to convert to speech"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "audio",
+        "type": "string",
+        "description": "Path to generated audio file"
+      },
+      {
+        "id": "filename",
+        "type": "string",
+        "description": "Generated audio filename"
+      },
+      {
+        "id": "duration",
+        "type": "number",
+        "description": "Audio duration in seconds"
+      }
+    ],
+    "events": {
+      "emits": [
+        "audio.generated",
+        "audio.playing",
+        "audio.finished"
+      ],
+      "listens": []
+    }
+  },
+  "config": {
+    "host": {
+      "type": "string",
+      "label": "AivisSpeech Host",
+      "description": "AivisSpeech engine host URL",
+      "default": "http://localhost:10101"
+    },
+    "speaker": {
+      "type": "select",
+      "label": "Speaker",
+      "description": "AivisSpeech speaker/character",
+      "default": 1,
+      "dynamic": true,
+      "dependsOn": "host"
+    },
+    "speedScale": {
+      "type": "number",
+      "label": "Speed",
+      "description": "Speech speed (0.5-2.0)",
+      "default": 1,
+      "min": 0.5,
+      "max": 2
+    },
+    "pitchScale": {
+      "type": "number",
+      "label": "Pitch",
+      "description": "Voice pitch (-0.15 to 0.15)",
+      "default": 0,
+      "min": -0.15,
+      "max": 0.15
+    },
+    "volumeScale": {
+      "type": "number",
+      "label": "Volume",
+      "description": "Audio volume (0.0-2.0)",
+      "default": 1,
+      "min": 0,
+      "max": 2
+    },
+    "outputDir": {
+      "type": "string",
+      "label": "Output Directory",
+      "description": "Directory to save audio files (optional)",
+      "default": ""
+    },
+    "demoMode": {
+      "type": "boolean",
+      "label": "Demo Mode",
+      "label_ja": "デモモード",
+      "description": "Skip TTS when AivisSpeech is unavailable",
+      "description_ja": "AivisSpeech未接続時にスキップ",
+      "default": false
+    }
+  }
+}
