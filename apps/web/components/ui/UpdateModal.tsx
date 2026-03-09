@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from '@/stores/localeStore';
+import { getErrorMessage } from '@/lib/errorHandler';
 
 type UpdateStatus = 'available' | 'downloading' | 'error';
 
@@ -69,7 +70,7 @@ export default function UpdateModal({ updateInfo, updateObj, onClose }: UpdateMo
       await relaunch();
     } catch (err) {
       setStatus('error');
-      setErrorMessage(err instanceof Error ? err.message : String(err));
+      setErrorMessage(getErrorMessage(err));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps -- updateObj is stable (ref from parent)
   }, []);

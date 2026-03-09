@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { PluginManifest, CategoryDefinition, PluginCategory, ConfigField } from '@/lib/types';
 import { getApiBaseUrl } from '@/lib/runtimeEndpoints';
+import { getErrorMessage } from '@/lib/errorHandler';
 
 // Default categories (fallback if API fails)
 const DEFAULT_CATEGORIES: CategoryDefinition[] = [
@@ -70,7 +71,7 @@ export const usePluginStore = create<PluginState>((set, get) => ({
       console.error('Failed to fetch plugins:', error);
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: getErrorMessage(error, 'Failed to fetch plugins'),
       });
     }
   },

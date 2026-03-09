@@ -1,4 +1,5 @@
 import { Workflow, PluginManifest, ApiResponse } from './types';
+import { getErrorMessage } from './errorHandler';
 
 // Use relative URLs in browser (proxied via Next.js rewrites)
 // Use full URL only for server-side or when explicitly set
@@ -34,7 +35,7 @@ class ApiClient {
       const data = await response.json();
       return { data };
     } catch (error) {
-      return { error: error instanceof Error ? error.message : 'Network error' };
+      return { error: getErrorMessage(error, 'Network error') };
     }
   }
 
@@ -175,7 +176,7 @@ class ApiClient {
       const data = await response.json();
       return { data };
     } catch (error) {
-      return { error: error instanceof Error ? error.message : 'Upload failed' };
+      return { error: getErrorMessage(error, 'Upload failed') };
     }
   }
 
@@ -208,7 +209,7 @@ class ApiClient {
       const data = await response.json();
       return { data };
     } catch (error) {
-      return { error: error instanceof Error ? error.message : 'Upload failed' };
+      return { error: getErrorMessage(error, 'Upload failed') };
     }
   }
 

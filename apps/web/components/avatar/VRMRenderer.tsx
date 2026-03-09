@@ -7,6 +7,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { loadMixamoAnimation } from './loadMixamoAnimation';
 import { DEFAULT_IDLE_ANIMATION } from '@/lib/constants';
+import { getErrorMessage } from '@/lib/errorHandler';
 
 export interface VRMRendererProps {
   modelUrl: string;
@@ -228,7 +229,7 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
       setLoading(false);
     } catch (err) {
       console.error('Error loading VRM:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load VRM');
+      setError(getErrorMessage(err, 'Failed to load VRM'));
       setLoading(false);
     }
   }, []);

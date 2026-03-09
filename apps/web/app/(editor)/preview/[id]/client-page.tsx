@@ -8,6 +8,7 @@ import { Workflow } from '@/lib/types';
 import { DEFAULT_MODEL_URL } from '@/lib/constants';
 import { resolveWorkflowId } from '@/lib/routeParams';
 import { getApiBaseUrl, getWsBaseUrl } from '@/lib/runtimeEndpoints';
+import { handleError, handleSilentError } from '@/lib/errorHandler';
 
 const WS_URL = getWsBaseUrl();
 const API_BASE = getApiBaseUrl();
@@ -117,7 +118,7 @@ export default function PreviewPage() {
           }
         }
       } catch (error) {
-        console.error('Failed to load workflow:', error);
+        handleSilentError(error, 'Failed to load workflow');
       }
     };
 
@@ -177,7 +178,7 @@ export default function PreviewPage() {
               const audio = new Audio(audioUrl);
               audioRef.current = audio;
               audio.play().catch((err) => {
-                console.error('Failed to play audio:', err);
+                handleSilentError(err, 'Failed to play audio');
               });
             }
             break;
@@ -209,7 +210,7 @@ export default function PreviewPage() {
   // Control handlers
   const handleStart = useCallback(async () => {
     if (!workflow) {
-      console.error('No workflow data loaded');
+      handleError('No workflow data loaded', 'Workflow start');
       return;
     }
     try {
@@ -219,7 +220,7 @@ export default function PreviewPage() {
         character: workflow.character,
       });
     } catch (error) {
-      console.error('Failed to start workflow:', error);
+      handleError(error, 'Failed to start workflow');
     }
   }, [workflowId, workflow]);
 
@@ -227,7 +228,7 @@ export default function PreviewPage() {
     try {
       await api.stopWorkflow(workflowId);
     } catch (error) {
-      console.error('Failed to stop workflow:', error);
+      handleError(error, 'Failed to stop workflow');
     }
   }, [workflowId]);
 
