@@ -96,6 +96,7 @@
     "text-transform": "Text transformation node.\n[Usage] Connect input to text. Set template in config. Use {{text}} to reference input.",
     "random": "Random value generator.\n[Usage] Set range or options in config. Different value output to value each time.",
     "timer": "Auto-trigger timer node.\n[Usage] Set interval (ms) in config. Connect to processes for periodic execution.",
+    "cron-trigger": "Cron schedule trigger node.\n[Usage] Set cron expression in config (e.g. '0 9 * * *' = daily at 9:00). Connect to periodic tasks.",
     "variable": "Variable storage node.\n[Usage] Set variable name in config. Use set to save, get to retrieve. Share values in workflow.",
     "anthropic-llm": "LLM node using Anthropic API.\n[Usage] Connect prompt input. Set model and system prompt in config.",
     "google-llm": "LLM node using Google AI API.\n[Usage] Connect prompt input. Set model and system prompt in config.",
