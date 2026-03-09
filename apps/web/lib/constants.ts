@@ -44,4 +44,12 @@ export const LLM_MODEL_OPTIONS: Record<string, { label: string; value: string }[
     { label: 'Mixtral 8x7B', value: 'mixtral-8x7b-32768' },
     { label: 'Gemma 2 9B', value: 'gemma2-9b-it' },
   ],
+  mistral: [
+    { label: 'Mistral Large', value: 'mistral-large-latest' },
+    { label: 'Mistral Medium', value: 'mistral-medium-latest' },
+    { label: 'Mistral Small', value: 'mistral-small-latest' },
+    { label: 'Codestral', value: 'codestral-latest' },
+    { label: 'Ministral 8B', value: 'ministral-8b-latest' },
+    { label: 'Ministral 3B', value: 'ministral-3b-latest' },
+  ],
 };

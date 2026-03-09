@@ -302,6 +302,40 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
       },
     ],
   },
+  "mistral-llm": {
+    label: "LLM (Mistral)",
+    fields: [
+      {
+        key: "apiKey",
+        type: "password",
+        label: "API Key",
+        placeholder: "...",
+      },
+      {
+        key: "model",
+        type: "select",
+        label: "Model",
+        options: LLM_MODEL_OPTIONS.mistral,
+      },
+      {
+        key: "systemPrompt",
+        type: "textarea",
+        label: "System Prompt",
+        placeholder: "Enter character settings...",
+      },
+      {
+        key: "promptSections",
+        type: "prompt-builder",
+        label: "Prompt Builder",
+      },
+      {
+        key: "temperature",
+        type: "number",
+        label: "Temperature",
+        placeholder: "0.7",
+      },
+    ],
+  },
   "voicevox-tts": {
     label: "TTS (VOICEVOX)",
     fields: [

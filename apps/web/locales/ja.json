@@ -101,6 +101,7 @@
     "google-llm": "Google AI APIでテキスト生成するLLMノード。\n【使い方】promptに質問を接続。設定でモデルとシステムプロンプトを指定。",
     "ollama-llm": "ローカルOllamaでテキスト生成するLLMノード。\n【使い方】promptに質問を接続。設定でモデルを指定。※Ollama起動が必要",
     "groq-llm": "Groqの高速推論APIでテキスト生成するLLMノード。\n【使い方】promptに質問を接続。設定でモデルとシステムプロンプトを指定。",
+    "mistral-llm": "Mistral AIでテキスト生成するLLMノード。\n【使い方】promptに質問を接続。設定でモデルとシステムプロンプトを指定。",
     "coeiroink-tts": "COEIROINKでテキストを音声に変換するTTSノード。\n【使い方】textに読み上げテキストを接続。設定で話者を選択。※COEIROINK起動が必要",
     "sbv2-tts": "Style-Bert-VITS2でテキストを音声に変換するTTSノード。\n【使い方】textに読み上げテキストを接続。設定でモデルを選択。※API起動が必要",
     "avatar-configuration": "VRMアバターの設定ノード。\n【使い方】モデルURL、アイドルアニメーションを設定。オーバーレイでアバターが表示。",
