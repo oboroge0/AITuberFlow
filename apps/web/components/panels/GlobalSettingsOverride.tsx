@@ -15,6 +15,8 @@ export const GLOBAL_SETTINGS_MAP: Record<string, Record<string, string>> = {
   "voicevox-tts": { host: "voicevox.host" },
   "coeiroink-tts": { host: "coeiroink.host" },
   "sbv2-tts": { host: "sbv2.host" },
+  "aivis-tts": { host: "aivis.host" },
+  "openai-tts": { apiKey: "openai.apiKey" },
 };
 
 interface GlobalSettingsBannerProps {

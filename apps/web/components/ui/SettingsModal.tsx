@@ -384,7 +384,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* SBV2 */}
-            <div className="p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
               <h4 className="text-xs font-medium text-white/60 mb-2">Style-Bert-VITS2</h4>
               <div>
                 <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.host')}</label>
@@ -392,6 +392,19 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   value={local['sbv2.host'] || ''}
                   onChange={(v) => set('sbv2.host', v)}
                   placeholder="http://localhost:5000"
+                />
+              </div>
+            </div>
+
+            {/* AivisSpeech */}
+            <div className="p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
+              <h4 className="text-xs font-medium text-white/60 mb-2">AivisSpeech</h4>
+              <div>
+                <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.host')}</label>
+                <TextInput
+                  value={local['aivis.host'] || ''}
+                  onChange={(v) => set('aivis.host', v)}
+                  placeholder="http://localhost:10101"
                 />
               </div>
             </div>

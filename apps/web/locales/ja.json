@@ -104,6 +104,8 @@
     "mistral-llm": "Mistral AIでテキスト生成するLLMノード。\n【使い方】promptに質問を接続。設定でモデルとシステムプロンプトを指定。",
     "coeiroink-tts": "COEIROINKでテキストを音声に変換するTTSノード。\n【使い方】textに読み上げテキストを接続。設定で話者を選択。※COEIROINK起動が必要",
     "sbv2-tts": "Style-Bert-VITS2でテキストを音声に変換するTTSノード。\n【使い方】textに読み上げテキストを接続。設定でモデルを選択。※API起動が必要",
+    "aivis-tts": "AivisSpeechでテキストを音声に変換するTTSノード。\n【使い方】textに読み上げテキストを接続。設定で話者を選択。※AivisSpeech起動が必要",
+    "openai-tts": "OpenAI TTSでテキストを音声に変換するTTSノード。\n【使い方】textに読み上げテキストを接続。設定でボイスとモデルを指定。",
     "avatar-configuration": "VRMアバターの設定ノード。\n【使い方】モデルURL、アイドルアニメーションを設定。オーバーレイでアバターが表示。",
     "emotion-analyzer": "テキストから感情を分析するノード。\n【使い方】textに分析するテキストを接続。emotion/intensityが出力。",
     "motion-trigger": "表情やモーションを手動でトリガーするノード。\n【使い方】triggerに任意の入力を接続。設定で表情/モーションを指定。",
