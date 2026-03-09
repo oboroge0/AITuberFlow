@@ -25,7 +25,7 @@
         "description": "Trigger to switch scene"
       },
       {
-        "id": "scene_name",
+        "id": "sceneName",
         "type": "string",
         "description": "Scene name (overrides config if provided)"
       }
@@ -37,7 +37,7 @@
         "description": "Whether the scene switch was successful"
       },
       {
-        "id": "current_scene",
+        "id": "currentScene",
         "type": "string",
         "description": "Current scene name after switch"
       },
@@ -71,7 +71,7 @@
       "description": "OBS WebSocket server password (leave empty if not set)",
       "default": ""
     },
-    "scene_name": {
+    "sceneName": {
       "type": "string",
       "label": "Scene Name",
       "description": "Target scene name to switch to",

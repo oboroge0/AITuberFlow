@@ -33,7 +33,7 @@
       "config": {
         "method": "rule-based",
         "language": "auto",
-        "emit_events": true
+        "emitEvents": true
       }
     },
     {
@@ -55,8 +55,8 @@
         "sensitivity": 5.0,
         "smoothing": 0.3,
         "threshold": 0.02,
-        "emit_realtime": true,
-        "frame_rate": 30
+        "emitRealtime": true,
+        "frameRate": 30
       }
     },
     {
@@ -64,9 +64,9 @@
       "type": "audio-player",
       "position": { "x": 1100, "y": 350 },
       "config": {
-        "wait_for_completion": true,
+        "waitForCompletion": true,
         "volume": 1.0,
-        "output_device": "browser"
+        "outputDevice": "browser"
       }
     },
     {
@@ -76,9 +76,9 @@
       "config": {
         "style": "default",
         "position": "bottom-center",
-        "font_size": 28,
-        "font_color": "#ffffff",
-        "background_color": "rgba(0, 0, 0, 0.7)",
+        "fontSize": 28,
+        "fontColor": "#ffffff",
+        "backgroundColor": "rgba(0, 0, 0, 0.7)",
         "animation": "fade"
       }
     },
@@ -88,9 +88,9 @@
       "position": { "x": 1100, "y": 150 },
       "config": {
         "renderer": "vtube-studio",
-        "vtube_port": 8001,
-        "vtube_mouth_param": "MouthOpen",
-        "vtube_expression_map": "{\"happy\": \"Happy\", \"sad\": \"Sad\", \"angry\": \"Angry\", \"surprised\": \"Surprised\", \"relaxed\": \"Relaxed\", \"neutral\": \"Neutral\"}"
+        "vtubePort": 8001,
+        "vtubeMouthParam": "MouthOpen",
+        "vtubeExpressionMap": "{\"happy\": \"Happy\", \"sad\": \"Sad\", \"angry\": \"Angry\", \"surprised\": \"Surprised\", \"relaxed\": \"Relaxed\", \"neutral\": \"Neutral\"}"
       }
     }
   ],

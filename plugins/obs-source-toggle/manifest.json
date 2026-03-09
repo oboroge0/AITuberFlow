@@ -42,7 +42,7 @@
         "description": "Current visibility state after operation"
       },
       {
-        "id": "source_name",
+        "id": "sourceName",
         "type": "string",
         "description": "Name of the affected source"
       }
@@ -71,13 +71,13 @@
       "description": "OBS WebSocket server password (leave empty if not set)",
       "default": ""
     },
-    "scene_name": {
+    "sceneName": {
       "type": "string",
       "label": "Scene Name",
       "description": "Scene containing the source (leave empty for current scene)",
       "default": ""
     },
-    "source_name": {
+    "sourceName": {
       "type": "string",
       "label": "Source Name",
       "description": "Name of the source to toggle",

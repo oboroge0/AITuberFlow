@@ -13,9 +13,9 @@ export default class AudioPlayerNode extends BaseNode {
   private outputDevice = "browser";
 
   async setup(config: Record<string, any>, context: NodeContext): Promise<void> {
-    this.waitForCompletion = config.wait_for_completion ?? true;
+    this.waitForCompletion = config.waitForCompletion ?? config.wait_for_completion ?? true;
     this.volume = config.volume ?? 1.0;
-    this.outputDevice = config.output_device ?? "browser";
+    this.outputDevice = config.outputDevice ?? config.output_device ?? "browser";
 
     await context.log(
       `Audio player initialized: output=${this.outputDevice}, ` +

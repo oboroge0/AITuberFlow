@@ -1209,7 +1209,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
       },
       // VRM settings
       {
-        key: "model_url",
+        key: "modelUrl",
         type: "model-file",
         label: "VRM Model",
         placeholder: "Upload VRM model...",
@@ -1217,7 +1217,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         showWhen: { key: "renderer", value: "vrm" },
       },
       {
-        key: "idle_animation",
+        key: "idleAnimation",
         type: "animation-file",
         label: "Idle Animation (FBX)",
         placeholder: "Upload Mixamo FBX...",
@@ -1226,7 +1226,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
       },
       // VTube Studio settings
       {
-        key: "vtube_port",
+        key: "vtubePort",
         type: "number",
         label: "VTube Studio Port",
         placeholder: "8001",
@@ -1234,7 +1234,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
       },
       // PNG settings
       {
-        key: "png_config",
+        key: "pngConfig",
         type: "png-expression-map",
         label: "PNG Expression Mappings",
         showWhen: { key: "renderer", value: "png" },
@@ -1257,13 +1257,13 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         placeholder: "0.8",
       },
       {
-        key: "motion_url",
+        key: "motionUrl",
         type: "animation-file",
         label: "Motion Animation (FBX)",
         placeholder: "Upload Mixamo FBX...",
         accept: ".fbx",
       },
-      { key: "emit_events", type: "checkbox", label: "Emit Avatar Events" },
+      { key: "emitEvents", type: "checkbox", label: "Emit Avatar Events" },
     ],
   },
   "emotion-analyzer": {
@@ -1284,7 +1284,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         label: "Available Expressions",
       },
       {
-        key: "llm_provider",
+        key: "llmProvider",
         type: "select",
         label: "LLM Provider",
         options: [
@@ -1295,19 +1295,19 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         showWhen: { key: "method", value: "llm" },
       },
       {
-        key: "llm_api_key",
+        key: "llmApiKey",
         type: "password",
         label: "LLM API Key",
         placeholder: "sk-...",
         showWhen: { key: "method", value: "llm" },
       },
       {
-        key: "llm_model",
+        key: "llmModel",
         type: "select",
         label: "LLM Model",
         options: [],
         dynamic: true,
-        dependsOn: "llm_provider",
+        dependsOn: "llmProvider",
         showWhen: { key: "method", value: "llm" },
       },
       {
@@ -1322,13 +1322,13 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         showWhen: { key: "method", value: "rule-based" },
       },
       {
-        key: "custom_mappings",
+        key: "customMappings",
         type: "textarea",
         label: "Custom Keyword Mappings (JSON)",
         placeholder: '{"happy": ["keyword1", "keyword2"]}',
         showWhen: { key: "method", value: "rule-based" },
       },
-      { key: "emit_events", type: "checkbox", label: "Emit Avatar Events" },
+      { key: "emitEvents", type: "checkbox", label: "Emit Avatar Events" },
     ],
   },
   "lip-sync": {
@@ -1361,9 +1361,9 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         label: "Threshold (0.0-0.2)",
         placeholder: "0.02",
       },
-      { key: "emit_realtime", type: "checkbox", label: "Emit Realtime Events" },
+      { key: "emitRealtime", type: "checkbox", label: "Emit Realtime Events" },
       {
-        key: "frame_rate",
+        key: "frameRate",
         type: "number",
         label: "Frame Rate",
         placeholder: "30",
@@ -1384,7 +1384,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         ],
       },
       {
-        key: "model_url",
+        key: "modelUrl",
         type: "model-file",
         label: "VRM Model",
         placeholder: "Upload VRM model...",
@@ -1392,7 +1392,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         showWhen: { key: "renderer", value: "vrm" },
       },
       {
-        key: "animation_url",
+        key: "animationUrl",
         type: "animation-file",
         label: "Idle Animation (FBX)",
         placeholder: "Upload Mixamo FBX...",
@@ -1400,14 +1400,14 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         showWhen: { key: "renderer", value: "vrm" },
       },
       {
-        key: "vtube_port",
+        key: "vtubePort",
         type: "number",
         label: "VTube Studio Port",
         placeholder: "8001",
         showWhen: { key: "renderer", value: "vtube-studio" },
       },
       {
-        key: "png_config",
+        key: "pngConfig",
         type: "png-expression-map",
         label: "PNG Expression Mappings",
         showWhen: { key: "renderer", value: "png" },
@@ -1459,7 +1459,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         placeholder: "1.0",
       },
       {
-        key: "output_device",
+        key: "outputDevice",
         type: "select",
         label: "Output Device",
         options: [
@@ -1468,7 +1468,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         ],
       },
       {
-        key: "wait_for_completion",
+        key: "waitForCompletion",
         type: "checkbox",
         label: "Wait for Completion",
       },
@@ -1500,24 +1500,24 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         ],
       },
       {
-        key: "font_size",
+        key: "fontSize",
         type: "number",
         label: "Font Size (px)",
         placeholder: "24",
       },
       {
-        key: "font_color",
+        key: "fontColor",
         type: "text",
         label: "Font Color",
         placeholder: "#ffffff",
       },
       {
-        key: "background_color",
+        key: "backgroundColor",
         type: "text",
         label: "Background Color",
         placeholder: "rgba(0, 0, 0, 0.7)",
       },
-      { key: "show_speaker", type: "checkbox", label: "Show Speaker Name" },
+      { key: "showSpeaker", type: "checkbox", label: "Show Speaker Name" },
       {
         key: "animation",
         type: "select",
@@ -1616,7 +1616,7 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         placeholder: "OBS WebSocket password",
       },
       {
-        key: "scene_name",
+        key: "sceneName",
         type: "text",
         label: "Scene Name",
         placeholder: "Target scene",
@@ -1635,13 +1635,13 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         placeholder: "OBS WebSocket password",
       },
       {
-        key: "scene_name",
+        key: "sceneName",
         type: "text",
         label: "Scene Name",
         placeholder: "Current scene if empty",
       },
       {
-        key: "source_name",
+        key: "sourceName",
         type: "text",
         label: "Source Name",
         placeholder: "Source to toggle",
@@ -1663,6 +1663,74 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
 // Convert kebab-case/snake_case to camelCase for i18n key derivation
 const toPluginCamel = (id: string) =>
   id.replace(/[-_]([a-z0-9])/g, (_, c: string) => c.toUpperCase());
+
+/**
+ * Maps old snake_case config keys to new camelCase keys per node type.
+ * Used to normalize legacy configs saved before the camelCase migration.
+ */
+const LEGACY_KEY_MAP: Record<string, Record<string, string>> = {
+  "avatar-configuration": {
+    model_url: "modelUrl",
+    idle_animation: "idleAnimation",
+    vtube_port: "vtubePort",
+    vtube_mouth_param: "vtubeMouthParam",
+    vtube_expression_map: "vtubeExpressionMap",
+    png_config: "pngConfig",
+  },
+  "motion-trigger": {
+    motion_url: "motionUrl",
+    emit_events: "emitEvents",
+  },
+  "emotion-analyzer": {
+    llm_provider: "llmProvider",
+    llm_api_key: "llmApiKey",
+    llm_model: "llmModel",
+    custom_mappings: "customMappings",
+    emit_events: "emitEvents",
+  },
+  "lip-sync": {
+    emit_realtime: "emitRealtime",
+    frame_rate: "frameRate",
+  },
+  "audio-player": {
+    output_device: "outputDevice",
+    wait_for_completion: "waitForCompletion",
+  },
+  "subtitle-display": {
+    font_size: "fontSize",
+    font_color: "fontColor",
+    background_color: "backgroundColor",
+    show_speaker: "showSpeaker",
+  },
+  "obs-scene-switch": {
+    scene_name: "sceneName",
+  },
+  "obs-source-toggle": {
+    scene_name: "sceneName",
+    source_name: "sourceName",
+  },
+};
+
+/**
+ * Normalize legacy snake_case config keys to camelCase.
+ * Preserves any camelCase keys that already exist (they take priority).
+ */
+function normalizeLegacyConfig(
+  nodeType: string,
+  config: Record<string, unknown>,
+): Record<string, unknown> {
+  const keyMap = LEGACY_KEY_MAP[nodeType];
+  if (!keyMap) return config;
+
+  const normalized = { ...config };
+  for (const [oldKey, newKey] of Object.entries(keyMap)) {
+    if (oldKey in normalized && !(newKey in normalized)) {
+      normalized[newKey] = normalized[oldKey];
+      delete normalized[oldKey];
+    }
+  }
+  return normalized;
+}
 
 export default function NodeSettings() {
   const { selectedNodeId, nodes, updateNode, removeNode } = useWorkflowStore();
@@ -1810,7 +1878,7 @@ export default function NodeSettings() {
 
   useEffect(() => {
     if (selectedNode) {
-      setLocalConfig(selectedNode.config || {});
+      setLocalConfig(normalizeLegacyConfig(selectedNode.type, selectedNode.config || {}));
       setShowOverrides(false);
 
       // Fetch VOICEVOX speakers if this is a voicevox-tts node
@@ -1875,9 +1943,9 @@ export default function NodeSettings() {
   const handleChange = (key: string, value: unknown) => {
     const newConfig = { ...localConfig, [key]: value };
 
-    // Reset llm_model when llm_provider changes
-    if (key === "llm_provider") {
-      newConfig.llm_model = "";
+    // Reset llmModel when llmProvider changes
+    if (key === "llmProvider") {
+      newConfig.llmModel = "";
     }
 
     setLocalConfig(newConfig);
@@ -1949,8 +2017,8 @@ export default function NodeSettings() {
         );
 
       case "select":
-        // Handle dynamic LLM model select (e.g., emotion-analyzer llm_model field)
-        if (field.dynamic && field.dependsOn && (field.key === "model" || field.key === "llm_model")) {
+        // Handle dynamic LLM model select (e.g., emotion-analyzer llmModel field)
+        if (field.dynamic && field.dependsOn && (field.key === "model" || field.key === "llmModel")) {
           const dependsOnValue = localConfig[field.dependsOn] as string;
           // Try plugin store first: provider "openai" → plugin "openai-llm"
           const providerPluginId = `${dependsOnValue}-llm`;

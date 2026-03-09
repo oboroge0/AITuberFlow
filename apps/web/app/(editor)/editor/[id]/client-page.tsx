@@ -149,7 +149,7 @@ export default function EditorPage() {
   // Handle motion selection from library
   const handleMotionSelect = useCallback((motion: Motion) => {
     updateAvatarState({ motion: motion.url });
-    emit('avatar.motion', { motion_url: motion.url });
+    emit('avatar.motion', { motionUrl: motion.url });
   }, [emit, updateAvatarState]);
 
   // Handle expression change from presets
@@ -173,8 +173,8 @@ export default function EditorPage() {
     return {
       hasAvatarNode: !!avatarNode,
       renderer: (avatarNode?.config?.renderer || 'vrm') as RendererType,
-      modelUrl: avatarNode?.config?.model_url || DEFAULT_MODEL_URL,
-      animationUrl: avatarNode?.config?.idle_animation,
+      modelUrl: avatarNode?.config?.modelUrl || avatarNode?.config?.model_url || DEFAULT_MODEL_URL,
+      animationUrl: avatarNode?.config?.idleAnimation || avatarNode?.config?.idle_animation,
     };
   }, [nodes]);
 

@@ -20,10 +20,10 @@ export default class SubtitleDisplayNode extends BaseNode {
   async setup(config: Record<string, any>, context: NodeContext): Promise<void> {
     this.style = config.style ?? "default";
     this.position = config.position ?? "bottom-center";
-    this.fontSize = config.font_size ?? 24;
-    this.fontColor = config.font_color ?? "#ffffff";
-    this.backgroundColor = config.background_color ?? "rgba(0, 0, 0, 0.7)";
-    this.showSpeaker = config.show_speaker ?? false;
+    this.fontSize = config.fontSize ?? config.font_size ?? 24;
+    this.fontColor = config.fontColor ?? config.font_color ?? "#ffffff";
+    this.backgroundColor = config.backgroundColor ?? config.background_color ?? "rgba(0, 0, 0, 0.7)";
+    this.showSpeaker = config.showSpeaker ?? config.show_speaker ?? false;
     this.animation = config.animation ?? "fade";
     this.duration = config.duration ?? 0;
 
