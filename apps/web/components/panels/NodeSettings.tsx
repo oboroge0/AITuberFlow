@@ -625,6 +625,7 @@ const GLOBAL_SETTINGS_MAP: Record<string, Record<string, string>> = {
   "anthropic-llm": { apiKey: "anthropic.apiKey", model: "anthropic.model" },
   "google-llm": { apiKey: "google.apiKey", model: "google.model" },
   "ollama-llm": { host: "ollama.host", model: "ollama.model" },
+  "mistral-llm": { apiKey: "mistral.apiKey", model: "mistral.model" },
   "voicevox-tts": { host: "voicevox.host" },
   "coeiroink-tts": { host: "coeiroink.host" },
   "sbv2-tts": { host: "sbv2.host" },
@@ -878,6 +879,40 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         type: "number",
         label: "Context Length",
         placeholder: "4096",
+      },
+    ],
+  },
+  "mistral-llm": {
+    label: "LLM (Mistral)",
+    fields: [
+      {
+        key: "apiKey",
+        type: "password",
+        label: "API Key",
+        placeholder: "...",
+      },
+      {
+        key: "model",
+        type: "select",
+        label: "Model",
+        options: LLM_MODEL_OPTIONS.mistral,
+      },
+      {
+        key: "systemPrompt",
+        type: "textarea",
+        label: "System Prompt",
+        placeholder: "Enter character settings...",
+      },
+      {
+        key: "promptSections",
+        type: "prompt-builder",
+        label: "Prompt Builder",
+      },
+      {
+        key: "temperature",
+        type: "number",
+        label: "Temperature",
+        placeholder: "0.7",
       },
     ],
   },

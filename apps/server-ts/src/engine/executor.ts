@@ -212,6 +212,7 @@ const GLOBAL_SETTINGS_MAP: Record<string, Record<string, string>> = {
   "anthropic-llm": { apiKey: "anthropic.apiKey", model: "anthropic.model" },
   "google-llm": { apiKey: "google.apiKey", model: "google.model" },
   "ollama-llm": { host: "ollama.host", model: "ollama.model" },
+  "mistral-llm": { apiKey: "mistral.apiKey", model: "mistral.model" },
   "voicevox-tts": { host: "voicevox.host" },
   "coeiroink-tts": { host: "coeiroink.host" },
   "sbv2-tts": { host: "sbv2.host" },

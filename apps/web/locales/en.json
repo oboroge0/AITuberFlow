@@ -100,6 +100,7 @@
     "anthropic-llm": "LLM node using Anthropic API.\n[Usage] Connect prompt input. Set model and system prompt in config.",
     "google-llm": "LLM node using Google AI API.\n[Usage] Connect prompt input. Set model and system prompt in config.",
     "ollama-llm": "LLM node using local Ollama.\n[Usage] Connect prompt input. Set model in config. *Requires Ollama running.",
+    "mistral-llm": "LLM node using Mistral AI API.\n[Usage] Connect prompt input. Set model and system prompt in config.",
     "coeiroink-tts": "TTS node using COEIROINK.\n[Usage] Connect text to read. Select speaker in config. *Requires COEIROINK running.",
     "sbv2-tts": "TTS node using Style-Bert-VITS2.\n[Usage] Connect text to read. Select model in config. *Requires API running.",
     "avatar-configuration": "VRM avatar configuration node.\n[Usage] Set model URL and idle animation. Avatar displays on overlay.",

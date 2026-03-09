@@ -115,6 +115,7 @@ function TextInput({
 const OPENAI_MODELS = LLM_MODEL_OPTIONS.openai;
 const ANTHROPIC_MODELS = LLM_MODEL_OPTIONS.anthropic;
 const GOOGLE_MODELS = LLM_MODEL_OPTIONS.google;
+const MISTRAL_MODELS = LLM_MODEL_OPTIONS.mistral;
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
   const { t } = useTranslation();
@@ -282,7 +283,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* Ollama */}
-            <div className="p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
               <h4 className="text-xs font-medium text-white/60 mb-2">Ollama</h4>
               <div className="space-y-2">
                 <div>
@@ -299,6 +300,29 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     value={local['ollama.model'] || ''}
                     onChange={(v) => set('ollama.model', v)}
                     placeholder="llama3.2, mistral..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Mistral */}
+            <div className="p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
+              <h4 className="text-xs font-medium text-white/60 mb-2">Mistral AI</h4>
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.apiKey')}</label>
+                  <PasswordInput
+                    value={local['mistral.apiKey'] || ''}
+                    onChange={(v) => set('mistral.apiKey', v)}
+                    placeholder="..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.model')}</label>
+                  <ModelSelect
+                    value={local['mistral.model'] || ''}
+                    onChange={(v) => set('mistral.model', v)}
+                    options={MISTRAL_MODELS}
                   />
                 </div>
               </div>
