@@ -176,6 +176,32 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
 
   // Reachable nodes are now computed in the Zustand store (workflowStore)
 
+  // Check if any string value in a config object matches the search query
+  const configMatchesQuery = useCallback(
+    (config: Record<string, unknown> | undefined, query: string): boolean => {
+      if (!config) return false;
+      for (const value of Object.values(config)) {
+        if (typeof value === 'string') {
+          if (value.toLowerCase().includes(query)) return true;
+        } else if (typeof value === 'number' || typeof value === 'boolean') {
+          if (String(value).toLowerCase().includes(query)) return true;
+        } else if (Array.isArray(value)) {
+          for (const item of value) {
+            if (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean') {
+              if (String(item).toLowerCase().includes(query)) return true;
+            } else if (item !== null && typeof item === 'object') {
+              if (configMatchesQuery(item as Record<string, unknown>, query)) return true;
+            }
+          }
+        } else if (value && typeof value === 'object') {
+          if (configMatchesQuery(value as Record<string, unknown>, query)) return true;
+        }
+      }
+      return false;
+    },
+    []
+  );
+
   // Compute search match node IDs
   const searchMatchIds = useMemo(() => {
     if (!searchVisible || !searchQuery.trim()) return new Set<string>();
@@ -184,11 +210,15 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
       workflowNodes
         .filter((node) => {
           const label = getPluginLabel(node.type).toLowerCase();
-          return label.includes(query) || node.type.toLowerCase().includes(query);
+          return (
+            label.includes(query) ||
+            node.type.toLowerCase().includes(query) ||
+            configMatchesQuery(node.config, query)
+          );
         })
         .map((node) => node.id)
     );
-  }, [searchVisible, searchQuery, workflowNodes, getPluginLabel]);
+  }, [searchVisible, searchQuery, workflowNodes, getPluginLabel, configMatchesQuery]);
 
   // Convert workflow nodes to React Flow nodes
   const flowNodes: Node[] = useMemo(
