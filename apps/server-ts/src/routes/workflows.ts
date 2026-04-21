@@ -322,17 +322,32 @@ app.post("/:id/start", async (c) => {
   const [existing] = await _db.select().from(workflows).where(eq(workflows.id, id));
   if (!existing) return c.json({ detail: "Workflow not found" }, 404);
 
-  let body: any = {};
-  try {
-    body = await c.req.json();
-  } catch {
-    // No body provided
+  // Distinguish "no body" (fine) from "malformed body" (reject).
+  // Hono's c.req.text() resolves to "" when no body was sent, letting us
+  // skip the JSON parse in that case. Malformed JSON still gets a 400.
+  let body: Record<string, unknown> = {};
+  const rawBody = await c.req.text();
+  if (rawBody.trim().length > 0) {
+    try {
+      const parsed = JSON.parse(rawBody) as unknown;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        body = parsed as Record<string, unknown>;
+      } else {
+        return c.json({ error: "Request body must be a JSON object" }, 400);
+      }
+    } catch {
+      return c.json({ error: "Invalid JSON in request body" }, 400);
+    }
   }
 
-  const nodes = body.nodes ?? JSON.parse(existing.nodesJson || "[]");
-  const connections = body.connections ?? JSON.parse(existing.connectionsJson || "[]");
-  const character = body.character ?? JSON.parse(existing.characterJson || "{}");
-  const startNodeId = body.startNodeId ?? null;
+  const nodes = (body.nodes as unknown[] | undefined) ?? JSON.parse(existing.nodesJson || "[]");
+  const connections =
+    (body.connections as unknown[] | undefined) ??
+    JSON.parse(existing.connectionsJson || "[]");
+  const character =
+    (body.character as Record<string, unknown> | undefined) ??
+    JSON.parse(existing.characterJson || "{}");
+  const startNodeId = typeof body.startNodeId === "string" ? body.startNodeId : null;
 
   const workflowData = {
     id: existing.id,

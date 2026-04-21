@@ -6,7 +6,7 @@ import { createBunWebSocket } from "hono/bun";
 import { serveStatic } from "hono/bun";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { initDb } from "./db/database";
+import { closeDb, initDb } from "./db/database";
 import { WorkflowExecutor } from "./engine/executor";
 import { integrationRoutes } from "./routes/integrations";
 import { pluginRoutes } from "./routes/plugins";
@@ -112,13 +112,48 @@ const port = Number.isFinite(parsedPort) ? parsedPort : 8001;
 console.log(`Started development server: http://localhost:${port}`);
 
 // Graceful shutdown handler
-process.on("SIGTERM", () => {
-  console.log("Received SIGTERM, shutting down gracefully...");
+const SHUTDOWN_TIMEOUT_MS = 10_000;
+let isShuttingDown = false;
+
+async function gracefulShutdown(signal: string): Promise<void> {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  console.log(`Received ${signal}, shutting down gracefully...`);
+
+  const timeoutHandle = setTimeout(() => {
+    console.warn(`Shutdown timed out after ${SHUTDOWN_TIMEOUT_MS}ms, forcing exit`);
+    process.exit(1);
+  }, SHUTDOWN_TIMEOUT_MS);
+  // Don't let the timeout keep the process alive if everything finishes fast.
+  if (typeof timeoutHandle === "object" && "unref" in timeoutHandle) {
+    timeoutHandle.unref();
+  }
+
+  try {
+    const runningIds = executor.getRunningWorkflowIds();
+    if (runningIds.length > 0) {
+      console.log(`Stopping ${runningIds.length} running workflow(s)...`);
+      await Promise.allSettled(runningIds.map((id) => executor.stopWorkflow(id)));
+    }
+  } catch (err) {
+    console.error("Error stopping workflows on shutdown:", err);
+  }
+
+  try {
+    closeDb();
+  } catch (err) {
+    console.error("Error closing database on shutdown:", err);
+  }
+
+  clearTimeout(timeoutHandle);
   process.exit(0);
+}
+
+process.on("SIGTERM", () => {
+  void gracefulShutdown("SIGTERM");
 });
 process.on("SIGINT", () => {
-  console.log("Received SIGINT, shutting down gracefully...");
-  process.exit(0);
+  void gracefulShutdown("SIGINT");
 });
 
 // Use export default for Bun's built-in server management.
