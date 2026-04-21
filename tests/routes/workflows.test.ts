@@ -550,6 +550,18 @@ describe("Workflow Execution", () => {
     expect(data.workflow_id).toBe(created.id);
   });
 
+  it("should reject start with malformed JSON body", async () => {
+    const created = await createWorkflowViaApi(app, { name: "Bad body" });
+    const res = await app.request(
+      new Request(`http://localhost/api/workflows/${created.id}/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{not valid json",
+      })
+    );
+    expect(res.status).toBe(400);
+  });
+
   it("should return 404 when starting non-existent workflow", async () => {
     const fakeId = "00000000-0000-0000-0000-000000000000";
     const res = await app.request(
