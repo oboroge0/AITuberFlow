@@ -69,8 +69,14 @@ export default class SwitchNode extends BaseNode {
     return strValue.toLowerCase().includes(compare.toLowerCase());
   }
 
+  /** Cap pattern/input length to mitigate catastrophic regex backtracking. */
+  private static readonly MAX_REGEX_PATTERN_LENGTH = 512;
+  private static readonly MAX_REGEX_INPUT_LENGTH = 64 * 1024;
+
   private _compareRegex(value: any, pattern: string): boolean {
+    if (pattern.length > SwitchNode.MAX_REGEX_PATTERN_LENGTH) return false;
     const strValue = value != null ? String(value) : "";
+    if (strValue.length > SwitchNode.MAX_REGEX_INPUT_LENGTH) return false;
     try {
       const flags = this.caseSensitive ? "" : "i";
       const regex = new RegExp(pattern, flags);

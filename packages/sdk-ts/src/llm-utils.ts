@@ -119,3 +119,18 @@ export async function handleLLMError(
     }
   }
 }
+
+/**
+ * Clamp a temperature value to the valid range [0, 2]. Non-finite, null,
+ * undefined, or empty-string inputs fall back to the provided default rather
+ * than silently coercing to 0.
+ */
+export function clampTemperature(value: unknown, fallback = 0.7): number {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === "string" && value.trim() === "") return fallback;
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  if (n < 0) return 0;
+  if (n > 2) return 2;
+  return n;
+}

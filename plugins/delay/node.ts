@@ -11,6 +11,7 @@ export default class DelayNode extends BaseNode {
   private randomize = false;
   private randomMin = 500;
   private randomMax = 2000;
+  private pendingControllers = new Set<AbortController>();
 
   async setup(config: Record<string, any>, context: NodeContext): Promise<void> {
     this.delayMs = config.delayMs ?? 1000;
@@ -33,7 +34,6 @@ export default class DelayNode extends BaseNode {
   ): Promise<Record<string, any>> {
     const inputData = inputs.input;
 
-    // Calculate delay
     let delay: number;
     if (this.randomize) {
       delay =
@@ -43,14 +43,41 @@ export default class DelayNode extends BaseNode {
       delay = this.delayMs;
     }
 
+    const controller = new AbortController();
+    this.pendingControllers.add(controller);
     await context.log(`Waiting ${delay}ms...`);
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    await context.log("Delay complete");
 
-    return { output: inputData };
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          this.pendingControllers.delete(controller);
+          resolve();
+        }, delay);
+        controller.signal.addEventListener(
+          "abort",
+          () => {
+            clearTimeout(timer);
+            this.pendingControllers.delete(controller);
+            reject(new DOMException("Delay aborted", "AbortError"));
+          },
+          { once: true },
+        );
+      });
+      await context.log("Delay complete");
+      return { output: inputData };
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        await context.log("Delay cancelled", "warning");
+      }
+      throw err;
+    }
   }
 
   async teardown(): Promise<void> {
-    // No cleanup needed.
+    // Cancel any outstanding delays so the timer doesn't fire after stop.
+    for (const controller of this.pendingControllers) {
+      controller.abort();
+    }
+    this.pendingControllers.clear();
   }
 }
