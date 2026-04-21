@@ -142,12 +142,15 @@ function loadGlobalSettings(): Record<string, string> {
 function checkRequiredConfigCore(
   nodes: NodeData[],
   manifests: Map<string, PluginManifest | null>,
+  settings?: Record<string, string>,
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   for (const node of nodes) {
     const manifest = manifests.get(node.type);
     if (!manifest?.config) continue;
+
+    const globalMapping = GLOBAL_SETTINGS_MAP[node.type];
 
     for (const [key, fieldDef] of Object.entries(manifest.config)) {
       if (!fieldDef.required) continue;
@@ -157,6 +160,10 @@ function checkRequiredConfigCore(
         value === undefined || value === null || value === "";
 
       if (isEmpty) {
+        // Skip if a global setting provides this value
+        const globalKey = globalMapping?.[key];
+        if (globalKey && settings?.[globalKey]) continue;
+
         issues.push({
           nodeId: node.id,
           nodeName: manifest.name || node.type,
@@ -176,8 +183,9 @@ function checkRequiredConfigCore(
 async function checkRequiredConfig(
   nodes: NodeData[],
   manifests: Map<string, PluginManifest | null>,
+  settings?: Record<string, string>,
 ): Promise<ValidationIssue[]> {
-  return checkRequiredConfigCore(nodes, manifests);
+  return checkRequiredConfigCore(nodes, manifests, settings);
 }
 
 /**
@@ -459,7 +467,7 @@ export async function validateWorkflow(
   const issues: ValidationIssue[] = [];
 
   // 1. Required config fields
-  issues.push(...(await checkRequiredConfig(nodes, manifests)));
+  issues.push(...(await checkRequiredConfig(nodes, manifests, settings)));
 
   // 2. Unconnected required input ports
   issues.push(...checkUnconnectedInputs(nodes, connections, manifests));
@@ -494,7 +502,7 @@ export function validateWorkflowSync(
   const issues: ValidationIssue[] = [];
 
   // 1. Required config fields (using shared core logic)
-  issues.push(...checkRequiredConfigCore(nodes, manifests));
+  issues.push(...checkRequiredConfigCore(nodes, manifests, settings));
 
   // 2. Unconnected required input ports
   issues.push(...checkUnconnectedInputs(nodes, connections, manifests));
