@@ -86,22 +86,44 @@ export default function OverlayPage() {
   const workflowId = useMemo(() => resolveWorkflowId(params.id, 'overlay'), [params.id]);
   const searchParams = useSearchParams();
 
+  // Helpers to parse URL params safely: NaN → fallback, then clamp to range.
+  const parseFloatParam = (raw: string | null, fallback: number, min: number, max: number): number => {
+    if (raw === null) return fallback;
+    const n = parseFloat(raw);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.max(min, Math.min(max, n));
+  };
+  const parseIntParam = (raw: string | null, fallback: number, min: number, max: number): number => {
+    if (raw === null) return fallback;
+    const n = parseInt(raw, 10);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.max(min, Math.min(max, n));
+  };
+
+  // Accept #rgb, #rrggbb, rgb()/rgba()/hsl()/hsla(), and common named colors.
+  // Reject anything else to avoid CSS injection via ?subBgColor=url(data:...).
+  const CSS_COLOR_RE = /^(#[0-9a-fA-F]{3,8}|rgba?\([^)]{1,64}\)|hsla?\([^)]{1,64}\)|[a-zA-Z]{1,32})$/;
+  const sanitizeCssColor = (raw: string | null, fallback: string): string => {
+    if (!raw) return fallback;
+    return CSS_COLOR_RE.test(raw.trim()) ? raw.trim() : fallback;
+  };
+
   // Avatar parameters
   const paramModel = searchParams.get('model');
   const paramAnimation = searchParams.get('animation');
-  const paramScale = parseFloat(searchParams.get('scale') || '1');
-  const paramX = parseFloat(searchParams.get('x') || '0');
-  const paramY = parseFloat(searchParams.get('y') || '0');
+  const paramScale = parseFloatParam(searchParams.get('scale'), 1, 0.1, 10);
+  const paramX = parseFloatParam(searchParams.get('x'), 0, -10000, 10000);
+  const paramY = parseFloatParam(searchParams.get('y'), 0, -10000, 10000);
 
   // Subtitle parameters
   const showSubtitles = searchParams.get('subtitle') !== 'false';
   const subPosition = searchParams.get('subPosition') || 'bottom';
-  const subFontSize = parseInt(searchParams.get('subFontSize') || '28', 10);
-  const subFontColor = searchParams.get('subFontColor') || '#ffffff';
-  const subBgColor = searchParams.get('subBgColor') || 'rgba(0,0,0,0.7)';
+  const subFontSize = parseIntParam(searchParams.get('subFontSize'), 28, 8, 200);
+  const subFontColor = sanitizeCssColor(searchParams.get('subFontColor'), '#ffffff');
+  const subBgColor = sanitizeCssColor(searchParams.get('subBgColor'), 'rgba(0,0,0,0.7)');
 
   // Audio parameters
-  const volume = parseInt(searchParams.get('volume') || '100', 10) / 100;
+  const volume = parseIntParam(searchParams.get('volume'), 100, 0, 100) / 100;
 
   // Debug
   const debug = searchParams.get('debug') === 'true';
@@ -128,6 +150,8 @@ export default function OverlayPage() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const donationAudioRef = useRef<HTMLAudioElement | null>(null);
+  // Track timeouts so we can cancel them on unmount / workflow change.
+  const pendingTimeoutsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
   // Force remount on navigation
   const [mountKey] = useState(() => Date.now());
@@ -136,6 +160,15 @@ export default function OverlayPage() {
   const handleMotionComplete = useCallback(() => {
     setAvatarState((prev) => ({ ...prev, motion: undefined }));
   }, []);
+
+  // Register a timeout handle so the WS cleanup can cancel it on unmount.
+  const trackTimeout = useCallback(
+    (handle: ReturnType<typeof setTimeout>): ReturnType<typeof setTimeout> => {
+      pendingTimeoutsRef.current.add(handle);
+      return handle;
+    },
+    [],
+  );
 
   // Load workflow config
   useEffect(() => {
@@ -264,7 +297,7 @@ export default function OverlayPage() {
           case 'subtitle': {
             if (!rest.text) {
               setSubtitleVisible(false);
-              setTimeout(() => setSubtitle(null), 300);
+              trackTimeout(setTimeout(() => setSubtitle(null), 300));
               break;
             }
 
@@ -272,10 +305,12 @@ export default function OverlayPage() {
             setSubtitleVisible(true);
 
             if (rest.duration && rest.duration > 0) {
-              setTimeout(() => {
-                setSubtitleVisible(false);
-                setTimeout(() => setSubtitle(null), 300);
-              }, rest.duration);
+              trackTimeout(
+                setTimeout(() => {
+                  setSubtitleVisible(false);
+                  trackTimeout(setTimeout(() => setSubtitle(null), 300));
+                }, rest.duration),
+              );
             }
             break;
           }
@@ -354,10 +389,12 @@ export default function OverlayPage() {
             }
 
             const duration = alertData.duration || 5000;
-            setTimeout(() => {
-              setDonationAlertVisible(false);
-              setTimeout(() => setDonationAlert(null), 500);
-            }, duration);
+            trackTimeout(
+              setTimeout(() => {
+                setDonationAlertVisible(false);
+                trackTimeout(setTimeout(() => setDonationAlert(null), 500));
+              }, duration),
+            );
             break;
           }
 
@@ -365,7 +402,7 @@ export default function OverlayPage() {
           case 'execution.stopped':
             setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
             setSubtitleVisible(false);
-            setTimeout(() => setSubtitle(null), 300);
+            trackTimeout(setTimeout(() => setSubtitle(null), 300));
             if (audioRef.current) {
               audioRef.current.pause();
               audioRef.current = null;
@@ -390,6 +427,12 @@ export default function OverlayPage() {
         donationAudioRef.current.pause();
         donationAudioRef.current = null;
       }
+      // Drain any pending subtitle/donation timeouts so setState doesn't fire
+      // after unmount.
+      for (const handle of pendingTimeoutsRef.current) {
+        clearTimeout(handle);
+      }
+      pendingTimeoutsRef.current.clear();
     };
   }, [workflowId, volume]);
 

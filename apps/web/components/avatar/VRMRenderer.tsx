@@ -442,6 +442,11 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
 
     window.addEventListener('resize', handleResize);
 
+    // Capture the container node now so cleanup uses the element this effect
+    // actually mounted into, not whatever containerRef points at when React
+    // invokes the cleanup (which can differ in StrictMode or after remounts).
+    const containerAtMount = containerRef.current;
+
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -466,10 +471,10 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
       animationLoadedRef.current = false;
 
       // Remove renderer from DOM and dispose
-      if (rendererRef.current && containerRef.current) {
+      if (rendererRef.current && containerAtMount) {
         try {
-          containerRef.current.removeChild(rendererRef.current.domElement);
-        } catch (e) {
+          containerAtMount.removeChild(rendererRef.current.domElement);
+        } catch {
           // DOM element might already be removed
         }
         rendererRef.current.dispose();
