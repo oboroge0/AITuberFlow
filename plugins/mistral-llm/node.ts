@@ -5,7 +5,13 @@
  * Uses OpenAI-compatible API format with custom baseURL.
  */
 
-import { BaseNode, NodeContext, createEvent, handleLLMError } from "@aituber-flow/sdk";
+import {
+  BaseNode,
+  NodeContext,
+  clampTemperature,
+  createEvent,
+  handleLLMError,
+} from "@aituber-flow/sdk";
 import OpenAI from "openai";
 
 interface PromptSection {
@@ -28,7 +34,7 @@ export default class MistralLLMNode extends BaseNode {
     const apiKey = config.apiKey ?? "";
     this.model = config.model ?? "mistral-small-latest";
     this.systemPrompt = config.systemPrompt ?? "You are a helpful assistant.";
-    this.temperature = config.temperature ?? 0.7;
+    this.temperature = clampTemperature(config.temperature, 0.7);
     this.maxTokens = config.maxTokens ?? 1024;
     this.promptSections = config.promptSections ?? null;
 

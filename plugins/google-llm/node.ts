@@ -4,7 +4,13 @@
  * Generates text using Google's Gemini models.
  */
 
-import { BaseNode, NodeContext, createEvent, handleLLMError } from "@aituber-flow/sdk";
+import {
+  BaseNode,
+  NodeContext,
+  clampTemperature,
+  createEvent,
+  handleLLMError,
+} from "@aituber-flow/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default class GoogleLLMNode extends BaseNode {
@@ -24,7 +30,7 @@ export default class GoogleLLMNode extends BaseNode {
     this.model = config.model ?? "gemini-1.5-flash";
     this.systemPrompt = config.systemPrompt ?? "You are a helpful assistant.";
     this.maxTokens = config.maxTokens ?? 1024;
-    this.temperature = config.temperature ?? 0.7;
+    this.temperature = clampTemperature(config.temperature, 0.7);
 
     if (!this.apiKey) {
       // Auto demo mode when API key is not set

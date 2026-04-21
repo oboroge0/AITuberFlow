@@ -4,7 +4,13 @@
  * Generates text responses using OpenAI's GPT models.
  */
 
-import { BaseNode, NodeContext, createEvent, handleLLMError } from "@aituber-flow/sdk";
+import {
+  BaseNode,
+  NodeContext,
+  clampTemperature,
+  createEvent,
+  handleLLMError,
+} from "@aituber-flow/sdk";
 import type { Event } from "@aituber-flow/sdk";
 import OpenAI from "openai";
 
@@ -46,7 +52,7 @@ export default class OpenAILLMNode extends BaseNode {
     this.apiKey = config.apiKey ?? "";
     this.model = config.model ?? "gpt-4o-mini";
     this.systemPrompt = config.systemPrompt ?? "You are a helpful assistant.";
-    this.temperature = config.temperature ?? 0.7;
+    this.temperature = clampTemperature(config.temperature, 0.7);
     this.maxTokens = config.maxTokens ?? 1024;
     this.reasoningEffort = config.reasoningEffort ?? null;
     this.promptSections = config.promptSections ?? null;

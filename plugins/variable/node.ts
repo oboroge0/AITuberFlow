@@ -30,14 +30,19 @@ export default class VariableNode extends BaseNode {
       value = this.defaultValue;
     }
 
-    // Convert to the specified type
+    // Convert to the specified type. On failure, fall back to defaultValue so
+    // downstream nodes never see a type-mismatched value masquerading as the
+    // requested type.
     try {
       if (this.valueType === "number") {
         const strValue = String(value);
-        value = strValue.includes(".") ? parseFloat(strValue) : parseInt(strValue, 10);
-        if (isNaN(value)) {
+        const parsed = strValue.includes(".")
+          ? parseFloat(strValue)
+          : parseInt(strValue, 10);
+        if (Number.isNaN(parsed)) {
           throw new Error(`Cannot convert "${strValue}" to number`);
         }
+        value = parsed;
       } else if (this.valueType === "boolean") {
         if (typeof value === "string") {
           value = ["true", "1", "yes"].includes(value.toLowerCase());
@@ -53,7 +58,11 @@ export default class VariableNode extends BaseNode {
         value = String(value);
       }
     } catch (e) {
-      await context.log(`Type conversion failed: ${e}`, "warning");
+      await context.log(
+        `Type conversion to "${this.valueType}" failed (${e instanceof Error ? e.message : String(e)}); using defaultValue`,
+        "warning",
+      );
+      value = this.defaultValue;
     }
 
     await context.log(`Variable '${this.name}' = ${value}`);

@@ -4,7 +4,13 @@
  * Generates text using Ollama local LLM server.
  */
 
-import { BaseNode, NodeContext, createEvent, handleLLMError } from "@aituber-flow/sdk";
+import {
+  BaseNode,
+  NodeContext,
+  clampTemperature,
+  createEvent,
+  handleLLMError,
+} from "@aituber-flow/sdk";
 
 interface OllamaGenerateResponse {
   response: string;
@@ -27,7 +33,7 @@ export default class OllamaLLMNode extends BaseNode {
     this.host = config.host ?? "http://localhost:11434";
     this.model = config.model ?? "llama3.2";
     this.systemPrompt = config.systemPrompt ?? "You are a helpful assistant.";
-    this.temperature = config.temperature ?? 0.7;
+    this.temperature = clampTemperature(config.temperature, 0.7);
     this.contextLength = config.contextLength ?? 4096;
 
     // Test connection - auto demo mode if unavailable

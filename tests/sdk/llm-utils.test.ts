@@ -4,6 +4,7 @@
 
 import { describe, it, expect, mock } from "bun:test";
 import {
+  clampTemperature,
   classifyLLMError,
   handleLLMError,
 } from "../../packages/sdk-ts/src/llm-utils";
@@ -163,5 +164,32 @@ describe("handleLLMError", () => {
     const ctx = createMockContext();
     const result = await handleLLMError("string error", "OpenAI", ctx);
     expect(result.response).toContain("string error");
+  });
+});
+
+describe("clampTemperature", () => {
+  it("returns valid numbers unchanged", () => {
+    expect(clampTemperature(0)).toBe(0);
+    expect(clampTemperature(0.7)).toBe(0.7);
+    expect(clampTemperature(2)).toBe(2);
+  });
+
+  it("clamps to [0, 2]", () => {
+    expect(clampTemperature(-1)).toBe(0);
+    expect(clampTemperature(5)).toBe(2);
+  });
+
+  it("coerces numeric strings", () => {
+    expect(clampTemperature("0.5")).toBe(0.5);
+    expect(clampTemperature("1.5")).toBe(1.5);
+  });
+
+  it("falls back when not a finite number", () => {
+    expect(clampTemperature(undefined)).toBe(0.7);
+    expect(clampTemperature(null)).toBe(0.7);
+    expect(clampTemperature("abc")).toBe(0.7);
+    expect(clampTemperature(Number.NaN)).toBe(0.7);
+    expect(clampTemperature(Number.POSITIVE_INFINITY)).toBe(0.7);
+    expect(clampTemperature(undefined, 0.3)).toBe(0.3);
   });
 });
