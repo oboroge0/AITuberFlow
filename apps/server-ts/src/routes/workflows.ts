@@ -47,19 +47,35 @@ const createWorkflowBody = z.object({
 // ─── Helpers ──────────────────────────────
 
 const SENSITIVE_KEYS = ["apiKey", "api_key", "password", "secret", "token", "apiSecret"];
+const SENSITIVE_KEYS_LOWER = new Set(SENSITIVE_KEYS.map((k) => k.toLowerCase()));
+const MAX_STRIP_DEPTH = 20;
+
+/**
+ * Recursively strip sensitive fields (api keys, tokens, passwords) from a
+ * value. Walks nested objects and arrays up to MAX_STRIP_DEPTH to guard against
+ * pathological inputs. Returns a new structure; input is not mutated.
+ */
+function deepStripSensitive(value: unknown, depth = 0): unknown {
+  if (depth >= MAX_STRIP_DEPTH) return value;
+  if (Array.isArray(value)) {
+    return value.map((item) => deepStripSensitive(item, depth + 1));
+  }
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [key, inner] of Object.entries(value as Record<string, unknown>)) {
+      if (SENSITIVE_KEYS_LOWER.has(key.toLowerCase())) {
+        out[key] = "";
+      } else {
+        out[key] = deepStripSensitive(inner, depth + 1);
+      }
+    }
+    return out;
+  }
+  return value;
+}
 
 function stripApiKeys(nodes: Record<string, unknown>[]): Record<string, unknown>[] {
-  return nodes.map((node) => {
-    const copy = { ...node };
-    if (copy.config && typeof copy.config === "object") {
-      const configCopy = { ...(copy.config as Record<string, unknown>) };
-      for (const key of SENSITIVE_KEYS) {
-        if (key in configCopy) configCopy[key] = "";
-      }
-      copy.config = configCopy;
-    }
-    return copy;
-  });
+  return nodes.map((node) => deepStripSensitive(node) as Record<string, unknown>);
 }
 
 type WorkflowRow = typeof workflows.$inferSelect;
@@ -215,13 +231,28 @@ app.get("/:id/export", async (c) => {
 });
 
 // Import workflow
+const importWorkflowBody = z.object({
+  name: z.string().max(256).optional(),
+  description: z.string().max(2048).optional().nullable(),
+  nodes: z.array(z.record(z.string(), z.unknown())).max(500).optional(),
+  connections: z.array(z.record(z.string(), z.unknown())).max(2000).optional(),
+  character: z.record(z.string(), z.unknown()).optional(),
+});
+
 app.post("/import", async (c) => {
-  let data;
+  let raw;
   try {
-    data = await c.req.json();
+    raw = await c.req.json();
   } catch {
     return c.json({ error: "Invalid JSON in request body" }, 400);
   }
+
+  const parsed = importWorkflowBody.safeParse(raw);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid workflow payload", details: parsed.error.format() }, 400);
+  }
+  const data = parsed.data;
+
   const id = generateId();
   const now = nowISO();
 
