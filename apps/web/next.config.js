@@ -1,5 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const packageJson = require('./package.json');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const path = require('path');
 const isDesktop = process.env.BUILD_MODE === 'desktop';
 
 /** @type {import('next').NextConfig} */
@@ -19,8 +21,13 @@ const nextConfig = {
     '@pixiv/three-vrm-animation',
   ],
 
-  // Turbopack config (Next.js 16+ default bundler)
-  turbopack: {},
+  // Turbopack config (Next.js 16+ default bundler).
+  // Pin the workspace root explicitly — both the monorepo root and apps/web
+  // have their own package-lock.json, and Next otherwise prints a warning
+  // asking us to disambiguate.
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
 
   // Disable dev indicators (Next.js logo in bottom-left corner)
   devIndicators: false,

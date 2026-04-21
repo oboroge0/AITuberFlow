@@ -414,6 +414,10 @@ export default function OverlayPage() {
       }
     };
 
+    // Capture the timeout set at effect-start so cleanup doesn't read a
+    // possibly-reassigned ref.
+    const pendingTimeoutsAtMount = pendingTimeoutsRef.current;
+
     return () => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'leave', payload: { workflowId } }));
@@ -429,12 +433,12 @@ export default function OverlayPage() {
       }
       // Drain any pending subtitle/donation timeouts so setState doesn't fire
       // after unmount.
-      for (const handle of pendingTimeoutsRef.current) {
+      for (const handle of pendingTimeoutsAtMount) {
         clearTimeout(handle);
       }
-      pendingTimeoutsRef.current.clear();
+      pendingTimeoutsAtMount.clear();
     };
-  }, [workflowId, volume]);
+  }, [workflowId, volume, trackTimeout]);
 
   // Subtitle position styles
   const subtitlePositionStyles: Record<string, React.CSSProperties> = {

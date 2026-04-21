@@ -1261,7 +1261,7 @@ export default function NodeSettings() {
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [modelUploading, setModelUploading] = useState(false);
   const modelInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const [avatarImages, setAvatarImages] = useState<string[]>([]);
+  const [avatarImages] = useState<string[]>([]);
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
 
@@ -1378,7 +1378,7 @@ export default function NodeSettings() {
         setVoicevoxError(response.error);
         setVoicevoxSpeakers([]);
       }
-    } catch (err) {
+    } catch {
       setVoicevoxError("Failed to fetch speakers");
       setVoicevoxSpeakers([]);
     } finally {

@@ -419,7 +419,7 @@ function PngExpressionMapField({
   value,
   onChange,
   onUploadImage,
-  availableImages,
+  availableImages: _availableImages,
 }: PngExpressionMapFieldProps) {
   const [newMapping, setNewMapping] = useState<PngExpressionMapping>({
     id: "",
@@ -460,14 +460,6 @@ function PngExpressionMapField({
     onChange({ ...config, expressions: newExpressions });
   };
 
-  const updateMapping = (oldId: string, newId: string, filename: string) => {
-    const newExpressions = { ...config.expressions };
-    if (oldId !== newId) {
-      delete newExpressions[oldId];
-    }
-    newExpressions[newId] = filename;
-    onChange({ ...config, expressions: newExpressions });
-  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

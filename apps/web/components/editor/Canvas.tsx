@@ -27,9 +27,9 @@ import FieldSelectorNode from './FieldSelectorNode';
 import ContextMenu, { type ContextMenuItem } from './ContextMenu';
 import DataPreviewPopup from './DataPreviewPopup';
 import SearchPanel from './SearchPanel';
-import { getNodeTypes, type SidebarNodeType } from './Sidebar';
+import { getNodeTypes } from './Sidebar';
 import { type PortType, type PortDefinition } from '@/lib/portTypes';
-import { useUIPreferencesStore, type NodeDisplayMode } from '@/stores/uiPreferencesStore';
+import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 import { type PromptSection } from '@/components/panels/NodeSettings';
 
 interface CanvasProps {

@@ -90,7 +90,6 @@ export default function DataPreviewPopup({
     ? pluginOutputs.map(o => o.id)
     : (nodeOutputFields[sourceNodeType] || []);
 
-  const hasData = data !== null && data !== undefined;
   const hasRuntimeFields = runtimeFields.length > 0;
 
   // Use runtime fields if available, otherwise use schema fields

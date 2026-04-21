@@ -89,7 +89,6 @@ export async function loadMixamoAnimation(
   const restRotationInverse = new THREE.Quaternion();
   const parentRestWorldRotation = new THREE.Quaternion();
   const _quatA = new THREE.Quaternion();
-  const _vec3 = new THREE.Vector3();
 
   // Get hip height for scaling
   const mixamoHips = asset.getObjectByName('mixamorigHips');
