@@ -147,7 +147,12 @@ export class NodeContext {
   }
 
   async updateCharacter(updates: Record<string, any>): Promise<void> {
-    Object.assign(this.character, updates);
+    // Guard against prototype pollution: never copy __proto__/constructor/prototype
+    // keys from user-controllable updates into the character state.
+    for (const [key, value] of Object.entries(updates)) {
+      if (key === "__proto__" || key === "constructor" || key === "prototype") continue;
+      this.character[key] = value;
+    }
   }
 
   getCharacterName(): string {
