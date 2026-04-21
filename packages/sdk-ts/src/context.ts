@@ -110,7 +110,10 @@ export class NodeContext {
     if (this._updateCharacterCallback) {
       await this._updateCharacterCallback(updates);
     }
-    Object.assign(this.character, updates);
+    for (const [key, value] of Object.entries(updates)) {
+      if (key === "__proto__" || key === "constructor" || key === "prototype") continue;
+      this.character[key] = value;
+    }
   }
 
   /**
