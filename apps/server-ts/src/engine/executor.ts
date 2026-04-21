@@ -290,6 +290,10 @@ export class WorkflowExecutor {
 
   // ─── Status ───────────────────────
 
+  getRunningWorkflowIds(): string[] {
+    return [...this.runningWorkflows.keys()];
+  }
+
   getStatus(workflowId: string): Record<string, unknown> {
     const status = this.runningWorkflows.get(workflowId);
     if (!status) return { status: "idle" };
@@ -547,9 +551,16 @@ export class WorkflowExecutor {
         workflow_data: data,
       });
 
-      // Start execution in background (non-blocking)
+      // Start execution in background (non-blocking). Errors here reach the
+      // top-level promise; record them on the workflow status so the HTTP
+      // /status endpoint and WebSocket clients can observe the failure.
       this.executeWorkflow(workflowId, data).catch((err) => {
         console.error("Workflow execution error:", err);
+        const status = this.runningWorkflows.get(workflowId);
+        if (status) {
+          status.status = "error";
+          status.error = err instanceof Error ? err.message : String(err);
+        }
       });
 
       console.log(`Started workflow: ${workflowId}`);
