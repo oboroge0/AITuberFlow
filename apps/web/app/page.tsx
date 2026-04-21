@@ -227,7 +227,6 @@ export default function HomePage() {
 
     try {
       const text = await file.text();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const importData = JSON.parse(text) as any;
       // Handle both wrapped format { workflow: {...} } and flat format { name, nodes, ... }
       const workflow = (importData.workflow || importData) as WorkflowExport | undefined;

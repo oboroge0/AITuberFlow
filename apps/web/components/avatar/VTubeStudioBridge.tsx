@@ -268,7 +268,7 @@ export default function VTubeStudioBridge({
           },
         ],
       });
-    } catch (error) {
+    } catch {
       // Silently fail for mouth updates (high frequency)
     }
   }, [authenticated, mouthParamId, sendMessage]);

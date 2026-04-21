@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import {
   Locale,
-  translations,
   getTranslation,
   getNodeDescription,
 } from '@/lib/i18n';
