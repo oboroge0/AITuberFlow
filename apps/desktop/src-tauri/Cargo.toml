@@ -1,6 +1,6 @@
 [package]
 name = "aituber-flow"
-version = "2.2.1"
+version = "2.3.1"
 description = "AITuberFlow Desktop - Visual workflow editor for AI VTuber streaming"
 authors = ["AITuberFlow"]
 edition = "2021"
