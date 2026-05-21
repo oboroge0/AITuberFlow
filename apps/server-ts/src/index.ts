@@ -121,6 +121,26 @@ process.on("SIGINT", () => {
   process.exit(0);
 });
 
+// Parent process monitoring: prevents orphan sidecar when the desktop main
+// process is SIGKILLed, panics, or otherwise terminates without firing the
+// Tauri WindowEvent::Destroyed handler. macOS lacks Linux's PR_SET_PDEATHSIG,
+// so we poll explicitly. The Tauri side passes its PID via env var.
+const parentPidEnv = process.env.AITUBERFLOW_PARENT_PID;
+if (parentPidEnv) {
+  const parentPid = Number(parentPidEnv);
+  if (Number.isFinite(parentPid) && parentPid > 0) {
+    console.log(`[parent-monitor] watching parent PID ${parentPid}`);
+    setInterval(() => {
+      try {
+        process.kill(parentPid, 0);
+      } catch {
+        console.log(`[parent-monitor] parent PID ${parentPid} no longer alive, exiting sidecar`);
+        process.exit(0);
+      }
+    }, 1000).unref();
+  }
+}
+
 // Use export default for Bun's built-in server management.
 // This ensures --hot mode works correctly (handler replacement without restart).
 export default {
