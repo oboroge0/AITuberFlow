@@ -5,6 +5,20 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
 [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [2.3.2] - 2026-05-23
+
+### 修正
+
+- macOS デスクトップ版の Auto-Updater 用 artifact（`.app.tar.gz`）が生成されず、`latest.json` に macOS platform が含まれない問題を修正 (#161)
+- 依存関係の脆弱性を解消し、root / web / server の audit が 0 vulnerabilities になるよう更新 (#169)
+- プロトタイプ汚染、HTTP Request ノードの SSRF/DoS、workflow import バリデーション、機密フィールド除去漏れなどのセキュリティ問題を修正 (#153, #148)
+- ワークフロー実行中の graceful shutdown、DB close、workflow start の不正 JSON handling、非同期実行エラーの可視化を改善 (#154, #149)
+- デスクトップ関連ファイルのバージョン更新漏れを防ぐため、リリース対象ファイルのバージョン整合性を改善 (#162)
+
+### 注意
+
+- v2.3.1 以前の macOS ユーザーは、v2.3.1 の `latest.json` に macOS updater artifact が含まれていないため、このリリースへの更新時のみ手動再ダウンロードが必要になる可能性があります。v2.3.2 以降をインストールした後は、次回以降の自動アップデートを受け取れる想定です。
+
 ## [2.3.1] - 2026-04-21
 
 ### 修正
