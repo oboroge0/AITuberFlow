@@ -440,3 +440,7 @@ MIT License - See [LICENSE](LICENSE) for details.
 ## ⭐ Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=oboroge0/AITuberFlow&type=Date)](https://star-history.com/#oboroge0/AITuberFlow&Date)
+
+## 📈 Download History
+
+[![Downloads trend](https://raw.githubusercontent.com/oboroge0/AITuberFlow/gh-pages/gh-dl/downloads-trend.svg)](https://github.com/oboroge0/AITuberFlow/releases)
