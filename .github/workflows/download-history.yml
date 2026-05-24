@@ -1,0 +1,43 @@
+name: Download History
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: download-history-${{ github.repository }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish-download-history:
+    name: Publish download history chart
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Publish downloads data and chart
+        uses: Justagwas/github-downloads-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          window_days: "365"
+          output_branch: "gh-pages"
+          output_path: "gh-dl/downloads.json"
+          publish_chart: "true"
+          chart_output_path: "gh-dl/downloads-trend.svg"
+          chart_types: "total-trend"
+          chart_themes: "slate"
+          charts_output_dir: "gh-dl/charts"
+          chart_width: "1000"
+          chart_height: "360"
+          chart_zero_baseline: "true"
+          chart_y_ticks: "6"
+          chart_x_label_every_days: "0"
+          chart_show_value_labels: "false"
+          chart_date_label_format: "yyyy-mm-dd"
+          chart_show_generated_at: "true"
+          chart_title_mode: "default"
