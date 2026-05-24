@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1",
+  "owner": "oboroge0",
+  "repo": "AITuberFlow",
+  "visibility": "public",
+  "generatedAt": "2026-05-24T18:08:05.771Z",
+  "stats": {
+    "total": 387,
+    "day": 0,
+    "week": 0,
+    "month": 0
+  },
+  "partial": {
+    "day": true,
+    "week": true,
+    "month": true
+  },
+  "snapshots": {
+    "windowDays": 365,
+    "count": 1,
+    "firstDate": "2026-05-24",
+    "lastDate": "2026-05-24",
+    "series": {
+      "2026-05-24": 387
+    }
+  },
+  "profile": {
+    "defaultMode": "daily",
+    "hourlyEnabled": false
+  }
+}
