@@ -22,6 +22,12 @@
   <a href="README.en.md">English</a>
 </p>
 
+<p align="center">
+  <a href="https://aituber-flow.dev/download">
+    <img src="https://aituber-flow.dev/download-stats.svg" alt="AITuberFlow downloads by platform" width="760">
+  </a>
+</p>
+
 ---
 
 ## 概要
