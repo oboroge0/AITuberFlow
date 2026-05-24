@@ -9,6 +9,19 @@ sqlite.exec("PRAGMA journal_mode = WAL");
 
 export const db = drizzle(sqlite, { schema });
 
+/**
+ * Close the underlying SQLite handle. Call during graceful shutdown to flush
+ * the WAL and release file locks.
+ */
+export function closeDb(): void {
+  try {
+    sqlite.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+  } catch {
+    // ignore — the close below still completes
+  }
+  sqlite.close();
+}
+
 const CREATE_TABLE_SQL = `
   CREATE TABLE IF NOT EXISTS workflows (
     id TEXT PRIMARY KEY,

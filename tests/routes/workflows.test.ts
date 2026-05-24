@@ -442,6 +442,50 @@ describe("Workflow Export / Import", () => {
     expect(exported.nodes[0].config.apiKey).toBe("sk-keep-me");
   });
 
+  it("should strip API keys nested deep inside config (deep strip)", async () => {
+    const created = await createWorkflowViaApi(app, {
+      name: "Deep Secret",
+      nodes: [
+        {
+          id: "n1",
+          type: "custom",
+          config: {
+            nested: {
+              deep: { apiKey: "sk-deep-hidden", harmless: "ok" },
+              authentication: { token: "t-leak" },
+            },
+            headers: { Authorization: "keep" }, // not in sensitive list
+            api_key: "snake-case-secret",
+          },
+        },
+      ],
+    });
+
+    const res = await app.request(
+      new Request(`http://localhost/api/workflows/${created.id}/export`, {
+        method: "GET",
+      })
+    );
+    expect(res.status).toBe(200);
+    const exported = await res.json();
+    const cfg = exported.nodes[0].config;
+    expect(cfg.nested.deep.apiKey).toBe("");
+    expect(cfg.nested.deep.harmless).toBe("ok");
+    expect(cfg.nested.authentication.token).toBe("");
+    expect(cfg.api_key).toBe("");
+    // Non-sensitive fields preserved
+    expect(cfg.headers.Authorization).toBe("keep");
+  });
+
+  it("should reject import with invalid payload shape", async () => {
+    const res = await app.request(
+      jsonRequest("POST", "/api/workflows/import", {
+        nodes: "not an array", // invalid
+      })
+    );
+    expect(res.status).toBe(400);
+  });
+
   it("should import a workflow", async () => {
     const importData = {
       name: "Imported Flow",
@@ -504,6 +548,18 @@ describe("Workflow Execution", () => {
     const data = await res.json();
     expect(data.status).toBe("started");
     expect(data.workflow_id).toBe(created.id);
+  });
+
+  it("should reject start with malformed JSON body", async () => {
+    const created = await createWorkflowViaApi(app, { name: "Bad body" });
+    const res = await app.request(
+      new Request(`http://localhost/api/workflows/${created.id}/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{not valid json",
+      })
+    );
+    expect(res.status).toBe(400);
   });
 
   it("should return 404 when starting non-existent workflow", async () => {
