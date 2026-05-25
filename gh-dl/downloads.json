@@ -3,7 +3,7 @@
   "owner": "oboroge0",
   "repo": "AITuberFlow",
   "visibility": "public",
-  "generatedAt": "2026-05-24T18:08:05.771Z",
+  "generatedAt": "2026-05-25T07:02:51.106Z",
   "stats": {
     "total": 387,
     "day": 0,
@@ -11,17 +11,18 @@
     "month": 0
   },
   "partial": {
-    "day": true,
+    "day": false,
     "week": true,
     "month": true
   },
   "snapshots": {
     "windowDays": 365,
-    "count": 1,
+    "count": 2,
     "firstDate": "2026-05-24",
-    "lastDate": "2026-05-24",
+    "lastDate": "2026-05-25",
     "series": {
-      "2026-05-24": 387
+      "2026-05-24": 387,
+      "2026-05-25": 387
     }
   },
   "profile": {
