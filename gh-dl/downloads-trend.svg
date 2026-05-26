@@ -19,26 +19,27 @@
   </defs>
   <rect class="bg" x="0" y="0" width="1000" height="360" rx="16" />
   <text class="title" x="64" y="34">oboroge0/AITuberFlow release downloads</text>
-  <text class="sub" x="64" y="352">Generated 2026-05-25</text>
+  <text class="sub" x="64" y="352">Generated 2026-05-26</text>
   <line x1="64" y1="52.00" x2="976" y2="52.00" class="grid"/>
-  <text x="56" y="56.00" text-anchor="end" class="axis">387</text>
+  <text x="56" y="56.00" text-anchor="end" class="axis">389</text>
   <line x1="64" y1="94.00" x2="976" y2="94.00" class="grid"/>
-  <text x="56" y="98.00" text-anchor="end" class="axis">323</text>
+  <text x="56" y="98.00" text-anchor="end" class="axis">324</text>
   <line x1="64" y1="136.00" x2="976" y2="136.00" class="grid"/>
-  <text x="56" y="140.00" text-anchor="end" class="axis">258</text>
+  <text x="56" y="140.00" text-anchor="end" class="axis">259</text>
   <line x1="64" y1="178.00" x2="976" y2="178.00" class="grid"/>
-  <text x="56" y="182.00" text-anchor="end" class="axis">194</text>
+  <text x="56" y="182.00" text-anchor="end" class="axis">195</text>
   <line x1="64" y1="220.00" x2="976" y2="220.00" class="grid"/>
-  <text x="56" y="224.00" text-anchor="end" class="axis">129</text>
+  <text x="56" y="224.00" text-anchor="end" class="axis">130</text>
   <line x1="64" y1="262.00" x2="976" y2="262.00" class="grid"/>
   <text x="56" y="266.00" text-anchor="end" class="axis">65</text>
   <line x1="64" y1="304.00" x2="976" y2="304.00" class="grid"/>
   <text x="56" y="308.00" text-anchor="end" class="axis">0</text>
-  <path d="M 64.00 304 L 64.00 52.00 L 976.00 52.00 L 976.00 304 Z" fill="url(#fill-total-trend-slate)"/>
-  <polyline class="line" points="64.00,52.00 976.00,52.00"/>
+  <path d="M 64.00 304 L 64.00 53.30 L 520.00 53.30 L 976.00 52.00 L 976.00 304 Z" fill="url(#fill-total-trend-slate)"/>
+  <polyline class="line" points="64.00,53.30 520.00,53.30 976.00,52.00"/>
   <circle class="dot" cx="976.00" cy="52.00" r="4.5"/>
   
   <text class="axis" x="64.00" y="336" text-anchor="start">2026-05-24</text>
-  <text class="axis" x="976.00" y="336" text-anchor="end">2026-05-25</text>
-  <text class="latest" x="976" y="34" text-anchor="end">Latest total: 387</text>
+  <text class="axis" x="520.00" y="336" text-anchor="middle">2026-05-25</text>
+  <text class="axis" x="976.00" y="336" text-anchor="end">2026-05-26</text>
+  <text class="latest" x="976" y="34" text-anchor="end">Latest total: 389</text>
 </svg>
