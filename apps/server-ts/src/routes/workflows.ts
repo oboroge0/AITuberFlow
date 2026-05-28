@@ -150,7 +150,7 @@ app.get("/:id", async (c) => {
 // Update workflow
 app.put("/:id", async (c) => {
   const id = c.req.param("id");
-  let body;
+  let body: unknown;
   try {
     body = await c.req.json();
   } catch {
@@ -240,7 +240,7 @@ const importWorkflowBody = z.object({
 });
 
 app.post("/import", async (c) => {
-  let raw;
+  let raw: unknown;
   try {
     raw = await c.req.json();
   } catch {
@@ -342,8 +342,7 @@ app.post("/:id/start", async (c) => {
 
   const nodes = (body.nodes as unknown[] | undefined) ?? JSON.parse(existing.nodesJson || "[]");
   const connections =
-    (body.connections as unknown[] | undefined) ??
-    JSON.parse(existing.connectionsJson || "[]");
+    (body.connections as unknown[] | undefined) ?? JSON.parse(existing.connectionsJson || "[]");
   const character =
     (body.character as Record<string, unknown> | undefined) ??
     JSON.parse(existing.characterJson || "{}");

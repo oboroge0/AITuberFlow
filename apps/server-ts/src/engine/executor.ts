@@ -90,6 +90,7 @@ export class NodeContext {
 
     let evt: Event;
     if ("type" in event && typeof event.type === "string") {
+      // biome-ignore lint/suspicious/noExplicitAny: plugin event may be loosely typed
       const { type, source_node_id, sourceNodeId, timestamp, ...payload } = event as any;
       evt = {
         type,
@@ -146,12 +147,13 @@ export class NodeContext {
     return controller;
   }
 
-  async updateCharacter(updates: Record<string, any>): Promise<void> {
+  // biome-ignore lint/suspicious/noExplicitAny: plugin API boundary — character state is dynamic
+  async updateCharacter(updates: Record<string, unknown>): Promise<void> {
     // Guard against prototype pollution: never copy __proto__/constructor/prototype
     // keys from user-controllable updates into the character state.
     for (const [key, value] of Object.entries(updates)) {
       if (key === "__proto__" || key === "constructor" || key === "prototype") continue;
-      this.character[key] = value;
+      (this.character as Record<string, unknown>)[key] = value;
     }
   }
 
@@ -163,6 +165,7 @@ export class NodeContext {
     return (this.character.personality as string) ?? "";
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: emotion shape defined by plugin
   getEmotion(): Record<string, any> {
     return (
       (this.character.emotion as Record<string, any>) ?? {
@@ -190,8 +193,10 @@ export class NodeContext {
 interface NodeRuntime {
   nodeId: string;
   nodeType: string;
+  // biome-ignore lint/suspicious/noExplicitAny: plugin config is dynamic
   config: Record<string, any>;
-  instance: any | null;
+  // biome-ignore lint/suspicious/noExplicitAny: plugin instance shape is unknown at compile time
+  instance: unknown | null;
   context: NodeContext;
 }
 
@@ -374,7 +379,7 @@ export class WorkflowExecutor {
   private async initializeNodes(
     workflowId: string,
     nodes: NodeData[],
-    character: Record<string, any>,
+    character: Record<string, unknown>,
     settings: Record<string, string>,
   ): Promise<void> {
     const runtimes = new Map<string, NodeRuntime>();
@@ -457,7 +462,7 @@ export class WorkflowExecutor {
       await this.workflowLocks.get(workflowId);
     }
 
-    let resolve: () => void;
+    let resolve: (() => void) | undefined;
     const lock = new Promise<void>((r) => {
       resolve = r;
     });
@@ -467,7 +472,7 @@ export class WorkflowExecutor {
       return await fn();
     } finally {
       this.workflowLocks.delete(workflowId);
-      resolve!();
+      resolve?.();
     }
   }
 
