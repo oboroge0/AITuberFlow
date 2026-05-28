@@ -67,7 +67,14 @@ interface PluginManifest {
   config?: ManifestConfig;
 }
 /** Node types that use API keys (not local-only services) */
-const API_KEY_NODE_TYPES = new Set(["openai-llm", "anthropic-llm", "google-llm", "mistral-llm", "groq-llm", "openai-tts"]);
+const API_KEY_NODE_TYPES = new Set([
+  "openai-llm",
+  "anthropic-llm",
+  "google-llm",
+  "mistral-llm",
+  "groq-llm",
+  "openai-tts",
+]);
 
 /**
  * Maps node types to their config fields and corresponding global setting keys.
