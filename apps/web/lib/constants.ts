@@ -37,7 +37,15 @@ export const LLM_MODEL_OPTIONS: Record<string, { label: string; value: string }[
     { label: 'Gemini 2.5 Pro', value: 'gemini-2.5-pro-preview-05-06' },
     { label: 'Gemini 2.5 Flash', value: 'gemini-2.5-flash-preview-05-20' },
   ],
-  groq: [
+  mistral: [
+    { label: 'Mistral Large', value: 'mistral-large-latest' },
+    { label: 'Mistral Medium', value: 'mistral-medium-latest' },
+    { label: 'Mistral Small', value: 'mistral-small-latest' },
+    { label: 'Codestral', value: 'codestral-latest' },
+    { label: 'Ministral 8B', value: 'ministral-8b-latest' },
+    { label: 'Ministral 3B', value: 'ministral-3b-latest' },
+  ],
+    groq: [
     { label: 'Llama 3.3 70B Versatile', value: 'llama-3.3-70b-versatile' },
     { label: 'Llama 3.1 8B Instant', value: 'llama-3.1-8b-instant' },
     { label: 'Llama Guard 3 8B', value: 'llama-guard-3-8b' },

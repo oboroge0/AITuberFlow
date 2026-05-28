@@ -14,7 +14,13 @@ const PROJECT_ROOT = resolve(import.meta.dir, "../../../..");
 const PLUGINS_DIR = process.env.PLUGINS_DIR || join(PROJECT_ROOT, "plugins");
 
 /** Source node types that run continuously and emit events. */
-export const SOURCE_NODE_TYPES = new Set(["twitch-chat", "youtube-chat", "discord-chat", "timer", "cron-trigger"]);
+export const SOURCE_NODE_TYPES = new Set([
+  "twitch-chat",
+  "youtube-chat",
+  "discord-chat",
+  "timer",
+  "cron-trigger",
+]);
 
 /**
  * Load a plugin's node class from its node.ts file.
