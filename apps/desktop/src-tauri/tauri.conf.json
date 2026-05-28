@@ -1,6 +1,6 @@
 {
   "productName": "AITuberFlow",
-  "version": "2.3.2",
+  "version": "2.4.0",
   "identifier": "com.aituberflow.app",
   "build": {
     "beforeBuildCommand": "",
@@ -26,7 +26,11 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app", "dmg", "nsis"],
+    "targets": [
+      "app",
+      "dmg",
+      "nsis"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -34,7 +38,9 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": ["binaries/server"],
+    "externalBin": [
+      "binaries/server"
+    ],
     "resources": [
       "resources/plugins/**/*",
       "resources/templates/**/*",
@@ -59,5 +65,3 @@
     }
   }
 }
-
-
