@@ -189,6 +189,7 @@ class VTubeStudioClient {
           pluginDeveloper: PLUGIN_DEVELOPER,
         },
         60_000,
+        // biome-ignore lint/suspicious/noExplicitAny: VTube Studio API response shape is dynamic
       )) as Record<string, any> | null;
 
       return response?.data?.authenticationToken ?? null;
@@ -204,6 +205,7 @@ class VTubeStudioClient {
         pluginName: PLUGIN_NAME,
         pluginDeveloper: PLUGIN_DEVELOPER,
         authenticationToken: token,
+        // biome-ignore lint/suspicious/noExplicitAny: VTube Studio API response shape is dynamic
       })) as Record<string, any> | null;
 
       if (response?.data) {

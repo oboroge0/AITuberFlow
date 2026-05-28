@@ -216,6 +216,25 @@ describe("NodeContext", () => {
     expect(updates[0]).toEqual({ mood: "happy", topic: "cooking" });
   });
 
+  it("updateCharacter refuses __proto__/constructor keys (prototype pollution guard)", async () => {
+    const ctx = new NodeContext({
+      workflowId: "wf-1",
+      nodeId: "n-1",
+      character: { name: "Bot" },
+    });
+
+    const malicious = JSON.parse('{"__proto__": {"polluted": true}, "mood": "ok"}');
+    await ctx.updateCharacter(malicious);
+
+    expect(ctx.character.mood).toBe("ok");
+    expect((Object.prototype as Record<string, unknown>).polluted).toBeUndefined();
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+
+    await ctx.updateCharacter({ constructor: { malicious: true } } as Record<string, any>);
+    // Object prototype should not be overwritten
+    expect(({}).constructor).toBe(Object);
+  });
+
   it("createTask returns AbortController and cleans up", async () => {
     const ctx = new NodeContext({
       workflowId: "wf-1",

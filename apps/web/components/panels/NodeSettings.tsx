@@ -626,9 +626,12 @@ const GLOBAL_SETTINGS_MAP: Record<string, Record<string, string>> = {
   "google-llm": { apiKey: "google.apiKey", model: "google.model" },
   "ollama-llm": { host: "ollama.host", model: "ollama.model" },
   "mistral-llm": { apiKey: "mistral.apiKey", model: "mistral.model" },
+  "groq-llm": { apiKey: "groq.apiKey", model: "groq.model" },
   "voicevox-tts": { host: "voicevox.host" },
   "coeiroink-tts": { host: "coeiroink.host" },
   "sbv2-tts": { host: "sbv2.host" },
+  "aivis-tts": { host: "aivis.host" },
+  "openai-tts": { apiKey: "openai.apiKey" },
 };
 
 // LLM_MODEL_OPTIONS imported from @/lib/constants
@@ -884,18 +887,22 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
   },
   "mistral-llm": {
     label: "LLM (Mistral)",
+  "groq-llm": {
+    label: "LLM (Groq)",
     fields: [
       {
         key: "apiKey",
         type: "password",
         label: "API Key",
         placeholder: "...",
+        placeholder: "gsk_...",
       },
       {
         key: "model",
         type: "select",
         label: "Model",
         options: LLM_MODEL_OPTIONS.mistral,
+        options: LLM_MODEL_OPTIONS.groq,
       },
       {
         key: "systemPrompt",
@@ -992,6 +999,63 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
       },
       { key: "length", type: "number", label: "Speed", placeholder: "1.0" },
       { key: "demoMode", type: "checkbox", label: "Demo Mode" },
+    ],
+  },
+  "aivis-tts": {
+    label: "TTS (AivisSpeech)",
+    fields: [
+      {
+        key: "host",
+        type: "text",
+        label: "AivisSpeech Host",
+        placeholder: "http://localhost:10101",
+      },
+      {
+        key: "speaker",
+        type: "select",
+        label: "Speaker",
+        dynamic: true,
+        options: [],
+      },
+      { key: "speedScale", type: "number", label: "Speed", placeholder: "1.0" },
+      { key: "demoMode", type: "checkbox", label: "Demo Mode" },
+    ],
+  },
+  "openai-tts": {
+    label: "TTS (OpenAI)",
+    fields: [
+      {
+        key: "apiKey",
+        type: "password",
+        label: "API Key",
+        placeholder: "sk-...",
+      },
+      {
+        key: "model",
+        type: "select",
+        label: "Model",
+        options: [
+          { label: "TTS-1 (Standard)", value: "tts-1" },
+          { label: "TTS-1 HD (High Quality)", value: "tts-1-hd" },
+          { label: "GPT-4o Mini TTS", value: "gpt-4o-mini-tts" },
+        ],
+      },
+      {
+        key: "voice",
+        type: "select",
+        label: "Voice",
+        options: [
+          { label: "Alloy", value: "alloy" },
+          { label: "Ash", value: "ash" },
+          { label: "Coral", value: "coral" },
+          { label: "Echo", value: "echo" },
+          { label: "Fable", value: "fable" },
+          { label: "Nova", value: "nova" },
+          { label: "Onyx", value: "onyx" },
+          { label: "Shimmer", value: "shimmer" },
+        ],
+      },
+      { key: "speed", type: "number", label: "Speed", placeholder: "1.0" },
     ],
   },
   "manual-input": {

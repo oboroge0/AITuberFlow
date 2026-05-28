@@ -90,6 +90,7 @@ export class NodeContext {
 
     let evt: Event;
     if ("type" in event && typeof event.type === "string") {
+      // biome-ignore lint/suspicious/noExplicitAny: plugin event may be loosely typed
       const { type, source_node_id, sourceNodeId, timestamp, ...payload } = event as any;
       evt = {
         type,
@@ -146,8 +147,14 @@ export class NodeContext {
     return controller;
   }
 
-  async updateCharacter(updates: Record<string, any>): Promise<void> {
-    Object.assign(this.character, updates);
+  // biome-ignore lint/suspicious/noExplicitAny: plugin API boundary — character state is dynamic
+  async updateCharacter(updates: Record<string, unknown>): Promise<void> {
+    // Guard against prototype pollution: never copy __proto__/constructor/prototype
+    // keys from user-controllable updates into the character state.
+    for (const [key, value] of Object.entries(updates)) {
+      if (key === "__proto__" || key === "constructor" || key === "prototype") continue;
+      (this.character as Record<string, unknown>)[key] = value;
+    }
   }
 
   getCharacterName(): string {
@@ -158,6 +165,7 @@ export class NodeContext {
     return (this.character.personality as string) ?? "";
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: emotion shape defined by plugin
   getEmotion(): Record<string, any> {
     return (
       (this.character.emotion as Record<string, any>) ?? {
@@ -185,8 +193,10 @@ export class NodeContext {
 interface NodeRuntime {
   nodeId: string;
   nodeType: string;
+  // biome-ignore lint/suspicious/noExplicitAny: plugin config is dynamic
   config: Record<string, any>;
-  instance: any | null;
+  // biome-ignore lint/suspicious/noExplicitAny: plugin instance shape is unknown at compile time
+  instance: unknown;
   context: NodeContext;
 }
 
@@ -213,9 +223,12 @@ const GLOBAL_SETTINGS_MAP: Record<string, Record<string, string>> = {
   "google-llm": { apiKey: "google.apiKey", model: "google.model" },
   "ollama-llm": { host: "ollama.host", model: "ollama.model" },
   "mistral-llm": { apiKey: "mistral.apiKey", model: "mistral.model" },
+  "groq-llm": { apiKey: "groq.apiKey", model: "groq.model" },
   "voicevox-tts": { host: "voicevox.host" },
   "coeiroink-tts": { host: "coeiroink.host" },
   "sbv2-tts": { host: "sbv2.host" },
+  "aivis-tts": { host: "aivis.host" },
+  "openai-tts": { apiKey: "openai.apiKey" },
 };
 
 function loadGlobalSettings(): Record<string, string> {
@@ -285,6 +298,10 @@ export class WorkflowExecutor {
   }
 
   // ─── Status ───────────────────────
+
+  getRunningWorkflowIds(): string[] {
+    return [...this.runningWorkflows.keys()];
+  }
 
   getStatus(workflowId: string): Record<string, unknown> {
     const status = this.runningWorkflows.get(workflowId);
@@ -366,7 +383,7 @@ export class WorkflowExecutor {
   private async initializeNodes(
     workflowId: string,
     nodes: NodeData[],
-    character: Record<string, any>,
+    character: Record<string, unknown>,
     settings: Record<string, string>,
   ): Promise<void> {
     const runtimes = new Map<string, NodeRuntime>();
@@ -406,7 +423,9 @@ export class WorkflowExecutor {
     inputs: Record<string, any>,
   ): Promise<Record<string, any>> {
     if (runtime.instance) {
-      return await runtime.instance.execute(inputs, runtime.context);
+      // biome-ignore lint/suspicious/noExplicitAny: plugin instance shape defined at runtime
+      const inst = runtime.instance as Record<string, any>;
+      return await inst.execute(inputs, runtime.context);
     }
     return await this.executeBuiltinNode(runtime.nodeType, runtime.config, inputs, runtime.context);
   }
@@ -417,9 +436,11 @@ export class WorkflowExecutor {
     this.nodeInstances.delete(workflowId);
 
     for (const runtime of runtimes.values()) {
-      if (runtime.instance?.teardown) {
+      // biome-ignore lint/suspicious/noExplicitAny: plugin instance shape defined at runtime
+      const inst = runtime.instance as Record<string, any> | null;
+      if (inst?.teardown) {
         try {
-          await runtime.instance.teardown();
+          await inst.teardown();
         } catch (err) {
           console.error(`Error tearing down node ${runtime.nodeId}:`, err);
         }
@@ -449,7 +470,7 @@ export class WorkflowExecutor {
       await this.workflowLocks.get(workflowId);
     }
 
-    let resolve: () => void;
+    let resolve: (() => void) | undefined;
     const lock = new Promise<void>((r) => {
       resolve = r;
     });
@@ -459,7 +480,7 @@ export class WorkflowExecutor {
       return await fn();
     } finally {
       this.workflowLocks.delete(workflowId);
-      resolve!();
+      resolve?.();
     }
   }
 
@@ -543,9 +564,16 @@ export class WorkflowExecutor {
         workflow_data: data,
       });
 
-      // Start execution in background (non-blocking)
+      // Start execution in background (non-blocking). Errors here reach the
+      // top-level promise; record them on the workflow status so the HTTP
+      // /status endpoint and WebSocket clients can observe the failure.
       this.executeWorkflow(workflowId, data).catch((err) => {
         console.error("Workflow execution error:", err);
+        const status = this.runningWorkflows.get(workflowId);
+        if (status) {
+          status.status = "error";
+          status.error = err instanceof Error ? err.message : String(err);
+        }
       });
 
       console.log(`Started workflow: ${workflowId}`);

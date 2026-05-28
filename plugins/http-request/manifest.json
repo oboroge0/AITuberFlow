@@ -69,6 +69,28 @@
       "default": 30000,
       "min": 1000,
       "max": 120000
+    },
+    "allowPrivateHosts": {
+      "type": "boolean",
+      "label": "Allow Private / Loopback Hosts",
+      "description": "Permit requests to localhost and RFC1918/link-local addresses. Disabled by default to mitigate SSRF.",
+      "default": false
+    },
+    "maxRedirects": {
+      "type": "number",
+      "label": "Max Redirects",
+      "description": "Maximum number of redirects to follow (0 disables redirects)",
+      "default": 5,
+      "min": 0,
+      "max": 20
+    },
+    "maxResponseBytes": {
+      "type": "number",
+      "label": "Max Response Size (bytes)",
+      "description": "Maximum allowed response body size in bytes",
+      "default": 52428800,
+      "min": 1024,
+      "max": 1073741824
     }
   }
 }

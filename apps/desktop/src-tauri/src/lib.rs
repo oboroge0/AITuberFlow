@@ -237,6 +237,9 @@ pub fn run() {
             );
 
             // Spawn the Bun server sidecar
+            // Pass our PID so the sidecar can self-terminate if we die ungracefully
+            // (SIGKILL, panic, etc.) — see apps/server-ts/src/index.ts parent-monitor.
+            let parent_pid = std::process::id();
             let shell = handle.shell();
             let (mut rx, child) = shell
                 .sidecar("server")
@@ -249,6 +252,7 @@ pub fn run() {
                 .env("UPLOAD_DIR", upload_dir.to_string_lossy().to_string())
                 .env("ANIMATIONS_DIR", animations_dir.to_string_lossy().to_string())
                 .env("AUDIO_DIR", audio_dir.to_string_lossy().to_string())
+                .env("AITUBERFLOW_PARENT_PID", parent_pid.to_string())
                 .spawn()
                 .expect("failed to spawn sidecar");
             drop(reservation);

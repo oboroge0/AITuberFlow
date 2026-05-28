@@ -200,14 +200,25 @@ export class EventFilter {
   /**
    * Safely resolve a dot-separated property path on an object.
    */
-  private _resolvePath(obj: Record<string, any>, path: string): any {
+  private _resolvePath(
+    obj: Record<string, unknown>,
+    path: string,
+  ): string | number | boolean | null {
     const parts = path.split(".");
-    let current: any = obj;
+    let current: unknown = obj;
     for (const part of parts) {
       if (current == null || typeof current !== "object") return null;
-      current = current[part];
+      current = (current as Record<string, unknown>)[part];
     }
-    return current ?? null;
+    if (current == null) return null;
+    if (
+      typeof current === "string" ||
+      typeof current === "number" ||
+      typeof current === "boolean"
+    ) {
+      return current;
+    }
+    return null;
   }
 }
 

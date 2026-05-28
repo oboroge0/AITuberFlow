@@ -44,5 +44,11 @@ export const LLM_MODEL_OPTIONS: Record<string, { label: string; value: string }[
     { label: 'Codestral', value: 'codestral-latest' },
     { label: 'Ministral 8B', value: 'ministral-8b-latest' },
     { label: 'Ministral 3B', value: 'ministral-3b-latest' },
+  groq: [
+    { label: 'Llama 3.3 70B Versatile', value: 'llama-3.3-70b-versatile' },
+    { label: 'Llama 3.1 8B Instant', value: 'llama-3.1-8b-instant' },
+    { label: 'Llama Guard 3 8B', value: 'llama-guard-3-8b' },
+    { label: 'Mixtral 8x7B', value: 'mixtral-8x7b-32768' },
+    { label: 'Gemma 2 9B', value: 'gemma2-9b-it' },
   ],
 };

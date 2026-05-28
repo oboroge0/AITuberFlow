@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   frontend:
     name: Frontend Check
@@ -56,6 +60,9 @@ jobs:
       - name: Type check
         run: bun run typecheck
 
+      - name: Lint & Format (Biome)
+        run: bun run lint
+
   test-ts:
     name: Run Tests (TypeScript)
     runs-on: ubuntu-latest
@@ -79,4 +86,4 @@ jobs:
         run: bun install
 
       - name: Run TypeScript tests
-        run: bun test tests/engine/ tests/routes/ --verbose
+        run: bun test tests/engine/ tests/routes/ tests/sdk/ --verbose

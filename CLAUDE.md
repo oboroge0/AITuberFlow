@@ -256,11 +256,16 @@ docs: プラグイン開発ガイドを更新
 
 ### 2. バージョン更新
 
-以下のファイルのバージョンを更新:
+以下のファイルのバージョンを更新 (5ファイル全て揃えること):
 - `apps/web/package.json`
 - `apps/server-ts/package.json`
+- `apps/desktop/package.json`
 - `apps/desktop/src-tauri/tauri.conf.json`
+- `apps/desktop/src-tauri/Cargo.toml` (更新後 `cd apps/desktop/src-tauri && cargo update -p aituber-flow` で Cargo.lock も更新)
 - `CHANGELOG.md`（日付は `date +%Y-%m-%d` で確認）
+
+⚠️ 過去のリリースで `apps/desktop/package.json` (2.0.0 のまま) と `Cargo.toml` (パッチずれ) の
+更新漏れが続いていた。Updater 判定の不安定や成果物バージョン文字列の齟齬を防ぐため必ず全て揃える。
 
 ### 3. コミット＆マージ
 

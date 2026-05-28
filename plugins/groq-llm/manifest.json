@@ -1,0 +1,90 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "groq-llm",
+  "name": "Groq LLM",
+  "version": "1.0.0",
+  "description": "Generate text using Groq's high-speed inference API. Supports Llama, Mixtral, and Gemma models.",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
+  },
+  "license": "MIT",
+  "category": "llm",
+  "ui": {
+    "label": "Groq",
+    "icon": "Zap",
+    "color": "#F55036",
+    "bgColor": "rgba(245, 80, 54, 0.1)",
+    "statusText": "High-speed inference"
+  },
+  "node": {
+    "inputs": [
+      {
+        "id": "prompt",
+        "type": "string",
+        "description": "The input prompt to send to the model"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "response",
+        "type": "string",
+        "description": "The generated response from the model"
+      }
+    ],
+    "events": {
+      "emits": [
+        "response.generated"
+      ],
+      "listens": []
+    }
+  },
+  "config": {
+    "apiKey": {
+      "type": "password",
+      "label": "API Key",
+      "description": "Your Groq API key",
+      "required": true
+    },
+    "model": {
+      "type": "select",
+      "label": "Model",
+      "description": "The model to use for inference",
+      "default": "llama-3.3-70b-versatile",
+      "options": [
+        { "label": "Llama 3.3 70B Versatile", "value": "llama-3.3-70b-versatile" },
+        { "label": "Llama 3.1 8B Instant", "value": "llama-3.1-8b-instant" },
+        { "label": "Llama Guard 3 8B", "value": "llama-guard-3-8b" },
+        { "label": "Mixtral 8x7B", "value": "mixtral-8x7b-32768" },
+        { "label": "Gemma 2 9B", "value": "gemma2-9b-it" }
+      ]
+    },
+    "systemPrompt": {
+      "type": "textarea",
+      "label": "System Prompt",
+      "description": "The system message that sets the AI's behavior",
+      "default": "You are a helpful assistant."
+    },
+    "promptSections": {
+      "type": "prompt-builder",
+      "label": "Prompt Builder",
+      "description": "Build complex prompts by combining static text, system prompt, and dynamic input sections"
+    },
+    "temperature": {
+      "type": "number",
+      "label": "Temperature",
+      "description": "Controls randomness. Higher = more creative, Lower = more focused (0-2)",
+      "default": 0.7,
+      "min": 0,
+      "max": 2
+    },
+    "maxTokens": {
+      "type": "number",
+      "label": "Max Tokens",
+      "description": "Maximum number of tokens in the response",
+      "default": 1024,
+      "min": 1,
+      "max": 8192
+    }
+  }
+}

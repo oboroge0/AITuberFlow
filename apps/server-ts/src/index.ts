@@ -6,7 +6,7 @@ import { createBunWebSocket } from "hono/bun";
 import { serveStatic } from "hono/bun";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { initDb } from "./db/database";
+import { closeDb, initDb } from "./db/database";
 import { WorkflowExecutor } from "./engine/executor";
 import { integrationRoutes } from "./routes/integrations";
 import { pluginRoutes } from "./routes/plugins";
@@ -16,6 +16,7 @@ import { setExecutor, setWSBroadcaster, workflowRoutes } from "./routes/workflow
 import { createWebSocketHandler, setExecutorForWS, wsBroadcaster } from "./websocket/handler";
 
 const app = new Hono();
+// biome-ignore lint/suspicious/noExplicitAny: Bun ServerWebSocket requires any as data type parameter
 const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket<any>>();
 
 // Static file serving directory (set by Tauri for desktop mode)
@@ -67,7 +68,9 @@ app.get(
 // When STATIC_DIR is set, serve the Next.js static export and provide SPA fallback
 if (STATIC_DIR) {
   const indexExists = existsSync(join(STATIC_DIR, "index.html"));
-  console.log(`[static] STATIC_DIR=${STATIC_DIR} index.html=${indexExists ? "found" : "NOT FOUND"}`);
+  console.log(
+    `[static] STATIC_DIR=${STATIC_DIR} index.html=${indexExists ? "found" : "NOT FOUND"}`,
+  );
 
   // Normalize path separators for cross-platform compatibility (Hono serveStatic)
   const normalizedStaticDir = STATIC_DIR.replace(/\\/g, "/");
@@ -112,14 +115,69 @@ const port = Number.isFinite(parsedPort) ? parsedPort : 8001;
 console.log(`Started development server: http://localhost:${port}`);
 
 // Graceful shutdown handler
-process.on("SIGTERM", () => {
-  console.log("Received SIGTERM, shutting down gracefully...");
+const SHUTDOWN_TIMEOUT_MS = 10_000;
+let isShuttingDown = false;
+
+async function gracefulShutdown(signal: string): Promise<void> {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  console.log(`Received ${signal}, shutting down gracefully...`);
+
+  const timeoutHandle = setTimeout(() => {
+    console.warn(`Shutdown timed out after ${SHUTDOWN_TIMEOUT_MS}ms, forcing exit`);
+    process.exit(1);
+  }, SHUTDOWN_TIMEOUT_MS);
+  // Don't let the timeout keep the process alive if everything finishes fast.
+  if (typeof timeoutHandle === "object" && "unref" in timeoutHandle) {
+    timeoutHandle.unref();
+  }
+
+  try {
+    const runningIds = executor.getRunningWorkflowIds();
+    if (runningIds.length > 0) {
+      console.log(`Stopping ${runningIds.length} running workflow(s)...`);
+      await Promise.allSettled(runningIds.map((id) => executor.stopWorkflow(id)));
+    }
+  } catch (err) {
+    console.error("Error stopping workflows on shutdown:", err);
+  }
+
+  try {
+    closeDb();
+  } catch (err) {
+    console.error("Error closing database on shutdown:", err);
+  }
+
+  clearTimeout(timeoutHandle);
   process.exit(0);
+}
+
+process.on("SIGTERM", () => {
+  void gracefulShutdown("SIGTERM");
 });
 process.on("SIGINT", () => {
-  console.log("Received SIGINT, shutting down gracefully...");
-  process.exit(0);
+  void gracefulShutdown("SIGINT");
 });
+
+// Parent process monitoring: prevents orphan sidecar when the desktop main
+// process is SIGKILLed, panics, or otherwise terminates without firing the
+// Tauri WindowEvent::Destroyed handler. macOS lacks Linux's PR_SET_PDEATHSIG,
+// so we poll explicitly. The Tauri side passes its PID via env var.
+const parentPidEnv = process.env.AITUBERFLOW_PARENT_PID;
+if (parentPidEnv) {
+  const parentPid = Number(parentPidEnv);
+  if (Number.isFinite(parentPid) && parentPid > 0) {
+    console.log(`[parent-monitor] watching parent PID ${parentPid}`);
+    setInterval(() => {
+      try {
+        process.kill(parentPid, 0);
+      } catch {
+        console.log(`[parent-monitor] parent PID ${parentPid} no longer alive, exiting sidecar`);
+        process.exit(0);
+      }
+    }, 1000).unref();
+  }
+}
 
 // Use export default for Bun's built-in server management.
 // This ensures --hot mode works correctly (handler replacement without restart).

@@ -17,10 +17,13 @@ interface WSMessage {
   payload?: Record<string, unknown>;
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: Bun ServerWebSocket requires any as data type parameter
+type BunWS = ServerWebSocket<any>;
+
 interface ClientInfo {
   id: string;
   rooms: Set<string>;
-  ws: WSContext<ServerWebSocket<any>>;
+  ws: WSContext<BunWS>;
 }
 
 /** Maximum allowed WebSocket message size (1 MB). */
@@ -33,13 +36,13 @@ export class WSBroadcaster {
   private rooms = new Map<string, Set<string>>(); // room -> client ids
   // Use ws.raw (ServerWebSocket) as key instead of WSContext,
   // because Hono creates a new WSContext wrapper per event.
-  private wsClientIds = new WeakMap<ServerWebSocket<any>, string>();
+  private wsClientIds = new WeakMap<BunWS, string>();
 
-  private getRaw(ws: WSContext<ServerWebSocket<any>>): ServerWebSocket<any> {
-    return (ws as any).raw;
+  private getRaw(ws: WSContext<BunWS>): BunWS {
+    return (ws as WSContext<BunWS> & { raw: BunWS }).raw;
   }
 
-  addClient(id: string, ws: WSContext<ServerWebSocket<any>>): void {
+  addClient(id: string, ws: WSContext<BunWS>): void {
     this.clients.set(id, { id, rooms: new Set(), ws });
     this.wsClientIds.set(this.getRaw(ws), id);
   }
@@ -55,7 +58,7 @@ export class WSBroadcaster {
     this.clients.delete(id);
   }
 
-  getClientId(ws: WSContext<ServerWebSocket<any>>): string | undefined {
+  getClientId(ws: WSContext<BunWS>): string | undefined {
     return this.wsClientIds.get(this.getRaw(ws));
   }
 
@@ -190,9 +193,7 @@ let clientCounter = 0;
 function parseMessageData(data: WSMessageReceive): WSMessage {
   if (typeof data === "string") {
     if (data.length > MAX_WS_MESSAGE_SIZE) {
-      throw new Error(
-        `Message too large: ${data.length} bytes (max: ${MAX_WS_MESSAGE_SIZE})`,
-      );
+      throw new Error(`Message too large: ${data.length} bytes (max: ${MAX_WS_MESSAGE_SIZE})`);
     }
     return JSON.parse(data) as WSMessage;
   }
@@ -203,22 +204,20 @@ function parseMessageData(data: WSMessageReceive): WSMessage {
 
   const bytes = new Uint8Array(data);
   if (bytes.byteLength > MAX_WS_MESSAGE_SIZE) {
-    throw new Error(
-      `Message too large: ${bytes.byteLength} bytes (max: ${MAX_WS_MESSAGE_SIZE})`,
-    );
+    throw new Error(`Message too large: ${bytes.byteLength} bytes (max: ${MAX_WS_MESSAGE_SIZE})`);
   }
   return JSON.parse(new TextDecoder().decode(bytes)) as WSMessage;
 }
 
-export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
+export function createWebSocketHandler(): WSEvents<BunWS> {
   return {
-    onOpen(_evt: Event, ws: WSContext<ServerWebSocket<any>>) {
+    onOpen(_evt: Event, ws: WSContext<BunWS>) {
       const clientId = `client_${++clientCounter}`;
       wsBroadcaster.addClient(clientId, ws);
       console.log(`WebSocket client connected: ${clientId}`);
     },
 
-    onMessage(evt: MessageEvent<WSMessageReceive>, ws: WSContext<ServerWebSocket<any>>) {
+    onMessage(evt: MessageEvent<WSMessageReceive>, ws: WSContext<BunWS>) {
       const clientId = wsBroadcaster.getClientId(ws);
       if (!clientId) return;
 
@@ -309,7 +308,7 @@ export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
       }
     },
 
-    onClose(_evt: CloseEvent, ws: WSContext<ServerWebSocket<any>>) {
+    onClose(_evt: CloseEvent, ws: WSContext<BunWS>) {
       const clientId = wsBroadcaster.getClientId(ws);
       if (clientId) {
         wsBroadcaster.removeClient(clientId);
@@ -317,7 +316,7 @@ export function createWebSocketHandler(): WSEvents<ServerWebSocket<any>> {
       }
     },
 
-    onError(evt: Event, ws: WSContext<ServerWebSocket<any>>) {
+    onError(evt: Event, ws: WSContext<BunWS>) {
       const clientId = wsBroadcaster.getClientId(ws);
       console.error(`WebSocket error for ${clientId}:`, evt);
     },

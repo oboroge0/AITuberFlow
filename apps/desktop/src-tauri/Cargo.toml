@@ -1,6 +1,6 @@
 [package]
 name = "aituber-flow"
-version = "2.2.1"
+version = "2.3.2"
 description = "AITuberFlow Desktop - Visual workflow editor for AI VTuber streaming"
 authors = ["AITuberFlow"]
 edition = "2021"
@@ -12,8 +12,14 @@ crate-type = ["lib", "cdylib", "staticlib"]
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
+[features]
+# devtools 機能 (WebView インスペクタ等) は dev 時のみ有効化。
+# release ビルドでは feature を渡さないため、エンドユーザーが内部 IPC を直接実行できない。
+# dev で有効化するには `tauri dev --features devtools` (apps/desktop/package.json の dev スクリプト参照)。
+devtools = ["tauri/devtools"]
+
 [dependencies]
-tauri = { version = "2", features = ["devtools"] }
+tauri = "2"
 tauri-plugin-shell = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
