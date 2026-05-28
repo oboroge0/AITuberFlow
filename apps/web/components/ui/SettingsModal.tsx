@@ -309,9 +309,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             {/* Mistral */}
             <div className="p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
               <h4 className="text-xs font-medium text-white/60 mb-2">Mistral AI</h4>
-            {/* Groq */}
-            <div className="p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
-              <h4 className="text-xs font-medium text-white/60 mb-2">Groq</h4>
               <div className="space-y-2">
                 <div>
                   <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.apiKey')}</label>
@@ -319,9 +316,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     value={local['mistral.apiKey'] || ''}
                     onChange={(v) => set('mistral.apiKey', v)}
                     placeholder="..."
-                    value={local['groq.apiKey'] || ''}
-                    onChange={(v) => set('groq.apiKey', v)}
-                    placeholder="gsk_..."
                   />
                 </div>
                 <div>
@@ -330,6 +324,26 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     value={local['mistral.model'] || ''}
                     onChange={(v) => set('mistral.model', v)}
                     options={MISTRAL_MODELS}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Groq */}
+            <div className="p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
+              <h4 className="text-xs font-medium text-white/60 mb-2">Groq</h4>
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.apiKey')}</label>
+                  <PasswordInput
+                    value={local['groq.apiKey'] || ''}
+                    onChange={(v) => set('groq.apiKey', v)}
+                    placeholder="gsk_..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.model')}</label>
+                  <ModelSelect
                     value={local['groq.model'] || ''}
                     onChange={(v) => set('groq.model', v)}
                     options={GROQ_MODELS}
