@@ -103,6 +103,8 @@
     "groq-llm": "LLM node using Groq's high-speed inference API.\n[Usage] Connect prompt input. Set model and system prompt in config.",
     "coeiroink-tts": "TTS node using COEIROINK.\n[Usage] Connect text to read. Select speaker in config. *Requires COEIROINK running.",
     "sbv2-tts": "TTS node using Style-Bert-VITS2.\n[Usage] Connect text to read. Select model in config. *Requires API running.",
+    "aivis-tts": "TTS node using AivisSpeech (VOICEVOX-compatible).\n[Usage] Connect text to read. Select speaker in config. *Requires AivisSpeech running.",
+    "openai-tts": "TTS node using OpenAI TTS API.\n[Usage] Connect text to read. Set voice and model in config.",
     "avatar-configuration": "VRM avatar configuration node.\n[Usage] Set model URL and idle animation. Avatar displays on overlay.",
     "emotion-analyzer": "Emotion analysis node.\n[Usage] Connect text to analyze. Outputs emotion and intensity.",
     "motion-trigger": "Manually trigger expressions and motions.\n[Usage] Connect any input to trigger. Set expression/motion in config.",
