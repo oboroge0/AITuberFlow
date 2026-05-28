@@ -5,6 +5,15 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に基づいており、
 [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [2.4.0] - 2026-05-28
+
+### 追加
+
+- **Groq LLMプラグイン** - Groqの高速推論APIを使用したLLMノードを追加。Llama 3.3 70B Versatile / Llama 3.1 8B Instant などのモデルをサポート (#128)
+- **Mistral AI LLMプラグイン** - Mistral AIのAPIを使用したLLMノードを追加。Mistral Large / Medium / Small / Codestral などのモデルをサポート (#129)
+- **AivisSpeech・OpenAI TTSプラグイン** - AivisSpeech（VOICEVOX互換）とOpenAI Text-to-SpeechのTTSノードを追加 (#130)
+- **Cronトリガーノード** - cron式でワークフローをスケジュール実行できるトリガーノードを追加 (#131)
+
 ## [2.3.2] - 2026-05-23
 
 ### 修正

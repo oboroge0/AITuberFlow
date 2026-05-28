@@ -1,6 +1,6 @@
 {
   "name": "aituber-flow-web",
-  "version": "2.3.2",
+  "version": "2.4.0",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
