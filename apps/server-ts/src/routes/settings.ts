@@ -35,8 +35,7 @@ app.put("/", zValidator("json", updateSettingsBody), async (c) => {
 
   _db.transaction((tx) => {
     for (const [key, value] of Object.entries(body)) {
-      tx
-        .insert(globalSettings)
+      tx.insert(globalSettings)
         .values({ key, value, updatedAt: now })
         .onConflictDoUpdate({
           target: globalSettings.key,

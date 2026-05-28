@@ -12,7 +12,7 @@
 import { join } from "node:path";
 import { db } from "../db/database";
 import { globalSettings } from "../db/schema";
-import { getPluginsDir, SOURCE_NODE_TYPES } from "./plugin-loader";
+import { SOURCE_NODE_TYPES, getPluginsDir } from "./plugin-loader";
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -92,7 +92,7 @@ const manifestCache = new Map<string, PluginManifest | null>();
 
 async function loadManifest(nodeType: string): Promise<PluginManifest | null> {
   if (manifestCache.has(nodeType)) {
-    return manifestCache.get(nodeType)!;
+    return manifestCache.get(nodeType) ?? null;
   }
 
   const pluginsDir = getPluginsDir();
@@ -156,8 +156,7 @@ function checkRequiredConfigCore(
       if (!fieldDef.required) continue;
 
       const value = node.config?.[key];
-      const isEmpty =
-        value === undefined || value === null || value === "";
+      const isEmpty = value === undefined || value === null || value === "";
 
       if (isEmpty) {
         // Skip if a global setting provides this value
@@ -248,7 +247,8 @@ function checkUnreachableNodes(
     const fromId = conn.from.nodeId;
     const toId = conn.to.nodeId;
     if (adjacency.has(fromId)) {
-      const neighbors = adjacency.get(fromId)!;
+      const neighbors = adjacency.get(fromId) ?? [];
+      adjacency.set(fromId, neighbors);
       if (!neighbors.includes(toId)) {
         neighbors.push(toId);
       }
@@ -257,9 +257,7 @@ function checkUnreachableNodes(
 
   // Find entry points
   const startNodes = nodes.filter((n) => n.type === "start").map((n) => n.id);
-  const sourceNodes = nodes
-    .filter((n) => SOURCE_NODE_TYPES.has(n.type))
-    .map((n) => n.id);
+  const sourceNodes = nodes.filter((n) => SOURCE_NODE_TYPES.has(n.type)).map((n) => n.id);
 
   let entryPoints: string[];
 
@@ -276,9 +274,7 @@ function checkUnreachableNodes(
         incomingCount.set(conn.to.nodeId, (incomingCount.get(conn.to.nodeId) ?? 0) + 1);
       }
     }
-    entryPoints = [...incomingCount.entries()]
-      .filter(([, count]) => count === 0)
-      .map(([id]) => id);
+    entryPoints = [...incomingCount.entries()].filter(([, count]) => count === 0).map(([id]) => id);
   }
 
   if (entryPoints.length === 0) {
@@ -298,7 +294,8 @@ function checkUnreachableNodes(
   const reachable = new Set<string>();
   const queue = [...entryPoints];
   while (queue.length > 0) {
-    const nodeId = queue.shift()!;
+    const nodeId = queue.shift();
+    if (!nodeId) break;
     if (reachable.has(nodeId)) continue;
     reachable.add(nodeId);
     for (const neighbor of adjacency.get(nodeId) ?? []) {
@@ -341,7 +338,8 @@ function checkCircularReferences(
     const fromId = conn.from.nodeId;
     const toId = conn.to.nodeId;
     if (adjacency.has(fromId)) {
-      const neighbors = adjacency.get(fromId)!;
+      const neighbors = adjacency.get(fromId) ?? [];
+      adjacency.set(fromId, neighbors);
       if (!neighbors.includes(toId)) {
         neighbors.push(toId);
       }
@@ -406,10 +404,7 @@ function checkCircularReferences(
 /**
  * Check API key settings on LLM/TTS nodes, considering global settings fallback.
  */
-function checkApiKeys(
-  nodes: NodeData[],
-  settings: Record<string, string>,
-): ValidationIssue[] {
+function checkApiKeys(nodes: NodeData[], settings: Record<string, string>): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   for (const node of nodes) {
@@ -421,17 +416,15 @@ function checkApiKeys(
     const nodeApiKey = node.config?.apiKey;
     const globalApiKey = settings[mapping.apiKey];
 
-    const nodeKeyEmpty =
-      nodeApiKey === undefined || nodeApiKey === null || nodeApiKey === "";
-    const globalKeyEmpty =
-      !globalApiKey || globalApiKey === "";
+    const nodeKeyEmpty = nodeApiKey === undefined || nodeApiKey === null || nodeApiKey === "";
+    const globalKeyEmpty = !globalApiKey || globalApiKey === "";
 
     if (nodeKeyEmpty && globalKeyEmpty) {
       issues.push({
         nodeId: node.id,
         nodeName: node.type,
         level: "warning",
-        message: `APIキーが設定されていません（ノード設定またはグローバル設定で設定してください）`,
+        message: "APIキーが設定されていません（ノード設定またはグローバル設定で設定してください）",
       });
     }
   }
@@ -444,9 +437,7 @@ function checkApiKeys(
 /**
  * Validate a workflow and return all issues found.
  */
-export async function validateWorkflow(
-  workflowData: WorkflowData,
-): Promise<ValidationIssue[]> {
+export async function validateWorkflow(workflowData: WorkflowData): Promise<ValidationIssue[]> {
   const { nodes, connections } = workflowData;
 
   if (!nodes || nodes.length === 0) {

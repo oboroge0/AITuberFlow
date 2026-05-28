@@ -16,6 +16,7 @@ import { setExecutor, setWSBroadcaster, workflowRoutes } from "./routes/workflow
 import { createWebSocketHandler, setExecutorForWS, wsBroadcaster } from "./websocket/handler";
 
 const app = new Hono();
+// biome-ignore lint/suspicious/noExplicitAny: Bun ServerWebSocket requires any as data type parameter
 const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket<any>>();
 
 // Static file serving directory (set by Tauri for desktop mode)
@@ -67,7 +68,9 @@ app.get(
 // When STATIC_DIR is set, serve the Next.js static export and provide SPA fallback
 if (STATIC_DIR) {
   const indexExists = existsSync(join(STATIC_DIR, "index.html"));
-  console.log(`[static] STATIC_DIR=${STATIC_DIR} index.html=${indexExists ? "found" : "NOT FOUND"}`);
+  console.log(
+    `[static] STATIC_DIR=${STATIC_DIR} index.html=${indexExists ? "found" : "NOT FOUND"}`,
+  );
 
   // Normalize path separators for cross-platform compatibility (Hono serveStatic)
   const normalizedStaticDir = STATIC_DIR.replace(/\\/g, "/");
