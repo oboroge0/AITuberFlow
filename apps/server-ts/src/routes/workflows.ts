@@ -150,7 +150,7 @@ app.get("/:id", async (c) => {
 // Update workflow
 app.put("/:id", async (c) => {
   const id = c.req.param("id");
-  let body: unknown;
+  let body: Record<string, unknown>;
   try {
     body = await c.req.json();
   } catch {
@@ -161,8 +161,9 @@ app.put("/:id", async (c) => {
   if (!existing) return c.json({ detail: "Workflow not found" }, 404);
 
   const updates: Partial<WorkflowRow> = { updatedAt: nowISO() };
-  if (body.name !== undefined) updates.name = body.name;
-  if (body.description !== undefined) updates.description = body.description;
+  if (typeof body.name === "string") updates.name = body.name;
+  if (body.description === null || typeof body.description === "string")
+    updates.description = body.description ?? null;
   if (body.nodes !== undefined) updates.nodesJson = JSON.stringify(body.nodes);
   if (body.connections !== undefined) updates.connectionsJson = JSON.stringify(body.connections);
   if (body.character !== undefined) updates.characterJson = JSON.stringify(body.character);

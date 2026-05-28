@@ -196,7 +196,7 @@ interface NodeRuntime {
   // biome-ignore lint/suspicious/noExplicitAny: plugin config is dynamic
   config: Record<string, any>;
   // biome-ignore lint/suspicious/noExplicitAny: plugin instance shape is unknown at compile time
-  instance: unknown | null;
+  instance: unknown;
   context: NodeContext;
 }
 
@@ -419,7 +419,9 @@ export class WorkflowExecutor {
     inputs: Record<string, any>,
   ): Promise<Record<string, any>> {
     if (runtime.instance) {
-      return await runtime.instance.execute(inputs, runtime.context);
+      // biome-ignore lint/suspicious/noExplicitAny: plugin instance shape defined at runtime
+      const inst = runtime.instance as Record<string, any>;
+      return await inst.execute(inputs, runtime.context);
     }
     return await this.executeBuiltinNode(runtime.nodeType, runtime.config, inputs, runtime.context);
   }
@@ -430,9 +432,11 @@ export class WorkflowExecutor {
     this.nodeInstances.delete(workflowId);
 
     for (const runtime of runtimes.values()) {
-      if (runtime.instance?.teardown) {
+      // biome-ignore lint/suspicious/noExplicitAny: plugin instance shape defined at runtime
+      const inst = runtime.instance as Record<string, any> | null;
+      if (inst?.teardown) {
         try {
-          await runtime.instance.teardown();
+          await inst.teardown();
         } catch (err) {
           console.error(`Error tearing down node ${runtime.nodeId}:`, err);
         }
