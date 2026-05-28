@@ -1,0 +1,59 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "cron-trigger",
+  "name": "Cron Trigger",
+  "version": "1.0.0",
+  "description": "Triggers workflow execution on a cron schedule. Useful for periodic tasks like daily greetings or timed notifications.",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
+  },
+  "license": "MIT",
+  "category": "input",
+  "ui": {
+    "label": "Cron",
+    "icon": "CalendarClock",
+    "color": "#8B5CF6",
+    "bgColor": "rgba(139, 92, 246, 0.1)",
+    "statusText": "Schedule trigger"
+  },
+  "node": {
+    "inputs": [],
+    "outputs": [
+      {
+        "id": "timestamp",
+        "type": "string",
+        "description": "Execution timestamp (ISO 8601)"
+      },
+      {
+        "id": "executionCount",
+        "type": "number",
+        "description": "Number of times this trigger has fired"
+      }
+    ],
+    "events": {
+      "emits": ["timer.tick"],
+      "listens": []
+    }
+  },
+  "config": {
+    "cron": {
+      "type": "string",
+      "label": "Cron Expression",
+      "description": "Standard 5-field cron: minute hour day-of-month month day-of-week (e.g. '0 9 * * *' = daily at 9:00)",
+      "default": "0 * * * *"
+    },
+    "timezone": {
+      "type": "string",
+      "label": "Timezone",
+      "description": "IANA timezone (e.g. Asia/Tokyo). Leave empty for system default.",
+      "default": ""
+    },
+    "enabled": {
+      "type": "boolean",
+      "label": "Enabled",
+      "description": "Enable or disable this trigger",
+      "default": true
+    }
+  }
+}
