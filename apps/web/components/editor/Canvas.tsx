@@ -29,9 +29,10 @@ import DataPreviewPopup from './DataPreviewPopup';
 import SearchPanel from './SearchPanel';
 import { getNodeTypes, type SidebarNodeType, CATEGORY_COLORS, CATEGORY_LABELS } from './Sidebar';
 import { type PluginCategory } from '@/lib/types';
-import { type PortType, type PortDefinition } from '@/lib/portTypes';
+import { type PortType, type PortDefinition, PORT_TYPE_COLORS, arePortTypesCompatible } from '@/lib/portTypes';
 import { useUIPreferencesStore, type NodeDisplayMode } from '@/stores/uiPreferencesStore';
 import { type PromptSection } from '@/components/panels/NodeSettings';
+import { useDragStateStore } from '@/stores/dragStateStore';
 
 interface CanvasProps {
   onNodeSelect?: (nodeId: string | null) => void;
@@ -118,6 +119,13 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
 
   const { nodeDisplayMode, setNodeDisplayMode, searchVisible, searchQuery } = useUIPreferencesStore();
   const { getPluginColor, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs } = usePluginStore();
+  const { setDragging, clearDragging } = useDragStateStore();
+
+  // State for the "drop-on-canvas" compatible node suggestion panel
+  const [connectSuggest, setConnectSuggest] = useState<{
+    x: number; y: number;
+    sourceType: PortType; sourceNodeId: string; sourcePortId: string;
+  } | null>(null);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -395,9 +403,65 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
           to: { nodeId: params.target, port: params.targetHandle },
         });
       }
+      setConnectSuggest(null);
     },
     [addConnection]
   );
+
+  // When dragging starts from a handle — notify drag state store so all nodes can highlight/dim
+  const onConnectStart = useCallback(
+    (_event: unknown, params: { nodeId?: string | null; handleId?: string | null; handleType?: 'source' | 'target' | null }) => {
+      const { nodeId, handleId, handleType } = params;
+      if (!nodeId || !handleId || !handleType) return;
+      const node = workflowNodes.find((n) => n.id === nodeId);
+      if (!node) return;
+      const portDefs = handleType === 'source' ? getPluginOutputs(node.type) : getPluginInputs(node.type);
+      const portDef = portDefs.find((p) => p.id === handleId);
+      if (portDef) {
+        setDragging(portDef.type as PortType, handleType);
+      }
+    },
+    [workflowNodes, getPluginInputs, getPluginOutputs, setDragging]
+  ) as Parameters<typeof ReactFlow>[0]['onConnectStart'];
+
+  // When dragging ends — clear drag state, show suggestion panel if dropped on empty canvas
+  const onConnectEnd = useCallback(
+    (event: MouseEvent | TouchEvent) => {
+      const state = useDragStateStore.getState();
+      const target = event.target as HTMLElement;
+      const isOnHandle = target.classList.contains('react-flow__handle');
+      const isOnNode = !!target.closest('.react-flow__node');
+      if (!isOnHandle && !isOnNode && state.draggingSourceType) {
+        const clientX = (event as MouseEvent).clientX ?? (event as TouchEvent).changedTouches?.[0]?.clientX;
+        const clientY = (event as MouseEvent).clientY ?? (event as TouchEvent).changedTouches?.[0]?.clientY;
+        if (clientX !== undefined && clientY !== undefined) {
+          setConnectSuggest({
+            x: clientX,
+            y: clientY,
+            sourceType: state.draggingSourceType,
+            sourceNodeId: '',
+            sourcePortId: '',
+          });
+        }
+      }
+      clearDragging();
+    },
+    [clearDragging]
+  );
+
+  /** Only allow connections where port types are compatible. */
+  const isValidConnection = useCallback(
+    (connection: { source?: string | null; target?: string | null; sourceHandle?: string | null; targetHandle?: string | null }) => {
+      const srcNode = workflowNodes.find((n) => n.id === connection.source);
+      const tgtNode = workflowNodes.find((n) => n.id === connection.target);
+      if (!srcNode || !tgtNode || !connection.sourceHandle || !connection.targetHandle) return true;
+      const srcPort = getPluginOutputs(srcNode.type).find((p) => p.id === connection.sourceHandle);
+      const tgtPort = getPluginInputs(tgtNode.type).find((p) => p.id === connection.targetHandle);
+      if (!srcPort || !tgtPort) return true; // unknown port — allow
+      return arePortTypesCompatible(srcPort.type as PortType, tgtPort.type as PortType);
+    },
+    [workflowNodes, getPluginInputs, getPluginOutputs]
+  ) as Parameters<typeof ReactFlow>[0]['isValidConnection'];
 
   // Track if edge was successfully reconnected
   const edgeReconnectSuccessful = useRef(true);
@@ -690,6 +754,9 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onConnectStart={onConnectStart}
+        onConnectEnd={onConnectEnd}
+        isValidConnection={isValidConnection}
         onReconnectStart={onReconnectStart}
         onReconnect={onReconnect}
         onReconnectEnd={onReconnectEnd}
@@ -729,6 +796,49 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
 
       {/* Search Panel */}
       <SearchPanel />
+
+      {/* Connect-suggest panel: shown when dragging a wire onto empty canvas */}
+      {connectSuggest && (() => {
+        const { plugins } = usePluginStore.getState();
+        const nodeTypesList = getNodeTypes();
+        const compatible = nodeTypesList.filter((nt) => {
+          const plugin = plugins.find((p) => p.id === nt.id);
+          if (!plugin) return false;
+          const inputs = plugin.node?.inputs ?? [];
+          return inputs.some((inp) => arePortTypesCompatible(connectSuggest.sourceType, inp.type as PortType));
+        });
+        if (compatible.length === 0) return null;
+        const adjust = (v: number, max: number, size: number) => Math.min(v, max - size);
+        const px = adjust(connectSuggest.x, window.innerWidth, 220);
+        const py = adjust(connectSuggest.y, window.innerHeight, compatible.length * 36 + 48);
+        return (
+          <div
+            className="fixed z-50 py-1 rounded-lg shadow-xl"
+            style={{ left: px, top: py, background: 'rgba(17,24,39,0.98)', border: '1px solid rgba(255,255,255,0.1)', minWidth: '210px' }}
+          >
+            <div className="px-3 pt-2 pb-1 text-[10px] text-white/40 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full" style={{ background: PORT_TYPE_COLORS[connectSuggest.sourceType] }} />
+              接続できるノード
+            </div>
+            {compatible.map((nt) => (
+              <button
+                key={nt.id}
+                onClick={() => {
+                  const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+                  if (!bounds) return;
+                  addNode({ type: nt.id, position: { x: connectSuggest.x - bounds.left - 80, y: connectSuggest.y - bounds.top - 30 }, config: { ...nt.defaultConfig } });
+                  setConnectSuggest(null);
+                }}
+                className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 text-white/90 hover:bg-white/10 transition-colors"
+              >
+                <span style={{ color: nt.color }}>{nt.icon}</span>
+                {nt.label}
+              </button>
+            ))}
+            <button onClick={() => setConnectSuggest(null)} className="w-full px-3 py-1.5 text-left text-[11px] text-white/30 hover:text-white/60 border-t border-white/10 mt-1">キャンセル</button>
+          </div>
+        );
+      })()}
 
       {/* Display Mode Toggle */}
       <div className="absolute top-4 right-4 flex gap-1 bg-gray-800/95 rounded-lg p-1 border border-white/10 shadow-lg z-10">

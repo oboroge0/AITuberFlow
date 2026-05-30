@@ -6,7 +6,8 @@ import { useWorkflowStore } from '@/stores/workflowStore';
 import { usePluginStore } from '@/stores/pluginStore';
 import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 import { useLocaleStore } from '@/stores/localeStore';
-import { type PortDefinition, PORT_TYPE_COLORS } from '@/lib/portTypes';
+import { type PortDefinition, PORT_TYPE_COLORS, PORT_TYPE_LABELS, arePortTypesCompatible, type PortType } from '@/lib/portTypes';
+import { useDragStateStore } from '@/stores/dragStateStore';
 import { renderIcon } from '@/lib/icons';
 
 export interface CustomNodeData extends Record<string, unknown> {
@@ -66,6 +67,11 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const [showTooltip, setShowTooltip] = useState(false);
   const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const status = nodeStatuses[id];
+
+  // Track drag state for port highlight/dim
+  const { draggingSourceType, draggingHandleType } = useDragStateStore();
+  // Hover state for port tooltips
+  const [hoveredPort, setHoveredPort] = useState<{ id: string; label: string; type: PortType; description?: string } | null>(null);
 
   const collapsed = collapsedNodeIds.includes(id);
 
@@ -322,7 +328,60 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     ) : null;
   };
 
-  // ============ COLLAPSED MODE ============
+  // Port hover tooltip
+  const PortTooltip = () => {
+    if (!hoveredPort) return null;
+    const typeColor = PORT_TYPE_COLORS[hoveredPort.type] ?? '#6B7280';
+    const typeLabel = PORT_TYPE_LABELS[hoveredPort.type] ?? hoveredPort.type;
+    return (
+      <div
+        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[60] pointer-events-none"
+        style={{ minWidth: '160px', maxWidth: '240px' }}
+      >
+        <div className="bg-gray-950/98 backdrop-blur-sm border rounded-lg p-2 shadow-xl" style={{ borderColor: `${typeColor}60` }}>
+          <div className="flex items-center gap-1.5 mb-1">
+            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: typeColor }} />
+            <span className="text-[11px] font-semibold text-white/90">{hoveredPort.label}</span>
+            <span className="text-[10px] ml-auto" style={{ color: typeColor }}>{typeLabel}</span>
+          </div>
+          {hoveredPort.description && (
+            <div className="text-[10px] text-white/60 leading-relaxed">{hoveredPort.description}</div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  /** Return handle style based on drag compatibility */
+  const getHandleStyle = (portType: PortType, isTarget: boolean): React.CSSProperties => {
+    const base: React.CSSProperties = {
+      borderRadius: '50%',
+      border: '2px solid #1F2937',
+      position: 'relative',
+      transition: 'opacity 0.15s, box-shadow 0.15s, transform 0.15s',
+    };
+    if (!draggingSourceType) {
+      // idle: normal appearance
+      return { ...base, width: '14px', height: '14px', background: PORT_TYPE_COLORS[portType] ?? '#374151' };
+    }
+    // Something is being dragged — check compatibility
+    const compatible = isTarget
+      ? arePortTypesCompatible(draggingSourceType, portType)
+      : arePortTypesCompatible(portType, draggingSourceType);
+
+    if (compatible) {
+      return {
+        ...base,
+        width: '16px',
+        height: '16px',
+        background: PORT_TYPE_COLORS[portType] ?? '#374151',
+        boxShadow: `0 0 8px ${PORT_TYPE_COLORS[portType] ?? '#374151'}`,
+        transform: 'scale(1.2)',
+      };
+    } else {
+      return { ...base, width: '14px', height: '14px', background: '#374151', opacity: 0.25 };
+    }
+  };
   if (collapsed) {
     return (
       <div
@@ -656,20 +715,18 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           {/* Input ports */}
           <div className="flex flex-col gap-1">
             {data.inputs?.map((input) => (
-              <div key={input.id} className="flex items-center gap-1 relative h-5">
+              <div
+                key={input.id}
+                className="flex items-center gap-1 relative h-5"
+                onMouseEnter={() => setHoveredPort({ id: input.id, label: input.label, type: input.type as PortType, description: (input as any).description })}
+                onMouseLeave={() => setHoveredPort(null)}
+              >
+                <PortTooltip />
                 <Handle
                   type="target"
                   position={Position.Left}
                   id={input.id}
-                  style={{
-                    width: '12px',
-                    height: '12px',
-                    borderRadius: '50%',
-                    background: PORT_TYPE_COLORS[input.type] || '#374151',
-                    border: '2px solid #1F2937',
-                    left: '-6px',
-                    position: 'absolute',
-                  }}
+                  style={{ ...getHandleStyle(input.type as PortType, true), left: '-7px', position: 'absolute' }}
                 />
                 <span className="text-[10px] text-white/60 pl-2 whitespace-nowrap">
                   {input.label}
@@ -681,7 +738,13 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           {/* Output ports */}
           <div className="flex flex-col gap-1 items-end">
             {data.outputs?.map((output) => (
-              <div key={output.id} className="flex items-center gap-1 relative h-5">
+              <div
+                key={output.id}
+                className="flex items-center gap-1 relative h-5"
+                onMouseEnter={() => setHoveredPort({ id: output.id, label: output.label, type: output.type as PortType, description: (output as any).description })}
+                onMouseLeave={() => setHoveredPort(null)}
+              >
+                <PortTooltip />
                 <span className="text-[10px] text-white/60 pr-2 whitespace-nowrap">
                   {output.label}
                 </span>
@@ -689,15 +752,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   type="source"
                   position={Position.Right}
                   id={output.id}
-                  style={{
-                    width: '12px',
-                    height: '12px',
-                    borderRadius: '50%',
-                    background: PORT_TYPE_COLORS[output.type] || config.color,
-                    border: '2px solid #1F2937',
-                    right: '-6px',
-                    position: 'absolute',
-                  }}
+                  style={{ ...getHandleStyle(output.type as PortType, false), right: '-7px', position: 'absolute' }}
                 />
               </div>
             ))}
