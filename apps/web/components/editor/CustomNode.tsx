@@ -358,7 +358,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       borderRadius: '50%',
       border: '2px solid #1F2937',
       position: 'relative',
-      transition: 'opacity 0.15s, box-shadow 0.15s, transform 0.15s',
+      transition: 'opacity 0.15s, box-shadow 0.15s, width 0.15s, height 0.15s',
     };
     if (!draggingSourceType) {
       // idle: normal appearance
@@ -370,13 +370,16 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       : arePortTypesCompatible(portType, draggingSourceType);
 
     if (compatible) {
+      // Grow via width/height (not transform): React Flow positions handles with a
+      // size-relative translate, so enlarging keeps the circle centered and expanding
+      // symmetrically. Overriding `transform` here would drop that translate and shift
+      // the handle off-center (different per side: left vs right).
       return {
         ...base,
-        width: '16px',
-        height: '16px',
+        width: '20px',
+        height: '20px',
         background: PORT_TYPE_COLORS[portType] ?? '#374151',
         boxShadow: `0 0 8px ${PORT_TYPE_COLORS[portType] ?? '#374151'}`,
-        transform: 'scale(1.2)',
       };
     } else {
       return { ...base, width: '14px', height: '14px', background: '#374151', opacity: 0.25 };

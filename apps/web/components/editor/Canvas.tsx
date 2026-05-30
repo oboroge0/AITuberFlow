@@ -509,7 +509,18 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     onNodeSelect?.(null);
     setContextMenu({ show: false, x: 0, y: 0, type: 'pane' });
     setDataPreview(null);
+    setConnectSuggest(null);
   }, [selectNode, onNodeSelect]);
+
+  // Dismiss the connect-suggest panel with the Escape key
+  useEffect(() => {
+    if (!connectSuggest) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setConnectSuggest(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [connectSuggest]);
 
   // Handle edge click to show data preview
   const onEdgeClick = useCallback(
