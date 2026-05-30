@@ -71,7 +71,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   // Track drag state for port highlight/dim
   const { draggingSourceType, draggingHandleType } = useDragStateStore();
   // Hover state for port tooltips
-  const [hoveredPort, setHoveredPort] = useState<{ id: string; label: string; type: PortType; description?: string } | null>(null);
+  const [hoveredPort, setHoveredPort] = useState<{ id: string; label: string; type: PortType; description?: string; side: 'input' | 'output' } | null>(null);
 
   const collapsed = collapsedNodeIds.includes(id);
 
@@ -328,9 +328,9 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     ) : null;
   };
 
-  // Port hover tooltip
-  const PortTooltip = () => {
-    if (!hoveredPort) return null;
+  // Port hover tooltip — only renders for the port currently hovered
+  const PortTooltip = ({ portId, side }: { portId: string; side: 'input' | 'output' }) => {
+    if (!hoveredPort || hoveredPort.id !== portId || hoveredPort.side !== side) return null;
     const typeColor = PORT_TYPE_COLORS[hoveredPort.type] ?? '#6B7280';
     const typeLabel = PORT_TYPE_LABELS[hoveredPort.type] ?? hoveredPort.type;
     return (
@@ -718,10 +718,10 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               <div
                 key={input.id}
                 className="flex items-center gap-1 relative h-5"
-                onMouseEnter={() => setHoveredPort({ id: input.id, label: input.label, type: input.type as PortType, description: (input as any).description })}
+                onMouseEnter={() => setHoveredPort({ id: input.id, label: input.label, type: input.type as PortType, description: (input as any).description, side: 'input' })}
                 onMouseLeave={() => setHoveredPort(null)}
               >
-                <PortTooltip />
+                <PortTooltip portId={input.id} side="input" />
                 <Handle
                   type="target"
                   position={Position.Left}
@@ -741,10 +741,10 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               <div
                 key={output.id}
                 className="flex items-center gap-1 relative h-5"
-                onMouseEnter={() => setHoveredPort({ id: output.id, label: output.label, type: output.type as PortType, description: (output as any).description })}
+                onMouseEnter={() => setHoveredPort({ id: output.id, label: output.label, type: output.type as PortType, description: (output as any).description, side: 'output' })}
                 onMouseLeave={() => setHoveredPort(null)}
               >
-                <PortTooltip />
+                <PortTooltip portId={output.id} side="output" />
                 <span className="text-[10px] text-white/60 pr-2 whitespace-nowrap">
                   {output.label}
                 </span>
