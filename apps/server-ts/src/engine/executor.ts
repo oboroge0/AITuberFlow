@@ -1157,6 +1157,24 @@ export class WorkflowExecutor {
     return order;
   }
 
+  /**
+   * Port IDs renamed from snake_case to camelCase in the config-naming
+   * refactor. Workflows saved before the rename still reference the old IDs
+   * in their connections, so resolve old → new here to avoid silently passing
+   * the wrong value (or the whole upstream output object) downstream.
+   */
+  private static readonly LEGACY_PORT_ID_ALIASES: Record<string, string> = {
+    mouth_values: "mouthValues",
+    motion_url: "motionUrl",
+    current_scene: "currentScene",
+    scene_name: "sceneName",
+    source_name: "sourceName",
+  };
+
+  private resolvePortId(port: string): string {
+    return WorkflowExecutor.LEGACY_PORT_ID_ALIASES[port] ?? port;
+  }
+
   private getNodeInputs(
     nodeId: string,
     connections: ConnectionData[],
@@ -1170,10 +1188,13 @@ export class WorkflowExecutor {
       const upstreamOutputs = nodeOutputs.get(conn.from.nodeId);
       if (!upstreamOutputs) continue;
 
-      if (conn.from.port in upstreamOutputs) {
-        inputs[conn.to.port] = upstreamOutputs[conn.from.port];
+      const fromPort = this.resolvePortId(conn.from.port);
+      const toPort = this.resolvePortId(conn.to.port);
+
+      if (fromPort in upstreamOutputs) {
+        inputs[toPort] = upstreamOutputs[fromPort];
       } else {
-        inputs[conn.to.port] = upstreamOutputs;
+        inputs[toPort] = upstreamOutputs;
       }
     }
 
