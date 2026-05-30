@@ -22,9 +22,22 @@ export const PORT_TYPE_LABELS: Record<PortType, string> = {
   trigger: 'トリガー',
 };
 
-/** Two types are compatible if either side is 'any', or they match exactly. */
+/** Port types that the UI models and can validate against each other. */
+const KNOWN_PORT_TYPES: ReadonlySet<string> = new Set<PortType>([
+  'string', 'number', 'boolean', 'audio', 'array', 'object', 'any', 'trigger',
+]);
+
+/**
+ * Two types are compatible if either side is 'any', or they match exactly.
+ *
+ * Plugin-specific port types that the UI does not yet model (e.g. 'Message'
+ * emitted by chat input nodes and consumed as 'string' by LLM prompts) are
+ * treated as compatible — otherwise the type system would block valid
+ * connections it simply doesn't describe yet (e.g. the core chat → LLM flow).
+ */
 export function arePortTypesCompatible(sourceType: PortType, targetType: PortType): boolean {
   if (sourceType === 'any' || targetType === 'any') return true;
+  if (!KNOWN_PORT_TYPES.has(sourceType) || !KNOWN_PORT_TYPES.has(targetType)) return true;
   return sourceType === targetType;
 }
 

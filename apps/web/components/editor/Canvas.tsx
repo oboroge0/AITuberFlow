@@ -817,7 +817,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
             style={{ left: px, top: py, background: 'rgba(17,24,39,0.98)', border: '1px solid rgba(255,255,255,0.1)', minWidth: '210px' }}
           >
             <div className="px-3 pt-2 pb-1 text-[10px] text-white/40 uppercase tracking-wider flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full" style={{ background: PORT_TYPE_COLORS[connectSuggest.sourceType] }} />
+              <span className="w-2 h-2 rounded-full" style={{ background: PORT_TYPE_COLORS[connectSuggest.sourceType] ?? '#6B7280' }} />
               接続できるノード
             </div>
             {compatible.map((nt) => (
