@@ -25,7 +25,6 @@ import { toast } from '@/stores/toastStore';
 import CustomNode, { type CustomNodeData } from './CustomNode';
 import FieldSelectorNode from './FieldSelectorNode';
 import ContextMenu, { type ContextMenuItem } from './ContextMenu';
-import DataPreviewPopup from './DataPreviewPopup';
 import SearchPanel from './SearchPanel';
 import { getNodeTypes, type SidebarNodeType, CATEGORY_COLORS, CATEGORY_LABELS } from './Sidebar';
 import { type PluginCategory } from '@/lib/types';
@@ -76,15 +75,6 @@ interface ContextMenuState {
   edgeId?: string;
 }
 
-interface DataPreviewState {
-  show: boolean;
-  x: number;
-  y: number;
-  edgeId: string;
-  sourceNodeId: string;
-  targetNodeId: string;
-}
-
 // Canvas component - requires ReactFlowProvider to be provided by parent
 export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -95,7 +85,6 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     y: 0,
     type: 'pane',
   });
-  const [dataPreview, setDataPreview] = useState<DataPreviewState | null>(null);
 
   const {
     nodes: workflowNodes,
@@ -112,7 +101,6 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     redo,
     copySelectedNodes,
     pasteNodes,
-    nodeStatuses,
     reachableNodeIds: reachableNodes,
     hasStartNode,
   } = useWorkflowStore();
@@ -229,8 +217,12 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     );
   }, [searchVisible, searchQuery, workflowNodes, getPluginLabel, configMatchesQuery]);
 
-  // Convert workflow nodes to React Flow nodes
-  const flowNodes: Node[] = useMemo(
+  // Convert workflow nodes to React Flow nodes.
+  // NOTE: intentionally independent of selection — selecting a node only changes
+  // `selectedNodeId`, and re-running this expensive computation (plugin lookups +
+  // dynamic port generation for every node) on each click was dropping a frame and
+  // making the animated edges stutter. Selection is applied cheaply in `flowNodes`.
+  const baseFlowNodes: Node[] = useMemo(
     () => {
       // Entry point node types (nodes with no inputs that can start execution)
       const entryPointTypes = new Set(['start', 'manual-input', 'youtube-chat', 'twitch-chat', 'timer']);
@@ -314,12 +306,26 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
             isSearchMatch: searchMatchIds.has(node.id),
             isSearchDimmed: searchMatchIds.size > 0 && !searchMatchIds.has(node.id),
           } as CustomNodeData,
-          selected: node.id === selectedNodeId,
+          selected: false,
         };
       });
     },
-    [workflowNodes, selectedNodeId, reachableNodes, hasStartNode, onRunWorkflow, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs, searchMatchIds]
+    [workflowNodes, reachableNodes, hasStartNode, onRunWorkflow, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs, searchMatchIds]
   );
+
+  // Apply selection in a cheap second pass. Unchanged nodes keep their object
+  // identity, so only the (de)selected node re-renders — the rest of the graph
+  // and its animated edges are left untouched, eliminating the click stutter.
+  const flowNodes: Node[] = useMemo(() => {
+    let changed = false;
+    const next = baseFlowNodes.map((node) => {
+      const selected = node.id === selectedNodeId;
+      if (!!node.selected === selected) return node;
+      changed = true;
+      return { ...node, selected };
+    });
+    return changed ? next : baseFlowNodes;
+  }, [baseFlowNodes, selectedNodeId]);
 
   // Convert workflow connections to React Flow edges with gradient style
   // Lines to/from unreachable nodes are dashed
@@ -427,6 +433,13 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
   // When dragging ends — clear drag state, show suggestion panel if dropped on empty canvas
   const onConnectEnd = useCallback(
     (event: MouseEvent | TouchEvent) => {
+      // Reconnecting an existing edge also fires connect events — don't show the
+      // "connectable nodes" suggestion panel when the user is just dragging an
+      // edge end and releasing it on the canvas.
+      if (isReconnecting.current) {
+        clearDragging();
+        return;
+      }
       const state = useDragStateStore.getState();
       const target = event.target as HTMLElement;
       const isOnHandle = target.classList.contains('react-flow__handle');
@@ -465,10 +478,15 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
 
   // Track if edge was successfully reconnected
   const edgeReconnectSuccessful = useRef(true);
+  // True while an existing edge's end is being dragged (reconnect). Used to
+  // suppress the "connectable nodes" suggestion panel on reconnect drops, since
+  // reconnecting also fires the connect-start/end events.
+  const isReconnecting = useRef(false);
 
   // Called when edge reconnection starts
   const onReconnectStart = useCallback(() => {
     edgeReconnectSuccessful.current = false;
+    isReconnecting.current = true;
   }, []);
 
   // Handle edge reconnection (dragging edge end to a new target)
@@ -492,6 +510,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         removeConnection(edge.id);
       }
       edgeReconnectSuccessful.current = true;
+      isReconnecting.current = false;
     },
     [removeConnection]
   );
@@ -508,7 +527,6 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     selectNode(null);
     onNodeSelect?.(null);
     setContextMenu({ show: false, x: 0, y: 0, type: 'pane' });
-    setDataPreview(null);
     setConnectSuggest(null);
   }, [selectNode, onNodeSelect]);
 
@@ -521,22 +539,6 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [connectSuggest]);
-
-  // Handle edge click to show data preview
-  const onEdgeClick = useCallback(
-    (event: React.MouseEvent, edge: Edge) => {
-      event.stopPropagation();
-      setDataPreview({
-        show: true,
-        x: event.clientX,
-        y: event.clientY,
-        edgeId: edge.id,
-        sourceNodeId: edge.source,
-        targetNodeId: edge.target,
-      });
-    },
-    []
-  );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -771,9 +773,8 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         onReconnectStart={onReconnectStart}
         onReconnect={onReconnect}
         onReconnectEnd={onReconnectEnd}
-        reconnectRadius={10}
+        reconnectRadius={20}
         onNodeClick={onNodeClick}
-        onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
         onDragOver={onDragOver}
         onDrop={onDrop}
@@ -909,31 +910,6 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         />
       )}
 
-      {/* Data Preview Popup */}
-      {dataPreview && (() => {
-        const connection = connections.find((c) => c.id === dataPreview.edgeId);
-        const sourceNode = workflowNodes.find((n) => n.id === dataPreview.sourceNodeId);
-        const targetNode = workflowNodes.find((n) => n.id === dataPreview.targetNodeId);
-        return (
-          <DataPreviewPopup
-            x={dataPreview.x}
-            y={dataPreview.y}
-            sourceNodeLabel={getPluginLabel(sourceNode?.type || '')}
-            sourceNodeType={sourceNode?.type || ''}
-            targetNodeLabel={getPluginLabel(targetNode?.type || '')}
-            data={nodeStatuses[dataPreview.sourceNodeId]?.data?.outputs}
-            selectedFields={connection?.from.fieldPaths || []}
-            onFieldsChange={(fieldPaths) => {
-              if (connection) {
-                updateConnection(connection.id, {
-                  from: { ...connection.from, fieldPaths },
-                });
-              }
-            }}
-            onClose={() => setDataPreview(null)}
-          />
-        );
-      })()}
     </div>
   );
 }

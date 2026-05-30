@@ -1,7 +1,7 @@
 /**
  * Known output fields for each node type.
  * Used as fallback when plugin store data is not yet available.
- * Shared between FieldSelectorNode and DataPreviewPopup.
+ * Used by FieldSelectorNode.
  *
  * These IDs must match the port IDs in Canvas.tsx/getNodeOutputs.
  */
