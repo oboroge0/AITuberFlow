@@ -27,7 +27,7 @@ interface SidebarProps {
 }
 
 // Category display colors (consistent with create_node.py)
-const CATEGORY_COLORS: Record<PluginCategory, string> = {
+export const CATEGORY_COLORS: Record<PluginCategory, string> = {
   control: '#10B981',
   input: '#22C55E',
   llm: '#10B981',
@@ -39,7 +39,7 @@ const CATEGORY_COLORS: Record<PluginCategory, string> = {
 };
 
 // Category labels
-const CATEGORY_LABELS: Record<PluginCategory, string> = {
+export const CATEGORY_LABELS: Record<PluginCategory, string> = {
   control: 'Control Flow',
   input: 'Input',
   llm: 'LLM',

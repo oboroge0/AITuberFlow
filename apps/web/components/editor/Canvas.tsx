@@ -27,7 +27,8 @@ import FieldSelectorNode from './FieldSelectorNode';
 import ContextMenu, { type ContextMenuItem } from './ContextMenu';
 import DataPreviewPopup from './DataPreviewPopup';
 import SearchPanel from './SearchPanel';
-import { getNodeTypes, type SidebarNodeType } from './Sidebar';
+import { getNodeTypes, type SidebarNodeType, CATEGORY_COLORS, CATEGORY_LABELS } from './Sidebar';
+import { type PluginCategory } from '@/lib/types';
 import { type PortType, type PortDefinition } from '@/lib/portTypes';
 import { useUIPreferencesStore, type NodeDisplayMode } from '@/stores/uiPreferencesStore';
 import { type PromptSection } from '@/components/panels/NodeSettings';
@@ -620,25 +621,58 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
       ];
     }
 
-    // Pane context menu - add nodes (dynamically loaded from plugins)
+    // Pane context menu — "Add Node ▶" with category flyout submenu
     const nodeTypesList = getNodeTypes();
-    return nodeTypesList.map((nodeType) => ({
-      label: `Add ${nodeType.label}`,
-      icon: <span style={{ color: nodeType.color }}>{nodeType.icon}</span>,
-      onClick: () => {
-        const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
-        if (!reactFlowBounds) return;
+    const { plugins } = usePluginStore.getState();
 
-        addNode({
-          type: nodeType.id,
-          position: {
-            x: contextMenu.x - reactFlowBounds.left - 80,
-            y: contextMenu.y - reactFlowBounds.top - 30,
+    // Group node types by category
+    const byCategory: Record<string, SidebarNodeType[]> = {};
+    for (const nt of nodeTypesList) {
+      const plugin = plugins.find((p) => p.id === nt.id);
+      const cat = plugin?.category ?? 'utility';
+      if (!byCategory[cat]) byCategory[cat] = [];
+      byCategory[cat].push(nt);
+    }
+
+    const categoryOrder: PluginCategory[] = [
+      'control', 'input', 'llm', 'tts', 'avatar', 'output', 'utility', 'obs',
+    ];
+
+    const submenuSections = categoryOrder
+      .filter((cat) => byCategory[cat]?.length > 0)
+      .map((cat) => ({
+        categoryId: cat,
+        label: CATEGORY_LABELS[cat] ?? cat,
+        color: CATEGORY_COLORS[cat] ?? '#6B7280',
+        items: (byCategory[cat] ?? []).map((nodeType) => ({
+          label: nodeType.label,
+          icon: <span style={{ color: nodeType.color }}>{nodeType.icon}</span>,
+          onClick: () => {
+            const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
+            if (!reactFlowBounds) return;
+            addNode({
+              type: nodeType.id,
+              position: {
+                x: contextMenu.x - reactFlowBounds.left - 80,
+                y: contextMenu.y - reactFlowBounds.top - 30,
+              },
+              config: { ...nodeType.defaultConfig },
+            });
           },
-          config: { ...nodeType.defaultConfig },
-        });
+        })),
+      }));
+
+    return [
+      {
+        label: 'ノードを追加',
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
+          </svg>
+        ),
+        submenuSections,
       },
-    }));
+    ];
   };
 
   return (
