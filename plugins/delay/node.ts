@@ -11,6 +11,7 @@ export default class DelayNode extends BaseNode {
   private randomize = false;
   private randomMin = 500;
   private randomMax = 2000;
+  private abortController: AbortController | null = null;
 
   async setup(config: Record<string, any>, context: NodeContext): Promise<void> {
     this.delayMs = config.delayMs ?? 1000;
@@ -44,13 +45,22 @@ export default class DelayNode extends BaseNode {
     }
 
     await context.log(`Waiting ${delay}ms...`);
-    await new Promise((resolve) => setTimeout(resolve, delay));
+    this.abortController = new AbortController();
+    const { signal } = this.abortController;
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(resolve, delay);
+      signal.addEventListener("abort", () => {
+        clearTimeout(timer);
+        reject(new Error("Delay cancelled"));
+      });
+    });
     await context.log("Delay complete");
 
     return { output: inputData };
   }
 
   async teardown(): Promise<void> {
-    // No cleanup needed.
+    this.abortController?.abort();
+    this.abortController = null;
   }
 }

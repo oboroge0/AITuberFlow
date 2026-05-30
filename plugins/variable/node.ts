@@ -53,7 +53,9 @@ export default class VariableNode extends BaseNode {
         value = String(value);
       }
     } catch (e) {
-      await context.log(`Type conversion failed: ${e}`, "warning");
+      await context.log(`Type conversion failed: ${e}. Falling back to defaultValue.`, "warning");
+      // Use defaultValue as a safe fallback to avoid passing a broken value downstream
+      value = this.defaultValue;
     }
 
     await context.log(`Variable '${this.name}' = ${value}`);

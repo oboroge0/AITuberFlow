@@ -29,6 +29,8 @@ export default class MistralLLMNode extends BaseNode {
     this.model = config.model ?? "mistral-small-latest";
     this.systemPrompt = config.systemPrompt ?? "You are a helpful assistant.";
     this.temperature = config.temperature ?? 0.7;
+    // Clamp to valid range [0, 2]
+    this.temperature = Math.max(0, Math.min(2, this.temperature));
     this.maxTokens = config.maxTokens ?? 1024;
     this.promptSections = config.promptSections ?? null;
 

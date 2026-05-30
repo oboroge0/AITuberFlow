@@ -25,6 +25,8 @@ export default class GoogleLLMNode extends BaseNode {
     this.systemPrompt = config.systemPrompt ?? "You are a helpful assistant.";
     this.maxTokens = config.maxTokens ?? 1024;
     this.temperature = config.temperature ?? 0.7;
+    // Clamp to Google's valid range [0, 2]
+    this.temperature = Math.max(0, Math.min(2, this.temperature));
 
     if (!this.apiKey) {
       // Auto demo mode when API key is not set
