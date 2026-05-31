@@ -105,14 +105,14 @@ export default function PreviewPage() {
           );
 
           if (avatarNode?.config) {
-            const workflowModelUrl = avatarNode.config.model_url || avatarNode.config.vrm_model;
+            const workflowModelUrl = avatarNode.config.modelUrl || avatarNode.config.model_url || avatarNode.config.vrm_model;
             setAvatarConfig((prev) => ({
               renderer: avatarNode.config.renderer || 'vrm',
               // Keep saved model URL if workflow doesn't have one
               modelUrl: workflowModelUrl || prev.modelUrl,
-              animationUrl: avatarNode.config.animation_url,
-              vtubePort: avatarNode.config.vtube_port,
-              pngConfig: avatarNode.config.png_config,
+              animationUrl: avatarNode.config.animationUrl || avatarNode.config.idle_animation,
+              vtubePort: avatarNode.config.vtubePort ?? avatarNode.config.vtube_port,
+              pngConfig: avatarNode.config.pngConfig || avatarNode.config.png_config,
             }));
           }
         }

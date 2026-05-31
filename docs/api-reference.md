@@ -678,7 +678,7 @@ Sent for lip-sync mouth movements.
 Sent when avatar animation should play.
 
 ```json
-{ "type": "avatar.motion", "motion_url": "/api/integrations/animations/file/wave.fbx" }
+{ "type": "avatar.motion", "motionUrl": "/api/integrations/animations/file/wave.fbx" }
 ```
 
 #### avatar.update

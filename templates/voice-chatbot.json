@@ -41,9 +41,9 @@
       "type": "audio-player",
       "position": { "x": 850, "y": 200 },
       "config": {
-        "wait_for_completion": true,
+        "waitForCompletion": true,
         "volume": 1.0,
-        "output_device": "browser"
+        "outputDevice": "browser"
       }
     },
     {
