@@ -54,7 +54,14 @@ export default class TextTransformNode extends BaseNode {
     } else if (this.operation === "trim") {
       result = text.trim();
     } else if (this.operation === "replace") {
-      result = text.split(this.find).join(this.replaceWith);
+      // Guard against empty find string (would split every character)
+      if (this.find.length === 0) {
+        await context.log("replace: 'find' is empty, skipping", "warning");
+      } else if (this.find.length > 1000) {
+        await context.log("replace: 'find' string too long (>1000 chars), skipping", "warning");
+      } else {
+        result = text.split(this.find).join(this.replaceWith);
+      }
     } else if (this.operation === "split_first") {
       const idx = text.indexOf(this.delimiter);
       result = idx >= 0 ? text.substring(0, idx) : text;

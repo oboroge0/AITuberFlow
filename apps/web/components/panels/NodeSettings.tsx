@@ -9,6 +9,7 @@ import { manifestConfigToNodeFields, evaluateShowWhen, normalizeOptions } from "
 import { useSettingsStore } from "@/stores/settingsStore";
 import { LLM_MODEL_OPTIONS } from "@/lib/constants";
 import type { NodeField } from "@/lib/types";
+import { toast } from "@/stores/toastStore";
 
 // Prompt section for structured prompt building
 export interface PromptSection {
@@ -1859,10 +1860,10 @@ export default function NodeSettings() {
           // Refresh the animations list
           fetchAnimations();
         } else if (response.error) {
-          alert(`Upload failed: ${response.error}`);
+          toast.error(`Upload failed: ${response.error}`);
         }
       } catch (err) {
-        alert("Failed to upload animation file");
+        toast.error("Failed to upload animation file");
       } finally {
         setAnimationUploading(false);
       }
@@ -1886,10 +1887,10 @@ export default function NodeSettings() {
           // Refresh the models list
           fetchModels();
         } else if (response.error) {
-          alert(`Upload failed: ${response.error}`);
+          toast.error(`Upload failed: ${response.error}`);
         }
       } catch (err) {
-        alert("Failed to upload model file");
+        toast.error("Failed to upload model file");
       } finally {
         setModelUploading(false);
       }
@@ -1905,10 +1906,10 @@ export default function NodeSettings() {
         if (response.data) {
           return response.data.url;
         } else if (response.error) {
-          alert(`Upload failed: ${response.error}`);
+          toast.error(`Upload failed: ${response.error}`);
         }
       } catch (err) {
-        alert("Failed to upload image");
+        toast.error("Failed to upload image");
       }
       return null;
     },
@@ -2019,9 +2020,8 @@ export default function NodeSettings() {
   };
 
   const handleDelete = () => {
-    if (confirm("Delete this node?")) {
-      removeNode(selectedNode.id);
-    }
+    removeNode(selectedNode.id);
+    toast.info("ノードを削除しました");
   };
 
   const renderField = (field: NodeField) => {

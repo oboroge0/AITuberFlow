@@ -30,6 +30,8 @@ export default class GroqLLMNode extends BaseNode {
     this.model = config.model ?? "llama-3.3-70b-versatile";
     this.systemPrompt = config.systemPrompt ?? "You are a helpful assistant.";
     this.temperature = config.temperature ?? 0.7;
+    // Clamp to valid range [0, 2]
+    this.temperature = Math.max(0, Math.min(2, this.temperature));
     this.maxTokens = config.maxTokens ?? 1024;
     this.promptSections = config.promptSections ?? null;
 

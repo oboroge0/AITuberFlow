@@ -28,6 +28,8 @@ export default class OllamaLLMNode extends BaseNode {
     this.model = config.model ?? "llama3.2";
     this.systemPrompt = config.systemPrompt ?? "You are a helpful assistant.";
     this.temperature = config.temperature ?? 0.7;
+    // Clamp to valid range [0, 2]
+    this.temperature = Math.max(0, Math.min(2, this.temperature));
     this.contextLength = config.contextLength ?? 4096;
 
     // Test connection - auto demo mode if unavailable

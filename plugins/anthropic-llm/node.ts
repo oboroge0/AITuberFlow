@@ -25,6 +25,8 @@ export default class AnthropicLLMNode extends BaseNode {
     this.systemPrompt = config.systemPrompt ?? "You are a helpful assistant.";
     this.maxTokens = config.maxTokens ?? 1024;
     this.temperature = config.temperature ?? 0.7;
+    // Clamp to Anthropic's valid range [0, 1]
+    this.temperature = Math.max(0, Math.min(1, this.temperature));
 
     if (!this.apiKey) {
       // Auto demo mode when API key is not set
@@ -61,6 +63,7 @@ export default class AnthropicLLMNode extends BaseNode {
       const message = await this.client.messages.create({
         model: this.model,
         max_tokens: this.maxTokens,
+        temperature: this.temperature,
         system: this.systemPrompt,
         messages: [{ role: "user" as const, content: prompt }],
       });
