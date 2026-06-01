@@ -60,3 +60,6 @@ audio_output/
 
 # Specs (private)
 SPEC.md
+
+# Codex local config (contains local secrets — never commit)
+.codex/
