@@ -173,8 +173,8 @@ export default function EditorPage() {
     return {
       hasAvatarNode: !!avatarNode,
       renderer: (avatarNode?.config?.renderer || 'vrm') as RendererType,
-      modelUrl: avatarNode?.config?.model_url || DEFAULT_MODEL_URL,
-      animationUrl: avatarNode?.config?.idle_animation,
+      modelUrl: avatarNode?.config?.modelUrl || avatarNode?.config?.model_url || DEFAULT_MODEL_URL,
+      animationUrl: avatarNode?.config?.idleAnimation || avatarNode?.config?.idle_animation,
     };
   }, [nodes]);
 

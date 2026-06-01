@@ -87,7 +87,7 @@
       ],
       "default": "bottom-center"
     },
-    "font_size": {
+    "fontSize": {
       "type": "number",
       "label": "Font Size (px)",
       "description": "Font size in pixels",
@@ -95,19 +95,19 @@
       "min": 12,
       "max": 72
     },
-    "font_color": {
+    "fontColor": {
       "type": "string",
       "label": "Font Color",
       "description": "Text color (CSS color value)",
       "default": "#ffffff"
     },
-    "background_color": {
+    "backgroundColor": {
       "type": "string",
       "label": "Background Color",
       "description": "Background color with alpha (CSS color value)",
       "default": "rgba(0, 0, 0, 0.7)"
     },
-    "show_speaker": {
+    "showSpeaker": {
       "type": "boolean",
       "label": "Show Speaker Name",
       "description": "Display character name before text",

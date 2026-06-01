@@ -1094,12 +1094,12 @@ function getNodeOutputs(type: string): PortDefinition[] {
     'motion-trigger': [
       { id: 'expression', label: 'Expression', type: 'string' },
       { id: 'intensity', label: 'Intensity', type: 'number' },
-      { id: 'motion_url', label: 'Motion URL', type: 'string' },
+      { id: 'motionUrl', label: 'Motion URL', type: 'string' },
       { id: 'motion', label: 'Motion', type: 'string' },
       { id: 'passthrough', label: 'Passthrough', type: 'any' },
     ],
     'lip-sync': [
-      { id: 'mouth_values', label: 'Mouth', type: 'array' },
+      { id: 'mouthValues', label: 'Mouth', type: 'array' },
       { id: 'duration', label: 'Duration', type: 'number' },
       { id: 'audio', label: 'Audio', type: 'audio' },
     ],

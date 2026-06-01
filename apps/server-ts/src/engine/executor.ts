@@ -15,6 +15,7 @@ import type { Event } from "./event-bus";
 import { EventBus, EventFilter } from "./event-bus";
 import { EventQueue } from "./event-queue";
 import { SOURCE_NODE_TYPES, loadPlugin } from "./plugin-loader";
+import { resolvePortId } from "./port-aliases";
 import { TaskRegistry } from "./task-registry";
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -326,11 +327,13 @@ export class WorkflowExecutor {
 
     if (avatarConfig.renderer !== "vtube-studio") return;
 
-    const port = (avatarConfig.vtube_port as number) ?? 8001;
-    const mouthParam = (avatarConfig.vtube_mouth_param as string) ?? "MouthOpen";
+    const port = (avatarConfig.vtubePort ?? avatarConfig.vtube_port ?? 8001) as number;
+    const mouthParam = (avatarConfig.vtubeMouthParam ??
+      avatarConfig.vtube_mouth_param ??
+      "MouthOpen") as string;
 
     let expressionMap: Record<string, string> | undefined;
-    const rawMap = avatarConfig.vtube_expression_map;
+    const rawMap = avatarConfig.vtubeExpressionMap ?? avatarConfig.vtube_expression_map;
     if (rawMap) {
       try {
         expressionMap = typeof rawMap === "string" ? JSON.parse(rawMap) : rawMap;
@@ -1186,6 +1189,13 @@ export class WorkflowExecutor {
     return order;
   }
 
+  /**
+   * Port IDs renamed from snake_case to camelCase in the config-naming
+   * refactor. Workflows saved before the rename still reference the old IDs in
+   * their connections, so resolve old → new here to avoid silently passing the
+   * wrong value (or the whole upstream output object) downstream. Shared with
+   * the validator (port-aliases.ts) so the two cannot drift.
+   */
   private getNodeInputs(
     nodeId: string,
     connections: ConnectionData[],
@@ -1199,10 +1209,13 @@ export class WorkflowExecutor {
       const upstreamOutputs = nodeOutputs.get(conn.from.nodeId);
       if (!upstreamOutputs) continue;
 
-      if (conn.from.port in upstreamOutputs) {
-        inputs[conn.to.port] = upstreamOutputs[conn.from.port];
+      const fromPort = resolvePortId(conn.from.port);
+      const toPort = resolvePortId(conn.to.port);
+
+      if (fromPort in upstreamOutputs) {
+        inputs[toPort] = upstreamOutputs[fromPort];
       } else {
-        inputs[conn.to.port] = upstreamOutputs;
+        inputs[toPort] = upstreamOutputs;
       }
     }
 

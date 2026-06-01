@@ -32,7 +32,7 @@
     ],
     "outputs": [
       {
-        "id": "mouth_values",
+        "id": "mouthValues",
         "type": "array",
         "description": "Array of mouth open values over time"
       },
@@ -94,13 +94,13 @@
       "min": 0,
       "max": 0.2
     },
-    "emit_realtime": {
+    "emitRealtime": {
       "type": "boolean",
       "label": "Emit Realtime Events",
       "description": "Emit avatar.mouth events in realtime during playback",
       "default": true
     },
-    "frame_rate": {
+    "frameRate": {
       "type": "number",
       "label": "Frame Rate",
       "description": "Number of mouth updates per second",

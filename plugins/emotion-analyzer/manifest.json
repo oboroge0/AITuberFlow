@@ -95,7 +95,7 @@
         "value": "rule-based"
       }
     },
-    "custom_mappings": {
+    "customMappings": {
       "type": "textarea",
       "label": "Custom Emotion Mappings (JSON)",
       "description": "Custom keyword to expression mappings",
@@ -105,7 +105,7 @@
         "value": "rule-based"
       }
     },
-    "llm_provider": {
+    "llmProvider": {
       "type": "select",
       "label": "LLM Provider",
       "description": "Provider for LLM-based analysis",
@@ -129,7 +129,7 @@
         "value": "llm"
       }
     },
-    "llm_api_key": {
+    "llmApiKey": {
       "type": "password",
       "label": "LLM API Key",
       "description": "API key for the selected LLM provider",
@@ -139,7 +139,7 @@
         "value": "llm"
       }
     },
-    "llm_model": {
+    "llmModel": {
       "type": "select",
       "label": "LLM Model",
       "description": "Model to use for emotion analysis",
@@ -150,9 +150,9 @@
         "key": "method",
         "value": "llm"
       },
-      "dependsOn": "llm_provider"
+      "dependsOn": "llmProvider"
     },
-    "emit_events": {
+    "emitEvents": {
       "type": "boolean",
       "label": "Emit Avatar Events",
       "description": "Emit avatar.expression events via WebSocket",

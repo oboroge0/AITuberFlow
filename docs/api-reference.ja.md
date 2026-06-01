@@ -678,7 +678,7 @@ ws.onmessage = (event) => {
 アバターアニメーションを再生する必要があるときに送信されます。
 
 ```json
-{ "type": "avatar.motion", "motion_url": "/api/integrations/animations/file/wave.fbx" }
+{ "type": "avatar.motion", "motionUrl": "/api/integrations/animations/file/wave.fbx" }
 ```
 
 #### avatar.update
