@@ -14,6 +14,7 @@ import { db } from "../db/database";
 import { globalSettings } from "../db/schema";
 import { SOURCE_NODE_TYPES, getPluginsDir } from "./plugin-loader";
 import { checkInvalidConnections } from "./connection-integrity";
+import { resolvePortId } from "./port-aliases";
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -482,7 +483,7 @@ export async function validateWorkflow(workflowData: WorkflowData): Promise<Vali
   issues.push(...checkApiKeys(nodes, settings));
 
   // 6. Invalid connections (port direction / existence / type compatibility)
-  issues.push(...checkInvalidConnections(nodes, connections, manifests));
+  issues.push(...checkInvalidConnections(nodes, connections, manifests, resolvePortId));
 
   return issues;
 }
@@ -520,7 +521,7 @@ export function validateWorkflowSync(
   issues.push(...checkApiKeys(nodes, settings));
 
   // 6. Invalid connections (port direction / existence / type compatibility)
-  issues.push(...checkInvalidConnections(nodes, connections, manifests));
+  issues.push(...checkInvalidConnections(nodes, connections, manifests, resolvePortId));
 
   return issues;
 }
