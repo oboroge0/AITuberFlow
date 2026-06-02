@@ -91,7 +91,7 @@ export function getNodeTypes(): SidebarNodeType[] {
 
 export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onImport }: SidebarProps) {
   const { addNode } = useWorkflowStore();
-  const { plugins, categories, isLoading, error, fetchPlugins } = usePluginStore();
+  const { plugins, isLoading, error, fetchPlugins } = usePluginStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [isHydrated, setIsHydrated] = useState(false);

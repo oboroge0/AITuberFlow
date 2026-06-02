@@ -69,7 +69,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const status = nodeStatuses[id];
 
   // Track drag state for port highlight/dim
-  const { draggingSourceType, draggingHandleType } = useDragStateStore();
+  const { draggingSourceType } = useDragStateStore();
   // Hover state for port tooltips
   const [hoveredPort, setHoveredPort] = useState<{ id: string; label: string; type: PortType; description?: string; side: 'input' | 'output' } | null>(null);
 

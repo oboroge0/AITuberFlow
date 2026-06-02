@@ -419,7 +419,7 @@ function PngExpressionMapField({
   value,
   onChange,
   onUploadImage,
-  availableImages,
+  _availableImages,
 }: PngExpressionMapFieldProps) {
   const [newMapping, setNewMapping] = useState<PngExpressionMapping>({
     id: "",
@@ -457,15 +457,6 @@ function PngExpressionMapField({
   const removeMapping = (id: string) => {
     const newExpressions = { ...config.expressions };
     delete newExpressions[id];
-    onChange({ ...config, expressions: newExpressions });
-  };
-
-  const updateMapping = (oldId: string, newId: string, filename: string) => {
-    const newExpressions = { ...config.expressions };
-    if (oldId !== newId) {
-      delete newExpressions[oldId];
-    }
-    newExpressions[newId] = filename;
     onChange({ ...config, expressions: newExpressions });
   };
 
@@ -1880,7 +1871,7 @@ export default function NodeSettings() {
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [modelUploading, setModelUploading] = useState(false);
   const modelInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const [avatarImages, setAvatarImages] = useState<string[]>([]);
+  const [avatarImages] = useState<string[]>([]);
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
 
@@ -1931,7 +1922,7 @@ export default function NodeSettings() {
         } else if (response.error) {
           toast.error(`Upload failed: ${response.error}`);
         }
-      } catch (err) {
+      } catch {
         toast.error("Failed to upload animation file");
       } finally {
         setAnimationUploading(false);
@@ -1958,7 +1949,7 @@ export default function NodeSettings() {
         } else if (response.error) {
           toast.error(`Upload failed: ${response.error}`);
         }
-      } catch (err) {
+      } catch {
         toast.error("Failed to upload model file");
       } finally {
         setModelUploading(false);
@@ -1977,7 +1968,7 @@ export default function NodeSettings() {
         } else if (response.error) {
           toast.error(`Upload failed: ${response.error}`);
         }
-      } catch (err) {
+      } catch {
         toast.error("Failed to upload image");
       }
       return null;
@@ -1997,7 +1988,7 @@ export default function NodeSettings() {
         setVoicevoxError(response.error);
         setVoicevoxSpeakers([]);
       }
-    } catch (err) {
+    } catch {
       setVoicevoxError("Failed to fetch speakers");
       setVoicevoxSpeakers([]);
     } finally {
@@ -2035,15 +2026,15 @@ export default function NodeSettings() {
 
   // Dynamic schema resolution: plugin store first, nodeConfigs fallback
   const plugin = getPluginById(selectedNode?.type ?? "");
-  const manifestFields = plugin?.config
-    ? manifestConfigToNodeFields(plugin.config)
-    : [];
   const fields: NodeField[] = useMemo(() => {
     if (!selectedNode) return [];
+    const manifestFields = plugin?.config
+      ? manifestConfigToNodeFields(plugin.config)
+      : [];
     return manifestFields.length > 0
       ? manifestFields
       : nodeConfigs[selectedNode.type]?.fields ?? [];
-  }, [selectedNode, manifestFields]);
+  }, [selectedNode, plugin]);
 
   // Split fields into overridable (have global setting) and normal
   // Classification is based on global mapping existence, not local config value,

@@ -29,7 +29,7 @@ import SearchPanel from './SearchPanel';
 import { getNodeTypes, type SidebarNodeType, CATEGORY_COLORS, CATEGORY_LABELS } from './Sidebar';
 import { type PluginCategory } from '@/lib/types';
 import { type PortType, type PortDefinition, PORT_TYPE_COLORS, arePortTypesCompatible } from '@/lib/portTypes';
-import { useUIPreferencesStore, type NodeDisplayMode } from '@/stores/uiPreferencesStore';
+import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 import { type PromptSection } from '@/components/panels/NodeSettings';
 import { useDragStateStore } from '@/stores/dragStateStore';
 

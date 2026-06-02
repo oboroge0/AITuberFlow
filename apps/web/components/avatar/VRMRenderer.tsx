@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useCallback, useState, useImperativeHandle, forwardRef } from 'react';
 import * as THREE from 'three';
-import { VRM, VRMLoaderPlugin, VRMExpressionPresetName, VRMHumanBoneName } from '@pixiv/three-vrm';
+import { VRM, VRMLoaderPlugin, VRMExpressionPresetName } from '@pixiv/three-vrm';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { loadMixamoAnimation } from './loadMixamoAnimation';
@@ -472,7 +472,7 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
       if (rendererRef.current && containerEl) {
         try {
           containerEl.removeChild(rendererRef.current.domElement);
-        } catch (e) {
+        } catch {
           // DOM element might already be removed
         }
         rendererRef.current.dispose();
