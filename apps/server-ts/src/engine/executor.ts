@@ -466,9 +466,13 @@ export class WorkflowExecutor {
   // ─── Workflow Lock ──────────────
 
   private async withWorkflowLock<T>(workflowId: string, fn: () => Promise<T>): Promise<T> {
-    // Wait for any existing operation on this workflow to complete
-    while (this.workflowLocks.has(workflowId)) {
-      await this.workflowLocks.get(workflowId);
+    // Wait for any existing operation on this workflow to complete.
+    // Capture the promise before awaiting to avoid a race where the lock
+    // is deleted between has() and get().
+    let existing = this.workflowLocks.get(workflowId);
+    while (existing) {
+      await existing;
+      existing = this.workflowLocks.get(workflowId);
     }
 
     let resolve: (() => void) | undefined;
