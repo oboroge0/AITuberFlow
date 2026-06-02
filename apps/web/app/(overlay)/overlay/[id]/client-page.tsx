@@ -89,19 +89,19 @@ export default function OverlayPage() {
   // Avatar parameters
   const paramModel = searchParams.get('model');
   const paramAnimation = searchParams.get('animation');
-  const paramScale = parseFloat(searchParams.get('scale') || '1');
-  const paramX = parseFloat(searchParams.get('x') || '0');
-  const paramY = parseFloat(searchParams.get('y') || '0');
+  const paramScale = Math.max(0.1, Math.min(10, parseFloat(searchParams.get('scale') || '1') || 1));
+  const paramX = Math.max(-1000, Math.min(1000, parseFloat(searchParams.get('x') || '0') || 0));
+  const paramY = Math.max(-1000, Math.min(1000, parseFloat(searchParams.get('y') || '0') || 0));
 
   // Subtitle parameters
   const showSubtitles = searchParams.get('subtitle') !== 'false';
   const subPosition = searchParams.get('subPosition') || 'bottom';
-  const subFontSize = parseInt(searchParams.get('subFontSize') || '28', 10);
+  const subFontSize = Math.max(8, Math.min(200, parseInt(searchParams.get('subFontSize') || '28', 10) || 28));
   const subFontColor = searchParams.get('subFontColor') || '#ffffff';
   const subBgColor = searchParams.get('subBgColor') || 'rgba(0,0,0,0.7)';
 
   // Audio parameters
-  const volume = parseInt(searchParams.get('volume') || '100', 10) / 100;
+  const volume = Math.max(0, Math.min(1, (parseInt(searchParams.get('volume') || '100', 10) || 100) / 100));
 
   // Debug
   const debug = searchParams.get('debug') === 'true';
@@ -128,6 +128,10 @@ export default function OverlayPage() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const donationAudioRef = useRef<HTMLAudioElement | null>(null);
+  const subtitleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const subtitleFadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const donationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const donationFadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Force remount on navigation
   const [mountKey] = useState(() => Date.now());
@@ -262,9 +266,12 @@ export default function OverlayPage() {
 
           // Subtitle events
           case 'subtitle': {
+            if (subtitleTimerRef.current) clearTimeout(subtitleTimerRef.current);
+            if (subtitleFadeTimerRef.current) clearTimeout(subtitleFadeTimerRef.current);
+
             if (!rest.text) {
               setSubtitleVisible(false);
-              setTimeout(() => setSubtitle(null), 300);
+              subtitleFadeTimerRef.current = setTimeout(() => setSubtitle(null), 300);
               break;
             }
 
@@ -272,9 +279,9 @@ export default function OverlayPage() {
             setSubtitleVisible(true);
 
             if (rest.duration && rest.duration > 0) {
-              setTimeout(() => {
+              subtitleTimerRef.current = setTimeout(() => {
                 setSubtitleVisible(false);
-                setTimeout(() => setSubtitle(null), 300);
+                subtitleFadeTimerRef.current = setTimeout(() => setSubtitle(null), 300);
               }, rest.duration);
             }
             break;
@@ -354,9 +361,11 @@ export default function OverlayPage() {
             }
 
             const duration = alertData.duration || 5000;
-            setTimeout(() => {
+            if (donationTimerRef.current) clearTimeout(donationTimerRef.current);
+            if (donationFadeTimerRef.current) clearTimeout(donationFadeTimerRef.current);
+            donationTimerRef.current = setTimeout(() => {
               setDonationAlertVisible(false);
-              setTimeout(() => setDonationAlert(null), 500);
+              donationFadeTimerRef.current = setTimeout(() => setDonationAlert(null), 500);
             }, duration);
             break;
           }
@@ -365,7 +374,8 @@ export default function OverlayPage() {
           case 'execution.stopped':
             setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
             setSubtitleVisible(false);
-            setTimeout(() => setSubtitle(null), 300);
+            if (subtitleTimerRef.current) clearTimeout(subtitleTimerRef.current);
+            subtitleFadeTimerRef.current = setTimeout(() => setSubtitle(null), 300);
             if (audioRef.current) {
               audioRef.current.pause();
               audioRef.current = null;
@@ -382,6 +392,10 @@ export default function OverlayPage() {
         ws.send(JSON.stringify({ type: 'leave', payload: { workflowId } }));
       }
       ws.close();
+      if (subtitleTimerRef.current) clearTimeout(subtitleTimerRef.current);
+      if (subtitleFadeTimerRef.current) clearTimeout(subtitleFadeTimerRef.current);
+      if (donationTimerRef.current) clearTimeout(donationTimerRef.current);
+      if (donationFadeTimerRef.current) clearTimeout(donationFadeTimerRef.current);
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
