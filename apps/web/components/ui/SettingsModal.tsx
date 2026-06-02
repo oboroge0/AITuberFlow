@@ -153,6 +153,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     setSaving(false);
     if (ok) {
       toast.success(t('globalSettings.saved'));
+      onClose();
     } else {
       toast.error(t('globalSettings.saveError'));
     }
