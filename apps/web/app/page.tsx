@@ -37,6 +37,9 @@ export default function HomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const deleteConfirmTimerRef = useRef<NodeJS.Timeout | null>(null);
   const setAnnouncements = useAnnouncementStore((s) => s.setAnnouncements);
+  const [isCreating, setIsCreating] = useState(false);
+  const [creatingTemplateId, setCreatingTemplateId] = useState<string | null>(null);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
 
   const getTauriInternals = () =>
     (window as Window & { __TAURI_INTERNALS__?: TauriInternals }).__TAURI_INTERNALS__;
@@ -103,6 +106,8 @@ export default function HomePage() {
   };
 
   const createNewWorkflow = async () => {
+    if (isCreating) return;
+    setIsCreating(true);
     const response = await api.createWorkflow({
       name: 'New Workflow',
       nodes: [],
@@ -117,13 +122,17 @@ export default function HomePage() {
       router.push(`/editor/${response.data.id}`);
     } else if (response.error) {
       setError(response.error);
+      setIsCreating(false);
     }
   };
 
   const createFromTemplate = async (templateId: string) => {
+    if (creatingTemplateId) return;
+    setCreatingTemplateId(templateId);
     const templateRes = await api.getTemplate(templateId);
     if (!templateRes.data) {
       setError(templateRes.error || 'Failed to load template');
+      setCreatingTemplateId(null);
       return;
     }
 
@@ -139,6 +148,7 @@ export default function HomePage() {
       router.push(`/editor/${response.data.id}`);
     } else if (response.error) {
       setError(response.error);
+      setCreatingTemplateId(null);
     }
   };
 
@@ -177,7 +187,10 @@ export default function HomePage() {
   };
 
   const duplicateWorkflow = async (id: string) => {
+    if (duplicatingId) return;
+    setDuplicatingId(id);
     const response = await api.duplicateWorkflow(id);
+    setDuplicatingId(null);
     if (response.data) {
       setWorkflows([response.data, ...workflows]);
     } else if (response.error) {
@@ -349,12 +362,17 @@ export default function HomePage() {
             </button>
             <button
               onClick={createNewWorkflow}
-              className="px-4 py-2 rounded-lg text-white font-semibold text-sm flex items-center gap-2 transition-opacity hover:opacity-90"
+              disabled={isCreating}
+              className="px-4 py-2 rounded-lg text-white font-semibold text-sm flex items-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-50"
               style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
+              {isCreating ? (
+                <div className="w-4 h-4 rounded-full animate-spin" style={{ border: '2px solid white', borderTopColor: 'transparent' }} />
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              )}
               {t('home.newWorkflow')}
             </button>
           </div>
@@ -410,19 +428,24 @@ export default function HomePage() {
                     <button
                       key={template.id}
                       onClick={() => createFromTemplate(template.id)}
-                      className="text-left rounded-xl border border-white/10 p-4 transition-all hover:border-[#10B981]/50 hover:bg-white/5 group"
+                      disabled={creatingTemplateId === template.id}
+                      className="text-left rounded-xl border border-white/10 p-4 transition-all hover:border-[#10B981]/50 hover:bg-white/5 group disabled:opacity-60"
                       style={{ background: 'rgba(17, 24, 39, 0.6)' }}
                     >
                       <div className="flex items-start justify-between">
                         <h3 className="text-lg font-semibold text-white group-hover:text-[#10B981] transition-colors">
                           {templateName}
                         </h3>
-                        <svg
-                          className="text-gray-500 group-hover:text-[#10B981] transition-colors mt-1"
-                          width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                        >
-                          <path d="M5 12h14M12 5l7 7-7 7"/>
-                        </svg>
+                        {creatingTemplateId === template.id ? (
+                          <div className="w-4 h-4 rounded-full animate-spin mt-1" style={{ border: '2px solid #10B981', borderTopColor: 'transparent' }} />
+                        ) : (
+                          <svg
+                            className="text-gray-500 group-hover:text-[#10B981] transition-colors mt-1"
+                            width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                          >
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                          </svg>
+                        )}
                       </div>
                       <p className="text-gray-400 text-sm mt-1 line-clamp-2">
                         {templateDesc}
@@ -471,9 +494,13 @@ export default function HomePage() {
                   </p>
                   <button
                     onClick={createNewWorkflow}
-                    className="px-6 py-3 rounded-lg text-white font-semibold transition-opacity hover:opacity-90"
+                    disabled={isCreating}
+                    className="px-6 py-3 rounded-lg text-white font-semibold transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center gap-2 mx-auto"
                     style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}
                   >
+                    {isCreating && (
+                      <div className="w-4 h-4 rounded-full animate-spin" style={{ border: '2px solid white', borderTopColor: 'transparent' }} />
+                    )}
                     {t('home.createFirst')}
                   </button>
                 </div>
@@ -516,13 +543,18 @@ export default function HomePage() {
                         <div className="flex items-center gap-3">
                           <button
                             onClick={() => duplicateWorkflow(workflow.id)}
-                            className="text-xs text-gray-400 hover:text-[#10B981] transition-colors"
+                            disabled={duplicatingId === workflow.id}
+                            className="text-xs text-gray-400 hover:text-[#10B981] transition-colors disabled:opacity-50"
                             title="Duplicate"
                           >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <rect x="9" y="9" width="13" height="13" rx="2"/>
-                              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                            </svg>
+                            {duplicatingId === workflow.id ? (
+                              <div className="w-3.5 h-3.5 rounded-full animate-spin" style={{ border: '2px solid #10B981', borderTopColor: 'transparent' }} />
+                            ) : (
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                              </svg>
+                            )}
                           </button>
                           <button
                             onClick={() => exportWorkflow(workflow.id, workflow.name)}
