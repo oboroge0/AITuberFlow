@@ -215,6 +215,7 @@ export default function EditorPage() {
     if (workflowId && workflowId !== 'new' && workflowId !== '_') {
       loadWorkflowData();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workflowId]);
 
   const loadWorkflowData = async () => {
@@ -602,6 +603,7 @@ export default function EditorPage() {
             boxShadow: '0 4px 20px rgba(16, 185, 129, 0.3)',
           }}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo.png"
             alt="AITuberFlow logo"

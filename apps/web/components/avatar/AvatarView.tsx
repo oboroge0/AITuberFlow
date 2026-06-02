@@ -70,6 +70,7 @@ function PNGRenderer({
 
   return (
     <div className={`png-renderer flex items-center justify-center h-full ${className}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={currentImage}
         alt="Avatar"
@@ -87,9 +88,9 @@ export default function AvatarView({
   modelUrl,
   animationUrl,
   pngConfig,
-  vtubePort = 8001,
-  vtubeMouthParam,
-  vtubeExpressionMap,
+  _vtubePort = 8001,
+  _vtubeMouthParam,
+  _vtubeExpressionMap,
   state,
   className = '',
   showSubtitles = false,
@@ -156,7 +157,7 @@ export default function AvatarView({
           </div>
         );
     }
-  }, [renderer, modelUrl, animationUrl, pngConfig, vtubePort, vtubeMouthParam, vtubeExpressionMap, state, backgroundColor, enableControls, showGrid, onMotionComplete]);
+  }, [renderer, modelUrl, animationUrl, pngConfig, state, backgroundColor, enableControls, showGrid, onMotionComplete]);
 
   return (
     <div className={`avatar-view relative w-full h-full ${className}`} style={{ pointerEvents: 'auto' }}>

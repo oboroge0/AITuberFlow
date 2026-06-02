@@ -239,7 +239,6 @@ export default function HomePage() {
 
     try {
       const text = await file.text();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const importData = JSON.parse(text) as any;
       // Handle both wrapped format { workflow: {...} } and flat format { name, nodes, ... }
       const workflow = (importData.workflow || importData) as WorkflowExport | undefined;
@@ -300,6 +299,7 @@ export default function HomePage() {
                 boxShadow: '0 4px 20px rgba(16, 185, 129, 0.3)',
               }}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/logo.png"
                 alt="AITuberFlow logo"
