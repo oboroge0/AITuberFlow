@@ -173,8 +173,11 @@ function setupWorkflowCallbacks(workflowId: string): void {
         viseme: event.payload.viseme,
       });
     } else if (event.type === "avatar.motion") {
+      // Forward both the new camelCase motionUrl (primary after issue #104)
+      // and the legacy motion field; consumers read `motionUrl || motion`.
       wsBroadcaster.broadcast(workflowId, "avatar.motion", {
         motion: event.payload.motion ?? "",
+        motionUrl: event.payload.motionUrl ?? "",
       });
     } else if (event.type === "avatar.update") {
       wsBroadcaster.broadcast(workflowId, "avatar.update", event.payload);

@@ -2009,9 +2009,7 @@ export default function NodeSettings() {
 
   useEffect(() => {
     if (selectedNode) {
-      setLocalConfig(
-        normalizeLegacyConfig(selectedNode.type, selectedNode.config || {}),
-      );
+      setLocalConfig(normalizeLegacyConfig(selectedNode.type, selectedNode.config || {}));
       setShowOverrides(false);
 
       // Fetch VOICEVOX speakers if this is a voicevox-tts node

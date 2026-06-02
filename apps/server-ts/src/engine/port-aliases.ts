@@ -1,8 +1,8 @@
 /**
- * Legacy port-ID aliases for the snake_case → camelCase config-naming refactor.
- * Workflows saved before the rename still reference the old port IDs in their
- * connections, so old → new resolution lets those workflows keep working
- * without re-saving them.
+ * Legacy port-ID aliases for the snake_case → camelCase config-naming refactor
+ * (issue #104). Workflows saved before the rename still reference the old port
+ * IDs in their connections, so old → new resolution lets those workflows keep
+ * working without re-saving them.
  *
  * Shared by the executor (to route node inputs correctly) and the validator /
  * connection-integrity check (to avoid false "unconnected input" warnings and

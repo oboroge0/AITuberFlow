@@ -156,7 +156,7 @@ export default function PreviewPage() {
             setAvatarState((prev) => ({ ...prev, mouthOpen: rest.value }));
             break;
           case 'avatar.motion':
-            setAvatarState((prev) => ({ ...prev, motion: rest.motion }));
+            setAvatarState((prev) => ({ ...prev, motion: rest.motionUrl || rest.motion }));
             break;
           case 'avatar.lookAt':
             setAvatarState((prev) => ({ ...prev, lookAt: rest }));

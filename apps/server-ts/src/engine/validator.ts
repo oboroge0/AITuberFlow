@@ -208,10 +208,13 @@ function checkUnconnectedInputs(
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
-  // Build a set of connected input ports: "nodeId:portId"
+  // Build a set of connected input ports: "nodeId:portId".
+  // Resolve legacy snake_case port IDs (issue #104) the same way the executor
+  // does, so a pre-rename connection (e.g. scene_name) is not flagged as
+  // unconnected against the manifest's new camelCase input id.
   const connectedInputs = new Set<string>();
   for (const conn of connections) {
-    connectedInputs.add(`${conn.to.nodeId}:${conn.to.port}`);
+    connectedInputs.add(`${conn.to.nodeId}:${resolvePortId(conn.to.port)}`);
   }
 
   for (const node of nodes) {
