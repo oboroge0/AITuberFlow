@@ -376,7 +376,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   // Execution actions
   setExecuting: (executing) => set({
     isExecuting: executing,
-    nodeStatuses: executing ? {} : {}, // Clear statuses when starting
+    ...(executing ? { nodeStatuses: {} } : {}),
   }),
 
   addLog: (log) => {
