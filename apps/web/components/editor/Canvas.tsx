@@ -103,6 +103,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     pasteNodes,
     reachableNodeIds: reachableNodes,
     hasStartNode,
+    nodeStatuses,
   } = useWorkflowStore();
 
   const { nodeDisplayMode, setNodeDisplayMode, searchVisible, searchQuery } = useUIPreferencesStore();
@@ -329,16 +330,30 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
 
   // Convert workflow connections to React Flow edges with gradient style
   // Lines to/from unreachable nodes are dashed
+  // Edge color/animation reflects source node execution status
   const flowEdges: Edge[] = useMemo(
     () =>
       connections.map((conn) => {
         const sourceNode = workflowNodes.find((n) => n.id === conn.from.nodeId);
-        const edgeColor = sourceNode ? (getPluginColor(sourceNode.type) || DEFAULT_EDGE_COLOR) : DEFAULT_EDGE_COLOR;
+        const baseEdgeColor = sourceNode ? (getPluginColor(sourceNode.type) || DEFAULT_EDGE_COLOR) : DEFAULT_EDGE_COLOR;
 
         // Check if this edge involves unreachable nodes (only when Start node exists)
         const sourceReachable = !hasStartNode || reachableNodes.has(conn.from.nodeId);
         const targetReachable = !hasStartNode || reachableNodes.has(conn.to.nodeId);
         const isReachableEdge = sourceReachable && targetReachable;
+
+        // Status-based edge styling
+        const sourceStatus = nodeStatuses[conn.from.nodeId]?.status;
+        let edgeColor = baseEdgeColor;
+        const animated = true;
+
+        if (sourceStatus === 'error') {
+          edgeColor = '#EF4444';
+        } else if (sourceStatus === 'running') {
+          edgeColor = '#3B82F6';
+        } else if (sourceStatus === 'completed') {
+          edgeColor = '#10B981';
+        }
 
         return {
           id: conn.id,
@@ -346,7 +361,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
           sourceHandle: conn.from.port,
           target: conn.to.nodeId,
           targetHandle: conn.to.port,
-          animated: true, // Always animate edges
+          animated,
           style: {
             stroke: edgeColor,
             strokeWidth: 3,
@@ -355,7 +370,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
           },
         };
       }),
-    [connections, workflowNodes, reachableNodes, hasStartNode, getPluginColor]
+    [connections, workflowNodes, reachableNodes, hasStartNode, getPluginColor, nodeStatuses]
   );
 
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState(flowNodes);

@@ -826,9 +826,16 @@ export class WorkflowExecutor {
           await this.updateNodeStatus(workflowId, node.id, "running");
 
           try {
+            const startTime = Date.now();
             const outputs = await this.executeNodeRuntime(runtime, inputs);
+            const duration = Date.now() - startTime;
             nodeOutputs.set(node.id, outputs ?? {});
-            await this.updateNodeStatus(workflowId, node.id, "completed", { outputs });
+            const resultSummary = this.buildResultSummary(outputs);
+            await this.updateNodeStatus(workflowId, node.id, "completed", {
+              outputs,
+              duration,
+              resultSummary,
+            });
           } catch (err) {
             await this.updateNodeStatus(workflowId, node.id, "error", { error: String(err) });
             await this.log(workflowId, node.id, `Node error: ${err}`, "error");
@@ -913,10 +920,15 @@ export class WorkflowExecutor {
       await this.updateNodeStatus(workflowId, node.id, "running");
 
       try {
+        const startTime = Date.now();
         const outputs = await this.executeNodeRuntime(runtime, inputs);
+        const duration = Date.now() - startTime;
         nodeOutputs.set(node.id, outputs ?? {});
+        const resultSummary = this.buildResultSummary(outputs);
         await this.updateNodeStatus(workflowId, node.id, "completed", {
           outputs,
+          duration,
+          resultSummary,
         });
         await this.log(workflowId, node.id, `Node completed: ${node.type}`, "info");
       } catch (err) {
@@ -1258,6 +1270,34 @@ export class WorkflowExecutor {
         await context.log(`Unknown node type: ${nodeType}`, "warning");
         return {};
     }
+  }
+
+  // ─── Result Summary ────────────────
+
+  private buildResultSummary(outputs: Record<string, any> | undefined): string {
+    if (!outputs || Object.keys(outputs).length === 0) return "No output";
+
+    // Try to generate a meaningful summary from known output patterns
+    if (typeof outputs.response === "string") {
+      const len = outputs.response.length;
+      return `Response: ${len} chars`;
+    }
+    if (typeof outputs.text === "string") {
+      const len = outputs.text.length;
+      return `Text: ${len} chars`;
+    }
+    if (typeof outputs.audio === "string") {
+      return `Audio: ${outputs.audio}`;
+    }
+    if (typeof outputs.expression === "string") {
+      return `Expression: ${outputs.expression}`;
+    }
+    if (outputs.trigger !== undefined) {
+      return "Triggered";
+    }
+
+    // Fallback: list output keys
+    return `Outputs: ${Object.keys(outputs).join(", ")}`;
   }
 
   // ─── Logging & Status ─────────────

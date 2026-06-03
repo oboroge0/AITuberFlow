@@ -1,6 +1,7 @@
 'use client';
 
-import React, { memo, useState, useRef } from 'react';
+import React, { memo, useState, useRef, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Handle, Position, type Node } from '@xyflow/react';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { usePluginStore } from '@/stores/pluginStore';
@@ -59,6 +60,20 @@ const ChevronRight = () => (
   </svg>
 );
 
+// Status visual config
+const STATUS_BORDER_COLORS: Record<string, { border: string; glow: string }> = {
+  running: { border: '#3B82F6', glow: 'rgba(59,130,246,0.3)' },
+  completed: { border: '#10B981', glow: 'rgba(16,185,129,0.2)' },
+  error: { border: '#EF4444', glow: 'rgba(239,68,68,0.3)' },
+  warning: { border: '#F59E0B', glow: 'rgba(245,158,11,0.25)' },
+};
+
+function formatDuration(ms: number | undefined): string {
+  if (ms === undefined || ms === null) return '';
+  if (ms < 1000) return `${ms}ms`;
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
 function CustomNode({ id, data, selected }: CustomNodeProps) {
   const { nodeStatuses, selectNode } = useWorkflowStore();
   const { getPluginColor, getPluginBgColor, getPluginIcon, getPluginById } = usePluginStore();
@@ -67,6 +82,12 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const [showTooltip, setShowTooltip] = useState(false);
   const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const status = nodeStatuses[id];
+
+  // Popover state
+  const [popoverVisible, setPopoverVisible] = useState(false);
+  const [popoverPinned, setPopoverPinned] = useState(false);
+  const popoverHideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const nodeRef = useRef<HTMLDivElement>(null);
 
   // Track drag state for port highlight/dim
   const { draggingSourceType } = useDragStateStore();
@@ -97,11 +118,90 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     searchStyle.opacity = 0.3;
   }
 
+  // Popover show/hide logic
+  const showPopover = useCallback(() => {
+    if (popoverHideTimeoutRef.current) {
+      clearTimeout(popoverHideTimeoutRef.current);
+      popoverHideTimeoutRef.current = null;
+    }
+    setPopoverVisible(true);
+  }, []);
+
+  const scheduleHidePopover = useCallback(() => {
+    if (popoverPinned) return;
+    popoverHideTimeoutRef.current = setTimeout(() => {
+      setPopoverVisible(false);
+    }, 200);
+  }, [popoverPinned]);
+
+  const cancelHidePopover = useCallback(() => {
+    if (popoverHideTimeoutRef.current) {
+      clearTimeout(popoverHideTimeoutRef.current);
+      popoverHideTimeoutRef.current = null;
+    }
+  }, []);
+
+  const togglePin = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPopoverPinned((prev) => {
+      if (prev) {
+        // Unpinning - schedule hide
+        popoverHideTimeoutRef.current = setTimeout(() => {
+          setPopoverVisible(false);
+        }, 200);
+      }
+      return !prev;
+    });
+  }, []);
+
+  const copyErrorToClipboard = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    const errorMsg = status?.data?.error || status?.data?.validationIssue || '';
+    if (errorMsg) {
+      navigator.clipboard.writeText(String(errorMsg)).catch(() => {});
+    }
+  }, [status]);
+
+  // ESC to unpin + click outside to unpin
+  useEffect(() => {
+    if (!popoverPinned) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setPopoverPinned(false);
+        setPopoverVisible(false);
+      }
+    };
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-popover-node-id]') && !nodeRef.current?.contains(target)) {
+        setPopoverPinned(false);
+        setPopoverVisible(false);
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    window.addEventListener('mousedown', handleClickOutside, true);
+    return () => {
+      window.removeEventListener('keydown', handleKey);
+      window.removeEventListener('mousedown', handleClickOutside, true);
+    };
+  }, [popoverPinned]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (popoverHideTimeoutRef.current) clearTimeout(popoverHideTimeoutRef.current);
+    };
+  }, []);
+
   // Tooltip show/hide with delay
   const handleMouseEnter = () => {
     tooltipTimeoutRef.current = setTimeout(() => {
       setShowTooltip(true);
     }, 500); // 500ms delay
+    // Show popover only when there's status data to show
+    if (status && status.status !== 'idle') {
+      showPopover();
+    }
   };
 
   const handleMouseLeave = () => {
@@ -110,6 +210,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       tooltipTimeoutRef.current = null;
     }
     setShowTooltip(false);
+    scheduleHidePopover();
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -156,14 +257,26 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
   // Get dimensions based on display mode
   const getNodeStyle = (): React.CSSProperties => {
+    // Status-based border and glow
+    const statusVisual = status?.status ? STATUS_BORDER_COLORS[status.status] : undefined;
+    let borderColor = 'rgba(255,255,255,0.1)';
+    let boxShadow = '0 4px 20px rgba(0,0,0,0.2)';
+
+    if (selected) {
+      borderColor = config.color;
+      boxShadow = `0 0 20px ${config.color}40, 0 4px 20px rgba(0,0,0,0.3)`;
+    }
+    if (statusVisual) {
+      borderColor = statusVisual.border;
+      boxShadow = `0 0 20px ${statusVisual.glow}, 0 4px 20px rgba(0,0,0,0.3)`;
+    }
+
     const baseStyle: React.CSSProperties = {
       background: config.bgColor,
-      border: `2px solid ${selected ? config.color : 'rgba(255,255,255,0.1)'}`,
+      border: `2px solid ${borderColor}`,
       borderRadius: '12px',
-      boxShadow: selected
-        ? `0 0 20px ${config.color}40, 0 4px 20px rgba(0,0,0,0.3)`
-        : '0 4px 20px rgba(0,0,0,0.2)',
-      transition: 'box-shadow 0.2s, border-color 0.2s, opacity 0.2s',
+      boxShadow,
+      transition: 'box-shadow 0.3s, border-color 0.3s, opacity 0.2s',
       ...searchStyle,
     };
 
@@ -352,6 +465,153 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     );
   };
 
+  // Status popover rendered via portal
+  const NodeStatusPopover = () => {
+    if (!popoverVisible || !status || status.status === 'idle') return null;
+
+    const statusColor = STATUS_BORDER_COLORS[status.status]?.border ?? '#6B7280';
+    const statusLabel = {
+      running: 'Running',
+      completed: 'Completed',
+      error: 'Error',
+      warning: 'Warning',
+    }[status.status] ?? status.status;
+    const duration = status.data?.duration;
+    const resultSummary = status.data?.resultSummary;
+    const errorMsg = status.data?.error || status.data?.validationIssue;
+    const outputs = status.data?.outputs;
+
+    // Calculate position from the node DOM element
+    const rect = nodeRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+
+    const popoverStyle: React.CSSProperties = {
+      position: 'fixed',
+      left: rect.right + 12,
+      top: rect.top,
+      zIndex: 9999,
+      pointerEvents: 'auto',
+      minWidth: '220px',
+      maxWidth: '320px',
+    };
+
+    // Keep popover within viewport
+    if (rect.right + 12 + 320 > window.innerWidth) {
+      popoverStyle.left = rect.left - 12 - 320;
+    }
+
+    return createPortal(
+      <div
+        data-popover-node-id={id}
+        style={popoverStyle}
+        onMouseEnter={cancelHidePopover}
+        onMouseLeave={scheduleHidePopover}
+      >
+        <div
+          className="backdrop-blur-md rounded-lg shadow-2xl overflow-hidden"
+          style={{
+            background: 'rgba(15, 23, 42, 0.95)',
+            border: `1px solid ${statusColor}40`,
+          }}
+        >
+          {/* Header */}
+          <div className="flex items-center gap-2 px-3 py-2">
+            <span
+              className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${status.status === 'running' ? 'animate-pulse' : ''}`}
+              style={{ background: statusColor }}
+            />
+            <span className="text-[12px] font-semibold text-white truncate flex-1">
+              {data.label}
+            </span>
+            {duration !== undefined && (
+              <span className="text-[10px] text-white/50 flex-shrink-0">
+                {formatDuration(duration)}
+              </span>
+            )}
+            <button
+              onClick={togglePin}
+              className={`w-5 h-5 flex items-center justify-center rounded transition-colors flex-shrink-0 ${
+                popoverPinned ? 'text-blue-400 bg-blue-400/20' : 'text-white/30 hover:text-white/60'
+              }`}
+              title={popoverPinned ? 'Unpin' : 'Pin'}
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill={popoverPinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                <path d="M12 2v8m0 4v8M4.93 4.93l4.24 4.24m5.66 5.66l4.24 4.24M2 12h8m4 0h8M4.93 19.07l4.24-4.24m5.66-5.66l4.24-4.24"/>
+              </svg>
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="h-px" style={{ background: `${statusColor}30` }} />
+
+          {/* Status message */}
+          <div
+            className="px-3 py-2 text-[11px] font-medium"
+            style={{
+              background: `${statusColor}10`,
+              color: statusColor,
+            }}
+          >
+            {statusLabel}
+            {status.status === 'running' && '...'}
+          </div>
+
+          {/* Detail rows */}
+          <div className="px-3 py-2 space-y-1.5">
+            {resultSummary && (
+              <div className="flex items-start gap-2">
+                <span className="text-[10px] text-white/40 w-14 flex-shrink-0">Result</span>
+                <span className="text-[11px] text-white/80">{String(resultSummary)}</span>
+              </div>
+            )}
+            {errorMsg && (
+              <div className="flex items-start gap-2">
+                <span className="text-[10px] text-red-400/70 w-14 flex-shrink-0">Error</span>
+                <span className="text-[11px] text-red-300 break-words flex-1">{String(errorMsg)}</span>
+              </div>
+            )}
+            {duration !== undefined && (
+              <div className="flex items-start gap-2">
+                <span className="text-[10px] text-white/40 w-14 flex-shrink-0">Duration</span>
+                <span className="text-[11px] text-white/80">{formatDuration(duration)}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Output preview */}
+          {outputs && Object.keys(outputs).length > 0 && (
+            <div className="px-3 pb-2">
+              <div className="text-[9px] text-white/30 uppercase tracking-wider mb-1">Output Preview</div>
+              <pre
+                className="text-[10px] text-white/60 bg-black/30 rounded p-2 overflow-auto max-h-[80px] whitespace-pre-wrap break-words"
+                style={{ fontFamily: 'monospace' }}
+              >
+                {JSON.stringify(outputs, null, 2).slice(0, 500)}
+              </pre>
+            </div>
+          )}
+
+          {/* Copy error button */}
+          {(status.status === 'error' || status.status === 'warning') && errorMsg && (
+            <div className="px-3 pb-2 flex justify-end">
+              <button
+                onClick={copyErrorToClipboard}
+                className="text-white/30 hover:text-white/70 transition-colors p-1 rounded hover:bg-white/10"
+                title="Copy error message"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>,
+      document.body
+    );
+  };
+
   /** Return handle style based on drag compatibility */
   const getHandleStyle = (portType: PortType, isTarget: boolean): React.CSSProperties => {
     const base: React.CSSProperties = {
@@ -388,6 +648,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   if (collapsed) {
     return (
       <div
+        ref={nodeRef}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
         onMouseEnter={handleMouseEnter}
@@ -397,6 +658,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       >
         <Tooltip />
         <PlayButton />
+        <NodeStatusPopover />
 
         {/* Input handles (kept for edge connections) */}
         {data.inputs && data.inputs.length > 0 && (
@@ -476,6 +738,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   if (nodeDisplayMode === 'simple') {
     return (
       <div
+        ref={nodeRef}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
         onMouseEnter={handleMouseEnter}
@@ -485,6 +748,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       >
         <Tooltip />
         <PlayButton />
+        <NodeStatusPopover />
 
         {/* Input handles - simple circles */}
         {data.inputs && data.inputs.length > 0 && (
@@ -562,6 +826,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   if (nodeDisplayMode === 'detailed') {
     return (
       <div
+        ref={nodeRef}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
         onMouseEnter={handleMouseEnter}
@@ -571,6 +836,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       >
         <Tooltip />
         <PlayButton />
+        <NodeStatusPopover />
 
         {/* Header section */}
         <div
@@ -679,6 +945,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
   return (
     <div
+      ref={nodeRef}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
       onMouseEnter={handleMouseEnter}
@@ -688,6 +955,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     >
       <Tooltip />
       <PlayButton />
+      <NodeStatusPopover />
 
       {/* Header */}
       <div className="flex items-center gap-2 mb-2">

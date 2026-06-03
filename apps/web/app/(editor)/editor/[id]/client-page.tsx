@@ -6,7 +6,7 @@ import { ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import Canvas from '@/components/editor/Canvas';
 import Sidebar from '@/components/editor/Sidebar';
 import NodeSettings from '@/components/panels/NodeSettings';
-import LogPanel from '@/components/panels/LogPanel';
+
 import ExpressionPresets from '@/components/panels/ExpressionPresets';
 import MotionLibrary, { Motion } from '@/components/panels/MotionLibrary';
 import { AvatarView, RendererType } from '@/components/avatar';
@@ -119,7 +119,15 @@ export default function EditorPage() {
     connections,
     character,
     setNodeStatus,
+    nodeStatuses,
   } = useWorkflowStore();
+
+  // Count nodes with error status
+  const errorCount = useMemo(() => {
+    return Object.values(nodeStatuses).filter(
+      (s) => s?.status === 'error'
+    ).length;
+  }, [nodeStatuses]);
 
   // Handle name editing
   const handleStartEditingName = () => {
@@ -716,6 +724,17 @@ export default function EditorPage() {
           </div>
         </div>
 
+        {/* Error count badge - shown only when there are errors */}
+        {errorCount > 0 && (
+          <div
+            className="px-3 py-2 rounded-lg bg-red-500/20 border border-red-500/50 text-red-300 flex items-center gap-2 text-sm cursor-default"
+            title={`${errorCount} node(s) with errors`}
+          >
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="font-medium">{errorCount} error{errorCount !== 1 ? 's' : ''}</span>
+          </div>
+        )}
+
         {/* Avatar Controls toggle - only show when preview is available */}
         {showPreview && (
         <button
@@ -918,20 +937,12 @@ export default function EditorPage() {
           />
         </div>
 
-        {/* Zoom Controls - positioned above Log Panel */}
+        {/* Zoom Controls */}
         <div
           className="absolute z-10"
-          style={{ left: '285px', bottom: '180px' }}
+          style={{ left: '285px', bottom: '25px' }}
         >
           <ZoomControls />
-        </div>
-
-        {/* Log Panel at bottom */}
-        <div
-          className="absolute bottom-5 z-10"
-          style={{ left: '285px', right: showPreview ? '320px' : '20px' }}
-        >
-          <LogPanel />
         </div>
 
         {/* Node Settings - Inside ReactFlowProvider, shown when a node is selected */}
