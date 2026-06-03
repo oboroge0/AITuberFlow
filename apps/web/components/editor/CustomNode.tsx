@@ -198,7 +198,6 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     tooltipTimeoutRef.current = setTimeout(() => {
       setShowTooltip(true);
     }, 500); // 500ms delay
-    // Show popover only when there's status data to show
     if (status && status.status !== 'idle') {
       showPopover();
     }

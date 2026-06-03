@@ -627,8 +627,10 @@ export class WorkflowExecutor {
     // Disconnect VTS
     await this.disconnectVtsIfNeeded(workflowId);
 
-    // Clean up callbacks
-    this.clearCallbacks(workflowId);
+    // Note: callbacks are NOT cleared here so that re-starting the workflow
+    // (without the WS client re-joining) still receives status/log/event
+    // updates. Callbacks are cleaned up when the WS room becomes empty
+    // (all clients leave or disconnect).
 
     // Update status
     this.runningWorkflows.delete(workflowId);
