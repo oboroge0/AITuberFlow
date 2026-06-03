@@ -8,6 +8,7 @@ import { Workflow } from '@/lib/types';
 import { DEFAULT_MODEL_URL } from '@/lib/constants';
 import { resolveWorkflowId } from '@/lib/routeParams';
 import { getApiBaseUrl, getWsBaseUrl } from '@/lib/runtimeEndpoints';
+import { toast } from '@/stores/toastStore';
 
 const WS_URL = getWsBaseUrl();
 const API_BASE = getApiBaseUrl();
@@ -84,6 +85,8 @@ export default function PreviewPage() {
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [pendingDeleteModel, setPendingDeleteModel] = useState<string | null>(null);
+  const deleteModelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Audio playback
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -118,6 +121,7 @@ export default function PreviewPage() {
         }
       } catch (error) {
         console.error('Failed to load workflow:', error);
+        toast.error('ワークフローの読み込みに失敗しました');
       }
     };
 
@@ -209,7 +213,7 @@ export default function PreviewPage() {
   // Control handlers
   const handleStart = useCallback(async () => {
     if (!workflow) {
-      console.error('No workflow data loaded');
+      toast.error('ワークフローデータが読み込まれていません');
       return;
     }
     try {
@@ -220,6 +224,7 @@ export default function PreviewPage() {
       });
     } catch (error) {
       console.error('Failed to start workflow:', error);
+      toast.error('ワークフローの開始に失敗しました');
     }
   }, [workflowId, workflow]);
 
@@ -228,6 +233,7 @@ export default function PreviewPage() {
       await api.stopWorkflow(workflowId);
     } catch (error) {
       console.error('Failed to stop workflow:', error);
+      toast.error('ワークフローの停止に失敗しました');
     }
   }, [workflowId]);
 
@@ -282,19 +288,33 @@ export default function PreviewPage() {
     }
   }, [loadModels]);
 
-  // Handle model delete
+  // Handle model delete (double-click to confirm)
   const handleDeleteModel = useCallback(async (filename: string) => {
-    if (!confirm(`Delete ${filename}?`)) return;
+    if (pendingDeleteModel !== filename) {
+      setPendingDeleteModel(filename);
+      toast.warning(`もう一度押すと「${filename}」を削除します`);
+      if (deleteModelTimerRef.current) clearTimeout(deleteModelTimerRef.current);
+      deleteModelTimerRef.current = setTimeout(() => {
+        setPendingDeleteModel(null);
+        deleteModelTimerRef.current = null;
+      }, 5000);
+      return;
+    }
+    setPendingDeleteModel(null);
+    if (deleteModelTimerRef.current) {
+      clearTimeout(deleteModelTimerRef.current);
+      deleteModelTimerRef.current = null;
+    }
 
     const response = await api.deleteModel(filename);
     if (response.data?.success) {
       loadModels();
-      // Clear model URL if the deleted model was selected
       if (avatarConfig.modelUrl?.includes(filename)) {
         setAvatarConfig((prev) => ({ ...prev, modelUrl: '' }));
       }
+      toast.success(`${filename} を削除しました`);
     }
-  }, [loadModels, avatarConfig.modelUrl]);
+  }, [loadModels, avatarConfig.modelUrl, pendingDeleteModel]);
 
   return (
     <div className="h-screen bg-slate-900 flex flex-col overflow-hidden">
