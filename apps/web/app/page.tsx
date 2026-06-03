@@ -153,22 +153,16 @@ export default function HomePage() {
   };
 
   const deleteWorkflow = async (id: string) => {
-    const tauri = getTauriInternals();
-    const isDesktop = typeof tauri?.invoke === 'function';
-    if (isDesktop) {
-      if (pendingDeleteId !== id) {
-        setPendingDeleteId(id);
-        toast.warning('もう一度押すと削除します');
-        if (deleteConfirmTimerRef.current) {
-          clearTimeout(deleteConfirmTimerRef.current);
-        }
-        deleteConfirmTimerRef.current = setTimeout(() => {
-          setPendingDeleteId(null);
-          deleteConfirmTimerRef.current = null;
-        }, 5000);
-        return;
+    if (pendingDeleteId !== id) {
+      setPendingDeleteId(id);
+      toast.warning(t('home.deleteConfirm'));
+      if (deleteConfirmTimerRef.current) {
+        clearTimeout(deleteConfirmTimerRef.current);
       }
-    } else if (!confirm(t('home.deleteConfirm'))) {
+      deleteConfirmTimerRef.current = setTimeout(() => {
+        setPendingDeleteId(null);
+        deleteConfirmTimerRef.current = null;
+      }, 5000);
       return;
     }
 
