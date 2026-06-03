@@ -376,7 +376,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   // Execution actions
   setExecuting: (executing) => set({
     isExecuting: executing,
-    ...(executing ? { nodeStatuses: {} } : {}),
+    nodeStatuses: {},
   }),
 
   addLog: (log) => {
@@ -403,7 +403,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
 
   // Bulk actions
   loadWorkflow: (data) => {
-    set({
+    set((state) => ({
       workflowId: data.id,
       workflowName: data.name,
       nodes: data.nodes,
@@ -412,10 +412,10 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       selectedNodeId: null,
       past: [],
       future: [],
-      logs: [],
-      nodeStatuses: {},
+      logs: state.isExecuting ? state.logs : [],
+      nodeStatuses: state.isExecuting ? state.nodeStatuses : {},
       ...computeReachableNodes(data.nodes, data.connections),
-    });
+    }));
   },
 
   clearWorkflow: () => {

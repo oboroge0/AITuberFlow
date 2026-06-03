@@ -306,12 +306,13 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
             onPlayClick: () => onRunWorkflow?.(node.id),
             isSearchMatch: searchMatchIds.has(node.id),
             isSearchDimmed: searchMatchIds.size > 0 && !searchMatchIds.has(node.id),
+            nodeStatus: nodeStatuses[node.id],
           } as CustomNodeData,
           selected: false,
         };
       });
     },
-    [workflowNodes, reachableNodes, hasStartNode, onRunWorkflow, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs, searchMatchIds]
+    [workflowNodes, reachableNodes, hasStartNode, onRunWorkflow, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs, searchMatchIds, nodeStatuses]
   );
 
   // Apply selection in a cheap second pass. Unchanged nodes keep their object

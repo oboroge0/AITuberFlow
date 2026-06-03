@@ -23,6 +23,7 @@ export interface CustomNodeData extends Record<string, unknown> {
   onPlayClick?: () => void; // Callback when play button is clicked
   isSearchMatch?: boolean;  // Whether this node matches the current search
   isSearchDimmed?: boolean; // Whether this node should be dimmed (search active but not matching)
+  nodeStatus?: { nodeId: string; status: string; data?: Record<string, unknown> };
 }
 
 export type CustomNodeType = Node<CustomNodeData>;
@@ -75,13 +76,13 @@ function formatDuration(ms: number | undefined): string {
 }
 
 function CustomNode({ id, data, selected }: CustomNodeProps) {
-  const { nodeStatuses, selectNode } = useWorkflowStore();
+  const selectNode = useWorkflowStore((s) => s.selectNode);
+  const status = data.nodeStatus;
   const { getPluginColor, getPluginBgColor, getPluginIcon, getPluginById } = usePluginStore();
   const { nodeDisplayMode, collapsedNodeIds, toggleNodeCollapse } = useUIPreferencesStore();
   const { getNodeDesc } = useLocaleStore();
   const [showTooltip, setShowTooltip] = useState(false);
   const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const status = nodeStatuses[id];
 
   // Popover state
   const [popoverVisible, setPopoverVisible] = useState(false);

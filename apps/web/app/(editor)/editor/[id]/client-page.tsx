@@ -448,8 +448,6 @@ export default function EditorPage() {
 
     if (response.error) {
       addLog({ level: 'error', message: `Failed to start: ${response.error}` });
-    } else {
-      setExecuting(true);
     }
   };
 
