@@ -43,6 +43,7 @@
       "label": "Log Level",
       "description": "The log level for output messages",
       "default": "info",
+      "inline": true,
       "options": [
         {"label": "Info", "value": "info"},
         {"label": "Debug", "value": "debug"},

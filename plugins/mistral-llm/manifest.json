@@ -51,6 +51,7 @@
       "label": "Model",
       "description": "The Mistral model to use",
       "default": "mistral-small-latest",
+      "inline": true,
       "options": [
         { "label": "Mistral Large", "value": "mistral-large-latest" },
         { "label": "Mistral Medium", "value": "mistral-medium-latest" },
@@ -77,7 +78,8 @@
       "description": "Controls randomness. Higher = more creative, Lower = more focused (0-2)",
       "default": 0.7,
       "min": 0,
-      "max": 2
+      "max": 2,
+      "inline": true
     },
     "maxTokens": {
       "type": "number",

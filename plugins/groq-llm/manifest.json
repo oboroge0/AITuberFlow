@@ -51,6 +51,7 @@
       "label": "Model",
       "description": "The model to use for inference",
       "default": "llama-3.3-70b-versatile",
+      "inline": true,
       "options": [
         { "label": "Llama 3.3 70B Versatile", "value": "llama-3.3-70b-versatile" },
         { "label": "Llama 3.1 8B Instant", "value": "llama-3.1-8b-instant" },
@@ -76,7 +77,8 @@
       "description": "Controls randomness. Higher = more creative, Lower = more focused (0-2)",
       "default": 0.7,
       "min": 0,
-      "max": 2
+      "max": 2,
+      "inline": true
     },
     "maxTokens": {
       "type": "number",

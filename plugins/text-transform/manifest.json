@@ -43,6 +43,7 @@
       "label": "Operation",
       "description": "Transformation to apply",
       "default": "template",
+      "inline": true,
       "options": ["template", "uppercase", "lowercase", "trim", "replace", "split_first", "split_last", "length", "prefix", "suffix"]
     },
     "template": {

@@ -53,6 +53,7 @@
       "type": "select",
       "label": "Analysis Method",
       "description": "Method to use for emotion detection",
+      "inline": true,
       "options": [
         {
           "label": "LLM-based (Recommended)",

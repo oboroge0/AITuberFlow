@@ -72,7 +72,8 @@
       "description": "Speech speed (0.5-2.0)",
       "default": 1,
       "min": 0.5,
-      "max": 2
+      "max": 2,
+      "inline": true
     },
     "pitchScale": {
       "type": "number",

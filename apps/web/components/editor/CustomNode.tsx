@@ -10,12 +10,15 @@ import { useLocaleStore } from '@/stores/localeStore';
 import { type PortDefinition, PORT_TYPE_COLORS, PORT_TYPE_LABELS, arePortTypesCompatible, type PortType } from '@/lib/portTypes';
 import { useDragStateStore } from '@/stores/dragStateStore';
 import { renderIcon } from '@/lib/icons';
+import { evaluateShowWhen } from '@/lib/configUtils';
+import type { ConfigField } from '@/lib/types';
 
 export interface CustomNodeData extends Record<string, unknown> {
   label: string;
   type: string;
   category: 'input' | 'process' | 'output' | 'control';
   config: Record<string, unknown>;
+  pluginConfig?: Record<string, import('@/lib/types').ConfigField>;
   inputs?: PortDefinition[];
   outputs?: PortDefinition[];
   isReachable?: boolean;  // Whether this node is reachable from Start
@@ -75,8 +78,150 @@ function formatDuration(ms: number | undefined): string {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
+// Inline fields component for ComfyUI-style editing directly on nodes
+function InlineFields({
+  config,
+  pluginConfig,
+  onConfigChange,
+  accentColor,
+}: {
+  config: Record<string, unknown>;
+  pluginConfig: Record<string, ConfigField>;
+  onConfigChange: (key: string, value: unknown) => void;
+  accentColor: string;
+}) {
+  const inlineFields = Object.entries(pluginConfig).filter(
+    ([, field]) => field.inline && !field.dynamic
+  );
+  if (inlineFields.length === 0) return null;
+
+  const barBg = 'rgba(255,255,255,0.07)';
+
+  return (
+    <div className="flex flex-col gap-[3px] mt-1">
+      {inlineFields.map(([key, field]) => {
+        if (!evaluateShowWhen(field.showWhen, config)) return null;
+
+        const value = config[key] ?? field.default;
+
+        if (field.type === 'select' && field.options) {
+          const options = field.options.map((opt) =>
+            typeof opt === 'string' ? { label: opt, value: opt } : opt
+          );
+          const selectedLabel = options.find(o => String(o.value) === String(value))?.label || String(value);
+          return (
+            <div key={key} className="nodrag nopan relative" style={{ background: barBg, borderRadius: '4px' }}>
+              <div className="flex items-center justify-between px-2 h-[26px]">
+                <span className="text-[10px] text-white/45 select-none">{field.label}</span>
+                <span className="text-[10px] text-white/75 select-none">{selectedLabel}</span>
+              </div>
+              <select
+                className="nodrag nopan absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                value={String(value ?? '')}
+                onChange={(e) => onConfigChange(key, e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {options.map((opt) => (
+                  <option key={String(opt.value)} value={String(opt.value)}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          );
+        }
+
+        if (field.type === 'number') {
+          const numValue = typeof value === 'number' ? value : Number(value) || 0;
+          const min = field.min ?? 0;
+          const max = field.max ?? 100;
+          const step = max - min <= 2 ? 0.01 : max - min <= 10 ? 0.1 : 1;
+          const pct = Math.max(0, Math.min(100, ((numValue - min) / (max - min)) * 100));
+          return (
+            <div key={key} className="nodrag nopan relative" style={{ background: barBg, borderRadius: '4px', overflow: 'hidden' }}>
+              <div
+                className="absolute left-0 top-0 bottom-0 pointer-events-none"
+                style={{ width: `${pct}%`, background: `${accentColor}50`, transition: 'width 0.1s' }}
+              />
+              <div className="relative flex items-center justify-between px-2 h-[26px]">
+                <span className="text-[10px] text-white/45 select-none">{field.label}</span>
+                <span className="text-[10px] text-white/75 tabular-nums select-none">
+                  {numValue % 1 === 0 ? numValue : numValue.toFixed(2)}
+                </span>
+              </div>
+              <input
+                type="range"
+                className="nodrag nopan absolute inset-0 w-full h-full opacity-0 cursor-ew-resize"
+                min={min}
+                max={max}
+                step={step}
+                value={numValue}
+                onChange={(e) => onConfigChange(key, parseFloat(e.target.value))}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          );
+        }
+
+        if (field.type === 'boolean') {
+          const boolValue = Boolean(value);
+          return (
+            <div key={key}>
+              <button
+                className="nodrag nopan w-full relative text-left"
+                style={{ background: barBg, borderRadius: '4px', overflow: 'hidden' }}
+                onClick={(e) => { e.stopPropagation(); onConfigChange(key, !boolValue); }}
+              >
+                {boolValue && (
+                  <div className="absolute left-0 top-0 bottom-0 w-full pointer-events-none" style={{ background: `${accentColor}20` }} />
+                )}
+                <div className="relative flex items-center justify-between px-2 h-[26px]">
+                  <span className="text-[10px] text-white/45 select-none">{field.label}</span>
+                  <div
+                    className="relative flex-shrink-0 rounded-full transition-colors"
+                    style={{ width: '20px', height: '11px', background: boolValue ? accentColor : 'rgba(255,255,255,0.2)' }}
+                  >
+                    <span
+                      className="absolute top-[1.5px] rounded-full bg-white transition-transform"
+                      style={{ width: '8px', height: '8px', transform: boolValue ? 'translateX(10.5px)' : 'translateX(1.5px)' }}
+                    />
+                  </div>
+                </div>
+              </button>
+            </div>
+          );
+        }
+
+        if (field.type === 'string') {
+          return (
+            <div key={key} className="nodrag nopan relative" style={{ background: barBg, borderRadius: '4px' }}>
+              <div className="flex items-center px-2 h-[26px] gap-2">
+                <span className="text-[10px] text-white/45 flex-shrink-0 select-none">{field.label}</span>
+                <input
+                  type="text"
+                  className="nodrag nopan bg-transparent text-[10px] text-white/75 outline-none text-right flex-1 min-w-0"
+                  value={String(value ?? '')}
+                  placeholder={field.placeholder}
+                  onChange={(e) => onConfigChange(key, e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            </div>
+          );
+        }
+
+        return null;
+      })}
+    </div>
+  );
+}
+
 function CustomNode({ id, data, selected }: CustomNodeProps) {
   const selectNode = useWorkflowStore((s) => s.selectNode);
+  const updateNode = useWorkflowStore((s) => s.updateNode);
+  const onInlineConfigChange = useCallback((key: string, value: unknown) => {
+    updateNode(id, { config: { ...data.config, [key]: value } });
+  }, [id, data.config, updateNode]);
   const status = data.nodeStatus;
   const { getPluginColor, getPluginBgColor, getPluginIcon, getPluginById } = usePluginStore();
   const { nodeDisplayMode, collapsedNodeIds, toggleNodeCollapse } = useUIPreferencesStore();
@@ -933,6 +1078,18 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           {getStatusText()}
         </div>
 
+        {/* Inline fields */}
+        {data.pluginConfig && (
+          <div className="px-3 pb-2">
+            <InlineFields
+              config={data.config}
+              pluginConfig={data.pluginConfig}
+              onConfigChange={onInlineConfigChange}
+              accentColor={config.color}
+            />
+          </div>
+        )}
+
         <StatusIndicator />
       </div>
     );
@@ -1035,6 +1192,15 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       <div className="text-[10px] text-white/40 truncate">
         {getStatusText()}
       </div>
+
+      {/* Inline fields */}
+      {data.pluginConfig && (
+        <InlineFields
+          config={data.config}
+          pluginConfig={data.pluginConfig}
+          onConfigChange={onInlineConfigChange}
+        />
+      )}
 
       <StatusIndicator />
     </div>

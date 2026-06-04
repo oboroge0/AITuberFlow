@@ -51,6 +51,7 @@
       "label": "Model",
       "description": "The GPT model to use",
       "default": "gpt-4o-mini",
+      "inline": true,
       "options": [
         { "label": "GPT-5.2", "value": "gpt-5.2" },
         { "label": "GPT-5.2 Codex", "value": "gpt-5.2-codex" },
@@ -136,7 +137,8 @@
       "description": "Controls randomness. Higher = more creative, Lower = more focused (0-2)",
       "default": 0.7,
       "min": 0,
-      "max": 2
+      "max": 2,
+      "inline": true
     },
     "maxTokens": {
       "type": "number",

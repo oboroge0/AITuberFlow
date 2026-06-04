@@ -51,6 +51,7 @@
       "label": "Model",
       "description": "Claude model to use",
       "default": "claude-sonnet-4-20250514",
+      "inline": true,
       "options": [
         { "label": "Claude Opus 4", "value": "claude-opus-4-20250514" },
         { "label": "Claude Sonnet 4", "value": "claude-sonnet-4-20250514" },
@@ -81,7 +82,8 @@
       "description": "Sampling temperature (0-1)",
       "default": 0.7,
       "min": 0,
-      "max": 1
+      "max": 1,
+      "inline": true
     }
   }
 }
