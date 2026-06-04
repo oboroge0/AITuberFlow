@@ -188,8 +188,9 @@ export default class CoeiroinkTTSNode extends BaseNode {
 
       return { audio: filepath, audioUrl, filename, duration };
     } catch (e) {
-      await context.log(`COEIROINK error: ${String(e)}`, "error");
-      return emptyResult;
+      const errorMsg = `COEIROINK error: ${String(e)}`;
+      await context.log(errorMsg, "error");
+      throw new Error(errorMsg);
     }
   }
 

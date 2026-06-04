@@ -68,8 +68,9 @@ export default class LipSyncNode extends BaseNode {
     try {
       [mouthValues, duration] = this.analyzeAudio(audio);
     } catch (e) {
-      await context.log(`Error analyzing audio: ${e}`, "error");
-      return { mouthValues: [], duration: 0.0, audio: originalPath ?? "" };
+      const errorMsg = `Error analyzing audio: ${e}`;
+      await context.log(errorMsg, "error");
+      throw new Error(errorMsg);
     }
 
     await context.log(

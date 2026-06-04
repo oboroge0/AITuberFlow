@@ -131,8 +131,9 @@ export default class OpenAITTSNode extends BaseNode {
       return { audio: audioPath, audioUrl, filename, duration };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      await context.log(`OpenAI TTS error: ${message}`, "error");
-      return { audio: "", audioUrl: "", filename: "", duration: 0 };
+      const errorMsg = `OpenAI TTS error: ${message}`;
+      await context.log(errorMsg, "error");
+      throw new Error(errorMsg);
     }
   }
 
