@@ -165,11 +165,13 @@ export default class SBV2TTSNode extends BaseNode {
       return { audio: filepath, audioUrl, filename, duration };
     } catch (e) {
       if (e instanceof Error && (e.name === "AbortError" || e.name === "TimeoutError")) {
-        await context.log("Style-Bert-VITS2 request timed out", "error");
-        return emptyResult;
+        const errorMsg = "Style-Bert-VITS2 request timed out";
+        await context.log(errorMsg, "error");
+        throw new Error(errorMsg);
       }
-      await context.log(`Style-Bert-VITS2 error: ${String(e)}`, "error");
-      return emptyResult;
+      const errorMsg = `Style-Bert-VITS2 error: ${String(e)}`;
+      await context.log(errorMsg, "error");
+      throw new Error(errorMsg);
     }
   }
 

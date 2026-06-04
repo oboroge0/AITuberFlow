@@ -210,6 +210,7 @@ export default class AivisSpeechTTSNode extends BaseNode {
           { service: "AivisSpeech", host: this.host },
         );
         await context.log(errorMsg, "error");
+        throw new Error(errorMsg);
       } else {
         const errorMsg = getErrorMessage(
           ErrorCode.TTS_SYNTHESIS_FAILED,
@@ -217,8 +218,8 @@ export default class AivisSpeechTTSNode extends BaseNode {
           { service: "AivisSpeech", error: String(e) },
         );
         await context.log(errorMsg, "error");
+        throw new Error(errorMsg);
       }
-      return { audio: "", audioUrl: "", filename: "", duration: 0 };
     }
   }
 

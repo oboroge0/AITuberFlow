@@ -357,11 +357,11 @@ app.post("/:id/start", async (c) => {
     character,
   };
 
-  await executor.startWorkflow(id, workflowData, startNodeId);
-
   if (wsBroadcaster) {
     wsBroadcaster.broadcast(id, "execution.started", {});
   }
+
+  await executor.startWorkflow(id, workflowData, startNodeId);
 
   return c.json({ status: "started", workflow_id: id });
 });
