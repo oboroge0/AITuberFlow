@@ -93,7 +93,8 @@
       "description": "Font size in pixels",
       "default": 24,
       "min": 12,
-      "max": 72
+      "max": 72,
+      "inline": true
     },
     "fontColor": {
       "type": "string",

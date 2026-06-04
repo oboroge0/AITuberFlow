@@ -74,6 +74,7 @@
       "label": "Voice",
       "description": "Voice to use for speech",
       "default": "alloy",
+      "inline": true,
       "options": [
         { "label": "Alloy", "value": "alloy" },
         { "label": "Ash", "value": "ash" },
@@ -93,7 +94,8 @@
       "description": "Speech speed (0.25-4.0)",
       "default": 1,
       "min": 0.25,
-      "max": 4
+      "max": 4,
+      "inline": true
     },
     "instructions": {
       "type": "textarea",

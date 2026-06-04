@@ -147,6 +147,7 @@ export interface ConfigField {
   dynamic?: boolean;
   dependsOn?: string;
   showWhen?: ShowWhenCondition;
+  inline?: boolean;
 }
 
 export type ShowWhenCondition =

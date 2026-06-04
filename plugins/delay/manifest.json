@@ -44,7 +44,8 @@
       "description": "Delay time in milliseconds",
       "default": 1000,
       "min": 0,
-      "max": 60000
+      "max": 60000,
+      "inline": true
     },
     "randomize": {
       "type": "boolean",

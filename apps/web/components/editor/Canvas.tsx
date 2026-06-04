@@ -107,7 +107,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
   } = useWorkflowStore();
 
   const { nodeDisplayMode, setNodeDisplayMode, searchVisible, searchQuery } = useUIPreferencesStore();
-  const { getPluginColor, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs } = usePluginStore();
+  const { getPluginColor, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs, getPluginConfig } = usePluginStore();
   const { setDragging, clearDragging } = useDragStateStore();
 
   // State for the "drop-on-canvas" compatible node suggestion panel
@@ -290,6 +290,8 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
           ? mapPluginCategoryToLegacy(plugin.category)
           : getNodeCategory(node.type);
 
+        const pluginConfig = getPluginConfig(node.type);
+
         return {
           id: node.id,
           type: reactFlowNodeType,
@@ -299,6 +301,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
             type: node.type,
             category,
             config: node.config,
+            pluginConfig,
             inputs: nodeInputs,
             outputs: nodeOutputs,
             isReachable,
@@ -312,7 +315,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         };
       });
     },
-    [workflowNodes, reachableNodes, hasStartNode, onRunWorkflow, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs, searchMatchIds, nodeStatuses]
+    [workflowNodes, reachableNodes, hasStartNode, onRunWorkflow, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs, getPluginConfig, searchMatchIds, nodeStatuses]
   );
 
   // Apply selection in a cheap second pass. Unchanged nodes keep their object
