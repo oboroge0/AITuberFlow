@@ -19,32 +19,32 @@
   </defs>
   <rect class="bg" x="0" y="0" width="1000" height="360" rx="16" />
   <text class="title" x="64" y="34">oboroge0/AITuberFlow release downloads</text>
-  <text class="sub" x="64" y="352">Generated 2026-06-06</text>
+  <text class="sub" x="64" y="352">Generated 2026-06-07</text>
   <line x1="64" y1="52.00" x2="976" y2="52.00" class="grid"/>
-  <text x="56" y="56.00" text-anchor="end" class="axis">437</text>
+  <text x="56" y="56.00" text-anchor="end" class="axis">443</text>
   <line x1="64" y1="94.00" x2="976" y2="94.00" class="grid"/>
-  <text x="56" y="98.00" text-anchor="end" class="axis">364</text>
+  <text x="56" y="98.00" text-anchor="end" class="axis">369</text>
   <line x1="64" y1="136.00" x2="976" y2="136.00" class="grid"/>
-  <text x="56" y="140.00" text-anchor="end" class="axis">291</text>
+  <text x="56" y="140.00" text-anchor="end" class="axis">295</text>
   <line x1="64" y1="178.00" x2="976" y2="178.00" class="grid"/>
-  <text x="56" y="182.00" text-anchor="end" class="axis">219</text>
+  <text x="56" y="182.00" text-anchor="end" class="axis">222</text>
   <line x1="64" y1="220.00" x2="976" y2="220.00" class="grid"/>
-  <text x="56" y="224.00" text-anchor="end" class="axis">146</text>
+  <text x="56" y="224.00" text-anchor="end" class="axis">148</text>
   <line x1="64" y1="262.00" x2="976" y2="262.00" class="grid"/>
-  <text x="56" y="266.00" text-anchor="end" class="axis">73</text>
+  <text x="56" y="266.00" text-anchor="end" class="axis">74</text>
   <line x1="64" y1="304.00" x2="976" y2="304.00" class="grid"/>
   <text x="56" y="308.00" text-anchor="end" class="axis">0</text>
-  <path d="M 64.00 304 L 64.00 80.83 L 134.15 80.83 L 204.31 79.68 L 274.46 79.68 L 344.62 79.68 L 414.77 76.80 L 484.92 58.34 L 555.08 58.34 L 625.23 57.77 L 695.38 56.04 L 765.54 56.04 L 835.69 56.04 L 905.85 53.15 L 976.00 52.00 L 976.00 304 Z" fill="url(#fill-total-trend-slate)"/>
-  <polyline class="line" points="64.00,80.83 134.15,80.83 204.31,79.68 274.46,79.68 344.62,79.68 414.77,76.80 484.92,58.34 555.08,58.34 625.23,57.77 695.38,56.04 765.54,56.04 835.69,56.04 905.85,53.15 976.00,52.00"/>
+  <path d="M 64.00 304 L 64.00 83.86 L 129.14 83.86 L 194.29 82.72 L 259.43 82.72 L 324.57 82.72 L 389.71 79.87 L 454.86 61.67 L 520.00 61.67 L 585.14 61.10 L 650.29 59.40 L 715.43 59.40 L 780.57 59.40 L 845.71 56.55 L 910.86 55.41 L 976.00 52.00 L 976.00 304 Z" fill="url(#fill-total-trend-slate)"/>
+  <polyline class="line" points="64.00,83.86 129.14,83.86 194.29,82.72 259.43,82.72 324.57,82.72 389.71,79.87 454.86,61.67 520.00,61.67 585.14,61.10 650.29,59.40 715.43,59.40 780.57,59.40 845.71,56.55 910.86,55.41 976.00,52.00"/>
   <circle class="dot" cx="976.00" cy="52.00" r="4.5"/>
   
   <text class="axis" x="64.00" y="336" text-anchor="start">2026-05-24</text>
-  <text class="axis" x="204.31" y="336" text-anchor="middle">2026-05-26</text>
-  <text class="axis" x="344.62" y="336" text-anchor="middle">2026-05-28</text>
-  <text class="axis" x="484.92" y="336" text-anchor="middle">2026-05-30</text>
-  <text class="axis" x="625.23" y="336" text-anchor="middle">2026-06-01</text>
-  <text class="axis" x="765.54" y="336" text-anchor="middle">2026-06-03</text>
-  <text class="axis" x="905.85" y="336" text-anchor="middle">2026-06-05</text>
-  <text class="axis" x="976.00" y="336" text-anchor="end">2026-06-06</text>
-  <text class="latest" x="976" y="34" text-anchor="end">Latest total: 437</text>
+  <text class="axis" x="194.29" y="336" text-anchor="middle">2026-05-26</text>
+  <text class="axis" x="324.57" y="336" text-anchor="middle">2026-05-28</text>
+  <text class="axis" x="454.86" y="336" text-anchor="middle">2026-05-30</text>
+  <text class="axis" x="585.14" y="336" text-anchor="middle">2026-06-01</text>
+  <text class="axis" x="715.43" y="336" text-anchor="middle">2026-06-03</text>
+  <text class="axis" x="845.71" y="336" text-anchor="middle">2026-06-05</text>
+  <text class="axis" x="976.00" y="336" text-anchor="end">2026-06-07</text>
+  <text class="latest" x="976" y="34" text-anchor="end">Latest total: 443</text>
 </svg>
