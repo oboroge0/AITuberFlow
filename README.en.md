@@ -214,6 +214,23 @@ npm run dev:web
 npm run dev:api
 ```
 
+### Run with Docker
+
+```bash
+# Start everything with Docker Compose
+docker compose up --build
+
+# Run in the background
+docker compose up -d
+
+# Stop
+docker compose down
+```
+
+In the Docker environment:
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:8001`
+
 ---
 
 ## Detailed Setup
