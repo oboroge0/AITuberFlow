@@ -78,8 +78,92 @@ function formatDuration(ms: number | undefined): string {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
-// Inline fields component for ComfyUI-style editing directly on nodes
-function InlineFields({
+// Inline password field with show/hide (needs own component for hooks)
+function InlinePasswordField({
+  value,
+  placeholder,
+  onChange,
+}: {
+  value: string;
+  placeholder?: string;
+  onChange: (val: string) => void;
+}) {
+  const [showPw, setShowPw] = useState(false);
+  const barBg = 'rgba(255,255,255,0.07)';
+  return (
+    <div className="nodrag nopan" style={{ background: barBg, borderRadius: '0 0 4px 4px' }}>
+      <div className="flex items-center px-2 h-[26px] gap-1">
+        <input
+          type={showPw ? 'text' : 'password'}
+          className="nodrag nopan bg-transparent text-[10px] text-white/75 outline-none flex-1 min-w-0"
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+        />
+        <button
+          className="nodrag nopan text-white/30 hover:text-white/60 flex-shrink-0"
+          onClick={(e) => { e.stopPropagation(); setShowPw(!showPw); }}
+        >
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            {showPw
+              ? <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><line x1="1" y1="1" x2="23" y2="23"/></>
+              : <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>
+            }
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Complex field types that cannot be edited inline
+const COMPLEX_FIELD_TYPES = new Set([
+  'prompt-builder', 'expression-list', 'animation-file',
+  'model-file', 'png-expression-map', 'input-list',
+]);
+
+// Get a summary string for a field value (used in collapsed view)
+function getValueSummary(field: ConfigField, value: unknown): string {
+  if (value === undefined || value === null || value === '') {
+    return '';
+  }
+
+  if (COMPLEX_FIELD_TYPES.has(field.type)) {
+    if (Array.isArray(value) && value.length > 0) return 'Configured';
+    if (typeof value === 'object' && value !== null && Object.keys(value).length > 0) return 'Configured';
+    if (typeof value === 'string' && value) return 'Configured';
+    return 'Not set';
+  }
+
+  switch (field.type) {
+    case 'select': {
+      if (!field.options) return String(value);
+      const options = field.options.map((opt) =>
+        typeof opt === 'string' ? { label: opt, value: opt } : opt
+      );
+      return options.find(o => String(o.value) === String(value))?.label || String(value);
+    }
+    case 'number':
+      return String(value);
+    case 'boolean':
+      return value ? 'ON' : 'OFF';
+    case 'password':
+      return value ? '••••••' : '';
+    case 'textarea': {
+      const s = String(value);
+      return s.length > 30 ? s.slice(0, 30) + '...' : s;
+    }
+    case 'string':
+    default: {
+      const str = String(value);
+      return str.length > 20 ? str.slice(0, 20) + '...' : str;
+    }
+  }
+}
+
+// Collapsible node config fields component (Phase 2)
+function NodeConfigFields({
   config,
   pluginConfig,
   onConfigChange,
@@ -90,127 +174,234 @@ function InlineFields({
   onConfigChange: (key: string, value: unknown) => void;
   accentColor: string;
 }) {
-  const inlineFields = Object.entries(pluginConfig).filter(
-    ([, field]) => field.inline && !field.dynamic
-  );
-  if (inlineFields.length === 0) return null;
+  // Build initial expanded state: inline fields start expanded, others collapsed
+  const allFields = Object.entries(pluginConfig);
+  const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    for (const [key, field] of allFields) {
+      initial[key] = !!field.inline;
+    }
+    return initial;
+  });
+
+  if (allFields.length === 0) return null;
 
   const barBg = 'rgba(255,255,255,0.07)';
 
-  return (
-    <div className="flex flex-col gap-[3px] mt-1">
-      {inlineFields.map(([key, field]) => {
-        if (!evaluateShowWhen(field.showWhen, config)) return null;
+  const toggleField = (key: string) => {
+    setExpandedFields(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
-        const value = config[key] ?? field.default;
+  // Toggle icon (small, subtle)
+  const ToggleIcon = ({ expanded }: { expanded: boolean }) => (
+    <svg
+      width="8" height="8" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="3"
+      className="flex-shrink-0"
+      style={{ color: 'rgba(255,255,255,0.3)' }}
+    >
+      {expanded
+        ? <polyline points="6 9 12 15 18 9"/>
+        : <polyline points="9 6 15 12 9 18"/>
+      }
+    </svg>
+  );
 
-        if (field.type === 'select' && field.options) {
-          const options = field.options.map((opt) =>
-            typeof opt === 'string' ? { label: opt, value: opt } : opt
-          );
-          const selectedLabel = options.find(o => String(o.value) === String(value))?.label || String(value);
-          return (
-            <div key={key} className="nodrag nopan relative" style={{ background: barBg, borderRadius: '4px' }}>
-              <div className="flex items-center justify-between px-2 h-[26px]">
-                <span className="text-[10px] text-white/45 select-none">{field.label}</span>
-                <span className="text-[10px] text-white/75 select-none">{selectedLabel}</span>
-              </div>
-              <select
-                className="nodrag nopan absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                value={String(value ?? '')}
-                onChange={(e) => onConfigChange(key, e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {options.map((opt) => (
-                  <option key={String(opt.value)} value={String(opt.value)}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+  // Render expanded control for a field
+  const renderExpandedControl = (key: string, field: ConfigField) => {
+    const value = config[key] ?? field.default;
+
+    // Complex types: show message
+    if (COMPLEX_FIELD_TYPES.has(field.type)) {
+      return (
+        <div
+          className="nodrag nopan px-2 py-1.5 text-[9px] text-white/40 italic"
+          style={{ background: 'rgba(0,0,0,0.15)', borderRadius: '0 0 4px 4px' }}
+        >
+          Open settings panel for this field
+        </div>
+      );
+    }
+
+    // Dynamic fields: show disabled display
+    if (field.dynamic) {
+      const summary = getValueSummary(field, value);
+      return (
+        <div
+          className="nodrag nopan px-2 py-1.5 text-[10px] text-white/50"
+          style={{ background: 'rgba(0,0,0,0.15)', borderRadius: '0 0 4px 4px' }}
+        >
+          {summary || 'Not set'}
+        </div>
+      );
+    }
+
+    switch (field.type) {
+      case 'select': {
+        if (!field.options) return null;
+        const options = field.options.map((opt) =>
+          typeof opt === 'string' ? { label: opt, value: opt } : opt
+        );
+        const selectedLabel = options.find(o => String(o.value) === String(value))?.label || String(value);
+        return (
+          <div className="nodrag nopan relative" style={{ background: barBg, borderRadius: '0 0 4px 4px' }}>
+            <div className="flex items-center justify-between px-2 h-[26px]">
+              <span className="text-[10px] text-white/75 select-none">{selectedLabel}</span>
             </div>
-          );
-        }
+            <select
+              className="nodrag nopan absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              value={String(value ?? '')}
+              onChange={(e) => onConfigChange(key, e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {options.map((opt) => (
+                <option key={String(opt.value)} value={String(opt.value)}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        );
+      }
 
-        if (field.type === 'number') {
-          const numValue = typeof value === 'number' ? value : Number(value) || 0;
-          const min = field.min ?? 0;
-          const max = field.max ?? 100;
-          const step = max - min <= 2 ? 0.01 : max - min <= 10 ? 0.1 : 1;
-          const pct = Math.max(0, Math.min(100, ((numValue - min) / (max - min)) * 100));
-          return (
-            <div key={key} className="nodrag nopan relative" style={{ background: barBg, borderRadius: '4px', overflow: 'hidden' }}>
+      case 'number': {
+        const numValue = typeof value === 'number' ? value : Number(value) || 0;
+        const min = field.min ?? 0;
+        const max = field.max ?? 100;
+        const step = max - min <= 2 ? 0.01 : max - min <= 10 ? 0.1 : 1;
+        const pct = Math.max(0, Math.min(100, ((numValue - min) / (max - min)) * 100));
+        return (
+          <div className="nodrag nopan relative" style={{ background: barBg, borderRadius: '0 0 4px 4px', overflow: 'hidden' }}>
+            <div
+              className="absolute left-0 top-0 bottom-0 pointer-events-none"
+              style={{ width: `${pct}%`, background: `${accentColor}50`, transition: 'width 0.1s' }}
+            />
+            <div className="relative flex items-center justify-end px-2 h-[26px]">
+              <span className="text-[10px] text-white/75 tabular-nums select-none">
+                {numValue % 1 === 0 ? numValue : numValue.toFixed(2)}
+              </span>
+            </div>
+            <input
+              type="range"
+              className="nodrag nopan absolute inset-0 w-full h-full opacity-0 cursor-ew-resize"
+              min={min}
+              max={max}
+              step={step}
+              value={numValue}
+              onChange={(e) => onConfigChange(key, parseFloat(e.target.value))}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        );
+      }
+
+      case 'boolean': {
+        const boolValue = Boolean(value);
+        return (
+          <button
+            className="nodrag nopan w-full relative text-left"
+            style={{ background: barBg, borderRadius: '0 0 4px 4px', overflow: 'hidden' }}
+            onClick={(e) => { e.stopPropagation(); onConfigChange(key, !boolValue); }}
+          >
+            {boolValue && (
+              <div className="absolute left-0 top-0 bottom-0 w-full pointer-events-none" style={{ background: `${accentColor}20` }} />
+            )}
+            <div className="relative flex items-center justify-end px-2 h-[26px]">
               <div
-                className="absolute left-0 top-0 bottom-0 pointer-events-none"
-                style={{ width: `${pct}%`, background: `${accentColor}50`, transition: 'width 0.1s' }}
-              />
-              <div className="relative flex items-center justify-between px-2 h-[26px]">
-                <span className="text-[10px] text-white/45 select-none">{field.label}</span>
-                <span className="text-[10px] text-white/75 tabular-nums select-none">
-                  {numValue % 1 === 0 ? numValue : numValue.toFixed(2)}
-                </span>
-              </div>
-              <input
-                type="range"
-                className="nodrag nopan absolute inset-0 w-full h-full opacity-0 cursor-ew-resize"
-                min={min}
-                max={max}
-                step={step}
-                value={numValue}
-                onChange={(e) => onConfigChange(key, parseFloat(e.target.value))}
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
-          );
-        }
-
-        if (field.type === 'boolean') {
-          const boolValue = Boolean(value);
-          return (
-            <div key={key}>
-              <button
-                className="nodrag nopan w-full relative text-left"
-                style={{ background: barBg, borderRadius: '4px', overflow: 'hidden' }}
-                onClick={(e) => { e.stopPropagation(); onConfigChange(key, !boolValue); }}
+                className="relative flex-shrink-0 rounded-full transition-colors"
+                style={{ width: '20px', height: '11px', background: boolValue ? accentColor : 'rgba(255,255,255,0.2)' }}
               >
-                {boolValue && (
-                  <div className="absolute left-0 top-0 bottom-0 w-full pointer-events-none" style={{ background: `${accentColor}20` }} />
-                )}
-                <div className="relative flex items-center justify-between px-2 h-[26px]">
-                  <span className="text-[10px] text-white/45 select-none">{field.label}</span>
-                  <div
-                    className="relative flex-shrink-0 rounded-full transition-colors"
-                    style={{ width: '20px', height: '11px', background: boolValue ? accentColor : 'rgba(255,255,255,0.2)' }}
-                  >
-                    <span
-                      className="absolute top-[1.5px] rounded-full bg-white transition-transform"
-                      style={{ width: '8px', height: '8px', transform: boolValue ? 'translateX(10.5px)' : 'translateX(1.5px)' }}
-                    />
-                  </div>
-                </div>
-              </button>
-            </div>
-          );
-        }
-
-        if (field.type === 'string') {
-          return (
-            <div key={key} className="nodrag nopan relative" style={{ background: barBg, borderRadius: '4px' }}>
-              <div className="flex items-center px-2 h-[26px] gap-2">
-                <span className="text-[10px] text-white/45 flex-shrink-0 select-none">{field.label}</span>
-                <input
-                  type="text"
-                  className="nodrag nopan bg-transparent text-[10px] text-white/75 outline-none text-right flex-1 min-w-0"
-                  value={String(value ?? '')}
-                  placeholder={field.placeholder}
-                  onChange={(e) => onConfigChange(key, e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
+                <span
+                  className="absolute top-[1.5px] rounded-full bg-white transition-transform"
+                  style={{ width: '8px', height: '8px', transform: boolValue ? 'translateX(10.5px)' : 'translateX(1.5px)' }}
                 />
               </div>
             </div>
-          );
-        }
+          </button>
+        );
+      }
 
+      case 'string':
+        return (
+          <div className="nodrag nopan" style={{ background: barBg, borderRadius: '0 0 4px 4px' }}>
+            <div className="flex items-center px-2 h-[26px]">
+              <input
+                type="text"
+                className="nodrag nopan bg-transparent text-[10px] text-white/75 outline-none w-full min-w-0"
+                value={String(value ?? '')}
+                placeholder={field.placeholder}
+                onChange={(e) => onConfigChange(key, e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          </div>
+        );
+
+      case 'password':
+        return (
+          <InlinePasswordField
+            value={String(value ?? '')}
+            placeholder={field.placeholder}
+            onChange={(val) => onConfigChange(key, val)}
+          />
+        );
+
+      case 'textarea':
+        return (
+          <div className="nodrag nopan" style={{ borderRadius: '0 0 4px 4px', overflow: 'hidden' }}>
+            <textarea
+              className="nodrag nopan w-full text-[10px] text-white/75 outline-none resize-none"
+              style={{
+                background: 'rgba(0,0,0,0.2)',
+                padding: '4px 8px',
+                minHeight: '52px',
+                maxHeight: '80px',
+                border: 'none',
+                borderRadius: '0 0 4px 4px',
+              }}
+              rows={3}
+              value={String(value ?? '')}
+              placeholder={field.placeholder}
+              onChange={(e) => onConfigChange(key, e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        );
+
+      default:
         return null;
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-[2px] mt-1">
+      {allFields.map(([key, field]) => {
+        if (!evaluateShowWhen(field.showWhen, config)) return null;
+
+        const isExpanded = !!expandedFields[key];
+        const value = config[key] ?? field.default;
+        const summary = getValueSummary(field, value);
+
+        return (
+          <div key={key} style={{ borderRadius: '4px', overflow: 'hidden' }}>
+            {/* Header bar - always visible */}
+            <button
+              className="nodrag nopan w-full text-left flex items-center gap-1.5 px-2 h-[26px]"
+              style={{ background: barBg, borderRadius: isExpanded ? '4px 4px 0 0' : '4px' }}
+              onClick={(e) => { e.stopPropagation(); toggleField(key); }}
+            >
+              <ToggleIcon expanded={isExpanded} />
+              <span className="text-[10px] text-white/45 select-none flex-shrink-0">{field.label}</span>
+              {!isExpanded && (
+                <span className="text-[10px] text-white/60 select-none ml-auto truncate max-w-[60%] text-right">
+                  {summary}
+                </span>
+              )}
+            </button>
+            {/* Expanded control */}
+            {isExpanded && renderExpandedControl(key, field)}
+          </div>
+        );
       })}
     </div>
   );
@@ -416,26 +607,29 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       boxShadow = `0 0 20px ${statusVisual.glow}, 0 4px 20px rgba(0,0,0,0.3)`;
     }
 
+    const NODE_WIDTH = 240;
+
     const baseStyle: React.CSSProperties = {
       background: config.bgColor,
       border: `2px solid ${borderColor}`,
       borderRadius: '12px',
       boxShadow,
       transition: 'box-shadow 0.3s, border-color 0.3s, opacity 0.2s',
+      width: `${NODE_WIDTH}px`,
       ...searchStyle,
     };
 
     if (collapsed) {
-      return { ...baseStyle, padding: '8px 12px', minWidth: '120px' };
+      return { ...baseStyle, padding: '8px 12px' };
     }
 
     switch (nodeDisplayMode) {
       case 'simple':
-        return { ...baseStyle, padding: '8px 12px', minWidth: '120px' };
+        return { ...baseStyle, padding: '8px 12px' };
       case 'detailed':
-        return { ...baseStyle, padding: '0', minWidth: '220px' };
+        return { ...baseStyle, padding: '0' };
       default: // standard
-        return { ...baseStyle, padding: '12px 16px', minWidth: '180px' };
+        return { ...baseStyle, padding: '12px 16px' };
     }
   };
 
@@ -511,7 +705,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           {showWarningTooltip && status?.data?.validationIssue && (
             <div
               className="absolute right-0 top-full mt-1 z-50 pointer-events-none"
-              style={{ minWidth: '200px', maxWidth: '300px' }}
+              style={{ overflow: 'hidden' }}
             >
               <div className="bg-amber-900/95 backdrop-blur-sm border border-amber-500/50 rounded-lg p-2 shadow-xl">
                 <div className="text-[10px] font-semibold text-amber-200 mb-1">Warning</div>
@@ -547,7 +741,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           {showErrorTooltip && (status?.data?.error || status?.data?.validationIssue) && (
             <div
               className="absolute right-0 top-full mt-1 z-50 pointer-events-none"
-              style={{ minWidth: '200px', maxWidth: '300px' }}
+              style={{ overflow: 'hidden' }}
             >
               <div className="bg-red-900/95 backdrop-blur-sm border border-red-500/50 rounded-lg p-2 shadow-xl">
                 <div className="text-[10px] font-semibold text-red-200 mb-1">Error</div>
@@ -569,7 +763,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     return showTooltip ? (
       <div
         className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-50 pointer-events-none"
-        style={{ minWidth: '180px', maxWidth: '260px' }}
+        style={{ overflow: 'hidden' }}
       >
         <div
           className="bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-lg p-3 shadow-xl"
@@ -594,7 +788,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     return (
       <div
         className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[60] pointer-events-none"
-        style={{ minWidth: '160px', maxWidth: '240px' }}
+        style={{ overflow: 'hidden' }}
       >
         <div className="bg-gray-950/98 backdrop-blur-sm border rounded-lg p-2 shadow-xl" style={{ borderColor: `${typeColor}60` }}>
           <div className="flex items-center gap-1.5 mb-1">
@@ -1078,10 +1272,10 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           {getStatusText()}
         </div>
 
-        {/* Inline fields */}
+        {/* Config fields */}
         {data.pluginConfig && (
           <div className="px-3 pb-2">
-            <InlineFields
+            <NodeConfigFields
               config={data.config}
               pluginConfig={data.pluginConfig}
               onConfigChange={onInlineConfigChange}
@@ -1193,12 +1387,13 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         {getStatusText()}
       </div>
 
-      {/* Inline fields */}
+      {/* Config fields */}
       {data.pluginConfig && (
-        <InlineFields
+        <NodeConfigFields
           config={data.config}
           pluginConfig={data.pluginConfig}
           onConfigChange={onInlineConfigChange}
+          accentColor={config.color}
         />
       )}
 

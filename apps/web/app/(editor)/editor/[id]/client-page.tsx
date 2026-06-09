@@ -5,8 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import Canvas from '@/components/editor/Canvas';
 import Sidebar from '@/components/editor/Sidebar';
-import NodeSettings from '@/components/panels/NodeSettings';
-
 import ExpressionPresets from '@/components/panels/ExpressionPresets';
 import MotionLibrary, { Motion } from '@/components/panels/MotionLibrary';
 import { AvatarView, RendererType } from '@/components/avatar';
@@ -792,9 +790,8 @@ export default function EditorPage() {
           background: 'rgba(17, 24, 39, 0.95)',
           borderRadius: '16px',
           border: '1px solid rgba(255,255,255,0.1)',
-          height: selectedNodeId ? '280px' : 'calc(100% - 100px)',
+          height: 'calc(100% - 100px)',
           minHeight: '280px',
-          transition: 'height 0.2s ease',
         }}
       >
         {/* Header */}
@@ -943,20 +940,7 @@ export default function EditorPage() {
           <ZoomControls />
         </div>
 
-        {/* Node Settings - Inside ReactFlowProvider, shown when a node is selected */}
-        {selectedNodeId && (
-          <div
-            className="absolute right-5 bottom-5 z-10 w-[280px] flex-1 overflow-hidden flex flex-col"
-            style={{
-              top: '360px',
-              background: 'rgba(17, 24, 39, 0.95)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255,255,255,0.1)',
-            }}
-          >
-            <NodeSettings />
-          </div>
-        )}
+        {/* Node settings are now rendered inline within each node (Phase 2) */}
       </ReactFlowProvider>
     </div>
   );
