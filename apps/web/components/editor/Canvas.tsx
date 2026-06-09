@@ -32,6 +32,7 @@ import { type PortType, type PortDefinition, PORT_TYPE_COLORS, arePortTypesCompa
 import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 import { type PromptSection } from '@/components/panels/NodeSettings';
 import { useDragStateStore } from '@/stores/dragStateStore';
+import { isEditableTarget } from '@/lib/domUtils';
 
 interface CanvasProps {
   onNodeSelect?: (nodeId: string | null) => void;
@@ -129,11 +130,8 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         return;
       }
 
-      // Ignore other shortcuts if typing in an input field
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement
-      ) {
+      // Ignore other shortcuts if typing in an input field (incl. select/contentEditable)
+      if (isEditableTarget(event.target)) {
         return;
       }
 
