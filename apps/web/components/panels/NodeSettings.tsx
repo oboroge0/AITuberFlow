@@ -7,6 +7,7 @@ import { usePluginStore } from "@/stores/pluginStore";
 import api, { VoicevoxSpeaker, AnimationInfo, ModelInfo } from "@/lib/api";
 import { manifestConfigToNodeFields, evaluateShowWhen, normalizeOptions } from "@/lib/configUtils";
 import { useSettingsStore } from "@/stores/settingsStore";
+import { GLOBAL_SETTINGS_MAP } from "@/lib/globalSettingsMap";
 import { LLM_MODEL_OPTIONS } from "@/lib/constants";
 import type { NodeField } from "@/lib/types";
 import { toast } from "@/stores/toastStore";
@@ -610,20 +611,9 @@ function PngExpressionMapField({
   );
 }
 
-// Global settings field mapping (mirrors server-side GLOBAL_SETTINGS_MAP)
-const GLOBAL_SETTINGS_MAP: Record<string, Record<string, string>> = {
-  "openai-llm": { apiKey: "openai.apiKey", model: "openai.model" },
-  "anthropic-llm": { apiKey: "anthropic.apiKey", model: "anthropic.model" },
-  "google-llm": { apiKey: "google.apiKey", model: "google.model" },
-  "ollama-llm": { host: "ollama.host", model: "ollama.model" },
-  "mistral-llm": { apiKey: "mistral.apiKey", model: "mistral.model" },
-  "groq-llm": { apiKey: "groq.apiKey", model: "groq.model" },
-  "voicevox-tts": { host: "voicevox.host" },
-  "coeiroink-tts": { host: "coeiroink.host" },
-  "sbv2-tts": { host: "sbv2.host" },
-  "aivis-tts": { host: "aivis.host" },
-  "openai-tts": { apiKey: "openai.apiKey" },
-};
+// Global settings field mapping moved to the shared module so the inline
+// node fields (CustomNode) and this panel stay in sync.
+// (mirrors server-side GLOBAL_SETTINGS_MAP)
 
 // LLM_MODEL_OPTIONS imported from @/lib/constants
 
