@@ -10,7 +10,34 @@ permissions:
   contents: write
 
 jobs:
+  preflight:
+    name: Preflight Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check versions match tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: node scripts/check-versions.mjs --tag "$GITHUB_REF_NAME"
+
+      - name: Check tag commit is on main
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          git fetch origin main
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "::error::タグのコミットが main 上にありません。main からタグを作成してください"
+            exit 1
+          fi
+
+      - name: Skip notice
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        run: echo "手動実行のためタグ検証をスキップしました"
+
   build-desktop:
+    needs: preflight
     strategy:
       fail-fast: false
       matrix:
