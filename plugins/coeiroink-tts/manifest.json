@@ -32,6 +32,11 @@
         "description": "Path to generated audio file"
       },
       {
+        "id": "audioUrl",
+        "type": "string",
+        "description": "URL to the generated audio file (served by the backend)"
+      },
+      {
         "id": "filename",
         "type": "string",
         "description": "Generated audio filename"
