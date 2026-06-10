@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import { WorkflowNode, Connection, ExecutionLog, NodeStatus, CharacterConfig } from '@/lib/types';
+import { WorkflowNode, Connection, ExecutionLog, NodeStatus, CharacterConfig, ActivityCycle, CycleStep } from '@/lib/types';
 
 // History state for undo/redo
 interface HistoryState {
@@ -31,6 +31,7 @@ interface WorkflowState {
   // Execution state
   logs: ExecutionLog[];
   nodeStatuses: Record<string, NodeStatus>;
+  cycles: ActivityCycle[];
 
   // Derived state (reachable nodes from BFS)
   reachableNodeIds: Set<string>;
@@ -68,6 +69,7 @@ interface WorkflowState {
   setExecuting: (executing: boolean) => void;
   addLog: (log: Omit<ExecutionLog, 'id' | 'timestamp'>) => void;
   clearLogs: () => void;
+  clearCycles: () => void;
   setNodeStatus: (nodeId: string, status: NodeStatus['status'], data?: any) => void;
 
   // Bulk actions
@@ -92,6 +94,72 @@ const defaultCharacter: CharacterConfig = {
   name: 'AI Assistant',
   personality: 'Friendly and helpful virtual streamer',
 };
+
+const MAX_CYCLES = 100;
+
+// Fold a node.status event into the activity cycle list. Statuses without a
+// cycleId (validation highlights, listening, idle resets) are ignored here.
+function aggregateCycle(
+  cycles: ActivityCycle[],
+  nodeId: string,
+  status: NodeStatus['status'],
+  data?: any,
+): ActivityCycle[] {
+  const cycleId: string | undefined = data?.cycleId;
+  if (!cycleId || (status !== 'running' && status !== 'completed' && status !== 'error')) {
+    return cycles;
+  }
+
+  let next = [...cycles];
+  let idx = next.findIndex((c) => c.id === cycleId);
+  if (idx === -1) {
+    next.push({
+      id: cycleId,
+      startedAt: new Date().toISOString(),
+      trigger: data?.cycleTrigger,
+      steps: [],
+      status: 'running',
+      totalDuration: 0,
+    });
+    if (next.length > MAX_CYCLES) next = next.slice(-MAX_CYCLES);
+    idx = next.findIndex((c) => c.id === cycleId);
+  }
+
+  const cycle = { ...next[idx] };
+  if (data?.cycleTrigger && !cycle.trigger) cycle.trigger = data.cycleTrigger;
+
+  const steps = [...cycle.steps];
+  const runningIdx = steps.findIndex((s) => s.nodeId === nodeId && s.status === 'running');
+  if (status === 'running') {
+    steps.push({ nodeId, status: 'running', startedAt: new Date().toISOString() });
+  } else {
+    const finished: CycleStep = {
+      nodeId,
+      status,
+      startedAt: runningIdx !== -1 ? steps[runningIdx].startedAt : new Date().toISOString(),
+      duration: data?.duration,
+      resultSummary: data?.resultSummary,
+      textPreview: data?.textPreview,
+      error: data?.error,
+    };
+    if (runningIdx !== -1) {
+      steps[runningIdx] = finished;
+    } else {
+      steps.push(finished);
+    }
+  }
+
+  cycle.steps = steps;
+  cycle.status = steps.some((s) => s.status === 'error')
+    ? 'error'
+    : steps.some((s) => s.status === 'running')
+      ? 'running'
+      : 'completed';
+  cycle.totalDuration = steps.reduce((sum, s) => sum + (s.duration ?? 0), 0);
+
+  next[idx] = cycle;
+  return next;
+}
 
 // Helper to save current state to history
 const saveToHistory = (state: WorkflowState): Partial<WorkflowState> => ({
@@ -176,6 +244,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   clipboard: null,
   logs: [],
   nodeStatuses: {},
+  cycles: [],
 
   // Basic setters
   setWorkflowId: (id) => set({ workflowId: id }),
@@ -397,12 +466,15 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
 
   clearLogs: () => set({ logs: [] }),
 
+  clearCycles: () => set({ cycles: [] }),
+
   setNodeStatus: (nodeId, status, data) => {
     set((state) => ({
       nodeStatuses: {
         ...state.nodeStatuses,
         [nodeId]: { nodeId, status, data },
       },
+      cycles: aggregateCycle(state.cycles, nodeId, status, data),
     }));
   },
 
@@ -437,6 +509,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       clipboard: null,
       logs: [],
       nodeStatuses: {},
+      cycles: [],
       reachableNodeIds: new Set<string>(),
       hasStartNode: false,
     });

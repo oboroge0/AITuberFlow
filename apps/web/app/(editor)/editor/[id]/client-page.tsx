@@ -6,6 +6,7 @@ import { ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import Canvas from '@/components/editor/Canvas';
 import Sidebar from '@/components/editor/Sidebar';
 import NodeSettings from '@/components/panels/NodeSettings';
+import ActivityDrawer from '@/components/panels/ActivityDrawer';
 import ExpressionPresets from '@/components/panels/ExpressionPresets';
 import MotionLibrary, { Motion } from '@/components/panels/MotionLibrary';
 import { AvatarView, RendererType } from '@/components/avatar';
@@ -950,6 +951,9 @@ export default function EditorPage() {
         >
           <ZoomControls />
         </div>
+
+        {/* Activity drawer (execution cycles + raw log) */}
+        <ActivityDrawer />
 
         {/* Node settings panel — opened on demand from a node's gear button or
             from complex/dynamic field rows that cannot be edited inline */}
