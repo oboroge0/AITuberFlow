@@ -8,12 +8,12 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { initDb } from "./db/database";
 import { WorkflowExecutor } from "./engine/executor";
-import { shutdownGracefully } from "./shutdown";
 import { integrationRoutes } from "./routes/integrations";
 import { pluginRoutes } from "./routes/plugins";
 import { settingsRoutes } from "./routes/settings";
 import { templateRoutes } from "./routes/templates";
 import { setExecutor, setWSBroadcaster, workflowRoutes } from "./routes/workflows";
+import { shutdownGracefully } from "./shutdown";
 import { createWebSocketHandler, setExecutorForWS, wsBroadcaster } from "./websocket/handler";
 
 const app = new Hono();
