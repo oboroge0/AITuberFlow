@@ -63,3 +63,12 @@ SPEC.md
 
 # Codex local config (contains local secrets — never commit)
 .codex/
+
+# Serena local config (tool-managed, rewritten on each run)
+.serena/
+
+# AI agent guide (local copy of CLAUDE.md)
+AGENTS.md
+
+# Playwright MCP debug artifacts
+.playwright-mcp/
