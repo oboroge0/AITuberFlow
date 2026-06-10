@@ -47,7 +47,7 @@ export default class TwitchChatNode extends InputNode {
     }
 
     try {
-      await this.connectToTwitch(context);
+      this.connectToTwitch(context);
     } catch (e) {
       await context.log(
         `Failed to connect to Twitch: ${String(e)}`,
@@ -56,7 +56,7 @@ export default class TwitchChatNode extends InputNode {
     }
   }
 
-  private async connectToTwitch(context: NodeContext): Promise<void> {
+  private connectToTwitch(context: NodeContext): void {
     const options: Record<string, any> = {
       channels: [this.channel!],
       connection: {
@@ -99,7 +99,19 @@ export default class TwitchChatNode extends InputNode {
       context.log(`Disconnected from Twitch: ${reason}`, "warning");
     });
 
-    await this.tmiClient.connect();
+    // connect() never settles while tmi.js is in its reconnect-retry loop
+    // (e.g. invalid/expired token), so awaiting it here would block workflow
+    // startup — and the stop that follows (issue #239). Run it as a tracked
+    // background task instead; success/failure surfaces via the handlers above.
+    const client = this.tmiClient;
+    context.createTask(async () => {
+      try {
+        await client.connect();
+      } catch (e) {
+        this.connected = false;
+        await context.log(`Failed to connect to Twitch: ${String(e)}`, "error");
+      }
+    });
   }
 
   private async handleMessage(
@@ -174,13 +186,26 @@ export default class TwitchChatNode extends InputNode {
 
   async teardown(): Promise<void> {
     this.connected = false;
-    if (this.tmiClient) {
-      try {
-        await this.tmiClient.disconnect();
-      } catch {
-        // Ignore disconnect errors
-      }
-      this.tmiClient = null;
+    const client = this.tmiClient;
+    this.tmiClient = null;
+    if (!client) return;
+
+    // Kill the automatic reconnect loop first — a client stuck retrying
+    // never settles disconnect() and would hang workflow shutdown.
+    try {
+      // biome-ignore lint/suspicious/noExplicitAny: opts is internal to tmi.js — best-effort flag flip
+      (client as any).opts.connection.reconnect = false;
+    } catch {
+      // opts shape changed — the disconnect timeout below still bounds us
+    }
+
+    try {
+      await Promise.race([
+        client.disconnect().catch(() => {}),
+        new Promise<void>((resolve) => setTimeout(resolve, 2000)),
+      ]);
+    } catch {
+      // Ignore disconnect errors
     }
   }
 }
