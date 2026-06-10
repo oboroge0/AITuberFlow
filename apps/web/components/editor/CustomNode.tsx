@@ -11,6 +11,8 @@ import { type PortDefinition, PORT_TYPE_COLORS, PORT_TYPE_LABELS, arePortTypesCo
 import { useDragStateStore } from '@/stores/dragStateStore';
 import { renderIcon } from '@/lib/icons';
 import { evaluateShowWhen } from '@/lib/configUtils';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { GLOBAL_SETTINGS_MAP } from '@/lib/globalSettingsMap';
 import type { ConfigField } from '@/lib/types';
 
 export interface CustomNodeData extends Record<string, unknown> {
@@ -514,12 +516,14 @@ function ConfigFieldsSkeleton() {
 
 // Collapsible node config fields component (Phase 2)
 function NodeConfigFields({
+  nodeType,
   config,
   pluginConfig,
   onConfigChange,
   accentColor,
   onOpenSettings,
 }: {
+  nodeType: string;
   config: Record<string, unknown>;
   pluginConfig: Record<string, ConfigField>;
   onConfigChange: (key: string, value: unknown) => void;
@@ -541,6 +545,22 @@ function NodeConfigFields({
     label: string;
     anchorRect: { top: number; left: number; right: number };
   } | null>(null);
+
+  // Global settings fallback: the engine fills empty fields (e.g. apiKey)
+  // from global settings — surface that so an empty field doesn't look broken
+  const { settings: globalSettings, loaded: globalSettingsLoaded, fetchSettings } = useSettingsStore();
+  useEffect(() => {
+    if (!globalSettingsLoaded) fetchSettings();
+  }, [globalSettingsLoaded, fetchSettings]);
+
+  const globalMapping = GLOBAL_SETTINGS_MAP[nodeType];
+  const globalKeyInUse = (key: string): string | undefined => {
+    const settingsKey = globalMapping?.[key];
+    if (!settingsKey) return undefined;
+    const local = config[key];
+    const isEmpty = local === undefined || local === null || local === '';
+    return isEmpty && globalSettings[settingsKey] ? settingsKey : undefined;
+  };
 
   if (allFields.length === 0) return null;
 
@@ -753,7 +773,14 @@ function NodeConfigFields({
 
         const isExpanded = !!expandedFields[key];
         const value = config[key] ?? field.default;
-        const summary = getValueSummary(field, value);
+        const usedGlobalKey = globalKeyInUse(key);
+        // When the engine falls back to a global setting, summarize THAT value
+        // (the plugin default shown otherwise would be wrong). Never reveal secrets.
+        const summary = usedGlobalKey
+          ? field.type === 'password'
+            ? ''
+            : getValueSummary(field, globalSettings[usedGlobalKey])
+          : getValueSummary(field, value);
 
         return (
           <div key={key} style={{ borderRadius: '4px', overflow: 'hidden' }}>
@@ -766,8 +793,17 @@ function NodeConfigFields({
             >
               <ToggleIcon expanded={isExpanded} />
               <span className="text-[10px] text-white/55 select-none flex-shrink-0">{field.label}</span>
-              {!isExpanded && (
-                <span className="text-[10px] text-white/60 select-none ml-auto truncate max-w-[60%] text-right">
+              {usedGlobalKey && (
+                <span
+                  className="text-[9px] px-1 py-px rounded select-none flex-shrink-0 ml-auto"
+                  style={{ background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)' }}
+                  title="ノード側が未設定のため、グローバル設定の値を使用しています（入力すると上書き）"
+                >
+                  グローバル
+                </span>
+              )}
+              {!isExpanded && summary && (
+                <span className={`text-[10px] text-white/60 select-none truncate max-w-[60%] text-right ${usedGlobalKey ? '' : 'ml-auto'}`}>
                   {summary}
                 </span>
               )}
@@ -1690,6 +1726,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         {data.pluginConfig && (
           <div className="px-3 pb-2">
             <NodeConfigFields
+              nodeType={data.type}
               config={data.config}
               pluginConfig={data.pluginConfig}
               onConfigChange={onInlineConfigChange}
@@ -1811,6 +1848,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       {/* Config fields */}
       {data.pluginConfig && (
         <NodeConfigFields
+          nodeType={data.type}
           config={data.config}
           pluginConfig={data.pluginConfig}
           onConfigChange={onInlineConfigChange}
