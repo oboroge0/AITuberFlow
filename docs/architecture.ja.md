@@ -32,6 +32,33 @@ AITuberFlowは、AITuber配信セットアップを作成するための**ビジ
 - **バックエンド** (Bun + Hono): ワークフロー実行エンジンとAPIサーバー
 - **プラグイン**: モジュラーなノード実装
 
+```mermaid
+graph TB
+    subgraph Browser["ユーザーのブラウザ"]
+        subgraph Frontend["Next.js フロントエンド"]
+            Editor["エディタキャンバス"]
+            Overlay["OBSオーバーレイ"]
+            Preview["アバタープレビュー"]
+        end
+    end
+
+    subgraph Server["Bun + Hono バックエンド"]
+        Routers["APIルート"]
+        Executor["ワークフローエグゼキューター"]
+        EventBus["イベントバス"]
+        DB[(SQLite)]
+        Plugins["プラグイン (32+)"]
+    end
+
+    Browser <-->|HTTP / WebSocket| Server
+    Routers --> Executor
+    Executor --> EventBus
+    Executor --> Plugins
+    Routers --> DB
+```
+
+**ASCIIダイアグラム（Mermaid非対応環境向け）:**
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         ユーザーのブラウザ                        │
@@ -413,6 +440,25 @@ plugins/openai-llm/
 
 ### プラグインライフサイクル
 
+```mermaid
+stateDiagram-v2
+    [*] --> Setup: ワークフロー開始
+    Setup --> ExecutionLoop: setup() を設定付きで呼び出し
+
+    state ExecutionLoop {
+        [*] --> WaitingForInput
+        WaitingForInput --> Execute: 入力受信
+        WaitingForInput --> OnEvent: イベント受信
+        Execute --> WaitingForInput: 出力を返す
+        OnEvent --> WaitingForInput: 出力を返す（任意）
+    }
+
+    ExecutionLoop --> Teardown: ワークフロー停止
+    Teardown --> [*]: teardown() でクリーンアップ
+```
+
+**ASCIIダイアグラム（Mermaid非対応環境向け）:**
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                      プラグインライフサイクル                       │
@@ -487,6 +533,41 @@ class MyNode extends BaseNode {
 ## データフロー
 
 ### ワークフロー実行フロー
+
+```mermaid
+sequenceDiagram
+    participant User as ユーザー
+    participant Frontend as フロントエンド
+    participant API as バックエンドAPI
+    participant Executor as エグゼキューター
+    participant Nodes as プラグインノード
+
+    User->>Frontend: ノードの「再生」をクリック
+    Frontend->>API: POST /api/workflows/{id}/execute
+    API->>Executor: start_workflow(id, node_id)
+
+    Executor->>Executor: DBからワークフローを読み込み
+    Executor->>Executor: 実行グラフを構築
+
+    loop 各ノード
+        Executor->>Nodes: setup(config, context)
+    end
+
+    loop 実行ループ
+        Executor->>Nodes: execute(inputs, context)
+        Nodes-->>Executor: outputs
+        Executor-->>Frontend: WebSocket: ログ・イベント
+    end
+
+    User->>Frontend: 「停止」をクリック
+    Frontend->>API: POST /api/workflows/{id}/stop
+
+    loop 各ノード
+        Executor->>Nodes: teardown()
+    end
+```
+
+**ASCIIダイアグラム（Mermaid非対応環境向け）:**
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
