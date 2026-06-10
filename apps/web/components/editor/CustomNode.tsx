@@ -1095,7 +1095,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           </div>
 
           {/* Warning tooltip */}
-          {showWarningTooltip && status?.data?.validationIssue && (
+          {showWarningTooltip && Boolean(status?.data?.validationIssue) && (
             <div
               className="absolute right-0 top-full mt-1 z-50 pointer-events-none"
               style={{ overflow: 'hidden' }}
@@ -1103,7 +1103,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               <div className="bg-amber-900/95 backdrop-blur-sm border border-amber-500/50 rounded-lg p-2 shadow-xl">
                 <div className="text-[10px] font-semibold text-amber-200 mb-1">Warning</div>
                 <div className="text-[11px] text-white/90 leading-relaxed break-words">
-                  {status.data.validationIssue}
+                  {String(status?.data?.validationIssue ?? '')}
                 </div>
               </div>
             </div>
@@ -1131,7 +1131,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           </div>
 
           {/* Error tooltip */}
-          {showErrorTooltip && (status?.data?.error || status?.data?.validationIssue) && (
+          {showErrorTooltip && Boolean(status?.data?.error || status?.data?.validationIssue) && (
             <div
               className="absolute right-0 top-full mt-1 z-50 pointer-events-none"
               style={{ overflow: 'hidden' }}
@@ -1139,7 +1139,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               <div className="bg-red-900/95 backdrop-blur-sm border border-red-500/50 rounded-lg p-2 shadow-xl">
                 <div className="text-[10px] font-semibold text-red-200 mb-1">Error</div>
                 <div className="text-[11px] text-white/90 leading-relaxed break-words">
-                  {status.data.error || status.data.validationIssue}
+                  {String(status?.data?.error || status?.data?.validationIssue || '')}
                 </div>
               </div>
             </div>
@@ -1208,10 +1208,17 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       error: 'Error',
       warning: 'Warning',
     }[status.status] ?? status.status;
-    const duration = status.data?.duration;
-    const resultSummary = status.data?.resultSummary;
-    const errorMsg = status.data?.error || status.data?.validationIssue;
-    const outputs = status.data?.outputs;
+    const durationValue = status.data?.duration;
+    const duration = typeof durationValue === 'number' ? durationValue : undefined;
+    const resultValue = status.data?.resultSummary;
+    const resultSummary = resultValue ? String(resultValue) : undefined;
+    const errorValue = status.data?.error || status.data?.validationIssue;
+    const errorMsg = errorValue ? String(errorValue) : undefined;
+    const outputsValue = status.data?.outputs;
+    const outputs =
+      outputsValue && typeof outputsValue === 'object'
+        ? (outputsValue as Record<string, unknown>)
+        : undefined;
 
     // Calculate position from the node DOM element
     const rect = nodeRef.current?.getBoundingClientRect();
@@ -1293,13 +1300,13 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             {resultSummary && (
               <div className="flex items-start gap-2">
                 <span className="text-[10px] text-white/40 w-14 flex-shrink-0">Result</span>
-                <span className="text-[11px] text-white/80">{String(resultSummary)}</span>
+                <span className="text-[11px] text-white/80">{resultSummary}</span>
               </div>
             )}
             {errorMsg && (
               <div className="flex items-start gap-2">
                 <span className="text-[10px] text-red-400/70 w-14 flex-shrink-0">Error</span>
-                <span className="text-[11px] text-red-300 break-words flex-1">{String(errorMsg)}</span>
+                <span className="text-[11px] text-red-300 break-words flex-1">{errorMsg}</span>
               </div>
             )}
             {duration !== undefined && (

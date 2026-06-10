@@ -9,6 +9,10 @@ const API_VERSION = "1.0";
 
 const TOKEN_FILE = resolve(import.meta.dir ?? ".", "../../data/vts_token.json");
 
+const CONNECT_TIMEOUT_MS = 10_000;
+const RECONNECT_BASE_DELAY_MS = 3_000;
+const RECONNECT_MAX_DELAY_MS = 60_000;
+
 interface PendingRequest {
   resolve: (value: unknown) => void;
   reject: (reason: unknown) => void;
@@ -26,6 +30,8 @@ class VTubeStudioClient {
   private mouthParam = "MouthOpen";
   private shouldReconnect = true;
   private abortController: AbortController | null = null;
+  private reconnectAttempts = 0;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
   get isConnected(): boolean {
     return this.connected && this.authenticated;
@@ -56,12 +62,23 @@ class VTubeStudioClient {
 
       return await new Promise<boolean>((resolve) => {
         const ws = new WebSocket(uri);
+        // Drop listeners from any previous (possibly still-connecting) socket
+        this.abortController?.abort();
         this.abortController = new AbortController();
         const { signal } = this.abortController;
+
+        const connectTimeout = setTimeout(() => {
+          console.warn("[VTS] Connection attempt timed out");
+          ws.close();
+          this.connected = false;
+          this.authenticated = false;
+          resolve(false);
+        }, CONNECT_TIMEOUT_MS);
 
         ws.addEventListener(
           "open",
           async () => {
+            clearTimeout(connectTimeout);
             this.ws = ws;
             this.connected = true;
             console.log("[VTS] Connected to VTube Studio");
@@ -69,6 +86,7 @@ class VTubeStudioClient {
 
             const success = await this.authenticate();
             if (success) {
+              this.reconnectAttempts = 0;
               console.log("[VTS] Authentication successful");
             } else {
               console.warn("[VTS] Authentication failed");
@@ -81,6 +99,7 @@ class VTubeStudioClient {
         ws.addEventListener(
           "error",
           () => {
+            clearTimeout(connectTimeout);
             console.error("[VTS] Connection error");
             this.connected = false;
             this.authenticated = false;
@@ -99,6 +118,12 @@ class VTubeStudioClient {
 
   async disconnect(): Promise<void> {
     this.shouldReconnect = false;
+
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this.reconnectAttempts = 0;
 
     for (const [id, req] of this.pendingRequests) {
       clearTimeout(req.timer);
@@ -322,10 +347,7 @@ class VTubeStudioClient {
         console.log("[VTS] Connection closed");
         this.connected = false;
         this.authenticated = false;
-
-        if (this.shouldReconnect) {
-          setTimeout(() => this.reconnect(), 3000);
-        }
+        this.scheduleReconnect();
       },
       { signal },
     );
@@ -341,10 +363,32 @@ class VTubeStudioClient {
     );
   }
 
+  private scheduleReconnect(): void {
+    if (!this.shouldReconnect || this.reconnectTimer) return;
+
+    const delay = Math.min(
+      RECONNECT_BASE_DELAY_MS * 2 ** this.reconnectAttempts,
+      RECONNECT_MAX_DELAY_MS,
+    );
+    this.reconnectAttempts++;
+    console.log(
+      `[VTS] Reconnecting in ${Math.round(delay / 1000)}s (attempt ${this.reconnectAttempts})`,
+    );
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      void this.reconnect();
+    }, delay);
+  }
+
   private async reconnect(): Promise<void> {
-    if (this.shouldReconnect && !this.connected) {
-      console.log("[VTS] Attempting to reconnect...");
-      await this.connect();
+    if (!this.shouldReconnect || this.connected) return;
+
+    console.log("[VTS] Attempting to reconnect...");
+    const success = await this.connect();
+    // A socket that never opens gets no close event, so the close handler
+    // cannot drive the retry loop - reschedule here on failure instead
+    if (!success && !this.connected) {
+      this.scheduleReconnect();
     }
   }
 }
