@@ -18,6 +18,7 @@ interface WorkflowState {
 
   // UI state
   selectedNodeId: string | null;
+  settingsPanelOpen: boolean;
   isExecuting: boolean;
 
   // History for undo/redo
@@ -46,6 +47,7 @@ interface WorkflowState {
   removeNode: (id: string) => void;
   setNodePosition: (id: string, position: { x: number; y: number }) => void;
   selectNode: (id: string | null) => void;
+  setSettingsPanelOpen: (open: boolean) => void;
 
   // Connection actions
   addConnection: (conn: Omit<Connection, 'id'>) => string;
@@ -167,6 +169,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   hasStartNode: false,
   character: defaultCharacter,
   selectedNodeId: null,
+  settingsPanelOpen: false,
   isExecuting: false,
   past: [],
   future: [],
@@ -234,6 +237,8 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   },
 
   selectNode: (id) => set({ selectedNodeId: id }),
+
+  setSettingsPanelOpen: (open) => set({ settingsPanelOpen: open }),
 
   // Connection actions
   addConnection: (conn) => {

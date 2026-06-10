@@ -50,7 +50,7 @@ function mapFieldType(manifestType: ConfigField['type']): NodeField['type'] {
 export function manifestConfigToNodeFields(
   config: Record<string, ConfigField>
 ): NodeField[] {
-  return Object.entries(config).filter(([, field]) => !field.inline).map(([key, field]) => ({
+  return Object.entries(config).map(([key, field]) => ({
     key,
     type: mapFieldType(field.type),
     label: field.label,
