@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
+    branches: [main, dev]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -86,4 +86,4 @@ jobs:
         run: bun install
 
       - name: Run TypeScript tests
-        run: bun test tests/engine/ tests/routes/ tests/sdk/ --verbose
+        run: bun test tests/ --verbose
