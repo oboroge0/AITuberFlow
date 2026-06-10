@@ -197,6 +197,32 @@ export interface NodeStatus {
   data?: any;
 }
 
+// Activity feed: one execution cycle = one trigger firing and its downstream wave
+export interface CycleStep {
+  nodeId: string;
+  status: 'running' | 'completed' | 'error';
+  startedAt: string;
+  duration?: number;
+  resultSummary?: string;
+  textPreview?: string;
+  error?: string;
+}
+
+export interface CycleTrigger {
+  sourceNodeId: string;
+  eventType: string;
+  summary: string;
+}
+
+export interface ActivityCycle {
+  id: string;
+  startedAt: string;
+  trigger?: CycleTrigger;
+  steps: CycleStep[];
+  status: 'running' | 'completed' | 'error';
+  totalDuration: number;
+}
+
 // Avatar types
 export type AvatarRendererType = 'vrm' | 'vtube-studio' | 'png';
 

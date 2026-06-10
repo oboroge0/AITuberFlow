@@ -730,6 +730,12 @@ export class WorkflowExecutor {
         const event: Event = (eventData as any).event;
         const sourceNodeId: string = (eventData as any).source_node_id;
 
+        // One dequeued event = one execution cycle. The id groups all node
+        // statuses of this wave so the frontend can render it as one entry.
+        const cycleId = crypto.randomUUID();
+        const cycleTrigger = this.buildCycleTrigger(sourceNodeId, event);
+        let cycleFirstStatus = true;
+
         await this.log(workflowId, sourceNodeId, `Processing event: ${event.type}`, "info");
 
         const downstreamIds = this.getDownstreamNodes(sourceNodeId, adjacency);
@@ -774,7 +780,13 @@ export class WorkflowExecutor {
             continue;
           }
 
-          await this.updateNodeStatus(workflowId, node.id, "running");
+          await this.updateNodeStatus(
+            workflowId,
+            node.id,
+            "running",
+            cycleFirstStatus ? { cycleId, cycleTrigger } : { cycleId },
+          );
+          cycleFirstStatus = false;
 
           try {
             const startTime = Date.now();
@@ -786,9 +798,14 @@ export class WorkflowExecutor {
               outputs,
               duration,
               resultSummary,
+              cycleId,
+              textPreview: this.buildTextPreview(outputs),
             });
           } catch (err) {
-            await this.updateNodeStatus(workflowId, node.id, "error", { error: String(err) });
+            await this.updateNodeStatus(workflowId, node.id, "error", {
+              error: String(err),
+              cycleId,
+            });
             await this.log(workflowId, node.id, `Node error: ${err}`, "error");
           }
         }
@@ -857,6 +874,15 @@ export class WorkflowExecutor {
 
     const nodeOutputs = new Map<string, Record<string, any>>();
 
+    // A linear run is a single execution cycle
+    const cycleId = crypto.randomUUID();
+    const cycleTrigger = {
+      sourceNodeId: executionOrder[0]?.id ?? "",
+      eventType: "manual",
+      summary: "手動実行",
+    };
+    let cycleFirstStatus = true;
+
     for (const node of executionOrder) {
       if (!this.runningWorkflows.has(workflowId)) break;
 
@@ -868,7 +894,13 @@ export class WorkflowExecutor {
       }
 
       await this.log(workflowId, node.id, `Executing node: ${node.type}`, "info");
-      await this.updateNodeStatus(workflowId, node.id, "running");
+      await this.updateNodeStatus(
+        workflowId,
+        node.id,
+        "running",
+        cycleFirstStatus ? { cycleId, cycleTrigger } : { cycleId },
+      );
+      cycleFirstStatus = false;
 
       try {
         const startTime = Date.now();
@@ -880,11 +912,14 @@ export class WorkflowExecutor {
           outputs,
           duration,
           resultSummary,
+          cycleId,
+          textPreview: this.buildTextPreview(outputs),
         });
         await this.log(workflowId, node.id, `Node completed: ${node.type}`, "info");
       } catch (err) {
         await this.updateNodeStatus(workflowId, node.id, "error", {
           error: String(err),
+          cycleId,
         });
         await this.log(workflowId, node.id, `Node error: ${err}`, "error");
         throw err;
@@ -1224,6 +1259,28 @@ export class WorkflowExecutor {
   }
 
   // ─── Result Summary ────────────────
+
+  /** Trigger info attached to the first node status of an execution cycle. */
+  private buildCycleTrigger(sourceNodeId: string, event: Event): Record<string, any> {
+    const payload = event.payload ?? {};
+    const text =
+      typeof payload.text === "string"
+        ? payload.text
+        : typeof payload.message === "string"
+          ? payload.message
+          : "";
+    return {
+      sourceNodeId,
+      eventType: event.type,
+      summary: text ? text.slice(0, 60) : event.type,
+    };
+  }
+
+  /** First characters of a text-like output, for the activity feed summary line. */
+  private buildTextPreview(outputs: Record<string, any> | undefined): string | undefined {
+    const t = outputs?.response ?? outputs?.text;
+    return typeof t === "string" && t.trim() ? t.slice(0, 80) : undefined;
+  }
 
   private buildResultSummary(outputs: Record<string, any> | undefined): string {
     if (!outputs || Object.keys(outputs).length === 0) return "No output";
