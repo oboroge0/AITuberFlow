@@ -108,7 +108,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
   } = useWorkflowStore();
 
   const { nodeDisplayMode, setNodeDisplayMode, searchVisible, searchQuery } = useUIPreferencesStore();
-  const { getPluginColor, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs, getPluginConfig } = usePluginStore();
+  const { getPluginColor, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs, getPluginConfig, isLoaded: pluginsLoaded } = usePluginStore();
   const { setDragging, clearDragging } = useDragStateStore();
 
   // State for the "drop-on-canvas" compatible node suggestion panel
@@ -300,6 +300,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
             category,
             config: node.config,
             pluginConfig,
+            pluginsLoaded,
             inputs: nodeInputs,
             outputs: nodeOutputs,
             isReachable,
@@ -313,7 +314,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         };
       });
     },
-    [workflowNodes, reachableNodes, hasStartNode, onRunWorkflow, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs, getPluginConfig, searchMatchIds, nodeStatuses]
+    [workflowNodes, reachableNodes, hasStartNode, onRunWorkflow, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs, getPluginConfig, pluginsLoaded, searchMatchIds, nodeStatuses]
   );
 
   // Apply selection in a cheap second pass. Unchanged nodes keep their object
@@ -391,9 +392,12 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     (changes) => {
       onNodesChangeInternal(changes);
 
-      // Handle position changes
+      // Handle position changes. Store writes are skipped while dragging:
+      // each write rebuilds every node's data object and re-renders all
+      // nodes (now heavy with inline config fields). React Flow tracks the
+      // live position internally; persist to the store only on drop.
       changes.forEach((change) => {
-        if (change.type === 'position' && change.position) {
+        if (change.type === 'position' && change.position && !change.dragging) {
           setNodePosition(change.id, change.position);
         }
         if (change.type === 'remove') {

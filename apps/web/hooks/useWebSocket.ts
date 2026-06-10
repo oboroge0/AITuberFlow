@@ -152,6 +152,17 @@ export function useWebSocket(workflowId: string | null) {
       }
     }
 
+    // Drop everything queued and silence the current utterance. A new run
+    // (or an explicit stop) must not keep playing audio from the previous run.
+    function clearAudioPlayback() {
+      audioQueueRef.current = [];
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
+    }
+
     function playNextAudio() {
       const nextUrl = audioQueueRef.current.shift();
       if (!nextUrl) {
@@ -198,11 +209,13 @@ export function useWebSocket(workflowId: string | null) {
           break;
 
         case 'execution.started':
+          clearAudioPlayback();
           setExecuting(true);
           addLog({ level: 'info', message: 'Workflow execution started' });
           break;
 
         case 'execution.stopped':
+          clearAudioPlayback();
           setExecuting(false);
           addLog({
             level: 'info',

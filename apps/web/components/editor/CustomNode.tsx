@@ -19,6 +19,7 @@ export interface CustomNodeData extends Record<string, unknown> {
   category: 'input' | 'process' | 'output' | 'control';
   config: Record<string, unknown>;
   pluginConfig?: Record<string, import('@/lib/types').ConfigField>;
+  pluginsLoaded?: boolean; // False until the plugin registry fetch completes (config fields unavailable)
   inputs?: PortDefinition[];
   outputs?: PortDefinition[];
   isReachable?: boolean;  // Whether this node is reachable from Start
@@ -497,6 +498,18 @@ function getValueSummary(field: ConfigField, value: unknown): string {
       return str.length > 20 ? str.slice(0, 20) + '...' : str;
     }
   }
+}
+
+// Placeholder shown while the plugin registry is still loading, so config
+// fields don't pop in after the node has already rendered.
+function ConfigFieldsSkeleton() {
+  return (
+    <div className="space-y-1 animate-pulse" aria-hidden="true">
+      <div className="h-[26px] rounded bg-white/5" />
+      <div className="h-[26px] rounded bg-white/5" />
+      <div className="h-[26px] rounded bg-white/5" />
+    </div>
+  );
 }
 
 // Collapsible node config fields component (Phase 2)
@@ -1685,6 +1698,11 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             />
           </div>
         )}
+        {!data.pluginConfig && data.pluginsLoaded === false && (
+          <div className="px-3 pb-2">
+            <ConfigFieldsSkeleton />
+          </div>
+        )}
 
         <StatusIndicator />
       </div>
@@ -1800,6 +1818,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           onOpenSettings={openSettings}
         />
       )}
+      {!data.pluginConfig && data.pluginsLoaded === false && <ConfigFieldsSkeleton />}
 
       <StatusIndicator />
     </div>
