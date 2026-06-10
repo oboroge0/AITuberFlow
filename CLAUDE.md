@@ -207,6 +207,47 @@ npm test
 4. Configure nodes in the right panel
 5. Click play button to run from a node
 
+## ブランチ運用とリリースフロー
+
+### ブランチの役割
+
+- **`dev`** — 開発統合ブランチ。全ての作業ブランチの PR はここへ向ける。**常にリリース可能な品質を保つ**（CI 緑＋動作確認してからマージ）。
+- **`main`** — リリースブランチ。リリース時にのみ dev からマージされる。タグは main 上で打つ。
+- **作業ブランチ** — worktree で作業し、dev へ PR。main へ直接 PR しない（hotfix を除く）。
+
+```
+feat/xxx (worktree) ──PR──▶ dev ──リリース時にまとめて──▶ main ──tag──▶ CI自動リリース
+```
+
+### 原則: 選別はマージ時、リリースは全部
+
+リリース時に機能を選んで取り込む（cherry-pick 式）運用はしない。dev で検証した組み合わせをそのままリリースする。
+
+- 「dev に入った ＝ 次のリリースに入る」
+- まだ出したくない機能は、PR をマージせず寝かせるか、設定フラグで隠してマージする
+- dev に入れて後悔した変更は、リリース前に dev 上で `git revert`（除外ではなく打ち消しで対応）
+
+### リリースの流れ
+
+1. マイルストーンの issue が揃ったら、dev から `release/vX.Y.Z` ブランチ（worktree）を切る
+2. バージョン更新＋ CHANGELOG 更新（下記「リリースプロセス」参照）→ dev へ PR → マージ
+3. dev → main へマージ（dev は main の上位互換のはずなので fast-forward になる。ならない場合は分岐の原因を調査してから進める）
+4. main 上でタグ作成 → push → CI が GitHub Release ＋デスクトップビルドを自動実行
+
+### 緊急修正（hotfix）
+
+リリース済みバージョンの重大バグのみ対象。
+
+1. main から `hotfix/xxx` を切る → main へ PR →マージ
+2. パッチ版（vX.Y.Z+1）のタグを main 上で作成 → push
+3. **直後に main を dev へマージし戻す**（忘れると dev/main が分岐し始める）
+
+### リリース頻度
+
+- マイルストーン単位で小さく頻繁に（目安: 2週間〜1ヶ月）。溜めるほどリリース時の検証範囲が爆発する
+- マイルストーンが大きすぎて溜まる場合は、issue を次のマイルストーンへ送ってスコープを削り、先にリリースする
+- 後方互換を切る大改造（v3 等）は dev に混ぜず、専用の長期ブランチで進める
+
 ## Git / GitHub ルール
 
 ### コミットメッセージ
@@ -279,10 +320,14 @@ git commit -m "Release vX.X.X
 closes #XX, closes #YY
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
+```
 
-# mainにマージ
+リリース準備ブランチを dev へ PR →マージした後、dev を main に取り込む:
+
+```bash
 git checkout main
-git merge <branch>
+git pull origin main
+git merge dev        # fast-forward になるはず（ならなければ分岐を調査）
 ```
 
 **⚠️ 重要: タグ作成前に追加修正がないか最終確認すること**
@@ -300,7 +345,7 @@ git push origin vX.X.X
 タグをpushすると、CI（`.github/workflows/release.yml`）が自動的にGitHubリリースを作成する。
 
 - `softprops/action-gh-release` が CHANGELOG.md からリリースノートを抽出して公開
-- デスクトップビルド（`.github/workflows/desktop-build.yml`）もタグpushで自動実行され、成果物がリリースに添付される
+- デスクトップビルド（`.github/workflows/desktop-release.yml`）もタグpushで自動実行され、成果物がリリースに添付される
 
 **⚠️ `gh release create` で手動リリースを作成しないこと。CIと競合してエラーになる。**
 
