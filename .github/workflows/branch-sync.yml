@@ -1,0 +1,31 @@
+name: Branch Sync Check
+
+# 運用上の不変条件「main は常に dev の祖先」を検証する。
+# hotfix を main に入れた後、dev へマージし戻すのを忘れると分岐が始まるため、
+# main への push 時と日次で自動検知する。
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Check main is ancestor of dev
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify main is an ancestor of dev
+        run: |
+          git fetch origin main dev
+          if git merge-base --is-ancestor origin/main origin/dev; then
+            echo "OK: main は dev の祖先です（分岐なし）"
+          else
+            echo "::error::main に dev へ未反映のコミットがあります。hotfix 後の戻し忘れの可能性があります。main を dev へマージし戻してください"
+            exit 1
+          fi
