@@ -419,7 +419,6 @@ function PngExpressionMapField({
   value,
   onChange,
   onUploadImage,
-  _availableImages,
 }: PngExpressionMapFieldProps) {
   const [newMapping, setNewMapping] = useState<PngExpressionMapping>({
     id: "",
