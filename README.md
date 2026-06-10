@@ -13,6 +13,7 @@
 
 <p align="center">
   <a href="https://github.com/oboroge0/AITuberFlow/actions/workflows/ci.yml"><img src="https://github.com/oboroge0/AITuberFlow/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://codecov.io/gh/oboroge0/AITuberFlow"><img src="https://codecov.io/gh/oboroge0/AITuberFlow/graph/badge.svg" alt="Coverage"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://github.com/oboroge0/AITuberFlow"><img src="https://img.shields.io/github/stars/oboroge0/AITuberFlow?style=social" alt="GitHub stars"></a>
   <a href="https://github.com/oboroge0/AITuberFlow/issues"><img src="https://img.shields.io/github/issues/oboroge0/AITuberFlow" alt="GitHub issues"></a>
