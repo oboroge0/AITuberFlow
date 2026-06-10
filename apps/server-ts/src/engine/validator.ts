@@ -10,9 +10,8 @@
  */
 
 import { join } from "node:path";
-import { db } from "../db/database";
-import { globalSettings } from "../db/schema";
 import { checkInvalidConnections } from "./connection-integrity";
+import { GLOBAL_SETTINGS_MAP, loadGlobalSettings } from "./global-settings";
 import { SOURCE_NODE_TYPES, getPluginsDir } from "./plugin-loader";
 import { resolvePortId } from "./port-aliases";
 
@@ -78,24 +77,6 @@ const API_KEY_NODE_TYPES = new Set([
   "openai-tts",
 ]);
 
-/**
- * Maps node types to their config fields and corresponding global setting keys.
- * Must stay in sync with the GLOBAL_SETTINGS_MAP in executor.ts.
- */
-const GLOBAL_SETTINGS_MAP: Record<string, Record<string, string>> = {
-  "openai-llm": { apiKey: "openai.apiKey", model: "openai.model" },
-  "anthropic-llm": { apiKey: "anthropic.apiKey", model: "anthropic.model" },
-  "google-llm": { apiKey: "google.apiKey", model: "google.model" },
-  "ollama-llm": { host: "ollama.host", model: "ollama.model" },
-  "mistral-llm": { apiKey: "mistral.apiKey", model: "mistral.model" },
-  "groq-llm": { apiKey: "groq.apiKey", model: "groq.model" },
-  "voicevox-tts": { host: "voicevox.host" },
-  "coeiroink-tts": { host: "coeiroink.host" },
-  "sbv2-tts": { host: "sbv2.host" },
-  "aivis-tts": { host: "aivis.host" },
-  "openai-tts": { apiKey: "openai.apiKey" },
-};
-
 // ─── Manifest Cache ──────────────────────────────────────────────
 
 const manifestCache = new Map<string, PluginManifest | null>();
@@ -130,14 +111,10 @@ export function clearManifestCache(): void {
 
 // ─── Global Settings Loader ──────────────────────────────────────
 
-function loadGlobalSettings(): Record<string, string> {
+/** Validation must not crash when the DB is unavailable - fall back to no settings. */
+function loadGlobalSettingsSafe(): Record<string, string> {
   try {
-    const rows = db.select().from(globalSettings).all();
-    const result: Record<string, string> = {};
-    for (const row of rows) {
-      result[row.key] = row.value;
-    }
-    return result;
+    return loadGlobalSettings();
   } catch {
     return {};
   }
@@ -465,7 +442,7 @@ export async function validateWorkflow(workflowData: WorkflowData): Promise<Vali
   }
 
   // Load global settings for API key check
-  const settings = loadGlobalSettings();
+  const settings = loadGlobalSettingsSafe();
 
   // Run all checks
   const issues: ValidationIssue[] = [];
