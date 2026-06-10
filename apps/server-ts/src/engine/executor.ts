@@ -375,7 +375,11 @@ export class WorkflowExecutor {
   }
 
   /** Cap a plugin lifecycle call so a hung plugin cannot block the engine. */
-  private async runWithTimeout(promise: Promise<unknown>, ms: number, label: string): Promise<void> {
+  private async runWithTimeout(
+    promise: Promise<unknown>,
+    ms: number,
+    label: string,
+  ): Promise<void> {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<never>((_, reject) => {
       timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
