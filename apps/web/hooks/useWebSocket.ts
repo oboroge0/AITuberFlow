@@ -23,6 +23,7 @@ export type ConnectionStatus = 'connected' | 'disconnected' | 'connecting' | 're
 export function useWebSocket(workflowId: string | null) {
   const wsRef = useRef<WebSocket | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioQueueRef = useRef<string[]>([]);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { addLog, setNodeStatus, setExecuting } = useWorkflowStore();
 
@@ -142,6 +143,40 @@ export function useWebSocket(workflowId: string | null) {
       }, delay);
     }
 
+    // Sequential playback: consecutive TTS outputs are queued so an utterance
+    // is never cut off by the next one arriving mid-playback.
+    function enqueueAudio(url: string) {
+      audioQueueRef.current.push(url);
+      if (!audioRef.current) {
+        playNextAudio();
+      }
+    }
+
+    function playNextAudio() {
+      const nextUrl = audioQueueRef.current.shift();
+      if (!nextUrl) {
+        audioRef.current = null;
+        return;
+      }
+
+      const audio = new Audio(nextUrl);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
+        playNextAudio();
+      };
+
+      audio.play().catch((err) => {
+        console.error('Failed to play audio:', err);
+        addLog({
+          level: 'warning',
+          message: `Audio playback failed: ${err.message}`,
+        });
+        playNextAudio();
+      });
+    }
+
     function handleMessage(data: any) {
       const { type, ...rest } = data;
 
@@ -188,26 +223,9 @@ export function useWebSocket(workflowId: string | null) {
             const audioUrl = `${API_URL}/api/integrations/audio/${rest.filename}`;
             addLog({
               level: 'info',
-              message: `Playing audio: ${rest.text?.substring(0, 30) || 'audio'}...`,
+              message: `${audioRef.current ? 'Queued' : 'Playing'} audio: ${rest.text?.substring(0, 30) || 'audio'}...`,
             });
-
-            if (audioRef.current) {
-              audioRef.current.pause();
-            }
-            const audio = new Audio(audioUrl);
-            audioRef.current = audio;
-
-            audio.onended = () => {
-              setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
-            };
-
-            audio.play().catch((err) => {
-              console.error('Failed to play audio:', err);
-              addLog({
-                level: 'warning',
-                message: `Audio playback failed: ${err.message}`,
-              });
-            });
+            enqueueAudio(audioUrl);
           }
           break;
 
@@ -263,6 +281,7 @@ export function useWebSocket(workflowId: string | null) {
         wsRef.current = null;
       }
 
+      audioQueueRef.current = [];
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;

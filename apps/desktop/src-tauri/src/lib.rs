@@ -2,11 +2,23 @@ use std::net::TcpListener;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 use tauri_plugin_shell::ShellExt;
 
 /// State to hold the sidecar child process for cleanup
 struct ServerProcess(Mutex<Option<tauri_plugin_shell::process::CommandChild>>);
 struct ServerPort(Mutex<u16>);
+
+/// Show a blocking error dialog so the user can see why startup failed,
+/// instead of panicking with no visible feedback.
+fn show_startup_error(app: &tauri::AppHandle, message: &str) {
+    eprintln!("[desktop] startup error: {}", message);
+    app.dialog()
+        .message(format!("AITuberFlow の起動に失敗しました。\n\n{}", message))
+        .kind(MessageDialogKind::Error)
+        .title("AITuberFlow 起動エラー")
+        .blocking_show();
+}
 
 /// Navigate the main window to the server URL once it's ready
 fn navigate_to_server(app: &tauri::AppHandle, port: u16) {
@@ -181,6 +193,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_dialog::init())
         .manage(ServerProcess(Mutex::new(None)))
         .manage(ServerPort(Mutex::new(8001)))
         .invoke_handler(tauri::generate_handler![
@@ -199,21 +212,41 @@ pub fn run() {
                 println!("[desktop] reserved dynamic server port: {}", port);
                 (port, Some(reservation))
             } else {
-                println!("[desktop] failed to reserve dynamic port, falling back to 8001");
-                (8001, None)
+                // Hold the listener as a reservation so another process cannot
+                // grab the port before the sidecar binds it.
+                match TcpListener::bind(("127.0.0.1", 8001)) {
+                    Ok(listener) => {
+                        println!("[desktop] failed to reserve dynamic port, falling back to 8001");
+                        (8001, Some(listener))
+                    }
+                    Err(err) => {
+                        let message = format!("サーバー用ポートを確保できませんでした: {}", err);
+                        show_startup_error(&handle, &message);
+                        return Err(message.into());
+                    }
+                }
             };
             *handle.state::<ServerPort>().0.lock().unwrap() = port;
 
             // Resolve resource paths for the sidecar environment
-            let resource_dir = app
-                .path()
-                .resource_dir()
-                .expect("failed to resolve resource dir");
+            let resource_dir = match app.path().resource_dir() {
+                Ok(dir) => dir,
+                Err(err) => {
+                    let message = format!("リソースディレクトリを解決できませんでした: {}", err);
+                    show_startup_error(&handle, &message);
+                    return Err(message.into());
+                }
+            };
 
-            let app_data_dir = app
-                .path()
-                .app_data_dir()
-                .expect("failed to resolve app data dir");
+            let app_data_dir = match app.path().app_data_dir() {
+                Ok(dir) => dir,
+                Err(err) => {
+                    let message =
+                        format!("アプリデータディレクトリを解決できませんでした: {}", err);
+                    show_startup_error(&handle, &message);
+                    return Err(message.into());
+                }
+            };
 
             // Ensure app data directories exist
             let _ = std::fs::create_dir_all(&app_data_dir);
@@ -241,9 +274,15 @@ pub fn run() {
             // (SIGKILL, panic, etc.) — see apps/server-ts/src/index.ts parent-monitor.
             let parent_pid = std::process::id();
             let shell = handle.shell();
-            let (mut rx, child) = shell
-                .sidecar("server")
-                .expect("failed to create sidecar command")
+            let sidecar_command = match shell.sidecar("server") {
+                Ok(command) => command,
+                Err(err) => {
+                    let message = format!("サーバープロセスを準備できませんでした: {}", err);
+                    show_startup_error(&handle, &message);
+                    return Err(message.into());
+                }
+            };
+            let spawn_result = sidecar_command
                 .env("PORT", port.to_string())
                 .env("DATABASE_URL", db_path.to_string_lossy().to_string())
                 .env("PLUGINS_DIR", plugins_dir.to_string_lossy().to_string())
@@ -253,8 +292,15 @@ pub fn run() {
                 .env("ANIMATIONS_DIR", animations_dir.to_string_lossy().to_string())
                 .env("AUDIO_DIR", audio_dir.to_string_lossy().to_string())
                 .env("AITUBERFLOW_PARENT_PID", parent_pid.to_string())
-                .spawn()
-                .expect("failed to spawn sidecar");
+                .spawn();
+            let (mut rx, child) = match spawn_result {
+                Ok(pair) => pair,
+                Err(err) => {
+                    let message = format!("サーバープロセスを起動できませんでした: {}", err);
+                    show_startup_error(&handle, &message);
+                    return Err(message.into());
+                }
+            };
             drop(reservation);
 
             // Store the child process for cleanup
@@ -314,5 +360,8 @@ pub fn run() {
             }
         })
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .unwrap_or_else(|err| {
+            eprintln!("[desktop] fatal error while running tauri application: {}", err);
+            std::process::exit(1);
+        });
 }

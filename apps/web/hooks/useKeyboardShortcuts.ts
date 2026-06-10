@@ -1,4 +1,5 @@
 import { useEffect, useCallback } from 'react';
+import { isEditableTarget } from '@/lib/domUtils';
 
 interface ShortcutHandlers {
   onSave?: () => void;
@@ -21,12 +22,8 @@ export function useKeyboardShortcuts({
 }: ShortcutHandlers) {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      // Ignore shortcuts when typing in input fields
-      const target = e.target as HTMLElement;
-      const isInputField =
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable;
+      // Ignore shortcuts when typing in input fields (incl. select)
+      const isInputField = isEditableTarget(e.target);
 
       // Ctrl/Cmd + S: Save
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {

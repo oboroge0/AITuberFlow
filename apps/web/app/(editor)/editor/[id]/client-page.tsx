@@ -6,7 +6,6 @@ import { ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import Canvas from '@/components/editor/Canvas';
 import Sidebar from '@/components/editor/Sidebar';
 import NodeSettings from '@/components/panels/NodeSettings';
-
 import ExpressionPresets from '@/components/panels/ExpressionPresets';
 import MotionLibrary, { Motion } from '@/components/panels/MotionLibrary';
 import { AvatarView, RendererType } from '@/components/avatar';
@@ -114,6 +113,8 @@ export default function EditorPage() {
     clearLogs,
     selectedNodeId,
     selectNode,
+    settingsPanelOpen,
+    setSettingsPanelOpen,
     removeNode,
     nodes,
     connections,
@@ -121,6 +122,13 @@ export default function EditorPage() {
     setNodeStatus,
     nodeStatuses,
   } = useWorkflowStore();
+
+  // Close the settings panel when node selection is cleared
+  useEffect(() => {
+    if (!selectedNodeId && settingsPanelOpen) {
+      setSettingsPanelOpen(false);
+    }
+  }, [selectedNodeId, settingsPanelOpen, setSettingsPanelOpen]);
 
   // Count nodes with error status
   const errorCount = useMemo(() => {
@@ -792,7 +800,7 @@ export default function EditorPage() {
           background: 'rgba(17, 24, 39, 0.95)',
           borderRadius: '16px',
           border: '1px solid rgba(255,255,255,0.1)',
-          height: selectedNodeId ? '280px' : 'calc(100% - 100px)',
+          height: settingsPanelOpen && selectedNodeId ? '280px' : 'calc(100% - 100px)',
           minHeight: '280px',
           transition: 'height 0.2s ease',
         }}
@@ -943,18 +951,40 @@ export default function EditorPage() {
           <ZoomControls />
         </div>
 
-        {/* Node Settings - Inside ReactFlowProvider, shown when a node is selected */}
-        {selectedNodeId && (
+        {/* Node settings panel — opened on demand from a node's gear button or
+            from complex/dynamic field rows that cannot be edited inline */}
+        {settingsPanelOpen && selectedNodeId && (
           <div
-            className="absolute right-5 bottom-5 z-10 w-[280px] flex-1 overflow-hidden flex flex-col"
+            className="absolute right-5 bottom-5 z-30 w-[280px] overflow-hidden flex flex-col"
             style={{
-              top: '360px',
-              background: 'rgba(17, 24, 39, 0.95)',
+              top: showPreview ? '360px' : '80px',
+              background: 'rgba(17, 24, 39, 0.97)',
               borderRadius: '16px',
               border: '1px solid rgba(255,255,255,0.1)',
             }}
           >
-            <NodeSettings />
+            <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-2 text-sm text-white/70">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                ノード詳細設定
+              </div>
+              <button
+                onClick={() => setSettingsPanelOpen(false)}
+                className="text-white/40 hover:text-white/70 transition-colors p-0.5"
+                title="閉じる"
+                aria-label="設定パネルを閉じる"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+              <NodeSettings />
+            </div>
           </div>
         )}
       </ReactFlowProvider>
