@@ -828,3 +828,55 @@ describe("Edge Cases", () => {
     expect(imported.id).not.toBe(original.id);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════
+// Workflow Validation Endpoint (body handling)
+// ═══════════════════════════════════════════════════════════════
+
+describe("Workflow validate body handling", () => {
+  it("should validate the saved workflow when no body is sent", async () => {
+    const created = await createWorkflowViaApi(app);
+
+    const res = await app.request(
+      new Request(`http://localhost/api/workflows/${created.id}/validate`, {
+        method: "POST",
+      })
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.valid).toBeDefined();
+    expect(Array.isArray(data.errors)).toBe(true);
+  });
+
+  it("should return 400 for malformed JSON body", async () => {
+    const created = await createWorkflowViaApi(app);
+
+    const res = await app.request(
+      new Request(`http://localhost/api/workflows/${created.id}/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{ this is not json",
+      })
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.error).toContain("Invalid JSON");
+  });
+
+  it("should validate provided nodes when a valid body is sent", async () => {
+    const created = await createWorkflowViaApi(app);
+
+    const res = await app.request(
+      jsonRequest("POST", `/api/workflows/${created.id}/validate`, {
+        nodes: [],
+        connections: [],
+      })
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.valid).toBeDefined();
+  });
+});

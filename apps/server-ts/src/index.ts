@@ -6,8 +6,9 @@ import { createBunWebSocket } from "hono/bun";
 import { serveStatic } from "hono/bun";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { closeDb, initDb } from "./db/database";
+import { initDb } from "./db/database";
 import { WorkflowExecutor } from "./engine/executor";
+import { shutdownGracefully } from "./shutdown";
 import { integrationRoutes } from "./routes/integrations";
 import { pluginRoutes } from "./routes/plugins";
 import { settingsRoutes } from "./routes/settings";
@@ -132,21 +133,7 @@ async function gracefulShutdown(signal: string): Promise<void> {
     timeoutHandle.unref();
   }
 
-  try {
-    const runningIds = executor.getRunningWorkflowIds();
-    if (runningIds.length > 0) {
-      console.log(`Stopping ${runningIds.length} running workflow(s)...`);
-      await Promise.allSettled(runningIds.map((id) => executor.stopWorkflow(id)));
-    }
-  } catch (err) {
-    console.error("Error stopping workflows on shutdown:", err);
-  }
-
-  try {
-    closeDb();
-  } catch (err) {
-    console.error("Error closing database on shutdown:", err);
-  }
+  await shutdownGracefully(executor);
 
   clearTimeout(timeoutHandle);
   process.exit(0);

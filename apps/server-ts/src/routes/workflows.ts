@@ -290,16 +290,22 @@ app.post("/:id/validate", async (c) => {
   const [existing] = await _db.select().from(workflows).where(eq(workflows.id, id));
   if (!existing) return c.json({ detail: "Workflow not found" }, 404);
 
+  // Distinguish "no body" (fine — validate the saved workflow) from
+  // "malformed body" (reject), same as the /:id/start endpoint.
   let body: z.infer<typeof validateWorkflowBody> = {};
-  try {
-    const rawBody = await c.req.json();
+  const rawText = await c.req.text();
+  if (rawText.trim().length > 0) {
+    let rawBody: unknown;
+    try {
+      rawBody = JSON.parse(rawText);
+    } catch {
+      return c.json({ error: "Invalid JSON in request body" }, 400);
+    }
     const parsed = validateWorkflowBody.safeParse(rawBody);
     if (!parsed.success) {
       return c.json({ error: "Invalid request body", details: parsed.error.format() }, 400);
     }
     body = parsed.data ?? {};
-  } catch {
-    // No body provided - use saved workflow data
   }
 
   const nodes = body?.nodes ?? JSON.parse(existing.nodesJson || "[]");
