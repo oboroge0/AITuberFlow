@@ -7,8 +7,10 @@
     "dev:api": "cd apps/server-ts && bun run dev",
     "dev:desktop": "cd apps/desktop && npm run dev",
     "setup": "cd apps/web && npm install && cd ../server-ts && bun install && cd ../../packages/sdk-ts && bun install && cd ../../apps/desktop && npm install",
-    "test": "bun test tests/engine/ tests/routes/ --verbose",
-    "lint": "cd apps/web && npm run lint",
+    "test": "bun test tests/ --verbose",
+    "lint": "npm run lint:web && npm run lint:server",
+    "lint:web": "cd apps/web && npm run lint",
+    "lint:server": "cd apps/server-ts && bun run lint",
     "build": "cd apps/web && npm run build",
     "build:desktop": "cd apps/desktop && npm run prepare-runtime",
     "create-node": "bun run scripts/create-node.ts"
@@ -25,7 +27,7 @@
     "@hono/zod-validator": "^0.4.0",
     "concurrently": "^9.1.2",
     "drizzle-orm": "^0.45.2",
-    "hono": "^4.12.18",
+    "hono": "^4.12.23",
     "zod": "^3.24.0"
   }
 }

@@ -8,12 +8,11 @@
  * Ported from Python apps/server/engine/executor.py (1173 lines).
  */
 
-import { db } from "../db/database";
-import { globalSettings } from "../db/schema";
 import { vtsClient } from "../integrations/vtube-studio";
 import type { Event } from "./event-bus";
 import { EventBus, EventFilter } from "./event-bus";
 import { EventQueue } from "./event-queue";
+import { loadGlobalSettings, mergeGlobalSettings } from "./global-settings";
 import { SOURCE_NODE_TYPES, loadPlugin } from "./plugin-loader";
 import { resolvePortId } from "./port-aliases";
 import { TaskRegistry } from "./task-registry";
@@ -148,7 +147,6 @@ export class NodeContext {
     return controller;
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: plugin API boundary — character state is dynamic
   async updateCharacter(updates: Record<string, unknown>): Promise<void> {
     // Guard against prototype pollution: never copy __proto__/constructor/prototype
     // keys from user-controllable updates into the character state.
@@ -196,7 +194,6 @@ interface NodeRuntime {
   nodeType: string;
   // biome-ignore lint/suspicious/noExplicitAny: plugin config is dynamic
   config: Record<string, any>;
-  // biome-ignore lint/suspicious/noExplicitAny: plugin instance shape is unknown at compile time
   instance: unknown;
   context: NodeContext;
 }
@@ -210,56 +207,6 @@ export class WorkflowCycleError extends Error {
     this.name = "WorkflowCycleError";
     this.cycleNodes = cycleNodes;
   }
-}
-
-// ─── Global Settings ─────────────────────────────────────────────
-
-/**
- * Maps node types to their config fields and corresponding global setting keys.
- * When a node's config field is empty, the global setting value is used instead.
- */
-const GLOBAL_SETTINGS_MAP: Record<string, Record<string, string>> = {
-  "openai-llm": { apiKey: "openai.apiKey", model: "openai.model" },
-  "anthropic-llm": { apiKey: "anthropic.apiKey", model: "anthropic.model" },
-  "google-llm": { apiKey: "google.apiKey", model: "google.model" },
-  "ollama-llm": { host: "ollama.host", model: "ollama.model" },
-  "mistral-llm": { apiKey: "mistral.apiKey", model: "mistral.model" },
-  "groq-llm": { apiKey: "groq.apiKey", model: "groq.model" },
-  "voicevox-tts": { host: "voicevox.host" },
-  "coeiroink-tts": { host: "coeiroink.host" },
-  "sbv2-tts": { host: "sbv2.host" },
-  "aivis-tts": { host: "aivis.host" },
-  "openai-tts": { apiKey: "openai.apiKey" },
-};
-
-function loadGlobalSettings(): Record<string, string> {
-  const rows = db.select().from(globalSettings).all();
-  const result: Record<string, string> = {};
-  for (const row of rows) {
-    result[row.key] = row.value;
-  }
-  return result;
-}
-
-function mergeGlobalSettings(
-  nodeType: string,
-  config: Record<string, unknown>,
-  settings: Record<string, string>,
-): Record<string, unknown> {
-  const mapping = GLOBAL_SETTINGS_MAP[nodeType];
-  if (!mapping) return config;
-
-  const merged = { ...config };
-  for (const [configField, settingsKey] of Object.entries(mapping)) {
-    const currentValue = merged[configField];
-    if (
-      (currentValue === undefined || currentValue === null || currentValue === "") &&
-      settings[settingsKey]
-    ) {
-      merged[configField] = settings[settingsKey];
-    }
-  }
-  return merged;
 }
 
 // ─── Executor ────────────────────────────────────────────────────
@@ -328,7 +275,9 @@ export class WorkflowExecutor {
     if (avatarConfig.renderer !== "vtube-studio") return;
 
     const port = (avatarConfig.vtubePort ?? avatarConfig.vtube_port ?? 8001) as number;
-    const mouthParam = (avatarConfig.vtubeMouthParam ?? avatarConfig.vtube_mouth_param ?? "MouthOpen") as string;
+    const mouthParam = (avatarConfig.vtubeMouthParam ??
+      avatarConfig.vtube_mouth_param ??
+      "MouthOpen") as string;
 
     let expressionMap: Record<string, string> | undefined;
     const rawMap = avatarConfig.vtubeExpressionMap ?? avatarConfig.vtube_expression_map;
