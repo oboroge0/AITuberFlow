@@ -12,8 +12,8 @@
 import { join } from "node:path";
 import { db } from "../db/database";
 import { globalSettings } from "../db/schema";
-import { SOURCE_NODE_TYPES, getPluginsDir } from "./plugin-loader";
 import { checkInvalidConnections } from "./connection-integrity";
+import { SOURCE_NODE_TYPES, getPluginsDir } from "./plugin-loader";
 import { resolvePortId } from "./port-aliases";
 
 // ─── Types ───────────────────────────────────────────────────────

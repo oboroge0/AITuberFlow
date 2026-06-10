@@ -7,6 +7,7 @@
 import { mkdir, readdir, unlink } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
 import { Hono } from "hono";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { getProjectRoot } from "../engine/plugin-loader";
 
 const app = new Hono();
@@ -23,6 +24,16 @@ const ALLOWED_VOICEVOX_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "::
 
 const ALLOWED_EXTENSIONS = new Set([".vrm", ".png", ".jpg", ".jpeg", ".gif", ".webp"]);
 const ALLOWED_ANIMATION_EXTENSIONS = new Set([".fbx", ".glb", ".gltf"]);
+
+interface VoicevoxStyle {
+  id: number;
+  name?: string;
+}
+
+interface VoicevoxSpeaker {
+  name?: string;
+  styles?: VoicevoxStyle[];
+}
 
 function validateVoicevoxHost(rawHost?: string): {
   host: string;
@@ -99,13 +110,13 @@ app.get("/voicevox/speakers", async (c) => {
     if (!response.ok) {
       return c.json(
         { detail: `VOICEVOX API error: ${response.statusText}` },
-        response.status as any,
+        response.status as ContentfulStatusCode,
       );
     }
 
-    const speakersData = (await response.json()) as any[];
-    const speakers = speakersData.flatMap((speaker: any) =>
-      (speaker.styles ?? []).map((style: any) => ({
+    const speakersData = (await response.json()) as VoicevoxSpeaker[];
+    const speakers = speakersData.flatMap((speaker) =>
+      (speaker.styles ?? []).map((style) => ({
         id: style.id,
         name: speaker.name ?? "Unknown",
         style: style.name ?? "Normal",
@@ -114,7 +125,7 @@ app.get("/voicevox/speakers", async (c) => {
     );
 
     return c.json({ speakers });
-  } catch (err: any) {
+  } catch (err) {
     if (isVoicevoxUnavailableError(err)) {
       return c.json(
         {

@@ -132,8 +132,7 @@ export function checkInvalidConnections(
   // Emit the "node has no ports" warning at most once per node, not per edge.
   const warnedNoPortNodes = new Set<string>();
 
-  const nameOf = (node: NodeLike): string =>
-    manifests.get(node.type)?.name || node.type;
+  const nameOf = (node: NodeLike): string => manifests.get(node.type)?.name || node.type;
 
   const warnNoPorts = (node: NodeLike): void => {
     if (warnedNoPortNodes.has(node.id)) return;
