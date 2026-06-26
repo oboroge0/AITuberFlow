@@ -199,13 +199,18 @@ export default class TwitchChatNode extends InputNode {
       // opts shape changed — the disconnect timeout below still bounds us
     }
 
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       await Promise.race([
         client.disconnect().catch(() => {}),
-        new Promise<void>((resolve) => setTimeout(resolve, 2000)),
+        new Promise<void>((resolve) => {
+          timer = setTimeout(resolve, 2000);
+        }),
       ]);
     } catch {
       // Ignore disconnect errors
+    } finally {
+      clearTimeout(timer);
     }
   }
 }
