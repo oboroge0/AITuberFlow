@@ -107,7 +107,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     nodeStatuses,
   } = useWorkflowStore();
 
-  const { nodeDisplayMode, setNodeDisplayMode, searchVisible, searchQuery } = useUIPreferencesStore();
+  const { searchVisible, searchQuery } = useUIPreferencesStore();
   const { getPluginColor, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs, getPluginConfig, isLoaded: pluginsLoaded } = usePluginStore();
   const { setDragging, clearDragging } = useDragStateStore();
 
@@ -872,24 +872,6 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
           </div>
         );
       })()}
-
-      {/* Display Mode Toggle */}
-      <div className="absolute top-4 right-4 flex gap-1 bg-gray-800/95 rounded-lg p-1 border border-white/10 shadow-lg z-10">
-        <span className="px-2 py-1.5 text-[10px] text-white/40">表示:</span>
-        {(['simple', 'standard', 'detailed'] as const).map((mode) => (
-          <button
-            key={mode}
-            onClick={() => setNodeDisplayMode(mode)}
-            className={`px-3 py-1.5 text-[11px] rounded transition-colors ${
-              nodeDisplayMode === mode
-                ? 'bg-white/20 text-white font-medium'
-                : 'text-white/60 hover:bg-white/10 hover:text-white/80'
-            }`}
-          >
-            {mode === 'simple' ? '簡易' : mode === 'standard' ? '標準' : '詳細'}
-          </button>
-        ))}
-      </div>
 
       {/* Custom styles for React Flow */}
       <style jsx global>{`
