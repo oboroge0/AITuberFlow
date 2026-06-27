@@ -18,7 +18,10 @@
     "delete": "Delete",
     "duplicate": "Duplicate",
     "export": "Export",
-    "deleteConfirm": "Delete this workflow?"
+    "deleteConfirm": "Delete this workflow?",
+    "workflowDeleted": "Workflow deleted",
+    "saveFailed": "Failed to save",
+    "workflowDownloaded": "Workflow downloaded"
   },
   "editor": {
     "save": "Save",
@@ -29,7 +32,33 @@
     "running": "Running",
     "back": "Back",
     "undo": "Undo",
-    "redo": "Redo"
+    "redo": "Redo",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "fitView": "Fit View",
+    "backToWorkflows": "Back to Workflows",
+    "clickToEditName": "Click to edit name",
+    "toggleAvatarControls": "Toggle Avatar Controls",
+    "openOverlay": "Open Overlay Window",
+    "copyOverlayUrl": "Copy Overlay URL for OBS Browser Source",
+    "overlay": "Overlay",
+    "copyUrl": "Copy URL",
+    "controls": "Controls",
+    "reconnecting": "Reconnecting...",
+    "offline": "Offline",
+    "nodeDetailSettings": "Node Detail Settings",
+    "close": "Close",
+    "closeSettingsPanel": "Close settings panel",
+    "preview": "Preview",
+    "expression": "Expression",
+    "motion": "Motion",
+    "copiedOverlayUrl": "Copied overlay URL for OBS",
+    "copyUrlFailed": "Failed to copy URL",
+    "importComplete": "Import complete: ",
+    "loadWorkflowFailed": "Failed to load workflow: ",
+    "autoSaveFailed": "Auto-save failed: ",
+    "validationSkipped": "Validation skipped: ",
+    "importFailed": "Import failed: "
   },
   "sidebar": {
     "search": "Search nodes...",
@@ -43,7 +72,20 @@
   "settings": {
     "nodeSettings": "Node Settings",
     "selectNode": "Select a node to edit",
-    "deleteNode": "Delete Node"
+    "deleteNode": "Delete Node",
+    "hidePassword": "Hide password",
+    "showPassword": "Show password",
+    "nodeDeleted": "Node deleted",
+    "uploadFailed": "Upload failed: ",
+    "uploadAnimationFailed": "Failed to upload animation file",
+    "uploadModelFailed": "Failed to upload model file",
+    "uploadImageFailed": "Failed to upload image",
+    "staticTextPlaceholder": "Enter static text for this part of the prompt...",
+    "addInputHelp": "Add input names to create ports. Use {{name}} in template.",
+    "expressionIdPlaceholder": "Expression ID (e.g., smug)",
+    "imageFilenamePlaceholder": "Image filename (e.g., smug.png)",
+    "descriptionForLlm": "Description for LLM analysis",
+    "descriptionForLlmPlaceholder": "Description for LLM (e.g., 'Self-satisfied, proud, confident')"
   },
   "logs": {
     "title": "Execution Log",
@@ -420,6 +462,72 @@
     "later": "Later",
     "close": "Close",
     "retry": "Retry"
+  },
+  "common": {
+    "close": "Close",
+    "copy": "Copy",
+    "save": "Save",
+    "cancel": "Cancel",
+    "configured": "Configured",
+    "notSet": "Not set",
+    "on": "ON",
+    "off": "OFF"
+  },
+  "activity": {
+    "title": "Activity",
+    "rawLog": "Raw Log",
+    "clear": "Clear",
+    "emptyHistory": "No execution history yet. Run the workflow to see it here",
+    "emptyLog": "No logs yet",
+    "clickToSelect": "Click to select node",
+    "items": "items",
+    "triggerRun": "Run",
+    "triggerManual": "Manual Run",
+    "running": "Running",
+    "copiedError": "Copied error details",
+    "copyFailed": "Failed to copy"
+  },
+  "search": {
+    "placeholder": "Search nodes...",
+    "prevResult": "Previous result",
+    "prevResultShortcut": "Previous result (Shift+Enter)",
+    "nextResult": "Next result",
+    "nextResultShortcut": "Next result (Enter)",
+    "closeShortcut": "Close (Esc)",
+    "closeSearch": "Close search"
+  },
+  "inline": {
+    "hideKey": "Hide key",
+    "showKey": "Show key",
+    "dragToAdjust": "Drag to adjust / Click for number input",
+    "editInSettings": "Edit in settings",
+    "globalBadge": "Global",
+    "globalTooltip": "Node value is not set, using global settings (enter to override)",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "detailSettings": "Detail Settings",
+    "openDetailSettings": "Open detail settings",
+    "charCountEdit": "chars — Click to edit",
+    "ctrlEnterSave": "Ctrl+Enter to save / Esc to cancel",
+    "runFromNode": "Run from this node"
+  },
+  "canvas": {
+    "nodeDeleted": "Node deleted",
+    "addNode": "Add Node",
+    "displayLabel": "Display:",
+    "simple": "Simple",
+    "standard": "Standard",
+    "detailed": "Detailed",
+    "connectableNodes": "Connectable nodes"
+  },
+  "preview": {
+    "loadFailed": "Failed to load workflow",
+    "noWorkflowData": "Workflow data not loaded",
+    "startFailed": "Failed to start workflow",
+    "stopFailed": "Failed to stop workflow"
+  },
+  "toast": {
+    "closeNotification": "Close notification"
   },
   "globalSettings": {
     "title": "Global Settings",

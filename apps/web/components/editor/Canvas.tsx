@@ -33,6 +33,7 @@ import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 import { type PromptSection } from '@/components/panels/NodeSettings';
 import { useDragStateStore } from '@/stores/dragStateStore';
 import { isEditableTarget } from '@/lib/domUtils';
+import { useTranslation } from '@/stores/localeStore';
 
 interface CanvasProps {
   onNodeSelect?: (nodeId: string | null) => void;
@@ -78,6 +79,7 @@ interface ContextMenuState {
 
 // Canvas component - requires ReactFlowProvider to be provided by parent
 export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
+  const { t } = useTranslation();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
@@ -402,7 +404,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         }
         if (change.type === 'remove') {
           removeNode(change.id);
-          toast.success('ノードを削除しました');
+          toast.success(t('canvas.nodeDeleted'));
         }
       });
     },
@@ -762,7 +764,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
 
     return [
       {
-        label: 'ノードを追加',
+        label: t('canvas.addNode'),
         icon: (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
@@ -851,7 +853,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
           >
             <div className="px-3 pt-2 pb-1 text-[10px] text-white/40 uppercase tracking-wider flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full" style={{ background: PORT_TYPE_COLORS[connectSuggest.sourceType] }} />
-              接続できるノード
+              {t('canvas.connectableNodes')}
             </div>
             {compatible.map((nt) => (
               <button
@@ -868,14 +870,14 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
                 {nt.label}
               </button>
             ))}
-            <button onClick={() => setConnectSuggest(null)} className="w-full px-3 py-1.5 text-left text-[11px] text-white/30 hover:text-white/60 border-t border-white/10 mt-1">キャンセル</button>
+            <button onClick={() => setConnectSuggest(null)} className="w-full px-3 py-1.5 text-left text-[11px] text-white/30 hover:text-white/60 border-t border-white/10 mt-1">{t('common.cancel')}</button>
           </div>
         );
       })()}
 
       {/* Display Mode Toggle */}
       <div className="absolute top-4 right-4 flex gap-1 bg-gray-800/95 rounded-lg p-1 border border-white/10 shadow-lg z-10">
-        <span className="px-2 py-1.5 text-[10px] text-white/40">表示:</span>
+        <span className="px-2 py-1.5 text-[10px] text-white/40">{t('canvas.displayLabel')}</span>
         {(['simple', 'standard', 'detailed'] as const).map((mode) => (
           <button
             key={mode}
@@ -886,7 +888,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
                 : 'text-white/60 hover:bg-white/10 hover:text-white/80'
             }`}
           >
-            {mode === 'simple' ? '簡易' : mode === 'standard' ? '標準' : '詳細'}
+            {mode === 'simple' ? t('canvas.simple') : mode === 'standard' ? t('canvas.standard') : t('canvas.detailed')}
           </button>
         ))}
       </div>
