@@ -42,22 +42,24 @@ async function loadPluginManifest(pluginDir: string): Promise<Record<string, unk
   }
 }
 
+let pluginCache: Record<string, unknown>[] | null = null;
+
 async function getAllPlugins(): Promise<Record<string, unknown>[]> {
-  const plugins: Record<string, unknown>[] = [];
+  if (pluginCache) return pluginCache;
 
   try {
     const entries = await readdir(PLUGINS_DIR, { withFileTypes: true });
-    for (const entry of entries) {
-      if (entry.isDirectory()) {
-        const manifest = await loadPluginManifest(join(PLUGINS_DIR, entry.name));
-        if (manifest) plugins.push(manifest);
-      }
-    }
+    const results = await Promise.all(
+      entries
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => loadPluginManifest(join(PLUGINS_DIR, entry.name))),
+    );
+    pluginCache = results.filter(Boolean) as Record<string, unknown>[];
   } catch {
-    // Plugins directory might not exist
+    pluginCache = [];
   }
 
-  return plugins;
+  return pluginCache;
 }
 
 // List all plugins

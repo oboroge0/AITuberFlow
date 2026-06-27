@@ -1269,7 +1269,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             <span className="text-[10px] ml-auto" style={{ color: typeColor }}>{typeLabel}</span>
           </div>
           {hoveredPort.description && (
-            <div className="text-[10px] text-white/60 leading-relaxed">{hoveredPort.description}</div>
+            <div className="text-[10px] text-white/60 leading-relaxed whitespace-normal">{hoveredPort.description}</div>
           )}
         </div>
       </div>

@@ -23,7 +23,7 @@
       {
         "id": "trigger",
         "type": "trigger",
-        "description": "Trigger output"
+        "description": "開始トリガー"
       }
     ],
     "events": {

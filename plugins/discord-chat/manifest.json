@@ -23,17 +23,17 @@
       {
         "id": "message",
         "type": "Message",
-        "description": "The full message object"
+        "description": "メッセージオブジェクト全体"
       },
       {
         "id": "author",
         "type": "string",
-        "description": "Message author name"
+        "description": "メッセージ投稿者名"
       },
       {
         "id": "text",
         "type": "string",
-        "description": "Message text content"
+        "description": "メッセージ本文"
       }
     ],
     "events": {

@@ -162,7 +162,7 @@ if (parentPidEnv) {
         console.log(`[parent-monitor] parent PID ${parentPid} no longer alive, exiting sidecar`);
         process.exit(0);
       }
-    }, 1000).unref();
+    }, 5000).unref();
   }
 }
 
