@@ -14,6 +14,7 @@ import { useWorkflowStore } from '@/stores/workflowStore';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { toast } from '@/stores/toastStore';
+import { useTranslation } from '@/stores/localeStore';
 import api from '@/lib/api';
 import { DEFAULT_MODEL_URL } from '@/lib/constants';
 import { resolveWorkflowId } from '@/lib/routeParams';
@@ -31,6 +32,7 @@ const IMPORT_SUCCESS_KEY = 'aituber-flow-import-success';
 
 // Zoom Controls component using ReactFlow's zoom API
 function ZoomControls() {
+  const { t } = useTranslation();
   const { zoomIn, zoomOut, fitView } = useReactFlow();
 
   return (
@@ -38,7 +40,7 @@ function ZoomControls() {
       <button
         onClick={() => zoomIn()}
         className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
-        title="Zoom In"
+        title={t('editor.zoomIn')}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <line x1="12" y1="5" x2="12" y2="19" />
@@ -49,7 +51,7 @@ function ZoomControls() {
       <button
         onClick={() => zoomOut()}
         className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
-        title="Zoom Out"
+        title={t('editor.zoomOut')}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <line x1="5" y1="12" x2="19" y2="12" />
@@ -59,7 +61,7 @@ function ZoomControls() {
       <button
         onClick={() => fitView()}
         className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
-        title="Fit View"
+        title={t('editor.fitView')}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
@@ -100,6 +102,7 @@ export default function EditorPage() {
   const [editedName, setEditedName] = useState('');
   const [showAvatarControls, setShowAvatarControls] = useState(false);
   const [avatarControlTab, setAvatarControlTab] = useState<'expression' | 'motion'>('expression');
+  const { t } = useTranslation();
   const nameInputRef = useRef<HTMLInputElement>(null);
   const isInitialLoad = useRef(true);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -221,10 +224,10 @@ export default function EditorPage() {
     const url = `${window.location.origin}/overlay/${workflowId}`;
     try {
       await navigator.clipboard.writeText(url);
-      toast.success('OBS用オーバーレイURLをコピーしました');
+      toast.success(t('editor.copiedOverlayUrl'));
     } catch (error) {
       console.error('Failed to copy overlay url:', error);
-      toast.error('URLコピーに失敗しました');
+      toast.error(t('editor.copyUrlFailed'));
     }
   }, [workflowId]);
 
@@ -264,7 +267,7 @@ export default function EditorPage() {
       const importSuccessName = sessionStorage.getItem(IMPORT_SUCCESS_KEY);
       if (importSuccessName) {
         sessionStorage.removeItem(IMPORT_SUCCESS_KEY);
-        toast.success(`インポート完了: ${importSuccessName}`);
+        toast.success(t('editor.importComplete') + importSuccessName);
       }
 
       // Allow auto-save after initial load settles
@@ -274,7 +277,7 @@ export default function EditorPage() {
       }, 500);
     } else if (response.error) {
       setEditorLoading(false);
-      toast.error(`ワークフローの読み込みに失敗: ${response.error}`);
+      toast.error(t('editor.loadWorkflowFailed') + response.error);
       if (workflowId !== '_' && response.error.includes('not found')) {
         router.push('/');
       }
@@ -306,7 +309,7 @@ export default function EditorPage() {
       const isThrottleExpired = now - lastAutoSaveErrorAt > AUTO_SAVE_ERROR_THROTTLE_MS;
 
       if (isDifferentError || isThrottleExpired) {
-        toast.error(`自動保存に失敗: ${response.error}`);
+        toast.error(t('editor.autoSaveFailed') + response.error);
         lastAutoSaveError = response.error;
         lastAutoSaveErrorAt = now;
       }
@@ -396,7 +399,7 @@ export default function EditorPage() {
     });
 
     if (validationResponse.error) {
-      toast.warning(`バリデーションをスキップしました: ${validationResponse.error}`);
+      toast.warning(t('editor.validationSkipped') + validationResponse.error);
       addLog({
         level: 'warning',
         message: `バリデーションAPI呼び出しに失敗しました: ${validationResponse.error}`,
@@ -575,7 +578,7 @@ export default function EditorPage() {
         window.location.href = `/editor/${response.data.id}`;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        toast.error(`インポートに失敗: ${errorMessage}`);
+        toast.error(t('editor.importFailed') + errorMessage);
         addLog({ level: 'error', message: `Import failed: ${errorMessage}` });
       }
     };
@@ -618,7 +621,7 @@ export default function EditorPage() {
         <button
           onClick={() => router.push('/')}
           className="w-10 h-10 rounded-[10px] flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all"
-          title="Back to Workflows"
+          title={t('editor.backToWorkflows')}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -656,7 +659,7 @@ export default function EditorPage() {
             <h1
               className="text-xl font-bold text-white m-0 cursor-pointer hover:text-emerald-400 transition-colors"
               onClick={handleStartEditingName}
-              title="Click to edit name"
+              title={t('editor.clickToEditName')}
             >
               {workflowName || 'AITuber Flow'}
               <svg
@@ -691,7 +694,7 @@ export default function EditorPage() {
                 >
                   <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                 </svg>
-                Reconnecting...
+                {t('editor.reconnecting')}
               </span>
             )}
             {connectionStatus === 'disconnected' && (
@@ -708,7 +711,7 @@ export default function EditorPage() {
                   <line x1="15" y1="9" x2="9" y2="15" />
                   <line x1="9" y1="9" x2="15" y2="15" />
                 </svg>
-                Offline
+                {t('editor.offline')}
               </span>
             )}
             {/* Auto-save indicator */}
@@ -725,7 +728,7 @@ export default function EditorPage() {
                 >
                   <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                 </svg>
-                Saving...
+                {t('editor.saving')}
               </span>
             ) : showSaved ? (
               <span className="text-xs flex items-center gap-1 text-emerald-400">
@@ -739,7 +742,7 @@ export default function EditorPage() {
                 >
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
-                Saved
+                {t('editor.saved')}
               </span>
             ) : null}
           </div>
@@ -765,14 +768,14 @@ export default function EditorPage() {
               ? 'bg-pink-500/30 border-pink-500/50 text-pink-300'
               : 'bg-pink-500/20 border-pink-500/50 text-pink-300 hover:bg-pink-500/30'
           }`}
-          title="Toggle Avatar Controls"
+          title={t('editor.toggleAvatarControls')}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="10"/>
             <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
             <line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
           </svg>
-          Controls
+          {t('editor.controls')}
         </button>
         )}
 
@@ -782,14 +785,14 @@ export default function EditorPage() {
             void openOverlay();
           }}
           className="px-4 py-2 rounded-lg bg-purple-500/20 border border-purple-500/50 text-purple-300 hover:bg-purple-500/30 transition-all flex items-center gap-2 text-sm"
-          title="Open Overlay Window"
+          title={t('editor.openOverlay')}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
             <line x1="8" y1="21" x2="16" y2="21"/>
             <line x1="12" y1="17" x2="12" y2="21"/>
           </svg>
-          Overlay
+          {t('editor.overlay')}
         </button>
 
         <button
@@ -797,13 +800,13 @@ export default function EditorPage() {
             void copyOverlayUrl();
           }}
           className="px-4 py-2 rounded-lg bg-indigo-500/20 border border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/30 transition-all flex items-center gap-2 text-sm"
-          title="Copy Overlay URL for OBS Browser Source"
+          title={t('editor.copyOverlayUrl')}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
           </svg>
-          Copy URL
+          {t('editor.copyUrl')}
         </button>
       </div>
 
@@ -827,7 +830,7 @@ export default function EditorPage() {
               <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
               <circle cx="12" cy="10" r="3"/>
             </svg>
-            Preview
+            {t('editor.preview')}
           </div>
           <div className="text-xs text-white/40">
             {avatarState.expression}
@@ -886,7 +889,7 @@ export default function EditorPage() {
                   <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
                   <line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
                 </svg>
-                Expression
+                {t('editor.expression')}
               </div>
             </button>
             <button
@@ -901,14 +904,14 @@ export default function EditorPage() {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polygon points="5 3 19 12 5 21 5 3"/>
                 </svg>
-                Motion
+                {t('editor.motion')}
               </div>
             </button>
             {/* Close button */}
             <button
               onClick={() => setShowAvatarControls(false)}
               className="px-2 py-2 text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors"
-              title="Close"
+              title={t('editor.close')}
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 6L6 18M6 6l12 12"/>
@@ -987,13 +990,13 @@ export default function EditorPage() {
                   <circle cx="12" cy="12" r="3"/>
                   <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                 </svg>
-                ノード詳細設定
+                {t('editor.nodeDetailSettings')}
               </div>
               <button
                 onClick={() => setSettingsPanelOpen(false)}
                 className="text-white/40 hover:text-white/70 transition-colors p-0.5"
-                title="閉じる"
-                aria-label="設定パネルを閉じる"
+                title={t('editor.close')}
+                aria-label={t('editor.closeSettingsPanel')}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M18 6L6 18M6 6l12 12"/>
