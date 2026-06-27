@@ -92,6 +92,7 @@ export default function EditorPage() {
   const router = useRouter();
   const workflowId = useMemo(() => resolveWorkflowId(params.id, 'editor'), [params.id]);
 
+  const [editorLoading, setEditorLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -237,7 +238,10 @@ export default function EditorPage() {
 
   const loadWorkflowData = async () => {
     isInitialLoad.current = true;
-    const response = await api.getWorkflow(workflowId);
+    const [response, statusResponse] = await Promise.all([
+      api.getWorkflow(workflowId),
+      api.getWorkflowStatus(workflowId),
+    ]);
     if (response.data) {
       loadWorkflow({
         id: response.data.id,
@@ -250,8 +254,6 @@ export default function EditorPage() {
         },
       });
 
-      // Sync execution state with server
-      const statusResponse = await api.getWorkflowStatus(workflowId);
       if (statusResponse.data) {
         setExecuting(statusResponse.data.status === 'running');
       } else if (statusResponse.error) {
@@ -268,8 +270,10 @@ export default function EditorPage() {
       // Allow auto-save after initial load settles
       setTimeout(() => {
         isInitialLoad.current = false;
+        setEditorLoading(false);
       }, 500);
     } else if (response.error) {
+      setEditorLoading(false);
       toast.error(`ワークフローの読み込みに失敗: ${response.error}`);
       if (workflowId !== '_' && response.error.includes('not found')) {
         router.push('/');
@@ -586,6 +590,16 @@ export default function EditorPage() {
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
+      {/* Loading overlay */}
+      {editorLoading && (
+        <div className="absolute inset-0 z-[100] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)' }}>
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-emerald-400 animate-spin" />
+            <span className="text-sm text-white/60">読み込み中...</span>
+          </div>
+        </div>
+      )}
+
       {/* Grid background */}
       <div
         className="absolute inset-0 pointer-events-none"
