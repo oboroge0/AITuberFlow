@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { usePluginStore } from '@/stores/pluginStore';
 import { toast } from '@/stores/toastStore';
+import { useTranslation } from '@/stores/localeStore';
 import type { ActivityCycle, CycleStep } from '@/lib/types';
 
 // Status colors follow the node border color language:
@@ -25,15 +26,16 @@ function formatDuration(ms: number | undefined): string {
 
 // Trigger display convention (icon-less): quoted text = utterance-like input,
 // plain labels = system triggers
-function triggerLabel(cycle: ActivityCycle): string {
-  const t = cycle.trigger;
-  if (!t) return '実行';
-  if (t.eventType === 'manual') return '手動実行';
-  if (t.summary && t.summary !== t.eventType) return `「${t.summary}」`;
-  return t.eventType;
+function triggerLabel(cycle: ActivityCycle, t: (key: string) => string): string {
+  const trigger = cycle.trigger;
+  if (!trigger) return t('activity.triggerRun');
+  if (trigger.eventType === 'manual') return t('activity.triggerManual');
+  if (trigger.summary && trigger.summary !== trigger.eventType) return `「${trigger.summary}」`;
+  return trigger.eventType;
 }
 
 export default function ActivityDrawer() {
+  const { t } = useTranslation();
   const { cycles, logs, nodes, selectNode, clearCycles, clearLogs, isExecuting } = useWorkflowStore();
   const { getPluginLabel } = usePluginStore();
 
@@ -54,7 +56,7 @@ export default function ActivityDrawer() {
   const responsePreview = (cycle: ActivityCycle): string => {
     if (cycle.status === 'error') {
       const failed = cycle.steps.find((s) => s.status === 'error');
-      if (failed) return `${nodeLabel(failed.nodeId)}: ${failed.error ?? 'エラー'}`;
+      if (failed) return `${nodeLabel(failed.nodeId)}: ${failed.error ?? t('status.error')}`;
     }
     for (let i = cycle.steps.length - 1; i >= 0; i--) {
       const p = cycle.steps[i].textPreview;
@@ -66,9 +68,9 @@ export default function ActivityDrawer() {
   const copyError = async (step: CycleStep) => {
     try {
       await navigator.clipboard.writeText(`${nodeLabel(step.nodeId)}: ${step.error ?? ''}`);
-      toast.success('エラー内容をコピーしました');
+      toast.success(t('activity.copiedError'));
     } catch {
-      toast.error('コピーに失敗しました');
+      toast.error(t('activity.copyFailed'));
     }
   };
 
@@ -92,7 +94,7 @@ export default function ActivityDrawer() {
         >
           {/* Tabs */}
           <div className="flex border-b border-white/10 flex-shrink-0">
-            {([['activity', 'アクティビティ'], ['raw', '生ログ']] as const).map(([key, label]) => (
+            {([['activity', t('activity.title')], ['raw', t('activity.rawLog')]] as const).map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setTab(key)}
@@ -110,7 +112,7 @@ export default function ActivityDrawer() {
                 onClick={() => (tab === 'activity' ? clearCycles() : clearLogs())}
                 className="text-[10px] text-white/40 hover:text-white/80 px-2 py-1 transition-colors"
               >
-                クリア
+                {t('activity.clear')}
               </button>
             </div>
           </div>
@@ -120,7 +122,7 @@ export default function ActivityDrawer() {
             <div className="flex-1 overflow-y-auto">
               {ordered.length === 0 ? (
                 <div className="text-white/35 text-xs text-center py-6">
-                  まだ実行履歴がありません。ワークフローを実行するとここに表示されます
+                  {t('activity.emptyHistory')}
                 </div>
               ) : (
                 ordered.map((cycle) => {
@@ -147,7 +149,7 @@ export default function ActivityDrawer() {
                           className="text-[11px] truncate flex-shrink-0 max-w-[30%]"
                           style={{ color: cycle.status === 'error' ? '#FCA5A5' : 'rgba(255,255,255,0.85)' }}
                         >
-                          {triggerLabel(cycle)}
+                          {triggerLabel(cycle, t)}
                         </span>
                         <span
                           className="text-[11px] truncate flex-1"
@@ -156,7 +158,7 @@ export default function ActivityDrawer() {
                           {responsePreview(cycle)}
                         </span>
                         <span className="text-[10px] text-white/40 flex-shrink-0 font-mono">
-                          {cycle.status === 'running' ? '実行中' : formatDuration(cycle.totalDuration)}
+                          {cycle.status === 'running' ? t('activity.running') : formatDuration(cycle.totalDuration)}
                         </span>
                       </button>
 
@@ -168,7 +170,7 @@ export default function ActivityDrawer() {
                               key={`${step.nodeId}-${i}`}
                               className="flex items-start gap-2 pl-7 pr-3 py-1 hover:bg-white/5 cursor-pointer"
                               onClick={() => selectNode(step.nodeId)}
-                              title="クリックでノードを選択"
+                              title={t('activity.clickToSelect')}
                             >
                               <span
                                 className="text-[10px] flex-shrink-0 w-[110px] truncate"
@@ -186,7 +188,7 @@ export default function ActivityDrawer() {
                                     className="ml-2 text-white/40 hover:text-white/80 underline"
                                     onClick={(e) => { e.stopPropagation(); void copyError(step); }}
                                   >
-                                    コピー
+                                    {t('common.copy')}
                                   </button>
                                 </span>
                               ) : (
@@ -209,7 +211,7 @@ export default function ActivityDrawer() {
           {tab === 'raw' && (
             <div className="flex-1 overflow-y-auto px-3 py-2" style={{ fontFamily: 'monospace', fontSize: '11px' }}>
               {logs.length === 0 ? (
-                <div className="text-white/35 text-center py-6">ログはまだありません</div>
+                <div className="text-white/35 text-center py-6">{t('activity.emptyLog')}</div>
               ) : (
                 logs.map((log) => (
                   <div
@@ -246,13 +248,13 @@ export default function ActivityDrawer() {
         aria-expanded={open}
       >
         <span className="select-none text-white/40">{open ? '▽' : '△'}</span>
-        <span>アクティビティ</span>
+        <span>{t('activity.title')}</span>
         {isExecuting && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />}
         {cycles.length > 0 && (
-          <span className="text-white/35">{cycles.length}件</span>
+          <span className="text-white/35">{cycles.length}{t('activity.items')}</span>
         )}
         {errorCount > 0 && (
-          <span className="text-red-400 font-medium">エラー {errorCount}</span>
+          <span className="text-red-400 font-medium">{t('status.error')} {errorCount}</span>
         )}
       </button>
     </div>

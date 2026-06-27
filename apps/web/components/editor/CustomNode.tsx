@@ -101,6 +101,7 @@ function InlineTextField({
   password?: boolean;
   onCommit: (val: string) => void;
 }) {
+  const { t } = useLocaleStore();
   const [draft, setDraft] = useState<string | null>(null);
   const [showPw, setShowPw] = useState(false);
   const cancelRef = useRef(false);
@@ -142,8 +143,8 @@ function InlineTextField({
         {password && (
           <button
             className={`nodrag nopan text-white/30 hover:text-white/60 flex-shrink-0 ${FOCUS_RING}`}
-            aria-label={showPw ? 'キーを隠す' : 'キーを表示'}
-            title={showPw ? 'キーを隠す' : 'キーを表示'}
+            aria-label={showPw ? t('inline.hideKey') : t('inline.showKey')}
+            title={showPw ? t('inline.hideKey') : t('inline.showKey')}
             onClick={(e) => { e.stopPropagation(); setShowPw(!showPw); }}
           >
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -181,6 +182,7 @@ function InlineNumberField({
   accentColor: string;
   onCommit: (val: number) => void;
 }) {
+  const { t } = useLocaleStore();
   const hasRange = typeof min === 'number' && typeof max === 'number' && max > min;
   const step = !hasRange ? 1 : (max! - min!) <= 2 ? 0.01 : (max! - min!) <= 10 ? 0.1 : 1;
   const useSlider = hasRange && (max! - min!) / step <= 200;
@@ -328,7 +330,7 @@ function InlineNumberField({
       aria-valuemin={min}
       aria-valuemax={max}
       aria-valuenow={display}
-      title="ドラッグで調整 / クリックで数値入力"
+      title={t('inline.dragToAdjust')}
       className={`nodrag nopan relative select-none ${editing ? '' : `cursor-ew-resize ${FOCUS_RING}`} ${FOCUS_RING_WITHIN}`}
       style={{ background: FIELD_BAR_BG, borderRadius: '0 0 4px 4px', overflow: 'hidden', touchAction: 'none' }}
       onPointerDown={onPointerDown}
@@ -369,6 +371,7 @@ function TextareaEditorPopover({
   onCommit: (val: string) => void;
   onClose: () => void;
 }) {
+  const { t } = useLocaleStore();
   const [draft, setDraft] = useState(value);
   const popRef = useRef<HTMLDivElement>(null);
   const draftRef = useRef(draft);
@@ -410,7 +413,7 @@ function TextareaEditorPopover({
       >
         <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
           <span className="text-[12px] font-semibold text-white/85">{label}</span>
-          <span className="text-[10px] text-white/35">Ctrl+Enter で保存 / Esc でキャンセル</span>
+          <span className="text-[10px] text-white/35">{t('inline.ctrlEnterSave')}</span>
         </div>
         <textarea
           className="nowheel w-full text-[13px] leading-relaxed text-white/90 outline-none resize-y"
@@ -434,20 +437,20 @@ function TextareaEditorPopover({
           }}
         />
         <div className="flex items-center justify-between px-3 py-2 border-t border-white/10">
-          <span className="text-[10px] text-white/40 tabular-nums">{draft.length}字</span>
+          <span className="text-[10px] text-white/40 tabular-nums">{draft.length}</span>
           <div className="flex items-center gap-2">
             <button
               className="text-[11px] text-white/50 hover:text-white/80 px-2 py-1 rounded transition-colors"
               onClick={onClose}
             >
-              キャンセル
+              {t('common.cancel')}
             </button>
             <button
               className="text-[11px] text-white px-3 py-1 rounded transition-colors"
               style={{ background: 'rgba(16, 185, 129, 0.7)' }}
               onClick={() => { onCommit(draft); onClose(); }}
             >
-              保存
+              {t('common.save')}
             </button>
           </div>
         </div>
@@ -464,16 +467,16 @@ const COMPLEX_FIELD_TYPES = new Set([
 ]);
 
 // Get a summary string for a field value (used in collapsed view)
-function getValueSummary(field: ConfigField, value: unknown): string {
+function getValueSummary(field: ConfigField, value: unknown, t: (key: string) => string): string {
   if (value === undefined || value === null || value === '') {
     return '';
   }
 
   if (COMPLEX_FIELD_TYPES.has(field.type)) {
-    if (Array.isArray(value) && value.length > 0) return 'Configured';
-    if (typeof value === 'object' && value !== null && Object.keys(value).length > 0) return 'Configured';
-    if (typeof value === 'string' && value) return 'Configured';
-    return 'Not set';
+    if (Array.isArray(value) && value.length > 0) return t('common.configured');
+    if (typeof value === 'object' && value !== null && Object.keys(value).length > 0) return t('common.configured');
+    if (typeof value === 'string' && value) return t('common.configured');
+    return t('common.notSet');
   }
 
   switch (field.type) {
@@ -487,7 +490,7 @@ function getValueSummary(field: ConfigField, value: unknown): string {
     case 'number':
       return String(value);
     case 'boolean':
-      return value ? 'ON' : 'OFF';
+      return value ? t('common.on') : t('common.off');
     case 'password':
       return value ? '••••••' : '';
     case 'textarea': {
@@ -530,6 +533,7 @@ function NodeConfigFields({
   accentColor: string;
   onOpenSettings: () => void;
 }) {
+  const { t } = useLocaleStore();
   // Build initial expanded state: inline fields start expanded, others collapsed
   const allFields = Object.entries(pluginConfig);
   const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>(() => {
@@ -585,7 +589,7 @@ function NodeConfigFields({
           <circle cx="12" cy="12" r="3"/>
           <path d="M12 1v3m0 16v3m11-11h-3M4 12H1m18.4-7.4l-2.1 2.1M6.7 17.3l-2.1 2.1m14.8 0l-2.1-2.1M6.7 6.7L4.6 4.6"/>
         </svg>
-        詳細設定で編集
+        {t('inline.editInSettings')}
       </button>
     </div>
   );
@@ -617,8 +621,8 @@ function NodeConfigFields({
     // Dynamic fields: options are fetched from external engines in the
     // settings panel (e.g. VOICEVOX speakers) — show value + hand-off button
     if (field.dynamic) {
-      const summary = getValueSummary(field, value);
-      return <OpenSettingsRow summary={summary || 'Not set'} />;
+      const summary = getValueSummary(field, value, t);
+      return <OpenSettingsRow summary={summary || t('common.notSet')} />;
     }
 
     switch (field.type) {
@@ -748,11 +752,11 @@ function NodeConfigFields({
               </div>
             ) : (
               <div className="text-[10px] text-white/35 italic">
-                {field.placeholder || '未設定'}
+                {field.placeholder || t('common.notSet')}
               </div>
             )}
             <div className="text-[9px] text-white/35 mt-0.5">
-              {str.length}字 — クリックで編集
+              {str.length}{t('inline.charCountEdit')}
             </div>
           </button>
         );
@@ -779,8 +783,8 @@ function NodeConfigFields({
         const summary = usedGlobalKey
           ? field.type === 'password'
             ? ''
-            : getValueSummary(field, globalSettings[usedGlobalKey])
-          : getValueSummary(field, value);
+            : getValueSummary(field, globalSettings[usedGlobalKey], t)
+          : getValueSummary(field, value, t);
 
         return (
           <div key={key} style={{ borderRadius: '4px', overflow: 'hidden' }}>
@@ -797,9 +801,9 @@ function NodeConfigFields({
                 <span
                   className="text-[9px] px-1 py-px rounded select-none flex-shrink-0 ml-auto"
                   style={{ background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)' }}
-                  title="ノード側が未設定のため、グローバル設定の値を使用しています（入力すると上書き）"
+                  title={t('inline.globalTooltip')}
                 >
-                  グローバル
+                  {t('inline.globalBadge')}
                 </span>
               )}
               {!isExpanded && summary && (
@@ -1057,7 +1061,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     <button
       onClick={handleCollapseToggle}
       className={`text-white/40 hover:text-white/80 transition-colors flex-shrink-0 ${className ?? ''}`}
-      title={collapsed ? '展開する' : '折りたたむ'}
+      title={collapsed ? t('inline.expand') : t('inline.collapse')}
     >
       {collapsed ? <ChevronRight /> : <ChevronDown />}
     </button>
@@ -1069,8 +1073,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       onClick={(e) => { e.stopPropagation(); openSettings(); }}
       onDoubleClick={(e) => e.stopPropagation()}
       className="nodrag text-white/30 hover:text-white/80 transition-colors flex-shrink-0 p-0.5"
-      title="詳細設定"
-      aria-label="詳細設定を開く"
+      title={t('inline.detailSettings')}
+      aria-label={t('inline.openDetailSettings')}
     >
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="12" cy="12" r="3"/>
@@ -1090,7 +1094,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           border: '2px solid #1F2937',
           boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
         }}
-        title="Run from this node"
+        title={t('inline.runFromNode')}
       >
         <svg width="10" height="10" viewBox="0 0 24 24" fill="white" stroke="none">
           <polygon points="5 3 19 12 5 21 5 3"/>
