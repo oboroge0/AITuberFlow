@@ -877,7 +877,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
 
       {/* Display Mode Toggle */}
       <div className="absolute top-4 right-4 flex gap-1 bg-gray-800/95 rounded-lg p-1 border border-white/10 shadow-lg z-10">
-        <span className="px-2 py-1.5 text-[10px] text-white/40">{t('canvas.displayLabel')}</span>
+        <span className="px-2 py-1.5 text-[10px] text-white/40">表示:</span>
         {(['simple', 'standard', 'detailed'] as const).map((mode) => (
           <button
             key={mode}
@@ -888,7 +888,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
                 : 'text-white/60 hover:bg-white/10 hover:text-white/80'
             }`}
           >
-            {mode === 'simple' ? t('canvas.simple') : mode === 'standard' ? t('canvas.standard') : t('canvas.detailed')}
+            {mode === 'simple' ? '簡易' : mode === 'standard' ? '標準' : '詳細'}
           </button>
         ))}
       </div>

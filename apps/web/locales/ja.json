@@ -514,10 +514,6 @@
   "canvas": {
     "nodeDeleted": "ノードを削除しました",
     "addNode": "ノードを追加",
-    "displayLabel": "表示:",
-    "simple": "簡易",
-    "standard": "標準",
-    "detailed": "詳細",
     "connectableNodes": "接続できるノード"
   },
   "preview": {

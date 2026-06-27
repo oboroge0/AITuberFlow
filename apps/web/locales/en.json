@@ -480,7 +480,7 @@
     "emptyHistory": "No execution history yet. Run the workflow to see it here",
     "emptyLog": "No logs yet",
     "clickToSelect": "Click to select node",
-    "items": "items",
+    "items": " items",
     "triggerRun": "Run",
     "triggerManual": "Manual Run",
     "running": "Running",
@@ -507,17 +507,13 @@
     "collapse": "Collapse",
     "detailSettings": "Detail Settings",
     "openDetailSettings": "Open detail settings",
-    "charCountEdit": "chars — Click to edit",
+    "charCountEdit": " chars — Click to edit",
     "ctrlEnterSave": "Ctrl+Enter to save / Esc to cancel",
     "runFromNode": "Run from this node"
   },
   "canvas": {
     "nodeDeleted": "Node deleted",
     "addNode": "Add Node",
-    "displayLabel": "Display:",
-    "simple": "Simple",
-    "standard": "Standard",
-    "detailed": "Detailed",
     "connectableNodes": "Connectable nodes"
   },
   "preview": {
