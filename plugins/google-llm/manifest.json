@@ -22,14 +22,14 @@
       {
         "id": "prompt",
         "type": "string",
-        "description": "User message to send to Gemini"
+        "description": "Geminiに送るメッセージ"
       }
     ],
     "outputs": [
       {
         "id": "response",
         "type": "string",
-        "description": "Generated response from Gemini"
+        "description": "Geminiの応答テキスト"
       }
     ],
     "events": {

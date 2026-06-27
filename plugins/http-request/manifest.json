@@ -22,19 +22,19 @@
       {
         "id": "body",
         "type": "any",
-        "description": "Request body data (for POST/PUT)"
+        "description": "リクエストボディ（POST/PUT用）"
       }
     ],
     "outputs": [
       {
         "id": "response",
         "type": "any",
-        "description": "Response data from the API"
+        "description": "APIからのレスポンスデータ"
       },
       {
         "id": "status",
         "type": "number",
-        "description": "HTTP status code"
+        "description": "HTTPステータスコード"
       }
     ],
     "events": {
