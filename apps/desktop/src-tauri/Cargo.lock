@@ -19,7 +19,7 @@ dependencies = [
 
 [[package]]
 name = "aituber-flow"
-version = "2.4.0"
+version = "2.5.0"
 dependencies = [
  "serde",
  "serde_json",
