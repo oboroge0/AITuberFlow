@@ -1198,28 +1198,62 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     </>
   );
 
-  // Tooltip component
+  // Tooltip component — shows port/config summary instead of node description
   const Tooltip = () => {
-    const description = getNodeDesc(data.type);
+    if (!showTooltip) return null;
 
-    return showTooltip ? (
+    const inputs = data.inputs ?? [];
+    const outputs = data.outputs ?? [];
+    const configFields = data.pluginConfig ? Object.entries(data.pluginConfig) : [];
+    const hasContent = inputs.length > 0 || outputs.length > 0 || configFields.length > 0;
+    if (!hasContent) return null;
+
+    return (
       <div
-        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-50 pointer-events-none"
-        style={{ overflow: 'hidden' }}
+        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-50 pointer-events-none whitespace-nowrap"
       >
-        <div
-          className="bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-lg p-3 shadow-xl"
-        >
-          <div className="text-[11px] text-white/90 whitespace-pre-line leading-relaxed">
-            {description}
-          </div>
+        <div className="bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-lg p-2.5 shadow-xl min-w-[180px]">
+          {inputs.length > 0 && (
+            <div className="mb-1.5">
+              <div className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">入力</div>
+              {inputs.map((inp) => (
+                <div key={inp.id} className="flex items-center gap-1.5 py-px">
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: PORT_TYPE_COLORS[inp.type as PortType] ?? '#6B7280' }} />
+                  <span className="text-[10px] text-white/80">{inp.label}</span>
+                  <span className="text-[9px] text-white/40 ml-auto">{PORT_TYPE_LABELS[inp.type as PortType] ?? inp.type}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {outputs.length > 0 && (
+            <div className={inputs.length > 0 ? 'mb-1.5 pt-1 border-t border-white/10' : 'mb-1.5'}>
+              <div className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">出力</div>
+              {outputs.map((out) => (
+                <div key={out.id} className="flex items-center gap-1.5 py-px">
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: PORT_TYPE_COLORS[out.type as PortType] ?? '#6B7280' }} />
+                  <span className="text-[10px] text-white/80">{out.label}</span>
+                  <span className="text-[9px] text-white/40 ml-auto">{PORT_TYPE_LABELS[out.type as PortType] ?? out.type}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {configFields.length > 0 && (
+            <div className={(inputs.length > 0 || outputs.length > 0) ? 'pt-1 border-t border-white/10' : ''}>
+              <div className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">設定</div>
+              {configFields.slice(0, 5).map(([key, field]) => (
+                <div key={key} className="text-[10px] text-white/60 py-px truncate max-w-[220px]">
+                  {field.label}
+                </div>
+              ))}
+              {configFields.length > 5 && (
+                <div className="text-[9px] text-white/35">+{configFields.length - 5}項目</div>
+              )}
+            </div>
+          )}
         </div>
-        {/* Arrow */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-gray-900/95 border-r border-b border-white/20 rotate-45"
-        />
+        <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-gray-900/95 border-r border-b border-white/20 rotate-45" />
       </div>
-    ) : null;
+    );
   };
 
   // Port hover tooltip — only renders for the port currently hovered
@@ -1229,8 +1263,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     const typeLabel = PORT_TYPE_LABELS[hoveredPort.type] ?? hoveredPort.type;
     return (
       <div
-        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[60] pointer-events-none"
-        style={{ overflow: 'hidden' }}
+        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[60] pointer-events-none whitespace-nowrap"
       >
         <div className="bg-gray-950/98 backdrop-blur-sm border rounded-lg p-2 shadow-xl" style={{ borderColor: `${typeColor}60` }}>
           <div className="flex items-center gap-1.5 mb-1">
@@ -1806,7 +1839,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   type="target"
                   position={Position.Left}
                   id={input.id}
-                  style={{ ...getHandleStyle(input.type as PortType, true), left: '-7px', position: 'absolute' }}
+                  style={{ ...getHandleStyle(input.type as PortType, true), left: '-7px', position: 'absolute', top: '50%', transform: 'translateY(-50%)' }}
                 />
                 <span className="text-[10px] text-white/60 pl-2 whitespace-nowrap">
                   {input.label}
@@ -1832,7 +1865,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   type="source"
                   position={Position.Right}
                   id={output.id}
-                  style={{ ...getHandleStyle(output.type as PortType, false), right: '-7px', position: 'absolute' }}
+                  style={{ ...getHandleStyle(output.type as PortType, false), right: '-7px', position: 'absolute', top: '50%', transform: 'translateY(-50%)' }}
                 />
               </div>
             ))}
