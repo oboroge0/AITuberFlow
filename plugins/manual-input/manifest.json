@@ -23,7 +23,7 @@
       {
         "id": "text",
         "type": "string",
-        "description": "The input text"
+        "description": "入力されたテキスト"
       }
     ],
     "events": {

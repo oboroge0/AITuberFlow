@@ -22,14 +22,14 @@
       {
         "id": "set",
         "type": "any",
-        "description": "Value to store (overrides default)"
+        "description": "保存する値（デフォルト値を上書き）"
       }
     ],
     "outputs": [
       {
         "id": "value",
         "type": "any",
-        "description": "Stored value"
+        "description": "保存された値"
       }
     ],
     "events": {

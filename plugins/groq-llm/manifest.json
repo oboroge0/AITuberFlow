@@ -22,14 +22,14 @@
       {
         "id": "prompt",
         "type": "string",
-        "description": "The input prompt to send to the model"
+        "description": "モデルに送るプロンプト"
       }
     ],
     "outputs": [
       {
         "id": "response",
         "type": "string",
-        "description": "The generated response from the model"
+        "description": "モデルの応答テキスト"
       }
     ],
     "events": {

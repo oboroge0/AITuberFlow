@@ -22,29 +22,29 @@
       {
         "id": "value",
         "type": "any",
-        "description": "Value to evaluate"
+        "description": "評価する値"
       },
       {
         "id": "data",
         "type": "any",
-        "description": "Data to pass through"
+        "description": "パススルーするデータ"
       }
     ],
     "outputs": [
       {
         "id": "true",
         "type": "any",
-        "description": "Output when condition is true"
+        "description": "条件が真のときの出力"
       },
       {
         "id": "false",
         "type": "any",
-        "description": "Output when condition is false"
+        "description": "条件が偽のときの出力"
       },
       {
         "id": "match",
         "type": "any",
-        "description": "Output when value matches"
+        "description": "値が一致したときの出力"
       }
     ],
     "events": {
