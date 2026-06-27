@@ -109,7 +109,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     nodeStatuses,
   } = useWorkflowStore();
 
-  const { nodeDisplayMode, setNodeDisplayMode, searchVisible, searchQuery } = useUIPreferencesStore();
+  const { searchVisible, searchQuery } = useUIPreferencesStore();
   const { getPluginColor, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs, getPluginConfig, isLoaded: pluginsLoaded } = usePluginStore();
   const { setDragging, clearDragging } = useDragStateStore();
 
@@ -843,55 +843,58 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
           return inputs.some((inp) => arePortTypesCompatible(connectSuggest.sourceType, inp.type as PortType));
         });
         if (compatible.length === 0) return null;
+
+        // Group by category (same structure as the sidebar / right-click menu)
+        const grouped = new Map<string, typeof compatible>();
+        for (const nt of compatible) {
+          const plugin = plugins.find((p) => p.id === nt.id);
+          const cat = (plugin?.category as string) ?? 'utility';
+          if (!grouped.has(cat)) grouped.set(cat, []);
+          grouped.get(cat)!.push(nt);
+        }
+
         const adjust = (v: number, max: number, size: number) => Math.min(v, max - size);
         const px = adjust(connectSuggest.x, window.innerWidth, 220);
-        const py = adjust(connectSuggest.y, window.innerHeight, compatible.length * 36 + 48);
+        const py = adjust(connectSuggest.y, window.innerHeight, 320);
         return (
           <div
-            className="fixed z-50 py-1 rounded-lg shadow-xl"
-            style={{ left: px, top: py, background: 'rgba(17,24,39,0.98)', border: '1px solid rgba(255,255,255,0.1)', minWidth: '210px' }}
+            className="fixed z-50 py-1 rounded-lg shadow-xl overflow-y-auto"
+            style={{ left: px, top: py, background: 'rgba(17,24,39,0.98)', border: '1px solid rgba(255,255,255,0.1)', minWidth: '210px', maxHeight: '320px' }}
           >
             <div className="px-3 pt-2 pb-1 text-[10px] text-white/40 uppercase tracking-wider flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full" style={{ background: PORT_TYPE_COLORS[connectSuggest.sourceType] }} />
               {t('canvas.connectableNodes')}
             </div>
-            {compatible.map((nt) => (
-              <button
-                key={nt.id}
-                onClick={() => {
-                  const bounds = reactFlowWrapper.current?.getBoundingClientRect();
-                  if (!bounds) return;
-                  addNode({ type: nt.id, position: { x: connectSuggest.x - bounds.left - 80, y: connectSuggest.y - bounds.top - 30 }, config: { ...nt.defaultConfig } });
-                  setConnectSuggest(null);
-                }}
-                className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 text-white/90 hover:bg-white/10 transition-colors"
-              >
-                <span style={{ color: nt.color }}>{nt.icon}</span>
-                {nt.label}
-              </button>
+            {[...grouped.entries()].map(([catId, nodes], gi) => (
+              <React.Fragment key={catId}>
+                {gi > 0 && <div className="my-0.5 border-t border-white/10" />}
+                <div
+                  className="px-3 pt-1.5 pb-0.5 text-[9px] font-semibold uppercase tracking-wider"
+                  style={{ color: CATEGORY_COLORS[catId as keyof typeof CATEGORY_COLORS] ?? '#6B7280' }}
+                >
+                  {CATEGORY_LABELS[catId as keyof typeof CATEGORY_LABELS] ?? catId}
+                </div>
+                {nodes.map((nt) => (
+                  <button
+                    key={nt.id}
+                    onClick={() => {
+                      const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+                      if (!bounds) return;
+                      addNode({ type: nt.id, position: { x: connectSuggest.x - bounds.left - 80, y: connectSuggest.y - bounds.top - 30 }, config: { ...nt.defaultConfig } });
+                      setConnectSuggest(null);
+                    }}
+                    className="w-full px-3 py-1.5 text-left text-sm flex items-center gap-2 text-white/90 hover:bg-white/10 transition-colors"
+                  >
+                    <span style={{ color: nt.color }}>{nt.icon}</span>
+                    {nt.label}
+                  </button>
+                ))}
+              </React.Fragment>
             ))}
             <button onClick={() => setConnectSuggest(null)} className="w-full px-3 py-1.5 text-left text-[11px] text-white/30 hover:text-white/60 border-t border-white/10 mt-1">{t('common.cancel')}</button>
           </div>
         );
       })()}
-
-      {/* Display Mode Toggle */}
-      <div className="absolute top-4 right-4 flex gap-1 bg-gray-800/95 rounded-lg p-1 border border-white/10 shadow-lg z-10">
-        <span className="px-2 py-1.5 text-[10px] text-white/40">表示:</span>
-        {(['simple', 'standard', 'detailed'] as const).map((mode) => (
-          <button
-            key={mode}
-            onClick={() => setNodeDisplayMode(mode)}
-            className={`px-3 py-1.5 text-[11px] rounded transition-colors ${
-              nodeDisplayMode === mode
-                ? 'bg-white/20 text-white font-medium'
-                : 'text-white/60 hover:bg-white/10 hover:text-white/80'
-            }`}
-          >
-            {mode === 'simple' ? '簡易' : mode === 'standard' ? '標準' : '詳細'}
-          </button>
-        ))}
-      </div>
 
       {/* Custom styles for React Flow */}
       <style jsx global>{`

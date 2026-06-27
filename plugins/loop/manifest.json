@@ -22,24 +22,24 @@
       {
         "id": "input",
         "type": "any",
-        "description": "Input data"
+        "description": "入力データ"
       },
       {
         "id": "loopback",
         "type": "any",
-        "description": "Loop back input"
+        "description": "ループバック入力"
       }
     ],
     "outputs": [
       {
         "id": "loop",
         "type": "any",
-        "description": "Loop output"
+        "description": "ループ出力"
       },
       {
         "id": "done",
         "type": "any",
-        "description": "Done output"
+        "description": "完了時の出力"
       }
     ],
     "events": {

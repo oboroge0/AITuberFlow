@@ -845,7 +845,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   }, [id, selectNode, setSettingsPanelOpen]);
   const status = data.nodeStatus;
   const { getPluginColor, getPluginBgColor, getPluginIcon, getPluginById } = usePluginStore();
-  const { nodeDisplayMode, collapsedNodeIds, toggleNodeCollapse } = useUIPreferencesStore();
+  const { collapsedNodeIds, toggleNodeCollapse } = useUIPreferencesStore();
   const { getNodeDesc, t } = useLocaleStore();
   const [showTooltip, setShowTooltip] = useState(false);
   const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -1053,14 +1053,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       return { ...baseStyle, padding: '8px 12px' };
     }
 
-    switch (nodeDisplayMode) {
-      case 'simple':
-        return { ...baseStyle, padding: '8px 12px' };
-      case 'detailed':
-        return { ...baseStyle, padding: '0' };
-      default: // standard
-        return { ...baseStyle, padding: '12px 16px' };
-    }
+    return { ...baseStyle, padding: '12px 16px' };
   };
 
   // Collapse toggle button
@@ -1202,28 +1195,62 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     </>
   );
 
-  // Tooltip component
+  // Tooltip component — shows port/config summary instead of node description
   const Tooltip = () => {
-    const description = getNodeDesc(data.type);
+    if (!showTooltip) return null;
 
-    return showTooltip ? (
+    const inputs = data.inputs ?? [];
+    const outputs = data.outputs ?? [];
+    const configFields = data.pluginConfig ? Object.entries(data.pluginConfig) : [];
+    const hasContent = inputs.length > 0 || outputs.length > 0 || configFields.length > 0;
+    if (!hasContent) return null;
+
+    return (
       <div
-        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-50 pointer-events-none"
-        style={{ overflow: 'hidden' }}
+        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-50 pointer-events-none whitespace-nowrap"
       >
-        <div
-          className="bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-lg p-3 shadow-xl"
-        >
-          <div className="text-[11px] text-white/90 whitespace-pre-line leading-relaxed">
-            {description}
-          </div>
+        <div className="bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-lg p-2.5 shadow-xl min-w-[180px]">
+          {inputs.length > 0 && (
+            <div className="mb-1.5">
+              <div className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">{t('inline.inputs')}</div>
+              {inputs.map((inp) => (
+                <div key={inp.id} className="flex items-center gap-1.5 py-px">
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: PORT_TYPE_COLORS[inp.type as PortType] ?? '#6B7280' }} />
+                  <span className="text-[10px] text-white/80">{inp.label}</span>
+                  <span className="text-[9px] text-white/40 ml-auto">{PORT_TYPE_LABELS[inp.type as PortType] ?? inp.type}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {outputs.length > 0 && (
+            <div className={inputs.length > 0 ? 'mb-1.5 pt-1 border-t border-white/10' : 'mb-1.5'}>
+              <div className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">{t('inline.outputs')}</div>
+              {outputs.map((out) => (
+                <div key={out.id} className="flex items-center gap-1.5 py-px">
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: PORT_TYPE_COLORS[out.type as PortType] ?? '#6B7280' }} />
+                  <span className="text-[10px] text-white/80">{out.label}</span>
+                  <span className="text-[9px] text-white/40 ml-auto">{PORT_TYPE_LABELS[out.type as PortType] ?? out.type}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {configFields.length > 0 && (
+            <div className={(inputs.length > 0 || outputs.length > 0) ? 'pt-1 border-t border-white/10' : ''}>
+              <div className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">{t('inline.settings')}</div>
+              {configFields.slice(0, 5).map(([key, field]) => (
+                <div key={key} className="text-[10px] text-white/60 py-px truncate max-w-[220px]">
+                  {field.label}
+                </div>
+              ))}
+              {configFields.length > 5 && (
+                <div className="text-[9px] text-white/35">+{configFields.length - 5} {t('inline.moreItems')}</div>
+              )}
+            </div>
+          )}
         </div>
-        {/* Arrow */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-gray-900/95 border-r border-b border-white/20 rotate-45"
-        />
+        <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-gray-900/95 border-r border-b border-white/20 rotate-45" />
       </div>
-    ) : null;
+    );
   };
 
   // Port hover tooltip — only renders for the port currently hovered
@@ -1233,8 +1260,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     const typeLabel = PORT_TYPE_LABELS[hoveredPort.type] ?? hoveredPort.type;
     return (
       <div
-        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[60] pointer-events-none"
-        style={{ overflow: 'hidden' }}
+        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[60] pointer-events-none whitespace-nowrap"
       >
         <div className="bg-gray-950/98 backdrop-blur-sm border rounded-lg p-2 shadow-xl" style={{ borderColor: `${typeColor}60` }}>
           <div className="flex items-center gap-1.5 mb-1">
@@ -1243,7 +1269,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             <span className="text-[10px] ml-auto" style={{ color: typeColor }}>{typeLabel}</span>
           </div>
           {hoveredPort.description && (
-            <div className="text-[10px] text-white/60 leading-relaxed">{hoveredPort.description}</div>
+            <div className="text-[10px] text-white/60 leading-relaxed whitespace-normal">{hoveredPort.description}</div>
           )}
         </div>
       </div>
@@ -1526,231 +1552,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     );
   }
 
-  // ============ SIMPLE MODE ============
-  if (nodeDisplayMode === 'simple') {
-    return (
-      <div
-        ref={nodeRef}
-        onClick={handleClick}
-        onDoubleClick={handleDoubleClick}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        className="relative"
-        style={getNodeStyle()}
-      >
-        <Tooltip />
-        <PlayButton />
-        <NodeStatusPopover />
-
-        {/* Input handles - simple circles */}
-        {data.inputs && data.inputs.length > 0 && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 flex flex-col gap-1">
-            {data.inputs.map((input) => (
-              <Handle
-                key={input.id}
-                type="target"
-                position={Position.Left}
-                id={input.id}
-                style={{
-                  width: '12px',
-                  height: '12px',
-                  borderRadius: '50%',
-                  background: PORT_TYPE_COLORS[input.type] || '#374151',
-                  border: '2px solid #1F2937',
-                  position: 'relative',
-                }}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Output handles - simple circles */}
-        {data.outputs && data.outputs.length > 0 && (
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 flex flex-col gap-1">
-            {data.outputs.map((output) => (
-              <Handle
-                key={output.id}
-                type="source"
-                position={Position.Right}
-                id={output.id}
-                style={{
-                  width: '12px',
-                  height: '12px',
-                  borderRadius: '50%',
-                  background: PORT_TYPE_COLORS[output.type] || config.color,
-                  border: '2px solid #1F2937',
-                  position: 'relative',
-                }}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Compact header - icon and label only */}
-        <div className="flex items-center gap-2">
-          <CollapseButton />
-          <div
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '4px',
-              background: config.color,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              flexShrink: 0,
-            }}
-          >
-            {config.icon}
-          </div>
-          <span className="font-semibold text-[12px] text-white truncate">
-            {data.label}
-          </span>
-        </div>
-
-        <StatusIndicator />
-      </div>
-    );
-  }
-
-  // ============ DETAILED MODE ============
-  if (nodeDisplayMode === 'detailed') {
-    return (
-      <div
-        ref={nodeRef}
-        onClick={handleClick}
-        onDoubleClick={handleDoubleClick}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        className="relative"
-        style={getNodeStyle()}
-      >
-        <Tooltip />
-        <PlayButton />
-        <NodeStatusPopover />
-
-        {/* Header section */}
-        <div
-          className="flex items-center gap-2 px-3 py-2"
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}
-        >
-          <CollapseButton />
-          <div
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '4px',
-              background: config.color,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              flexShrink: 0,
-            }}
-          >
-            {config.icon}
-          </div>
-          <span className="font-semibold text-[12px] text-white truncate flex-1 min-w-0">
-            {data.label}
-          </span>
-          <SettingsButton />
-        </div>
-
-        {/* Inputs section */}
-        {data.inputs && data.inputs.length > 0 && (
-          <div className="px-3 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-            <div className="text-[9px] text-white/40 uppercase tracking-wider mb-1">Inputs</div>
-            {data.inputs.map((input) => (
-              <div key={input.id} className="flex items-center gap-2 py-1 relative">
-                <Handle
-                  type="target"
-                  position={Position.Left}
-                  id={input.id}
-                  style={{
-                    width: '10px',
-                    height: '10px',
-                    borderRadius: '50%',
-                    background: PORT_TYPE_COLORS[input.type] || '#374151',
-                    border: '1px solid #1F2937',
-                    left: '-5px',
-                    position: 'absolute',
-                  }}
-                />
-                <span className="text-[11px] text-white/80 ml-2">{input.label}</span>
-                <span
-                  className="text-[9px] ml-auto"
-                  style={{ color: PORT_TYPE_COLORS[input.type] || '#6B7280' }}
-                >
-                  {input.type}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Outputs section */}
-        {data.outputs && data.outputs.length > 0 && (
-          <div className="px-3 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-            <div className="text-[9px] text-white/40 uppercase tracking-wider mb-1">Outputs</div>
-            {data.outputs.map((output) => (
-              <div key={output.id} className="flex items-center gap-2 py-1 relative">
-                <span
-                  className="text-[9px]"
-                  style={{ color: PORT_TYPE_COLORS[output.type] || '#6B7280' }}
-                >
-                  {output.type}
-                </span>
-                <span className="text-[11px] text-white/80 ml-auto mr-2">{output.label}</span>
-                <Handle
-                  type="source"
-                  position={Position.Right}
-                  id={output.id}
-                  style={{
-                    width: '10px',
-                    height: '10px',
-                    borderRadius: '50%',
-                    background: PORT_TYPE_COLORS[output.type] || config.color,
-                    border: '1px solid #1F2937',
-                    right: '-5px',
-                    position: 'absolute',
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Status footer */}
-        <div className="px-3 py-2 text-[10px] text-white/50">
-          {getStatusText()}
-        </div>
-
-        {/* Config fields */}
-        {data.pluginConfig && (
-          <div className="px-3 pb-2">
-            <NodeConfigFields
-              nodeType={data.type}
-              config={data.config}
-              pluginConfig={data.pluginConfig}
-              onConfigChange={onInlineConfigChange}
-              accentColor={config.color}
-              onOpenSettings={openSettings}
-            />
-          </div>
-        )}
-        {!data.pluginConfig && data.pluginsLoaded === false && (
-          <div className="px-3 pb-2">
-            <ConfigFieldsSkeleton />
-          </div>
-        )}
-
-        <StatusIndicator />
-      </div>
-    );
-  }
-
-  // ============ STANDARD MODE (default) ============
+  // ============ STANDARD MODE ============
   const inputCount = data.inputs?.length || 0;
   const outputCount = data.outputs?.length || 0;
   const maxPorts = Math.max(inputCount, outputCount);
@@ -1810,7 +1612,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   type="target"
                   position={Position.Left}
                   id={input.id}
-                  style={{ ...getHandleStyle(input.type as PortType, true), left: '-7px', position: 'absolute' }}
+                  style={{ ...getHandleStyle(input.type as PortType, true), left: '-7px', position: 'absolute', top: '50%', transform: 'translateY(-50%)' }}
                 />
                 <span className="text-[10px] text-white/60 pl-2 whitespace-nowrap">
                   {input.label}
@@ -1836,7 +1638,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   type="source"
                   position={Position.Right}
                   id={output.id}
-                  style={{ ...getHandleStyle(output.type as PortType, false), right: '-7px', position: 'absolute' }}
+                  style={{ ...getHandleStyle(output.type as PortType, false), right: '-7px', position: 'absolute', top: '50%', transform: 'translateY(-50%)' }}
                 />
               </div>
             ))}

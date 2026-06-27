@@ -22,34 +22,34 @@
       {
         "id": "trigger",
         "type": "any",
-        "description": "Any input to trigger the configured expression/motion"
+        "description": "表情・モーション発動のトリガー"
       }
     ],
     "outputs": [
       {
         "id": "expression",
         "type": "string",
-        "description": "The triggered expression name"
+        "description": "発動した表情名"
       },
       {
         "id": "intensity",
         "type": "number",
-        "description": "The expression intensity"
+        "description": "表情の強度"
       },
       {
         "id": "motionUrl",
         "type": "string",
-        "description": "URL/path to the motion FBX file"
+        "description": "モーションFBXファイルのURL"
       },
       {
         "id": "motion",
         "type": "string",
-        "description": "The triggered motion name (legacy)"
+        "description": "発動したモーション名（レガシー）"
       },
       {
         "id": "passthrough",
         "type": "any",
-        "description": "Pass-through of the trigger input"
+        "description": "トリガー入力のパススルー"
       }
     ],
     "events": {

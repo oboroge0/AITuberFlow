@@ -22,29 +22,29 @@
       {
         "id": "audio",
         "type": "audio",
-        "description": "Audio data (WAV/PCM bytes)"
+        "description": "音声データ（WAV/PCMバイト）"
       },
       {
         "id": "audioUrl",
         "type": "string",
-        "description": "Path or URL to audio file"
+        "description": "音声ファイルのパスまたはURL"
       }
     ],
     "outputs": [
       {
         "id": "mouthValues",
         "type": "array",
-        "description": "Array of mouth open values over time"
+        "description": "口の開き具合の時系列配列"
       },
       {
         "id": "duration",
         "type": "number",
-        "description": "Audio duration in seconds"
+        "description": "音声の長さ（秒）"
       },
       {
         "id": "audio",
         "type": "audio",
-        "description": "Pass-through of input audio"
+        "description": "入力音声のパススルー"
       }
     ],
     "events": {

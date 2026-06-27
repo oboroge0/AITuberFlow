@@ -1,13 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type NodeDisplayMode = 'simple' | 'standard' | 'detailed';
-
 interface UIPreferencesState {
-  // Node display
-  nodeDisplayMode: NodeDisplayMode;
-  setNodeDisplayMode: (mode: NodeDisplayMode) => void;
-
   // Node collapse state (persisted)
   collapsedNodeIds: string[];
   toggleNodeCollapse: (nodeId: string) => void;
@@ -25,10 +19,6 @@ interface UIPreferencesState {
 export const useUIPreferencesStore = create<UIPreferencesState>()(
   persist(
     (set, get) => ({
-      // Node display
-      nodeDisplayMode: 'standard',
-      setNodeDisplayMode: (mode) => set({ nodeDisplayMode: mode }),
-
       // Node collapse
       collapsedNodeIds: [],
       toggleNodeCollapse: (nodeId: string) => {
@@ -58,7 +48,6 @@ export const useUIPreferencesStore = create<UIPreferencesState>()(
     {
       name: 'aituber-flow-ui-preferences',
       partialize: (state) => ({
-        nodeDisplayMode: state.nodeDisplayMode,
         collapsedNodeIds: state.collapsedNodeIds,
       }),
     }

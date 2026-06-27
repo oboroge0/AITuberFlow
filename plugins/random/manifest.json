@@ -22,14 +22,14 @@
       {
         "id": "trigger",
         "type": "any",
-        "description": "Trigger to generate random value"
+        "description": "ランダム値生成のトリガー"
       }
     ],
     "outputs": [
       {
         "id": "value",
         "type": "any",
-        "description": "Generated random value"
+        "description": "生成されたランダム値"
       }
     ],
     "events": {

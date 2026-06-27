@@ -539,5 +539,11 @@
     "usingGlobal": "Using Global Settings",
     "override": "Override with node settings",
     "collapse": "Collapse"
+  },
+  "inline": {
+    "inputs": "Inputs",
+    "outputs": "Outputs",
+    "settings": "Settings",
+    "moreItems": "more"
   }
 }

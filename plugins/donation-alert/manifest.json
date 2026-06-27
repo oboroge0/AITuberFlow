@@ -22,34 +22,34 @@
       {
         "id": "trigger",
         "type": "any",
-        "description": "Trigger to show the alert"
+        "description": "アラート表示のトリガー"
       },
       {
         "id": "amount",
         "type": "number",
-        "description": "Donation amount"
+        "description": "投げ銭の金額"
       },
       {
         "id": "currency",
         "type": "string",
-        "description": "Currency code (USD, JPY, etc.)"
+        "description": "通貨コード（USD、JPYなど）"
       },
       {
         "id": "author",
         "type": "string",
-        "description": "Donor name"
+        "description": "投げ銭した人の名前"
       },
       {
         "id": "message",
         "type": "string",
-        "description": "Donation message"
+        "description": "投げ銭メッセージ"
       }
     ],
     "outputs": [
       {
         "id": "displayed",
         "type": "boolean",
-        "description": "True when alert is displayed"
+        "description": "アラート表示済みならtrue"
       }
     ],
     "events": {
