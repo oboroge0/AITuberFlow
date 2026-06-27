@@ -435,5 +435,11 @@
     "usingGlobal": "グローバル設定を使用",
     "override": "個別設定で上書き",
     "collapse": "閉じる"
+  },
+  "inline": {
+    "inputs": "入力",
+    "outputs": "出力",
+    "settings": "設定",
+    "moreItems": "項目"
   }
 }

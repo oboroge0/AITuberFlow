@@ -842,7 +842,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const status = data.nodeStatus;
   const { getPluginColor, getPluginBgColor, getPluginIcon, getPluginById } = usePluginStore();
   const { nodeDisplayMode, collapsedNodeIds, toggleNodeCollapse } = useUIPreferencesStore();
-  const { getNodeDesc } = useLocaleStore();
+  const { getNodeDesc, t } = useLocaleStore();
   const [showTooltip, setShowTooltip] = useState(false);
   const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -1215,7 +1215,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         <div className="bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-lg p-2.5 shadow-xl min-w-[180px]">
           {inputs.length > 0 && (
             <div className="mb-1.5">
-              <div className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">入力</div>
+              <div className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">{t('inline.inputs')}</div>
               {inputs.map((inp) => (
                 <div key={inp.id} className="flex items-center gap-1.5 py-px">
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: PORT_TYPE_COLORS[inp.type as PortType] ?? '#6B7280' }} />
@@ -1227,7 +1227,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           )}
           {outputs.length > 0 && (
             <div className={inputs.length > 0 ? 'mb-1.5 pt-1 border-t border-white/10' : 'mb-1.5'}>
-              <div className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">出力</div>
+              <div className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">{t('inline.outputs')}</div>
               {outputs.map((out) => (
                 <div key={out.id} className="flex items-center gap-1.5 py-px">
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: PORT_TYPE_COLORS[out.type as PortType] ?? '#6B7280' }} />
@@ -1239,14 +1239,14 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           )}
           {configFields.length > 0 && (
             <div className={(inputs.length > 0 || outputs.length > 0) ? 'pt-1 border-t border-white/10' : ''}>
-              <div className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">設定</div>
+              <div className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">{t('inline.settings')}</div>
               {configFields.slice(0, 5).map(([key, field]) => (
                 <div key={key} className="text-[10px] text-white/60 py-px truncate max-w-[220px]">
                   {field.label}
                 </div>
               ))}
               {configFields.length > 5 && (
-                <div className="text-[9px] text-white/35">+{configFields.length - 5}項目</div>
+                <div className="text-[9px] text-white/35">+{configFields.length - 5} {t('inline.moreItems')}</div>
               )}
             </div>
           )}
