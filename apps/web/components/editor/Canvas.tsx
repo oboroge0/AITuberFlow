@@ -809,6 +809,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         className="!bg-transparent"
         connectionMode={ConnectionMode.Strict}
         elevateNodesOnSelect
+        selectNodesOnDrag
         defaultEdgeOptions={{
           animated: true,
           style: { stroke: DEFAULT_EDGE_COLOR, strokeWidth: 3 },

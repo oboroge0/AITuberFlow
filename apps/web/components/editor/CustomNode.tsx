@@ -1040,7 +1040,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     const NODE_WIDTH = 240;
 
     const baseStyle: React.CSSProperties = {
-      background: config.bgColor,
+      background: '#0F172A',
       border: `2px solid ${borderColor}`,
       borderRadius: '12px',
       boxShadow,
