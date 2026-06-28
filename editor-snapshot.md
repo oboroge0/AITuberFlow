@@ -1,0 +1,216 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - button "Back to Workflows" [ref=e4] [cursor=pointer]:
+        - img [ref=e5]
+      - img "AITuberFlow logo" [ref=e8]
+      - generic [ref=e9]:
+        - heading "Phase2 Test" [level=1] [ref=e86] [cursor=pointer]:
+          - text: Phase2 Test
+          - img [ref=e11]
+        - paragraph [ref=e15]: Build your AI streamer visually
+      - button "Overlay" [ref=e21] [cursor=pointer]:
+        - img [ref=e22]
+        - text: Overlay
+      - button "Copy URL" [ref=e24] [cursor=pointer]:
+        - img [ref=e25]
+        - text: Copy URL
+    - generic [ref=e29]:
+      - application [ref=e30]:
+        - generic [ref=e32]:
+          - generic:
+            - generic:
+              - img:
+                - group "Edge from n-llm to n-emotion" [ref=e87] [cursor=pointer]
+            - generic:
+              - group [ref=e92]:
+                - generic [ref=e93]:
+                  - generic [ref=e94]:
+                    - button "折りたたむ" [ref=e95] [cursor=pointer]:
+                      - img [ref=e96]
+                    - img [ref=e99]
+                    - generic [ref=e102]: ChatGPT
+                  - generic [ref=e103]:
+                    - generic [ref=e107]: Prompt
+                    - generic [ref=e110]: Response
+                  - generic [ref=e112]: "Model: gpt-4o-mini"
+                  - generic [ref=e113]:
+                    - button "API Key ••••••" [ref=e115] [cursor=pointer]:
+                      - img [ref=e116]
+                      - generic [ref=e118]: API Key
+                      - generic [ref=e119]: ••••••
+                    - generic [ref=e120]:
+                      - button "Model" [ref=e121] [cursor=pointer]:
+                        - img [ref=e122]
+                        - generic [ref=e124]: Model
+                      - generic [ref=e125]:
+                        - generic [ref=e127]: GPT-4o Mini
+                        - combobox [ref=e128] [cursor=pointer]:
+                          - option "GPT-5.2"
+                          - option "GPT-5.2 Codex"
+                          - option "GPT-5.1"
+                          - option "GPT-5.1 Codex"
+                          - option "GPT-5.1 Codex Mini"
+                          - option "GPT-5"
+                          - option "GPT-5 Mini"
+                          - option "GPT-5 Nano"
+                          - option "GPT-4.1"
+                          - option "GPT-4.1 Mini"
+                          - option "GPT-4.1 Nano"
+                          - option "o4 Mini"
+                          - option "o3"
+                          - option "o3 Mini"
+                          - option "GPT-4o"
+                          - option "GPT-4o Mini" [selected]
+                    - button "System Prompt You are a helpful assistant." [ref=e130] [cursor=pointer]:
+                      - img [ref=e131]
+                      - generic [ref=e133]: System Prompt
+                      - generic [ref=e134]: You are a helpful assistant.
+                    - button "Prompt Builder" [ref=e136] [cursor=pointer]:
+                      - img [ref=e137]
+                      - generic [ref=e139]: Prompt Builder
+                    - generic [ref=e140]:
+                      - button "Temperature" [ref=e141] [cursor=pointer]:
+                        - img [ref=e142]
+                        - generic [ref=e144]: Temperature
+                      - generic [ref=e145]:
+                        - generic [ref=e147]: "0.70"
+                        - slider [ref=e148]: "0.7"
+                    - button "Max Tokens 200" [ref=e150] [cursor=pointer]:
+                      - img [ref=e151]
+                      - generic [ref=e153]: Max Tokens
+                      - generic [ref=e154]: "200"
+              - group [ref=e155]:
+                - generic [ref=e156]:
+                  - generic [ref=e157]:
+                    - button "折りたたむ" [ref=e158] [cursor=pointer]:
+                      - img [ref=e159]
+                    - img [ref=e162]
+                    - generic [ref=e165]: Emotion Analyzer
+                  - generic [ref=e166]:
+                    - generic [ref=e170]: Text
+                    - generic [ref=e171]:
+                      - generic [ref=e173]: Expression
+                      - generic [ref=e176]: Intensity
+                      - generic [ref=e179]: Text
+                  - generic [ref=e181]: Emotion Analyzer
+                  - generic [ref=e182]:
+                    - generic [ref=e183]:
+                      - button "Analysis Method" [ref=e184] [cursor=pointer]:
+                        - img [ref=e185]
+                        - generic [ref=e187]: Analysis Method
+                      - generic [ref=e188]:
+                        - generic [ref=e190]: Rule-based (Keywords)
+                        - combobox [ref=e191] [cursor=pointer]:
+                          - option "LLM-based (Recommended)"
+                          - option "Rule-based (Keywords)" [selected]
+                    - button "Available Expressions Not set" [ref=e193] [cursor=pointer]:
+                      - img [ref=e194]
+                      - generic [ref=e196]: Available Expressions
+                      - generic [ref=e197]: Not set
+                    - button "Language Japanese" [ref=e199] [cursor=pointer]:
+                      - img [ref=e200]
+                      - generic [ref=e202]: Language
+                      - generic [ref=e203]: Japanese
+                    - 'button "Custom Emotion Mappings (JSON) {}" [ref=e205] [cursor=pointer]':
+                      - img [ref=e206]
+                      - generic [ref=e208]: Custom Emotion Mappings (JSON)
+                      - generic [ref=e209]: "{}"
+                    - button "Emit Avatar Events ON" [ref=e211] [cursor=pointer]:
+                      - img [ref=e212]
+                      - generic [ref=e214]: Emit Avatar Events
+                      - generic [ref=e215]: "ON"
+              - group [ref=e216]:
+                - generic [ref=e217]:
+                  - generic [ref=e218]:
+                    - button "折りたたむ" [ref=e219] [cursor=pointer]:
+                      - img [ref=e220]
+                    - img [ref=e223]
+                    - generic [ref=e226]: Delay
+                  - generic [ref=e227]:
+                    - generic [ref=e231]: Input
+                    - generic [ref=e234]: Output
+                  - generic [ref=e236]: "Delay: 9106ms"
+                  - generic [ref=e237]:
+                    - generic [ref=e238]:
+                      - button "Delay (ms)" [ref=e239] [cursor=pointer]:
+                        - img [ref=e240]
+                        - generic [ref=e242]: Delay (ms)
+                      - generic [ref=e243]:
+                        - generic [ref=e245]: "9106"
+                        - slider [ref=e246]: "9106"
+                    - button "Randomize OFF" [ref=e248] [cursor=pointer]:
+                      - img [ref=e249]
+                      - generic [ref=e251]: Randomize
+                      - generic [ref=e252]: "OFF"
+                    - button "Random Min (ms) 500" [ref=e254] [cursor=pointer]:
+                      - img [ref=e255]
+                      - generic [ref=e257]: Random Min (ms)
+                      - generic [ref=e258]: "500"
+                    - button "Random Max (ms) 2000" [ref=e260] [cursor=pointer]:
+                      - img [ref=e261]
+                      - generic [ref=e263]: Random Max (ms)
+                      - generic [ref=e264]: "2000"
+        - img
+      - generic [ref=e36]:
+        - generic [ref=e37]: "表示:"
+        - button "簡易" [ref=e38] [cursor=pointer]
+        - button "標準" [ref=e39] [cursor=pointer]
+        - button "詳細" [ref=e40] [cursor=pointer]
+    - generic [ref=e42]:
+      - generic [ref=e43]:
+        - heading "AITuber Flow" [level=2] [ref=e44]
+        - paragraph [ref=e45]: Visual Workflow Editor
+      - button "Run Workflow" [ref=e47] [cursor=pointer]:
+        - img [ref=e48]
+        - text: Run Workflow
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - heading "Nodes (Drag to Canvas)" [level=3] [ref=e52]
+          - generic [ref=e53]:
+            - img [ref=e54]
+            - textbox "Search nodes..." [ref=e57]
+        - generic [ref=e58]:
+          - button "Control Flow" [ref=e266] [cursor=pointer]:
+            - generic [ref=e267]: Control Flow
+            - img [ref=e268]
+          - button "Input" [ref=e271] [cursor=pointer]:
+            - generic [ref=e272]: Input
+            - img [ref=e273]
+          - button "LLM" [ref=e276] [cursor=pointer]:
+            - generic [ref=e277]: LLM
+            - img [ref=e278]
+          - button "TTS" [ref=e281] [cursor=pointer]:
+            - generic [ref=e282]: TTS
+            - img [ref=e283]
+          - button "Avatar" [ref=e286] [cursor=pointer]:
+            - generic [ref=e287]: Avatar
+            - img [ref=e288]
+          - button "Output" [ref=e291] [cursor=pointer]:
+            - generic [ref=e292]: Output
+            - img [ref=e293]
+          - button "Utility" [ref=e296] [cursor=pointer]:
+            - generic [ref=e297]: Utility
+            - img [ref=e298]
+          - button "OBS" [ref=e301] [cursor=pointer]:
+            - generic [ref=e302]: OBS
+            - img [ref=e303]
+      - generic [ref=e60]:
+        - button "Save" [ref=e61] [cursor=pointer]:
+          - img [ref=e62]
+          - text: Save
+        - generic [ref=e66]:
+          - button "Export" [ref=e67] [cursor=pointer]:
+            - img [ref=e68]
+            - text: Export
+          - button "Import" [ref=e71] [cursor=pointer]:
+            - img [ref=e72]
+            - text: Import
+    - generic [ref=e76]:
+      - button "Zoom In" [ref=e77] [cursor=pointer]:
+        - img [ref=e78]
+      - button "Zoom Out" [ref=e80] [cursor=pointer]:
+        - img [ref=e81]
+      - button "Fit View" [ref=e83] [cursor=pointer]:
+        - img [ref=e84]
+  - alert [ref=e305]
