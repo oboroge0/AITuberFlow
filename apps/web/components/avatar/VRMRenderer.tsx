@@ -233,8 +233,30 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
     }
   }, []);
 
-  // Animation loop
+  // Animation loop — paused when the page is hidden (Page Visibility API)
+  // to avoid burning CPU/GPU while the user is in another tab or window.
+  const pausedRef = useRef(false);
+
+  useEffect(() => {
+    const onVisChange = () => {
+      if (document.hidden) {
+        pausedRef.current = true;
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = 0;
+        }
+      } else {
+        pausedRef.current = false;
+        clockRef.current.getDelta();
+        animate();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisChange);
+    return () => document.removeEventListener('visibilitychange', onVisChange);
+  }, []);
+
   const animate = useCallback(() => {
+    if (pausedRef.current) return;
     animationFrameRef.current = requestAnimationFrame(animate);
 
     const delta = clockRef.current.getDelta();
