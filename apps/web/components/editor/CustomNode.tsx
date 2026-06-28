@@ -859,7 +859,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   // Track drag state for port highlight/dim
   const { draggingSourceType, draggingHandleType } = useDragStateStore();
   // Hover state for port tooltips
-  const [hoveredPort, setHoveredPort] = useState<{ id: string; label: string; type: PortType; description?: string; side: 'input' | 'output' } | null>(null);
+  const [hoveredPort, setHoveredPort] = useState<{ id: string; label: string; type: PortType; description?: string; side: 'input' | 'output'; rect?: DOMRect } | null>(null);
 
   const collapsed = collapsedNodeIds.includes(id);
 
@@ -1195,18 +1195,21 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     </>
   );
 
-  // Tooltip component — shows port/config summary instead of node description
+  // Tooltip component — rendered via portal so it's always above all nodes
   const Tooltip = () => {
-    if (!showTooltip) return null;
+    if (!showTooltip || !nodeRef.current) return null;
 
     const inputs = data.inputs ?? [];
     const outputs = data.outputs ?? [];
     const hasContent = inputs.length > 0 || outputs.length > 0;
     if (!hasContent) return null;
 
-    return (
+    const rect = nodeRef.current.getBoundingClientRect();
+
+    return createPortal(
       <div
-        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-50 pointer-events-none whitespace-nowrap"
+        className="fixed pointer-events-none whitespace-nowrap"
+        style={{ left: rect.left + rect.width / 2, top: rect.top - 8, transform: 'translate(-50%, -100%)', zIndex: 10000 }}
       >
         <div className="bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-lg p-2.5 shadow-xl min-w-[180px]">
           {inputs.length > 0 && (
@@ -1234,19 +1237,21 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             </div>
           )}
         </div>
-        <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-gray-900/95 border-r border-b border-white/20 rotate-45" />
-      </div>
+      </div>,
+      document.body,
     );
   };
 
-  // Port hover tooltip — only renders for the port currently hovered
+  // Port hover tooltip — rendered via portal so it's always above all nodes
   const PortTooltip = ({ portId, side }: { portId: string; side: 'input' | 'output' }) => {
-    if (!hoveredPort || hoveredPort.id !== portId || hoveredPort.side !== side) return null;
+    if (!hoveredPort || hoveredPort.id !== portId || hoveredPort.side !== side || !hoveredPort.rect) return null;
     const typeColor = PORT_TYPE_COLORS[hoveredPort.type] ?? '#6B7280';
     const typeLabel = PORT_TYPE_LABELS[hoveredPort.type] ?? hoveredPort.type;
-    return (
+    const r = hoveredPort.rect;
+    return createPortal(
       <div
-        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[60] pointer-events-none whitespace-nowrap"
+        className="fixed pointer-events-none whitespace-nowrap"
+        style={{ left: r.left + r.width / 2, top: r.top - 8, transform: 'translate(-50%, -100%)', zIndex: 10001 }}
       >
         <div className="bg-gray-950/98 backdrop-blur-sm border rounded-lg p-2 shadow-xl" style={{ borderColor: `${typeColor}60` }}>
           <div className="flex items-center gap-1.5 mb-1">
@@ -1258,7 +1263,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             <div className="text-[10px] text-white/60 leading-relaxed whitespace-normal">{hoveredPort.description}</div>
           )}
         </div>
-      </div>
+      </div>,
+      document.body,
     );
   };
 
@@ -1595,7 +1601,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               <div
                 key={input.id}
                 className="flex items-center gap-1 relative h-5"
-                onMouseEnter={() => setHoveredPort({ id: input.id, label: input.label, type: input.type as PortType, description: (input as any).description, side: 'input' })}
+                onMouseEnter={(e) => setHoveredPort({ id: input.id, label: input.label, type: input.type as PortType, description: (input as any).description, side: 'input', rect: (e.currentTarget as HTMLElement).getBoundingClientRect() })}
                 onMouseLeave={() => setHoveredPort(null)}
               >
                 <PortTooltip portId={input.id} side="input" />
@@ -1618,7 +1624,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               <div
                 key={output.id}
                 className="flex items-center gap-1 relative h-5"
-                onMouseEnter={() => setHoveredPort({ id: output.id, label: output.label, type: output.type as PortType, description: (output as any).description, side: 'output' })}
+                onMouseEnter={(e) => setHoveredPort({ id: output.id, label: output.label, type: output.type as PortType, description: (output as any).description, side: 'output', rect: (e.currentTarget as HTMLElement).getBoundingClientRect() })}
                 onMouseLeave={() => setHoveredPort(null)}
               >
                 <PortTooltip portId={output.id} side="output" />
