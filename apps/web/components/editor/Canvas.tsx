@@ -240,7 +240,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         // Get inputs from plugin store or fall back to dynamic input logic
         const pluginInputs = getPluginInputs(node.type);
         let nodeInputs = pluginInputs.length > 0
-          ? pluginInputs.map(p => ({ id: p.id, label: formatPortLabel(p.id), type: p.type as PortType }))
+          ? pluginInputs.map(p => ({ id: p.id, label: formatPortLabel(p.id), type: p.type as PortType, description: p.description }))
           : getNodeInputs(node.type, node.config);
 
         // Dynamic port generation based on manifest config field types
@@ -276,7 +276,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         // Get outputs from plugin store or fall back to static definitions
         const pluginOutputs = getPluginOutputs(node.type);
         const nodeOutputs = pluginOutputs.length > 0
-          ? pluginOutputs.map(p => ({ id: p.id, label: formatPortLabel(p.id), type: p.type as PortType }))
+          ? pluginOutputs.map(p => ({ id: p.id, label: formatPortLabel(p.id), type: p.type as PortType, description: p.description }))
           : getNodeOutputs(node.type);
 
         const isEntryPoint = entryPointTypes.has(node.type) || nodeInputs.length === 0;
