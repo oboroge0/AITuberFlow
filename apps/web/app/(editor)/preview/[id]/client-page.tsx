@@ -8,6 +8,7 @@ import { Workflow } from '@/lib/types';
 import { DEFAULT_MODEL_URL } from '@/lib/constants';
 import { resolveWorkflowId } from '@/lib/routeParams';
 import { getApiBaseUrl, getWsBaseUrl } from '@/lib/runtimeEndpoints';
+import { useTranslation } from '@/stores/localeStore';
 import { toast } from '@/stores/toastStore';
 
 const WS_URL = getWsBaseUrl();
@@ -43,6 +44,7 @@ export default function PreviewPage() {
   const params = useParams<{ id?: string | string[] }>();
   const workflowId = useMemo(() => resolveWorkflowId(params.id, 'preview'), [params.id]);
   const router = useRouter();
+  const { t } = useTranslation();
 
   const wsRef = useRef<WebSocket | null>(null);
   const [connected, setConnected] = useState(false);
@@ -121,7 +123,7 @@ export default function PreviewPage() {
         }
       } catch (error) {
         console.error('Failed to load workflow:', error);
-        toast.error('ワークフローの読み込みに失敗しました');
+        toast.error(t('preview.loadFailed'));
       }
     };
 
@@ -213,7 +215,7 @@ export default function PreviewPage() {
   // Control handlers
   const handleStart = useCallback(async () => {
     if (!workflow) {
-      toast.error('ワークフローデータが読み込まれていません');
+      toast.error(t('preview.noWorkflowData'));
       return;
     }
     try {
@@ -224,7 +226,7 @@ export default function PreviewPage() {
       });
     } catch (error) {
       console.error('Failed to start workflow:', error);
-      toast.error('ワークフローの開始に失敗しました');
+      toast.error(t('preview.startFailed'));
     }
   }, [workflowId, workflow]);
 
@@ -233,7 +235,7 @@ export default function PreviewPage() {
       await api.stopWorkflow(workflowId);
     } catch (error) {
       console.error('Failed to stop workflow:', error);
-      toast.error('ワークフローの停止に失敗しました');
+      toast.error(t('preview.stopFailed'));
     }
   }, [workflowId]);
 
