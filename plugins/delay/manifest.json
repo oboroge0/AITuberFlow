@@ -22,14 +22,14 @@
       {
         "id": "input",
         "type": "any",
-        "description": "Data to pass through after delay"
+        "description": "遅延後に渡すデータ"
       }
     ],
     "outputs": [
       {
         "id": "output",
         "type": "any",
-        "description": "Delayed data output"
+        "description": "遅延されたデータ出力"
       }
     ],
     "events": {

@@ -22,29 +22,29 @@
       {
         "id": "text",
         "type": "string",
-        "description": "Text to convert to speech"
+        "description": "読み上げるテキスト"
       }
     ],
     "outputs": [
       {
         "id": "audio",
-        "type": "string",
-        "description": "Path to generated audio file"
+        "type": "audio",
+        "description": "生成された音声ファイルのパス"
       },
       {
         "id": "audioUrl",
         "type": "string",
-        "description": "URL to the generated audio file (served by the backend)"
+        "description": "音声ファイルのURL"
       },
       {
         "id": "filename",
         "type": "string",
-        "description": "Generated audio filename"
+        "description": "音声ファイル名"
       },
       {
         "id": "duration",
         "type": "number",
-        "description": "Audio duration in seconds"
+        "description": "音声の長さ（秒）"
       }
     ],
     "events": {

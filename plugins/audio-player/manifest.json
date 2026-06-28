@@ -21,25 +21,25 @@
     "inputs": [
       {
         "id": "audio",
-        "type": "string",
-        "description": "Path to audio file"
+        "type": "audio",
+        "description": "音声ファイルのパス"
       },
       {
         "id": "duration",
         "type": "number",
-        "description": "Audio duration in seconds (optional, will be calculated if not provided)"
+        "description": "音声の長さ（秒、省略可）"
       }
     ],
     "outputs": [
       {
         "id": "audio",
-        "type": "string",
-        "description": "Pass-through of audio path"
+        "type": "audio",
+        "description": "音声パスのパススルー"
       },
       {
         "id": "duration",
         "type": "number",
-        "description": "Audio duration in seconds"
+        "description": "音声の長さ（秒）"
       }
     ],
     "events": {

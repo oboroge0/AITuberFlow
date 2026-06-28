@@ -22,14 +22,14 @@
       {
         "id": "text",
         "type": "string",
-        "description": "Text to display as subtitle"
+        "description": "字幕に表示するテキスト"
       }
     ],
     "outputs": [
       {
         "id": "text",
         "type": "string",
-        "description": "Pass-through of input text"
+        "description": "入力テキストのパススルー"
       }
     ],
     "events": {
