@@ -5,8 +5,10 @@ import { useReactFlow } from '@xyflow/react';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { usePluginStore } from '@/stores/pluginStore';
 import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
+import { useTranslation } from '@/stores/localeStore';
 
 export default function SearchPanel() {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const { setCenter } = useReactFlow();
 
@@ -90,7 +92,7 @@ export default function SearchPanel() {
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="ノードを検索..."
+        placeholder={t('search.placeholder')}
         className="bg-transparent text-white text-sm outline-none w-48 placeholder-white/30"
       />
 
@@ -107,8 +109,8 @@ export default function SearchPanel() {
       <button
         onClick={goToPrev}
         className="text-white/50 hover:text-white/80 transition-colors p-0.5"
-        title="前の結果 (Shift+Enter)"
-        aria-label="前の結果"
+        title={t('search.prevResultShortcut')}
+        aria-label={t('search.prevResult')}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <polyline points="18 15 12 9 6 15"/>
@@ -117,8 +119,8 @@ export default function SearchPanel() {
       <button
         onClick={goToNext}
         className="text-white/50 hover:text-white/80 transition-colors p-0.5"
-        title="次の結果 (Enter)"
-        aria-label="次の結果"
+        title={t('search.nextResultShortcut')}
+        aria-label={t('search.nextResult')}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <polyline points="6 9 12 15 18 9"/>
@@ -129,8 +131,8 @@ export default function SearchPanel() {
       <button
         onClick={() => setSearchVisible(false)}
         className="text-white/50 hover:text-white/80 transition-colors p-0.5 ml-1"
-        title="閉じる (Esc)"
-        aria-label="検索を閉じる"
+        title={t('search.closeShortcut')}
+        aria-label={t('search.closeSearch')}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
