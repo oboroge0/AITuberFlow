@@ -21,7 +21,7 @@
     "inputs": [
       {
         "id": "audio",
-        "type": "string",
+        "type": "audio",
         "description": "音声ファイルのパス"
       },
       {
@@ -33,7 +33,7 @@
     "outputs": [
       {
         "id": "audio",
-        "type": "string",
+        "type": "audio",
         "description": "音声パスのパススルー"
       },
       {
