@@ -22,24 +22,24 @@
       {
         "id": "text",
         "type": "string",
-        "description": "Text to analyze for emotions"
+        "description": "感情分析するテキスト"
       }
     ],
     "outputs": [
       {
         "id": "expression",
         "type": "string",
-        "description": "Detected expression ID (e.g., happy, sad, smug)"
+        "description": "検出された表情ID"
       },
       {
         "id": "intensity",
         "type": "number",
-        "description": "Intensity of the expression (0.0 - 1.0)"
+        "description": "表情の強度（0.0〜1.0）"
       },
       {
         "id": "text",
         "type": "string",
-        "description": "Pass-through of input text"
+        "description": "入力テキストのパススルー"
       }
     ],
     "events": {

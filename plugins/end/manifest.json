@@ -22,7 +22,7 @@
       {
         "id": "input",
         "type": "any",
-        "description": "Data received when workflow ends"
+        "description": "終了時の受信データ"
       }
     ],
     "outputs": [],

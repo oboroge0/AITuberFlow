@@ -23,17 +23,17 @@
       {
         "id": "message",
         "type": "Message",
-        "description": "The latest chat message"
+        "description": "最新のチャットメッセージ"
       },
       {
         "id": "author",
         "type": "string",
-        "description": "Message author name"
+        "description": "メッセージ投稿者名"
       },
       {
         "id": "text",
         "type": "string",
-        "description": "Message text content"
+        "description": "メッセージ本文"
       }
     ],
     "events": {
