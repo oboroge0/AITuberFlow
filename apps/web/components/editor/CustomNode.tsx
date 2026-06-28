@@ -857,7 +857,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const nodeRef = useRef<HTMLDivElement>(null);
 
   // Track drag state for port highlight/dim
-  const { draggingSourceType } = useDragStateStore();
+  const { draggingSourceType, draggingHandleType } = useDragStateStore();
   // Hover state for port tooltips
   const [hoveredPort, setHoveredPort] = useState<{ id: string; label: string; type: PortType; description?: string; side: 'input' | 'output' } | null>(null);
 
@@ -1428,7 +1428,12 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       // idle: normal appearance
       return { ...base, width: '14px', height: '14px', background: PORT_TYPE_COLORS[portType] ?? '#374151' };
     }
-    // Something is being dragged — check compatibility
+    // Something is being dragged — only highlight ports of the opposite side
+    // (source→target or target→source). Same-side ports stay dimmed.
+    const isOppositeSide = draggingHandleType === 'source' ? isTarget : !isTarget;
+    if (!isOppositeSide) {
+      return { ...base, width: '14px', height: '14px', background: PORT_TYPE_COLORS[portType] ?? '#374151', opacity: 0.3 };
+    }
     const compatible = isTarget
       ? arePortTypesCompatible(draggingSourceType, portType)
       : arePortTypesCompatible(portType, draggingSourceType);
