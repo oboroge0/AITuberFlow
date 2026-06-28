@@ -33,6 +33,7 @@ function PasswordField({
   placeholder,
   style,
 }: PasswordFieldProps) {
+  const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
 
   return (
@@ -47,10 +48,10 @@ function PasswordField({
       <button
         type="button"
         onClick={() => setShowPassword((prev) => !prev)}
-        aria-label={showPassword ? "Hide password" : "Show password"}
+        aria-label={showPassword ? t("settings.hidePassword") : t("settings.showPassword")}
         aria-pressed={showPassword}
         className="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors"
-        title={showPassword ? "Hide password" : "Show password"}
+        title={showPassword ? t("settings.hidePassword") : t("settings.showPassword")}
       >
         {showPassword ? (
           // Eye-off icon
@@ -92,6 +93,7 @@ interface InputListFieldProps {
 }
 
 function InputListField({ value, onChange, placeholder }: InputListFieldProps) {
+  const { t } = useTranslation();
   const [newInput, setNewInput] = useState("");
   const inputs = value || [];
 
@@ -150,13 +152,13 @@ function InputListField({ value, onChange, placeholder }: InputListFieldProps) {
           onClick={addInput}
           className="px-3 py-1 rounded-md border border-blue-500/50 bg-blue-500/10 text-blue-400 text-[11px] cursor-pointer hover:bg-blue-500/20"
         >
-          Add
+          {t('nodeConfig.common.add')}
         </button>
       </div>
 
       {/* Help text */}
       <div className="text-[9px] text-white/40">
-        Add input names to create ports. Use {`{{name}}`} in template.
+        {t('settings.addInputHelp')}
       </div>
     </div>
   );
@@ -214,6 +216,7 @@ interface ExpressionListFieldProps {
 }
 
 function ExpressionListField({ value, onChange }: ExpressionListFieldProps) {
+  const { t } = useTranslation();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newExpr, setNewExpr] = useState<Partial<Expression>>({
     id: "",
@@ -309,7 +312,7 @@ function ExpressionListField({ value, onChange }: ExpressionListFieldProps) {
                   onChange={(e) =>
                     updateExpression(expr.id, { description: e.target.value })
                   }
-                  placeholder="Description for LLM (e.g., 'Self-satisfied, proud, confident')"
+                  placeholder={t('settings.descriptionForLlmPlaceholder')}
                   rows={2}
                   style={{ ...inputStyle, width: "100%", resize: "vertical" }}
                 />
@@ -357,7 +360,7 @@ function ExpressionListField({ value, onChange }: ExpressionListFieldProps) {
             type="text"
             value={newExpr.id || ""}
             onChange={(e) => setNewExpr({ ...newExpr, id: e.target.value })}
-            placeholder="ID (e.g., smug)"
+            placeholder={t('settings.expressionIdPlaceholder')}
             style={{ ...inputStyle, flex: 1 }}
           />
           <input
@@ -375,7 +378,7 @@ function ExpressionListField({ value, onChange }: ExpressionListFieldProps) {
             onChange={(e) =>
               setNewExpr({ ...newExpr, description: e.target.value })
             }
-            placeholder="Description for LLM analysis"
+            placeholder={t('settings.descriptionForLlm')}
             style={{ ...inputStyle, flex: 1 }}
           />
           <button
@@ -421,6 +424,7 @@ function PngExpressionMapField({
   onChange,
   onUploadImage,
 }: PngExpressionMapFieldProps) {
+  const { t } = useTranslation();
   const [newMapping, setNewMapping] = useState<PngExpressionMapping>({
     id: "",
     filename: "",
@@ -565,7 +569,7 @@ function PngExpressionMapField({
             onChange={(e) =>
               setNewMapping({ ...newMapping, id: e.target.value })
             }
-            placeholder="Expression ID (e.g., smug)"
+            placeholder={t('settings.expressionIdPlaceholder')}
             style={{ ...inputStyle, flex: 1 }}
           />
         </div>
@@ -576,7 +580,7 @@ function PngExpressionMapField({
             onChange={(e) =>
               setNewMapping({ ...newMapping, filename: e.target.value })
             }
-            placeholder="Image filename (e.g., smug.png)"
+            placeholder={t('settings.imageFilenamePlaceholder')}
             style={{ ...inputStyle, flex: 1 }}
           />
           <input
@@ -1909,10 +1913,10 @@ export default function NodeSettings() {
           // Refresh the animations list
           fetchAnimations();
         } else if (response.error) {
-          toast.error(`Upload failed: ${response.error}`);
+          toast.error(t('settings.uploadFailed') + response.error);
         }
       } catch {
-        toast.error("Failed to upload animation file");
+        toast.error(t('settings.uploadAnimationFailed'));
       } finally {
         setAnimationUploading(false);
       }
@@ -1936,10 +1940,10 @@ export default function NodeSettings() {
           // Refresh the models list
           fetchModels();
         } else if (response.error) {
-          toast.error(`Upload failed: ${response.error}`);
+          toast.error(t('settings.uploadFailed') + response.error);
         }
       } catch {
-        toast.error("Failed to upload model file");
+        toast.error(t('settings.uploadModelFailed'));
       } finally {
         setModelUploading(false);
       }
@@ -1955,10 +1959,10 @@ export default function NodeSettings() {
         if (response.data) {
           return response.data.url;
         } else if (response.error) {
-          toast.error(`Upload failed: ${response.error}`);
+          toast.error(t('settings.uploadFailed') + response.error);
         }
       } catch {
-        toast.error("Failed to upload image");
+        toast.error(t('settings.uploadImageFailed'));
       }
       return null;
     },
@@ -2070,7 +2074,7 @@ export default function NodeSettings() {
 
   const handleDelete = () => {
     removeNode(selectedNode.id);
-    toast.info("ノードを削除しました");
+    toast.info(t('settings.nodeDeleted'));
   };
 
   const renderField = (field: NodeField) => {
@@ -2480,7 +2484,7 @@ export default function NodeSettings() {
                       onChange={(e) =>
                         updateSection(section.id, e.target.value)
                       }
-                      placeholder="Enter static text for this part of the prompt..."
+                      placeholder={t('settings.staticTextPlaceholder')}
                       rows={2}
                       style={{
                         width: "100%",

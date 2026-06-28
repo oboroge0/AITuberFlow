@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useToastStore, Toast, ToastType } from '@/stores/toastStore';
+import { useTranslation } from '@/stores/localeStore';
 
 const typeStyles: Record<ToastType, { bg: string; border: string; icon: string }> = {
   success: {
@@ -27,6 +28,7 @@ const typeStyles: Record<ToastType, { bg: string; border: string; icon: string }
 };
 
 function ToastItem({ toast }: { toast: Toast }) {
+  const { t } = useTranslation();
   const removeToast = useToastStore((state) => state.removeToast);
   const styles = typeStyles[toast.type];
 
@@ -44,7 +46,7 @@ function ToastItem({ toast }: { toast: Toast }) {
       <p className="text-white text-sm flex-1">{toast.message}</p>
       <button
         onClick={() => removeToast(toast.id)}
-        aria-label="通知を閉じる"
+        aria-label={t('toast.closeNotification')}
         className="text-white/60 hover:text-white transition-colors flex-shrink-0"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

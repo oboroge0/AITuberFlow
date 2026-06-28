@@ -22,24 +22,24 @@
       {
         "id": "list",
         "type": "any",
-        "description": "List or text to iterate over"
+        "description": "反復するリストまたはテキスト"
       }
     ],
     "outputs": [
       {
         "id": "item",
         "type": "any",
-        "description": "Current item"
+        "description": "現在のアイテム"
       },
       {
         "id": "index",
         "type": "number",
-        "description": "Current index"
+        "description": "現在のインデックス"
       },
       {
         "id": "done",
         "type": "trigger",
-        "description": "Triggered when iteration completes"
+        "description": "反復完了時に発火"
       }
     ],
     "events": {

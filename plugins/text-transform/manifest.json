@@ -22,14 +22,14 @@
       {
         "id": "text",
         "type": "string",
-        "description": "Text to transform"
+        "description": "変換するテキスト"
       }
     ],
     "outputs": [
       {
         "id": "result",
         "type": "string",
-        "description": "Transformed text"
+        "description": "変換後のテキスト"
       }
     ],
     "events": {

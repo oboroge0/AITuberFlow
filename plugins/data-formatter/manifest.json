@@ -22,19 +22,19 @@
       {
         "id": "data",
         "type": "any",
-        "description": "Input data to format (object, string, or any value)"
+        "description": "フォーマットする入力データ"
       }
     ],
     "outputs": [
       {
         "id": "formatted",
         "type": "string",
-        "description": "Formatted output string"
+        "description": "フォーマット済みテキスト"
       },
       {
         "id": "parsed",
         "type": "object",
-        "description": "Parsed data object (useful for chaining)"
+        "description": "パース済みデータオブジェクト"
       }
     ],
     "events": {
