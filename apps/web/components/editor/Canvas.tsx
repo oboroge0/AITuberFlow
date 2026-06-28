@@ -807,7 +807,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         nodeTypes={reactFlowNodeTypes}
         fitView
         className="!bg-transparent"
-        connectionMode={ConnectionMode.Loose}
+        connectionMode={ConnectionMode.Strict}
         defaultEdgeOptions={{
           animated: true,
           style: { stroke: DEFAULT_EDGE_COLOR, strokeWidth: 3 },
@@ -832,69 +832,6 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
       {/* Search Panel */}
       <SearchPanel />
 
-      {/* Connect-suggest panel: shown when dragging a wire onto empty canvas */}
-      {connectSuggest && (() => {
-        const { plugins } = usePluginStore.getState();
-        const nodeTypesList = getNodeTypes();
-        const compatible = nodeTypesList.filter((nt) => {
-          const plugin = plugins.find((p) => p.id === nt.id);
-          if (!plugin) return false;
-          const inputs = plugin.node?.inputs ?? [];
-          return inputs.some((inp) => arePortTypesCompatible(connectSuggest.sourceType, inp.type as PortType));
-        });
-        if (compatible.length === 0) return null;
-
-        // Group by category (same structure as the sidebar / right-click menu)
-        const grouped = new Map<string, typeof compatible>();
-        for (const nt of compatible) {
-          const plugin = plugins.find((p) => p.id === nt.id);
-          const cat = (plugin?.category as string) ?? 'utility';
-          if (!grouped.has(cat)) grouped.set(cat, []);
-          grouped.get(cat)!.push(nt);
-        }
-
-        const adjust = (v: number, max: number, size: number) => Math.min(v, max - size);
-        const px = adjust(connectSuggest.x, window.innerWidth, 220);
-        const py = adjust(connectSuggest.y, window.innerHeight, 320);
-        return (
-          <div
-            className="fixed z-50 py-1 rounded-lg shadow-xl overflow-y-auto"
-            style={{ left: px, top: py, background: 'rgba(17,24,39,0.98)', border: '1px solid rgba(255,255,255,0.1)', minWidth: '210px', maxHeight: '320px' }}
-          >
-            <div className="px-3 pt-2 pb-1 text-[10px] text-white/40 uppercase tracking-wider flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full" style={{ background: PORT_TYPE_COLORS[connectSuggest.sourceType] }} />
-              {t('canvas.connectableNodes')}
-            </div>
-            {[...grouped.entries()].map(([catId, nodes], gi) => (
-              <React.Fragment key={catId}>
-                {gi > 0 && <div className="my-0.5 border-t border-white/10" />}
-                <div
-                  className="px-3 pt-1.5 pb-0.5 text-[9px] font-semibold uppercase tracking-wider"
-                  style={{ color: CATEGORY_COLORS[catId as keyof typeof CATEGORY_COLORS] ?? '#6B7280' }}
-                >
-                  {CATEGORY_LABELS[catId as keyof typeof CATEGORY_LABELS] ?? catId}
-                </div>
-                {nodes.map((nt) => (
-                  <button
-                    key={nt.id}
-                    onClick={() => {
-                      const bounds = reactFlowWrapper.current?.getBoundingClientRect();
-                      if (!bounds) return;
-                      addNode({ type: nt.id, position: { x: connectSuggest.x - bounds.left - 80, y: connectSuggest.y - bounds.top - 30 }, config: { ...nt.defaultConfig } });
-                      setConnectSuggest(null);
-                    }}
-                    className="w-full px-3 py-1.5 text-left text-sm flex items-center gap-2 text-white/90 hover:bg-white/10 transition-colors"
-                  >
-                    <span style={{ color: nt.color }}>{nt.icon}</span>
-                    {nt.label}
-                  </button>
-                ))}
-              </React.Fragment>
-            ))}
-            <button onClick={() => setConnectSuggest(null)} className="w-full px-3 py-1.5 text-left text-[11px] text-white/30 hover:text-white/60 border-t border-white/10 mt-1">{t('common.cancel')}</button>
-          </div>
-        );
-      })()}
 
       {/* Custom styles for React Flow */}
       <style jsx global>{`
