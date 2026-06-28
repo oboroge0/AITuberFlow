@@ -399,6 +399,9 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
       // nodes (now heavy with inline config fields). React Flow tracks the
       // live position internally; persist to the store only on drop.
       changes.forEach((change) => {
+        if (change.type === 'position' && change.dragging) {
+          selectNode(change.id);
+        }
         if (change.type === 'position' && change.position && !change.dragging) {
           setNodePosition(change.id, change.position);
         }
