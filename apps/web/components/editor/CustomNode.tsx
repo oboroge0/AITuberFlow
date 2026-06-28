@@ -1201,7 +1201,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
     const inputs = data.inputs ?? [];
     const outputs = data.outputs ?? [];
-    const hasContent = inputs.length > 0 || outputs.length > 0;
+    const configFields = data.pluginConfig ? Object.entries(data.pluginConfig) : [];
+    const hasContent = inputs.length > 0 || outputs.length > 0 || configFields.length > 0;
     if (!hasContent) return null;
 
     return (
@@ -1231,6 +1232,19 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   <span className="text-[9px] text-white/40 ml-auto">{PORT_TYPE_LABELS[out.type as PortType] ?? out.type}</span>
                 </div>
               ))}
+            </div>
+          )}
+          {configFields.length > 0 && (
+            <div className={(inputs.length > 0 || outputs.length > 0) ? 'pt-1 border-t border-white/10' : ''}>
+              <div className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">{t('inline.settings')}</div>
+              {configFields.slice(0, 5).map(([key, field]) => (
+                <div key={key} className="text-[10px] text-white/60 py-px truncate max-w-[220px]">
+                  {field.label}
+                </div>
+              ))}
+              {configFields.length > 5 && (
+                <div className="text-[9px] text-white/35">+{configFields.length - 5} {t('inline.moreItems')}</div>
+              )}
             </div>
           )}
         </div>
