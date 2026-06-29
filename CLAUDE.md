@@ -250,6 +250,15 @@ feat/xxx (worktree) ──PR──▶ dev ──リリース時にまとめて�
 
 ## Git / GitHub ルール
 
+### dev への直接 push 禁止
+
+**dev ブランチに直接コミット・push しないこと。** 小さな修正でも必ず作業ブランチから PR を経由する。直接 push すると履歴が散らかり、force push でのまとめ直しが必要になる（v2.5.1 で発生）。
+
+```
+# NG: git commit && git push origin dev
+# OK: git checkout -b fix/xxx dev → commit → push → PR → マージ
+```
+
 ### コミットメッセージ
 
 - **日本語で書くこと**
