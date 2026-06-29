@@ -561,9 +561,6 @@
     "collapse": "折りたたむ",
     "detailSettings": "詳細設定",
     "openDetailSettings": "詳細設定を開く",
-    "runFromNode": "このノードから実行",
-    "cancel": "キャンセル",
-    "save": "保存",
-    "notSet": "未設定"
+    "runFromNode": "このノードから実行"
   }
 }

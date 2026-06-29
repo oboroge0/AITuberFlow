@@ -561,9 +561,6 @@
     "collapse": "Collapse",
     "detailSettings": "Detail Settings",
     "openDetailSettings": "Open detail settings",
-    "runFromNode": "Run from this node",
-    "cancel": "Cancel",
-    "save": "Save",
-    "notSet": "Not set"
+    "runFromNode": "Run from this node"
   }
 }
