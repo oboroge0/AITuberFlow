@@ -51,7 +51,7 @@
       "type": "model-file",
       "label": "3D Model",
       "description": "URL or path to VRM model file",
-      "default": "/models/avatar.vrm",
+      "default": "/models/Flowchan.vrm",
       "accept": ".vrm",
       "showWhen": { "key": "renderer", "value": "vrm" }
     },
