@@ -455,11 +455,9 @@
     }
   },
   "update": {
-    "title": "Update Available",
+    "restart": "Restart & Update",
     "downloading": "Downloading update...",
     "error": "Update failed",
-    "now": "Update Now",
-    "later": "Later",
     "close": "Close",
     "retry": "Retry"
   },
