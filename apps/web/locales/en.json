@@ -455,11 +455,9 @@
     }
   },
   "update": {
-    "title": "Update Available",
+    "restart": "Restart & Update",
     "downloading": "Downloading update...",
     "error": "Update failed",
-    "now": "Update Now",
-    "later": "Later",
     "close": "Close",
     "retry": "Retry"
   },
@@ -548,6 +546,19 @@
     "inputs": "Inputs",
     "outputs": "Outputs",
     "settings": "Settings",
-    "moreItems": "more"
+    "moreItems": "more",
+    "hideKey": "Hide key",
+    "showKey": "Show key",
+    "dragToAdjust": "Drag to adjust / Click for numeric input",
+    "ctrlEnterSave": "Ctrl+Enter to save / Esc to cancel",
+    "editInSettings": "Edit in detail settings",
+    "charCountEdit": " chars — Click to edit",
+    "globalTooltip": "Using global settings value because this field is empty (enter a value to override)",
+    "globalBadge": "Global",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "detailSettings": "Detail Settings",
+    "openDetailSettings": "Open detail settings",
+    "runFromNode": "Run from this node"
   }
 }

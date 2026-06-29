@@ -178,6 +178,21 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
     animationLoadedRef.current = false;
 
     try {
+      // Pre-check: verify the URL returns a valid file (not an HTML error page)
+      try {
+        const headRes = await fetch(url, { method: 'HEAD' });
+        if (!headRes.ok) {
+          throw new Error(`モデルファイルが見つかりません: ${url} (${headRes.status})`);
+        }
+        const ct = headRes.headers.get('content-type') ?? '';
+        if (ct.includes('text/html')) {
+          throw new Error(`モデルファイルが見つかりません: ${url}（HTMLが返されました。パスを確認してください）`);
+        }
+      } catch (fetchErr) {
+        if (fetchErr instanceof Error && fetchErr.message.startsWith('モデル')) throw fetchErr;
+        // fetch itself failed (CORS, network) — let the loader try anyway
+      }
+
       const loader = new GLTFLoader();
       loader.register((parser) => new VRMLoaderPlugin(parser));
 
@@ -449,12 +464,14 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
       controlsRef.current = controls;
     }
 
-    // Handle resize
+    // Handle resize — triggered by both window resize and container layout
+    // changes (e.g. settings panel opening/closing)
     const handleResize = () => {
       if (!containerRef.current || !rendererRef.current || !cameraRef.current) return;
 
       const width = containerRef.current.clientWidth;
       const height = containerRef.current.clientHeight;
+      if (width === 0 || height === 0) return;
 
       cameraRef.current.aspect = width / height;
       cameraRef.current.updateProjectionMatrix();
@@ -463,6 +480,13 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
 
     window.addEventListener('resize', handleResize);
 
+    // ResizeObserver catches container size changes that don't trigger
+    // window resize (e.g. side panel open/close changing the layout)
+    const resizeObserver = new ResizeObserver(handleResize);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
     // Capture container ref for cleanup — containerRef.current may be null
     // by the time the cleanup function runs after unmount.
     const containerEl = containerRef.current;
@@ -470,6 +494,7 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
       cancelAnimationFrame(animationFrameRef.current);
 
       // Dispose controls first (before renderer)
