@@ -7,7 +7,7 @@ import api, { TemplateSummary, WorkflowExport } from '@/lib/api';
 import { Workflow } from '@/lib/types';
 import { useTranslation } from '@/stores/localeStore';
 import { toast } from '@/stores/toastStore';
-import UpdateModal from '@/components/ui/UpdateModal';
+import UpdateButton from '@/components/ui/UpdateButton';
 import SettingsModal from '@/components/ui/SettingsModal';
 import AnnouncementBanner from '@/components/ui/AnnouncementBanner';
 import {
@@ -32,7 +32,6 @@ export default function HomePage() {
     body?: string;
   } | null>(null);
   const updateObjRef = useRef<unknown>(null);
-  const [updateDismissed, setUpdateDismissed] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const deleteConfirmTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -592,6 +591,13 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-gray-400">
           <p>{t('support.description')}</p>
           <div className="flex items-center gap-4">
+            {/* Update button (desktop only, shown when an update is available) */}
+            {updateInfo != null && updateObjRef.current != null && (
+              <UpdateButton
+                updateInfo={updateInfo}
+                updateObj={updateObjRef.current}
+              />
+            )}
             <a
               href="https://github.com/oboroge0/AITuberFlow/issues"
               target="_blank"
@@ -629,15 +635,6 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
-
-      {/* Update modal (desktop only) */}
-      {updateInfo != null && !updateDismissed && updateObjRef.current != null ? (
-        <UpdateModal
-          updateInfo={updateInfo}
-          updateObj={updateObjRef.current}
-          onClose={() => setUpdateDismissed(true)}
-        />
-      ) : null}
 
       {/* Global settings modal */}
       {showSettings && (
