@@ -548,6 +548,19 @@
     "inputs": "入力",
     "outputs": "出力",
     "settings": "設定",
-    "moreItems": "項目"
+    "moreItems": "項目",
+    "hideKey": "キーを隠す",
+    "showKey": "キーを表示",
+    "dragToAdjust": "ドラッグで調整 / クリックで数値入力",
+    "ctrlEnterSave": "Ctrl+Enter で保存 / Esc でキャンセル",
+    "editInSettings": "詳細設定で編集",
+    "charCountEdit": "字 — クリックで編集",
+    "globalTooltip": "ノード側が未設定のため、グローバル設定の値を使用しています（入力すると上書き）",
+    "globalBadge": "グローバル",
+    "expand": "展開する",
+    "collapse": "折りたたむ",
+    "detailSettings": "詳細設定",
+    "openDetailSettings": "詳細設定を開く",
+    "runFromNode": "このノードから実行"
   }
 }

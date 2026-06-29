@@ -19,7 +19,7 @@ tauri-build = { version = "2", features = [] }
 devtools = ["tauri/devtools"]
 
 [dependencies]
-tauri = "2"
+tauri = { version = "2", features = [] }
 tauri-plugin-shell = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
