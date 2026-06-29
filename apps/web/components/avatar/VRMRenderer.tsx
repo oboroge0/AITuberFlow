@@ -178,6 +178,21 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
     animationLoadedRef.current = false;
 
     try {
+      // Pre-check: verify the URL returns a valid file (not an HTML error page)
+      try {
+        const headRes = await fetch(url, { method: 'HEAD' });
+        if (!headRes.ok) {
+          throw new Error(`モデルファイルが見つかりません: ${url} (${headRes.status})`);
+        }
+        const ct = headRes.headers.get('content-type') ?? '';
+        if (ct.includes('text/html')) {
+          throw new Error(`モデルファイルが見つかりません: ${url}（HTMLが返されました。パスを確認してください）`);
+        }
+      } catch (fetchErr) {
+        if (fetchErr instanceof Error && fetchErr.message.startsWith('モデル')) throw fetchErr;
+        // fetch itself failed (CORS, network) — let the loader try anyway
+      }
+
       const loader = new GLTFLoader();
       loader.register((parser) => new VRMLoaderPlugin(parser));
 

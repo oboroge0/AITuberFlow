@@ -28,7 +28,7 @@ export default class ConsoleOutputNode extends BaseNode {
       await context.log(`${this.prefix} (empty)`, "debug");
     }
 
-    return {};
+    return { text };
   }
 
   async teardown(): Promise<void> {
