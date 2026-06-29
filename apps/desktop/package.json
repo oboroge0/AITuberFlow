@@ -1,6 +1,6 @@
 {
   "name": "@aituber-flow/desktop",
-  "version": "2.5.1",
+  "version": "2.5.2",
   "private": true,
   "scripts": {
     "prepare-runtime": "cd ../web && npm run build:desktop && cd ../desktop && node scripts/build-sidecar.js && node scripts/copy-resources.js",
