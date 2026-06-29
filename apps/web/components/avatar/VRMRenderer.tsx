@@ -464,12 +464,14 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
       controlsRef.current = controls;
     }
 
-    // Handle resize
+    // Handle resize — triggered by both window resize and container layout
+    // changes (e.g. settings panel opening/closing)
     const handleResize = () => {
       if (!containerRef.current || !rendererRef.current || !cameraRef.current) return;
 
       const width = containerRef.current.clientWidth;
       const height = containerRef.current.clientHeight;
+      if (width === 0 || height === 0) return;
 
       cameraRef.current.aspect = width / height;
       cameraRef.current.updateProjectionMatrix();
@@ -478,6 +480,13 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
 
     window.addEventListener('resize', handleResize);
 
+    // ResizeObserver catches container size changes that don't trigger
+    // window resize (e.g. side panel open/close changing the layout)
+    const resizeObserver = new ResizeObserver(handleResize);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
     // Capture container ref for cleanup — containerRef.current may be null
     // by the time the cleanup function runs after unmount.
     const containerEl = containerRef.current;
@@ -485,6 +494,7 @@ const VRMRenderer = forwardRef<VRMRendererRef, VRMRendererProps>(function VRMRen
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
       cancelAnimationFrame(animationFrameRef.current);
 
       // Dispose controls first (before renderer)
