@@ -8,6 +8,7 @@ import { Workflow } from '@/lib/types';
 import { useTranslation } from '@/stores/localeStore';
 import { toast } from '@/stores/toastStore';
 import UpdateButton from '@/components/ui/UpdateButton';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 import SettingsModal from '@/components/ui/SettingsModal';
 import AnnouncementBanner from '@/components/ui/AnnouncementBanner';
 import {
@@ -266,24 +267,22 @@ export default function HomePage() {
   return (
     <div
       className="h-screen flex flex-col overflow-hidden"
-      style={{
-        background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)',
-      }}
+      style={{ background: 'var(--bg-gradient)' }}
     >
       {/* Grid background */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
+            linear-gradient(var(--grid-line) 1px, transparent 1px),
+            linear-gradient(90deg, var(--grid-line) 1px, transparent 1px)
           `,
           backgroundSize: '40px 40px',
         }}
       />
 
       {/* Header */}
-      <header className="relative z-10 flex-shrink-0 border-b border-white/10" style={{ background: 'rgba(17, 24, 39, 0.8)' }}>
+      <header className="relative z-10 flex-shrink-0 border-b border-token-border" style={{ background: 'var(--surface)' }}>
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
@@ -310,14 +309,14 @@ export default function HomePage() {
               >
                 {t('home.title')}
               </h1>
-              <p className="text-xs text-white/50 m-0">{t('home.subtitle')}</p>
+              <p className="text-xs text-fg-dim m-0">{t('home.subtitle')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {/* Global settings */}
             <button
               onClick={() => setShowSettings(true)}
-              className="px-3 py-2 rounded-lg text-white/60 text-sm transition-colors hover:bg-white/10"
+              className="px-3 py-2 rounded-lg text-fg-muted text-sm transition-colors hover:bg-hover"
               title={t('globalSettings.title')}
               aria-label={t('globalSettings.title')}
             >
@@ -326,10 +325,12 @@ export default function HomePage() {
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
               </svg>
             </button>
+            {/* Theme toggle */}
+            <ThemeToggle />
             {/* Language switcher */}
             <button
               onClick={() => setLocale(locale === 'ja' ? 'en' : 'ja')}
-              className="px-3 py-2 rounded-lg text-white/60 text-sm transition-colors hover:bg-white/10"
+              className="px-3 py-2 rounded-lg text-fg-muted text-sm transition-colors hover:bg-hover"
               title={locale === 'ja' ? t('tooltip.switchToEnglish') : t('tooltip.switchToJapanese')}
             >
               {locale === 'ja' ? 'EN' : 'JA'}
@@ -343,8 +344,8 @@ export default function HomePage() {
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2 rounded-lg text-white/80 font-medium text-sm flex items-center gap-2 transition-colors hover:bg-white/10"
-              style={{ border: '1px solid rgba(255,255,255,0.2)' }}
+              className="px-4 py-2 rounded-lg text-fg font-medium text-sm flex items-center gap-2 transition-colors hover:bg-hover"
+              style={{ border: '1px solid var(--border)' }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -382,20 +383,20 @@ export default function HomePage() {
               className="w-8 h-8 rounded-full mx-auto animate-spin"
               style={{ border: '2px solid #10B981', borderTopColor: 'transparent' }}
             />
-            <p className="text-gray-400 mt-4">{t('home.loading')}</p>
+            <p className="text-fg-muted mt-4">{t('home.loading')}</p>
           </div>
         ) : error ? (
           <div
-            className="text-center py-12 rounded-2xl border border-white/10"
-            style={{ background: 'rgba(17, 24, 39, 0.8)' }}
+            className="text-center py-12 rounded-2xl border border-token-border"
+            style={{ background: 'var(--surface)' }}
           >
             <p className="text-red-400 mb-4">{error}</p>
-            <p className="text-gray-500 text-sm">
+            <p className="text-fg-faint text-sm">
               {t('home.serverError')}
             </p>
             <button
               onClick={loadData}
-              className="mt-4 px-4 py-2 rounded-lg text-[#10B981] text-sm transition-colors hover:bg-white/5"
+              className="mt-4 px-4 py-2 rounded-lg text-[#10B981] text-sm transition-colors hover:bg-hover"
               style={{ border: '1px solid #10B981' }}
             >
               {t('home.retry')}
@@ -406,13 +407,13 @@ export default function HomePage() {
             {/* Templates Section */}
             {templates.length > 0 && (
               <section className="mb-10">
-                <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+                <h2 className="text-2xl font-semibold text-fg mb-4 flex items-center gap-2">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2">
                     <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
                   </svg>
                   {t('home.templates')}
                 </h2>
-                <p className="text-gray-400 text-sm mb-4">{t('home.templatesDesc')}</p>
+                <p className="text-fg-muted text-sm mb-4">{t('home.templatesDesc')}</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {templates.map((template) => {
                     const templateName = locale === 'ja' && template.name_ja ? template.name_ja : template.name;
@@ -422,28 +423,28 @@ export default function HomePage() {
                       key={template.id}
                       onClick={() => createFromTemplate(template.id)}
                       disabled={creatingTemplateId === template.id}
-                      className="text-left rounded-xl border border-white/10 p-4 transition-all hover:border-[#10B981]/50 hover:bg-white/5 group disabled:opacity-60"
-                      style={{ background: 'rgba(17, 24, 39, 0.6)' }}
+                      className="text-left rounded-xl border border-token-border p-4 transition-all hover:border-[#10B981]/50 hover:bg-hover group disabled:opacity-60"
+                      style={{ background: 'var(--surface-2)' }}
                     >
                       <div className="flex items-start justify-between">
-                        <h3 className="text-lg font-semibold text-white group-hover:text-[#10B981] transition-colors">
+                        <h3 className="text-lg font-semibold text-fg group-hover:text-[#10B981] transition-colors">
                           {templateName}
                         </h3>
                         {creatingTemplateId === template.id ? (
                           <div className="w-4 h-4 rounded-full animate-spin mt-1" style={{ border: '2px solid #10B981', borderTopColor: 'transparent' }} />
                         ) : (
                           <svg
-                            className="text-gray-500 group-hover:text-[#10B981] transition-colors mt-1"
+                            className="text-fg-faint group-hover:text-[#10B981] transition-colors mt-1"
                             width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
                           >
                             <path d="M5 12h14M12 5l7 7-7 7"/>
                           </svg>
                         )}
                       </div>
-                      <p className="text-gray-400 text-sm mt-1 line-clamp-2">
+                      <p className="text-fg-muted text-sm mt-1 line-clamp-2">
                         {templateDesc}
                       </p>
-                      <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+                      <div className="flex items-center gap-4 mt-3 text-xs text-fg-faint">
                         <span className="flex items-center gap-1">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -466,12 +467,12 @@ export default function HomePage() {
 
             {/* Workflows Section */}
             <section>
-              <h2 className="text-2xl font-semibold text-white mb-6">{t('home.yourWorkflows')}</h2>
+              <h2 className="text-2xl font-semibold text-fg mb-6">{t('home.yourWorkflows')}</h2>
 
               {workflows.length === 0 ? (
                 <div
-                  className="text-center py-12 rounded-2xl border border-white/10"
-                  style={{ background: 'rgba(17, 24, 39, 0.8)' }}
+                  className="text-center py-12 rounded-2xl border border-token-border"
+                  style={{ background: 'var(--surface)' }}
                 >
                   <div
                     className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
@@ -481,8 +482,8 @@ export default function HomePage() {
                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">{t('home.noWorkflows')}</h3>
-                  <p className="text-gray-400 mb-6 max-w-md mx-auto">
+                  <h3 className="text-xl font-semibold text-fg mb-2">{t('home.noWorkflows')}</h3>
+                  <p className="text-fg-muted mb-6 max-w-md mx-auto">
                     {t('home.noWorkflowsDesc')}
                   </p>
                   <button
@@ -502,19 +503,19 @@ export default function HomePage() {
                     {workflows.map((workflow) => (
                     <div
                       key={workflow.id}
-                      className="rounded-xl border border-white/10 overflow-hidden transition-all hover:border-[#10B981]/50 group"
-                      style={{ background: 'rgba(17, 24, 39, 0.8)' }}
+                      className="rounded-xl border border-token-border overflow-hidden transition-all hover:border-[#10B981]/50 group"
+                      style={{ background: 'var(--surface)' }}
                     >
                       <Link href={`/editor/${workflow.id}`} className="block p-4">
-                        <h3 className="text-lg font-semibold text-white group-hover:text-[#10B981] transition-colors">
+                        <h3 className="text-lg font-semibold text-fg group-hover:text-[#10B981] transition-colors">
                           {workflow.name}
                         </h3>
                         {workflow.description && (
-                          <p className="text-gray-400 text-sm mt-1 line-clamp-2">
+                          <p className="text-fg-muted text-sm mt-1 line-clamp-2">
                             {workflow.description}
                           </p>
                         )}
-                        <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+                        <div className="flex items-center gap-4 mt-3 text-xs text-fg-faint">
                           <span className="flex items-center gap-1">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -529,15 +530,15 @@ export default function HomePage() {
                           </span>
                         </div>
                       </Link>
-                      <div className="px-4 py-2 border-t border-white/10 flex justify-between items-center">
-                        <span className="text-xs text-gray-600">
+                      <div className="px-4 py-2 border-t border-token-border flex justify-between items-center">
+                        <span className="text-xs text-fg-faint">
                           {new Date(workflow.updatedAt).toLocaleDateString()}
                         </span>
                         <div className="flex items-center gap-3">
                           <button
                             onClick={() => duplicateWorkflow(workflow.id)}
                             disabled={duplicatingId === workflow.id}
-                            className="text-xs text-gray-400 hover:text-[#10B981] transition-colors disabled:opacity-50"
+                            className="text-xs text-fg-muted hover:text-[#10B981] transition-colors disabled:opacity-50"
                             title="Duplicate"
                           >
                             {duplicatingId === workflow.id ? (
@@ -551,7 +552,7 @@ export default function HomePage() {
                           </button>
                           <button
                             onClick={() => exportWorkflow(workflow.id, workflow.name)}
-                            className="text-xs text-gray-400 hover:text-[#3B82F6] transition-colors"
+                            className="text-xs text-fg-muted hover:text-[#3B82F6] transition-colors"
                             title="Export"
                           >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -565,7 +566,7 @@ export default function HomePage() {
                             className={`text-xs transition-colors ${
                               pendingDeleteId === workflow.id
                                 ? 'text-red-400'
-                                : 'text-gray-400 hover:text-red-400'
+                                : 'text-fg-muted hover:text-red-400'
                             }`}
                             title={pendingDeleteId === workflow.id ? 'Click again to delete' : 'Delete'}
                           >
@@ -587,8 +588,8 @@ export default function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 flex-shrink-0 border-t border-white/10 py-4" style={{ background: 'rgba(17, 24, 39, 0.8)' }}>
-        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-gray-400">
+      <footer className="relative z-10 flex-shrink-0 border-t border-token-border py-4" style={{ background: 'var(--surface)' }}>
+        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-fg-muted">
           <p>{t('support.description')}</p>
           <div className="flex items-center gap-4">
             {/* Update button (desktop only, shown when an update is available) */}
@@ -624,14 +625,14 @@ export default function HomePage() {
               href="https://x.com/oboroge9"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 hover:text-white transition-colors"
+              className="flex items-center gap-1 hover:text-fg transition-colors"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
               </svg>
               {t('support.dm')} (@oboroge9)
             </a>
-            <span className="text-gray-600">v{process.env.NEXT_PUBLIC_APP_VERSION}</span>
+            <span className="text-fg-faint">v{process.env.NEXT_PUBLIC_APP_VERSION}</span>
           </div>
         </div>
       </footer>
