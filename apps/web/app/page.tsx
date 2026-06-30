@@ -344,7 +344,7 @@ export default function HomePage() {
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2 rounded-lg text-fg font-medium text-sm flex items-center gap-2 transition-colors hover:bg-hover"
+              className="px-4 py-2 rounded-lg text-fg-strong font-medium text-sm flex items-center gap-2 transition-colors hover:bg-hover"
               style={{ border: '1px solid var(--border)' }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -531,7 +531,7 @@ export default function HomePage() {
                         </div>
                       </Link>
                       <div className="px-4 py-2 border-t border-token-border flex justify-between items-center">
-                        <span className="text-xs text-fg-faint">
+                        <span className="text-xs text-fg-fainter">
                           {new Date(workflow.updatedAt).toLocaleDateString()}
                         </span>
                         <div className="flex items-center gap-3">
@@ -632,7 +632,7 @@ export default function HomePage() {
               </svg>
               {t('support.dm')} (@oboroge9)
             </a>
-            <span className="text-fg-faint">v{process.env.NEXT_PUBLIC_APP_VERSION}</span>
+            <span className="text-fg-fainter">v{process.env.NEXT_PUBLIC_APP_VERSION}</span>
           </div>
         </div>
       </footer>

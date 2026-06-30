@@ -31,9 +31,11 @@ const config: Config = {
         'token-border': 'var(--border)',
         'token-border-subtle': 'var(--border-subtle)',
         'fg': 'var(--text)',
+        'fg-strong': 'var(--text-strong)',
         'fg-muted': 'var(--text-muted)',
         'fg-dim': 'var(--text-dim)',
         'fg-faint': 'var(--text-faint)',
+        'fg-fainter': 'var(--text-fainter)',
       },
       backgroundImage: {
         'gradient-main': 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)',
