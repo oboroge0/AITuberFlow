@@ -81,9 +81,9 @@ function formatDuration(ms: number | undefined): string {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
-const FIELD_BAR_BG = 'rgba(255,255,255,0.07)';
-const FOCUS_RING = 'focus-visible:shadow-[0_0_0_1.5px_rgba(255,255,255,0.45)]';
-const FOCUS_RING_WITHIN = 'focus-within:shadow-[0_0_0_1.5px_rgba(255,255,255,0.45)]';
+const FIELD_BAR_BG = 'var(--node-field)';
+const FOCUS_RING = 'focus-visible:shadow-[0_0_0_1.5px_var(--focus-ring)]';
+const FOCUS_RING_WITHIN = 'focus-within:shadow-[0_0_0_1.5px_var(--focus-ring)]';
 
 // Text input with draft state: commits on blur/Enter, reverts on Escape.
 // Keeping edits local until commit means one undo entry / one auto-save per
@@ -124,7 +124,7 @@ function InlineTextField({
       <div className="flex items-center px-2 h-[26px] gap-1">
         <input
           type={password && !showPw ? 'password' : 'text'}
-          className="nodrag nopan bg-transparent text-[10px] text-white/75 outline-none flex-1 min-w-0"
+          className="nodrag nopan bg-transparent text-[10px] text-fg-strong outline-none flex-1 min-w-0"
           value={draft ?? value}
           placeholder={placeholder}
           aria-label={ariaLabel}
@@ -142,7 +142,7 @@ function InlineTextField({
         />
         {password && (
           <button
-            className={`nodrag nopan text-white/30 hover:text-white/60 flex-shrink-0 ${FOCUS_RING}`}
+            className={`nodrag nopan text-fg-faint hover:text-fg-muted flex-shrink-0 ${FOCUS_RING}`}
             aria-label={showPw ? t('inline.hideKey') : t('inline.showKey')}
             title={showPw ? t('inline.hideKey') : t('inline.showKey')}
             onClick={(e) => { e.stopPropagation(); setShowPw(!showPw); }}
@@ -270,7 +270,7 @@ function InlineNumberField({
   const editInput = (
     <input
       type="number"
-      className="nodrag nopan bg-transparent text-[10px] text-white/90 outline-none text-right flex-1 min-w-0 tabular-nums"
+      className="nodrag nopan bg-transparent text-[10px] text-fg outline-none text-right flex-1 min-w-0 tabular-nums"
       value={draft}
       min={min}
       max={max}
@@ -304,7 +304,7 @@ function InlineNumberField({
           {editing ? editInput : (
             <input
               type="number"
-              className="nodrag nopan bg-transparent text-[10px] text-white/75 outline-none text-right flex-1 min-w-0 tabular-nums"
+              className="nodrag nopan bg-transparent text-[10px] text-fg-strong outline-none text-right flex-1 min-w-0 tabular-nums"
               value={format(value)}
               min={min}
               max={max}
@@ -346,7 +346,7 @@ function InlineNumberField({
       />
       <div className="relative flex items-center justify-end px-2 h-[26px]">
         {editing ? editInput : (
-          <span className="text-[10px] text-white/75 tabular-nums select-none">
+          <span className="text-[10px] text-fg-strong tabular-nums select-none">
             {format(display)}
           </span>
         )}
@@ -409,16 +409,16 @@ function TextareaEditorPopover({
     >
       <div
         className="backdrop-blur-md rounded-lg shadow-2xl overflow-hidden flex flex-col"
-        style={{ background: 'rgba(15, 23, 42, 0.97)', border: '1px solid rgba(255,255,255,0.15)' }}
+        style={{ background: 'var(--surface-strong)', border: '1px solid var(--border)' }}
       >
-        <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
-          <span className="text-[12px] font-semibold text-white/85">{label}</span>
-          <span className="text-[10px] text-white/35">{t('inline.ctrlEnterSave')}</span>
+        <div className="flex items-center justify-between px-3 py-2 border-b border-token-border">
+          <span className="text-[12px] font-semibold text-fg-strong">{label}</span>
+          <span className="text-[10px] text-fg-faint">{t('inline.ctrlEnterSave')}</span>
         </div>
         <textarea
-          className="nowheel w-full text-[13px] leading-relaxed text-white/90 outline-none resize-y"
+          className="nowheel w-full text-[13px] leading-relaxed text-fg outline-none resize-y"
           style={{
-            background: 'rgba(0,0,0,0.25)',
+            background: 'var(--elevated)',
             padding: '10px 12px',
             minHeight: '180px',
             maxHeight: '50vh',
@@ -436,11 +436,11 @@ function TextareaEditorPopover({
             }
           }}
         />
-        <div className="flex items-center justify-between px-3 py-2 border-t border-white/10">
-          <span className="text-[10px] text-white/40 tabular-nums">{draft.length}</span>
+        <div className="flex items-center justify-between px-3 py-2 border-t border-token-border">
+          <span className="text-[10px] text-fg-faint tabular-nums">{draft.length}</span>
           <div className="flex items-center gap-2">
             <button
-              className="text-[11px] text-white/50 hover:text-white/80 px-2 py-1 rounded transition-colors"
+              className="text-[11px] text-fg-dim hover:text-fg-strong px-2 py-1 rounded transition-colors"
               onClick={onClose}
             >
               {t('common.cancel')}
@@ -510,9 +510,9 @@ function getValueSummary(field: ConfigField, value: unknown, t: (key: string) =>
 function ConfigFieldsSkeleton() {
   return (
     <div className="space-y-1 animate-pulse" aria-hidden="true">
-      <div className="h-[26px] rounded bg-white/5" />
-      <div className="h-[26px] rounded bg-white/5" />
-      <div className="h-[26px] rounded bg-white/5" />
+      <div className="h-[26px] rounded bg-elevated" />
+      <div className="h-[26px] rounded bg-elevated" />
+      <div className="h-[26px] rounded bg-elevated" />
     </div>
   );
 }
@@ -577,12 +577,12 @@ function NodeConfigFields({
   // Row that hands off to the settings panel for fields that cannot be edited
   // inline (complex editors, dynamic option lists fetched from engines)
   const OpenSettingsRow = ({ summary }: { summary?: string }) => (
-    <div style={{ background: 'rgba(0,0,0,0.15)', borderRadius: '0 0 4px 4px' }}>
+    <div style={{ background: 'var(--elevated)', borderRadius: '0 0 4px 4px' }}>
       {summary && (
-        <div className="nodrag nopan px-2 pt-1.5 text-[10px] text-white/60 truncate">{summary}</div>
+        <div className="nodrag nopan px-2 pt-1.5 text-[10px] text-fg-muted truncate">{summary}</div>
       )}
       <button
-        className={`nodrag nopan w-full px-2 py-1.5 text-[10px] text-white/55 hover:text-white/90 hover:bg-white/10 transition-colors flex items-center gap-1.5 ${FOCUS_RING}`}
+        className={`nodrag nopan w-full px-2 py-1.5 text-[10px] text-fg-dim hover:text-fg hover:bg-hover transition-colors flex items-center gap-1.5 ${FOCUS_RING}`}
         onClick={(e) => { e.stopPropagation(); onOpenSettings(); }}
       >
         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0">
@@ -600,7 +600,7 @@ function NodeConfigFields({
       width="8" height="8" viewBox="0 0 24 24"
       fill="none" stroke="currentColor" strokeWidth="3"
       className="flex-shrink-0"
-      style={{ color: 'rgba(255,255,255,0.3)' }}
+      style={{ color: 'var(--text-faint)' }}
     >
       {expanded
         ? <polyline points="6 9 12 15 18 9"/>
@@ -639,7 +639,7 @@ function NodeConfigFields({
             onDoubleClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-2 h-[26px]">
-              <span className="text-[10px] text-white/75 select-none">{selectedLabel}</span>
+              <span className="text-[10px] text-fg-strong select-none">{selectedLabel}</span>
             </div>
             <select
               className="nodrag nopan absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -696,7 +696,7 @@ function NodeConfigFields({
             <div className="relative flex items-center justify-end px-2 h-[26px]">
               <div
                 className="relative flex-shrink-0 rounded-full transition-colors"
-                style={{ width: '20px', height: '11px', background: boolValue ? accentColor : 'rgba(255,255,255,0.2)' }}
+                style={{ width: '20px', height: '11px', background: boolValue ? accentColor : 'var(--border)' }}
               >
                 <span
                   className="absolute top-[1.5px] rounded-full bg-white transition-transform"
@@ -733,8 +733,8 @@ function NodeConfigFields({
         const str = String(value ?? '');
         return (
           <button
-            className={`nodrag nopan w-full text-left px-2 py-1.5 hover:bg-white/10 transition-colors ${FOCUS_RING}`}
-            style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '0 0 4px 4px' }}
+            className={`nodrag nopan w-full text-left px-2 py-1.5 hover:bg-hover transition-colors ${FOCUS_RING}`}
+            style={{ background: 'var(--elevated)', borderRadius: '0 0 4px 4px' }}
             onClick={(e) => {
               e.stopPropagation();
               const rect = e.currentTarget.getBoundingClientRect();
@@ -747,15 +747,15 @@ function NodeConfigFields({
             onDoubleClick={(e) => e.stopPropagation()}
           >
             {str ? (
-              <div className="text-[10px] text-white/70 line-clamp-2 whitespace-pre-wrap break-words">
+              <div className="text-[10px] text-fg-muted line-clamp-2 whitespace-pre-wrap break-words">
                 {str}
               </div>
             ) : (
-              <div className="text-[10px] text-white/35 italic">
+              <div className="text-[10px] text-fg-faint italic">
                 {field.placeholder || t('common.notSet')}
               </div>
             )}
-            <div className="text-[9px] text-white/35 mt-0.5">
+            <div className="text-[9px] text-fg-faint mt-0.5">
               {str.length}{t('inline.charCountEdit')}
             </div>
           </button>
@@ -796,18 +796,18 @@ function NodeConfigFields({
               onClick={(e) => { e.stopPropagation(); toggleField(key); }}
             >
               <ToggleIcon expanded={isExpanded} />
-              <span className="text-[10px] text-white/55 select-none flex-shrink-0">{field.label}</span>
+              <span className="text-[10px] text-fg-dim select-none flex-shrink-0">{field.label}</span>
               {usedGlobalKey && (
                 <span
                   className="text-[9px] px-1 py-px rounded select-none flex-shrink-0 ml-auto"
-                  style={{ background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)' }}
+                  style={{ background: 'var(--elevated)', color: 'var(--text-muted)' }}
                   title={t('inline.globalTooltip')}
                 >
                   {t('inline.globalBadge')}
                 </span>
               )}
               {!isExpanded && summary && (
-                <span className={`text-[10px] text-white/60 select-none truncate max-w-[60%] text-right ${usedGlobalKey ? '' : 'ml-auto'}`}>
+                <span className={`text-[10px] text-fg-muted select-none truncate max-w-[60%] text-right ${usedGlobalKey ? '' : 'ml-auto'}`}>
                   {summary}
                 </span>
               )}
@@ -1025,7 +1025,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const getNodeStyle = (): React.CSSProperties => {
     // Status-based border and glow
     const statusVisual = status?.status ? STATUS_BORDER_COLORS[status.status] : undefined;
-    let borderColor = 'rgba(255,255,255,0.1)';
+    let borderColor = 'var(--border)';
     let boxShadow = '0 4px 20px rgba(0,0,0,0.2)';
 
     if (selected) {
@@ -1040,7 +1040,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     const NODE_WIDTH = 240;
 
     const baseStyle: React.CSSProperties = {
-      background: '#0F172A',
+      background: 'var(--node-bg)',
       border: `2px solid ${borderColor}`,
       borderRadius: '12px',
       boxShadow,
@@ -1060,7 +1060,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const CollapseButton = ({ className }: { className?: string }) => (
     <button
       onClick={handleCollapseToggle}
-      className={`text-white/40 hover:text-white/80 transition-colors flex-shrink-0 ${className ?? ''}`}
+      className={`text-fg-faint hover:text-fg-strong transition-colors flex-shrink-0 ${className ?? ''}`}
       title={collapsed ? t('inline.expand') : t('inline.collapse')}
     >
       {collapsed ? <ChevronRight /> : <ChevronDown />}
@@ -1072,7 +1072,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     <button
       onClick={(e) => { e.stopPropagation(); openSettings(); }}
       onDoubleClick={(e) => e.stopPropagation()}
-      className="nodrag text-white/30 hover:text-white/80 transition-colors flex-shrink-0 p-0.5"
+      className="nodrag text-fg-faint hover:text-fg-strong transition-colors flex-shrink-0 p-0.5"
       title={t('inline.detailSettings')}
       aria-label={t('inline.openDetailSettings')}
     >
@@ -1148,7 +1148,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             >
               <div className="bg-amber-900/95 backdrop-blur-sm border border-amber-500/50 rounded-lg p-2 shadow-xl">
                 <div className="text-[10px] font-semibold text-amber-200 mb-1">Warning</div>
-                <div className="text-[11px] text-white/90 leading-relaxed break-words">
+                <div className="text-[11px] text-fg leading-relaxed break-words">
                   {String(status?.data?.validationIssue ?? '')}
                 </div>
               </div>
@@ -1184,7 +1184,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             >
               <div className="bg-red-900/95 backdrop-blur-sm border border-red-500/50 rounded-lg p-2 shadow-xl">
                 <div className="text-[10px] font-semibold text-red-200 mb-1">Error</div>
-                <div className="text-[11px] text-white/90 leading-relaxed break-words">
+                <div className="text-[11px] text-fg leading-relaxed break-words">
                   {String(status?.data?.error || status?.data?.validationIssue || '')}
                 </div>
               </div>
@@ -1211,27 +1211,27 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         className="fixed pointer-events-none whitespace-nowrap"
         style={{ left: rect.left + rect.width / 2, top: rect.top - 8, transform: 'translate(-50%, -100%)', zIndex: 10000 }}
       >
-        <div className="bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-lg p-2.5 shadow-xl min-w-[180px]">
+        <div className="bg-surface-strong backdrop-blur-sm border border-token-border rounded-lg p-2.5 shadow-xl min-w-[180px]">
           {inputs.length > 0 && (
             <div className="mb-1.5">
-              <div className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">{t('inline.inputs')}</div>
+              <div className="text-[9px] text-fg-faint uppercase tracking-wider mb-0.5">{t('inline.inputs')}</div>
               {inputs.map((inp) => (
                 <div key={inp.id} className="flex items-center gap-1.5 py-px">
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: PORT_TYPE_COLORS[inp.type as PortType] ?? '#6B7280' }} />
-                  <span className="text-[10px] text-white/80">{inp.label}</span>
-                  <span className="text-[9px] text-white/40 ml-auto">{PORT_TYPE_LABELS[inp.type as PortType] ?? inp.type}</span>
+                  <span className="text-[10px] text-fg-strong">{inp.label}</span>
+                  <span className="text-[9px] text-fg-faint ml-auto">{PORT_TYPE_LABELS[inp.type as PortType] ?? inp.type}</span>
                 </div>
               ))}
             </div>
           )}
           {outputs.length > 0 && (
-            <div className={inputs.length > 0 ? 'pt-1 border-t border-white/10' : ''}>
-              <div className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">{t('inline.outputs')}</div>
+            <div className={inputs.length > 0 ? 'pt-1 border-t border-token-border' : ''}>
+              <div className="text-[9px] text-fg-faint uppercase tracking-wider mb-0.5">{t('inline.outputs')}</div>
               {outputs.map((out) => (
                 <div key={out.id} className="flex items-center gap-1.5 py-px">
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: PORT_TYPE_COLORS[out.type as PortType] ?? '#6B7280' }} />
-                  <span className="text-[10px] text-white/80">{out.label}</span>
-                  <span className="text-[9px] text-white/40 ml-auto">{PORT_TYPE_LABELS[out.type as PortType] ?? out.type}</span>
+                  <span className="text-[10px] text-fg-strong">{out.label}</span>
+                  <span className="text-[9px] text-fg-faint ml-auto">{PORT_TYPE_LABELS[out.type as PortType] ?? out.type}</span>
                 </div>
               ))}
             </div>
@@ -1253,14 +1253,14 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         className="fixed pointer-events-none whitespace-nowrap"
         style={{ left: r.left + r.width / 2, top: r.top - 8, transform: 'translate(-50%, -100%)', zIndex: 10001 }}
       >
-        <div className="bg-gray-950/98 backdrop-blur-sm border rounded-lg p-2 shadow-xl" style={{ borderColor: `${typeColor}60` }}>
+        <div className="bg-surface-strong backdrop-blur-sm border rounded-lg p-2 shadow-xl" style={{ borderColor: `${typeColor}60` }}>
           <div className="flex items-center gap-1.5 mb-1">
             <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: typeColor }} />
-            <span className="text-[11px] font-semibold text-white/90">{hoveredPort.label}</span>
+            <span className="text-[11px] font-semibold text-fg">{hoveredPort.label}</span>
             <span className="text-[10px] ml-auto" style={{ color: typeColor }}>{typeLabel}</span>
           </div>
           {hoveredPort.description && (
-            <div className="text-[10px] text-white/60 leading-relaxed whitespace-normal">{hoveredPort.description}</div>
+            <div className="text-[10px] text-fg-muted leading-relaxed whitespace-normal">{hoveredPort.description}</div>
           )}
         </div>
       </div>,
@@ -1320,7 +1320,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         <div
           className="backdrop-blur-md rounded-lg shadow-2xl overflow-hidden"
           style={{
-            background: 'rgba(15, 23, 42, 0.95)',
+            background: 'var(--surface-strong)',
             border: `1px solid ${statusColor}40`,
           }}
         >
@@ -1330,18 +1330,18 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${status.status === 'running' ? 'animate-pulse' : ''}`}
               style={{ background: statusColor }}
             />
-            <span className="text-[12px] font-semibold text-white truncate flex-1">
+            <span className="text-[12px] font-semibold text-fg truncate flex-1">
               {data.label}
             </span>
             {duration !== undefined && (
-              <span className="text-[10px] text-white/50 flex-shrink-0">
+              <span className="text-[10px] text-fg-dim flex-shrink-0">
                 {formatDuration(duration)}
               </span>
             )}
             <button
               onClick={togglePin}
               className={`w-5 h-5 flex items-center justify-center rounded transition-colors flex-shrink-0 ${
-                popoverPinned ? 'text-blue-400 bg-blue-400/20' : 'text-white/30 hover:text-white/60'
+                popoverPinned ? 'text-blue-400 bg-blue-400/20' : 'text-fg-faint hover:text-fg-muted'
               }`}
               title={popoverPinned ? 'Unpin' : 'Pin'}
             >
@@ -1370,8 +1370,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           <div className="px-3 py-2 space-y-1.5">
             {resultSummary && (
               <div className="flex items-start gap-2">
-                <span className="text-[10px] text-white/40 w-14 flex-shrink-0">Result</span>
-                <span className="text-[11px] text-white/80">{resultSummary}</span>
+                <span className="text-[10px] text-fg-faint w-14 flex-shrink-0">Result</span>
+                <span className="text-[11px] text-fg-strong">{resultSummary}</span>
               </div>
             )}
             {errorMsg && (
@@ -1382,8 +1382,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             )}
             {duration !== undefined && (
               <div className="flex items-start gap-2">
-                <span className="text-[10px] text-white/40 w-14 flex-shrink-0">Duration</span>
-                <span className="text-[11px] text-white/80">{formatDuration(duration)}</span>
+                <span className="text-[10px] text-fg-faint w-14 flex-shrink-0">Duration</span>
+                <span className="text-[11px] text-fg-strong">{formatDuration(duration)}</span>
               </div>
             )}
           </div>
@@ -1391,9 +1391,9 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           {/* Output preview */}
           {outputs && Object.keys(outputs).length > 0 && (
             <div className="px-3 pb-2">
-              <div className="text-[9px] text-white/30 uppercase tracking-wider mb-1">Output Preview</div>
+              <div className="text-[9px] text-fg-faint uppercase tracking-wider mb-1">Output Preview</div>
               <pre
-                className="text-[10px] text-white/60 bg-black/30 rounded p-2 overflow-auto max-h-[80px] whitespace-pre-wrap break-words"
+                className="text-[10px] text-fg-muted bg-black/30 rounded p-2 overflow-auto max-h-[80px] whitespace-pre-wrap break-words"
                 style={{ fontFamily: 'monospace' }}
               >
                 {JSON.stringify(outputs, null, 2).slice(0, 500)}
@@ -1406,7 +1406,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             <div className="px-3 pb-2 flex justify-end">
               <button
                 onClick={copyErrorToClipboard}
-                className="text-white/30 hover:text-white/70 transition-colors p-1 rounded hover:bg-white/10"
+                className="text-fg-faint hover:text-fg-muted transition-colors p-1 rounded hover:bg-hover"
                 title="Copy error message"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1539,7 +1539,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           >
             {config.icon}
           </div>
-          <span className="font-semibold text-[11px] text-white truncate">
+          <span className="font-semibold text-[11px] text-fg truncate">
             {data.label}
           </span>
         </div>
@@ -1586,7 +1586,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         >
           {config.icon}
         </div>
-        <span className="font-semibold text-[13px] text-white truncate flex-1 min-w-0">
+        <span className="font-semibold text-[13px] text-fg truncate flex-1 min-w-0">
           {data.label}
         </span>
         <SettingsButton />
@@ -1611,7 +1611,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   id={input.id}
                   style={{ ...getHandleStyle(input.type as PortType, true), left: '-7px', position: 'absolute', top: '50%', transform: 'translateY(-50%)' }}
                 />
-                <span className="text-[10px] text-white/60 pl-2 whitespace-nowrap">
+                <span className="text-[10px] text-fg-muted pl-2 whitespace-nowrap">
                   {input.label}
                 </span>
               </div>
@@ -1628,7 +1628,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                 onMouseLeave={() => setHoveredPort(null)}
               >
                 <PortTooltip portId={output.id} side="output" />
-                <span className="text-[10px] text-white/60 pr-2 whitespace-nowrap">
+                <span className="text-[10px] text-fg-muted pr-2 whitespace-nowrap">
                   {output.label}
                 </span>
                 <Handle
@@ -1644,7 +1644,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       )}
 
       {/* Status */}
-      <div className="text-[10px] text-white/40 truncate">
+      <div className="text-[10px] text-fg-faint truncate">
         {getStatusText()}
       </div>
 
