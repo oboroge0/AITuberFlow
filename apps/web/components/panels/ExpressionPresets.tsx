@@ -44,7 +44,7 @@ export default function ExpressionPresets({
 
   return (
     <div className="p-3">
-      <h3 className="text-sm font-semibold text-white mb-3">Expression Presets</h3>
+      <h3 className="text-sm font-semibold text-fg mb-3">Expression Presets</h3>
 
       {/* Expression Grid */}
       <div className="grid grid-cols-3 gap-2 mb-4">
@@ -54,16 +54,16 @@ export default function ExpressionPresets({
             onClick={() => sendExpression(expr.id)}
             className={`p-2 rounded-lg text-center transition-all ${
               currentExpression === expr.id
-                ? 'ring-2 ring-offset-2 ring-offset-gray-900'
-                : 'hover:bg-white/10'
+                ? 'ring-2 ring-offset-2 ring-offset-[var(--surface-strong)]'
+                : 'hover:bg-hover'
             }`}
             style={{
-              backgroundColor: currentExpression === expr.id ? `${expr.color}30` : 'rgba(255,255,255,0.05)',
+              backgroundColor: currentExpression === expr.id ? `${expr.color}30` : 'var(--elevated)',
               '--tw-ring-color': expr.color,
             } as React.CSSProperties}
           >
             <div className="text-2xl mb-1">{expr.emoji}</div>
-            <div className="text-[10px] text-white/70">{expr.name}</div>
+            <div className="text-[10px] text-fg-muted">{expr.name}</div>
           </button>
         ))}
       </div>
@@ -71,8 +71,8 @@ export default function ExpressionPresets({
       {/* Mouth Control */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs text-white/50">Mouth Open</span>
-          <span className="text-xs text-white/70">{(mouthOpen * 100).toFixed(0)}%</span>
+          <span className="text-xs text-fg-dim">Mouth Open</span>
+          <span className="text-xs text-fg-muted">{(mouthOpen * 100).toFixed(0)}%</span>
         </div>
         <input
           type="range"
@@ -81,7 +81,7 @@ export default function ExpressionPresets({
           step="0.01"
           value={mouthOpen}
           onChange={(e) => sendMouth(parseFloat(e.target.value))}
-          className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer
+          className="w-full h-2 bg-elevated rounded-full appearance-none cursor-pointer
             [&::-webkit-slider-thumb]:appearance-none
             [&::-webkit-slider-thumb]:w-4
             [&::-webkit-slider-thumb]:h-4
@@ -93,14 +93,14 @@ export default function ExpressionPresets({
 
       {/* Quick Actions */}
       <div className="space-y-2">
-        <div className="text-[10px] text-white/40 uppercase tracking-wider">Quick Actions</div>
+        <div className="text-[10px] text-fg-faint uppercase tracking-wider">Quick Actions</div>
         <div className="flex gap-2">
           <button
             onClick={() => {
               sendExpression('neutral');
               sendMouth(0);
             }}
-            className="flex-1 py-1.5 text-xs bg-white/5 text-white/70 rounded hover:bg-white/10"
+            className="flex-1 py-1.5 text-xs bg-elevated text-fg-muted rounded hover:bg-hover"
           >
             Reset
           </button>
@@ -123,7 +123,7 @@ export default function ExpressionPresets({
                 sendMouth(0);
               }, 2000);
             }}
-            className="flex-1 py-1.5 text-xs bg-white/5 text-white/70 rounded hover:bg-white/10"
+            className="flex-1 py-1.5 text-xs bg-elevated text-fg-muted rounded hover:bg-hover"
           >
             Test Talk
           </button>
@@ -131,9 +131,9 @@ export default function ExpressionPresets({
       </div>
 
       {/* Current State Display */}
-      <div className="mt-4 p-2 bg-black/30 rounded text-[10px] text-white/50">
-        <div>Expression: <span className="text-white/70">{currentExpression}</span></div>
-        <div>Mouth: <span className="text-white/70">{(mouthOpen * 100).toFixed(0)}%</span></div>
+      <div className="mt-4 p-2 bg-elevated rounded text-[10px] text-fg-dim">
+        <div>Expression: <span className="text-fg-muted">{currentExpression}</span></div>
+        <div>Mouth: <span className="text-fg-muted">{(mouthOpen * 100).toFixed(0)}%</span></div>
       </div>
     </div>
   );
