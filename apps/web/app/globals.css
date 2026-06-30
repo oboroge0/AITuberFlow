@@ -22,6 +22,7 @@
   --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
   --surface: rgba(17, 24, 39, 0.8);
   --surface-2: rgba(17, 24, 39, 0.6);
+  --surface-strong: rgba(17, 24, 39, 0.95);
   --card: rgba(17, 24, 39, 0.8);
   --elevated: rgba(255, 255, 255, 0.05);
   --hover: rgba(255, 255, 255, 0.1);
@@ -42,6 +43,7 @@
   --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #eaeef4 50%, #f8fafc 100%);
   --surface: rgba(255, 255, 255, 0.92);
   --surface-2: rgba(255, 255, 255, 0.7);
+  --surface-strong: rgba(255, 255, 255, 0.95);
   --card: rgba(255, 255, 255, 0.9);
   --elevated: rgba(15, 23, 42, 0.04);
   --hover: rgba(15, 23, 42, 0.06);

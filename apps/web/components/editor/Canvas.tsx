@@ -780,9 +780,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
       {/* Gradient background overlay */}
       <div
         className="absolute inset-0 pointer-events-none z-0"
-        style={{
-          background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)',
-        }}
+        style={{ background: 'var(--bg-gradient)' }}
       />
       <ReactFlow
         nodes={nodes}
@@ -820,7 +818,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         multiSelectionKeyCode={['Shift']}
       >
         <Background
-          color="rgba(255,255,255,0.03)"
+          color="var(--grid-line)"
           gap={40}
           size={1}
           style={{ background: 'transparent' }}
