@@ -25,6 +25,7 @@ const config: Config = {
         'bg': 'var(--bg)',
         'surface': 'var(--surface)',
         'surface-2': 'var(--surface-2)',
+        'surface-strong': 'var(--surface-strong)',
         'card': 'var(--card)',
         'elevated': 'var(--elevated)',
         'hover': 'var(--hover)',

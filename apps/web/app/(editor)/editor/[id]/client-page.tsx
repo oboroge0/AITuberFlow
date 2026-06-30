@@ -36,10 +36,10 @@ function ZoomControls() {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
 
   return (
-    <div className="flex flex-col gap-0.5 bg-gray-800/95 rounded-lg border border-white/20 shadow-lg overflow-hidden">
+    <div className="flex flex-col gap-0.5 bg-surface-strong rounded-lg border border-token-border shadow-lg overflow-hidden">
       <button
         onClick={() => zoomIn()}
-        className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
+        className="w-7 h-7 flex items-center justify-center text-fg hover:bg-hover transition-colors"
         title={t('editor.zoomIn')}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -47,20 +47,20 @@ function ZoomControls() {
           <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
       </button>
-      <div className="h-px bg-white/10" />
+      <div className="h-px bg-elevated" />
       <button
         onClick={() => zoomOut()}
-        className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
+        className="w-7 h-7 flex items-center justify-center text-fg hover:bg-hover transition-colors"
         title={t('editor.zoomOut')}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
       </button>
-      <div className="h-px bg-white/10" />
+      <div className="h-px bg-elevated" />
       <button
         onClick={() => fitView()}
-        className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
+        className="w-7 h-7 flex items-center justify-center text-fg hover:bg-hover transition-colors"
         title={t('editor.fitView')}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -589,16 +589,16 @@ export default function EditorPage() {
     <div
       className="h-screen w-screen relative overflow-hidden"
       style={{
-        background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)',
+        background: 'var(--bg-gradient)',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
       {/* Loading overlay */}
       {editorLoading && (
-        <div className="absolute inset-0 z-[100] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)' }}>
+        <div className="absolute inset-0 z-[100] flex items-center justify-center" style={{ background: 'var(--bg-gradient)' }}>
           <div className="flex flex-col items-center gap-4">
-            <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-emerald-400 animate-spin" />
-            <span className="text-sm text-white/60">読み込み中...</span>
+            <div className="w-10 h-10 rounded-full border-2 border-token-border border-t-emerald-400 animate-spin" />
+            <span className="text-sm text-fg-muted">読み込み中...</span>
           </div>
         </div>
       )}
@@ -608,8 +608,8 @@ export default function EditorPage() {
         className="absolute inset-0 pointer-events-none"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
+            linear-gradient(var(--grid-line) 1px, transparent 1px),
+            linear-gradient(90deg, var(--grid-line) 1px, transparent 1px)
           `,
           backgroundSize: '40px 40px',
         }}
@@ -620,7 +620,7 @@ export default function EditorPage() {
         {/* Back button */}
         <button
           onClick={() => router.push('/')}
-          className="w-10 h-10 rounded-[10px] flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all"
+          className="w-10 h-10 rounded-[10px] flex items-center justify-center text-fg-muted hover:text-fg hover:bg-hover transition-all"
           title={t('editor.backToWorkflows')}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -653,11 +653,11 @@ export default function EditorPage() {
               onChange={(e) => setEditedName(e.target.value)}
               onBlur={handleFinishEditingName}
               onKeyDown={handleNameKeyDown}
-              className="text-xl font-bold text-white bg-white/10 border border-white/20 rounded px-2 py-0.5 outline-none focus:border-emerald-500 w-[200px]"
+              className="text-xl font-bold text-fg bg-elevated border border-token-border rounded px-2 py-0.5 outline-none focus:border-emerald-500 w-[200px]"
             />
           ) : (
             <h1
-              className="text-xl font-bold text-white m-0 cursor-pointer hover:text-emerald-400 transition-colors"
+              className="text-xl font-bold text-fg m-0 cursor-pointer hover:text-emerald-400 transition-colors"
               onClick={handleStartEditingName}
               title={t('editor.clickToEditName')}
             >
@@ -677,7 +677,7 @@ export default function EditorPage() {
             </h1>
           )}
           <div className="flex items-center gap-2">
-            <p className="text-xs text-white/50 m-0">
+            <p className="text-xs text-fg-dim m-0">
               Build your AI streamer visually
             </p>
             {/* Connection status indicator */}
@@ -751,7 +751,7 @@ export default function EditorPage() {
         {/* Error count badge - shown only when there are errors */}
         {errorCount > 0 && (
           <div
-            className="px-3 py-2 rounded-lg bg-red-500/20 border border-red-500/50 text-red-300 flex items-center gap-2 text-sm cursor-default"
+            className="px-3 py-2 rounded-lg bg-red-500/20 border border-red-500/50 text-red-700 dark:text-red-300 flex items-center gap-2 text-sm cursor-default"
             title={`${errorCount} node(s) with errors`}
           >
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
@@ -765,8 +765,8 @@ export default function EditorPage() {
           onClick={() => setShowAvatarControls(!showAvatarControls)}
           className={`px-4 py-2 rounded-lg border transition-all flex items-center gap-2 text-sm ${
             showAvatarControls
-              ? 'bg-pink-500/30 border-pink-500/50 text-pink-300'
-              : 'bg-pink-500/20 border-pink-500/50 text-pink-300 hover:bg-pink-500/30'
+              ? 'bg-pink-500/30 border-pink-500/50 text-pink-700 dark:text-pink-300'
+              : 'bg-pink-500/20 border-pink-500/50 text-pink-700 dark:text-pink-300 hover:bg-pink-500/30'
           }`}
           title={t('editor.toggleAvatarControls')}
         >
@@ -784,7 +784,7 @@ export default function EditorPage() {
           onClick={() => {
             void openOverlay();
           }}
-          className="px-4 py-2 rounded-lg bg-purple-500/20 border border-purple-500/50 text-purple-300 hover:bg-purple-500/30 transition-all flex items-center gap-2 text-sm"
+          className="px-4 py-2 rounded-lg bg-purple-500/20 border border-purple-500/50 text-purple-700 dark:text-purple-300 hover:bg-purple-500/30 transition-all flex items-center gap-2 text-sm"
           title={t('editor.openOverlay')}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -799,7 +799,7 @@ export default function EditorPage() {
           onClick={() => {
             void copyOverlayUrl();
           }}
-          className="px-4 py-2 rounded-lg bg-indigo-500/20 border border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/30 transition-all flex items-center gap-2 text-sm"
+          className="px-4 py-2 rounded-lg bg-indigo-500/20 border border-indigo-500/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/30 transition-all flex items-center gap-2 text-sm"
           title={t('editor.copyOverlayUrl')}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -815,24 +815,24 @@ export default function EditorPage() {
       <div
         className="absolute top-20 right-5 z-20 w-[280px] overflow-hidden flex flex-col"
         style={{
-          background: 'rgba(17, 24, 39, 0.95)',
+          background: 'var(--surface-strong)',
           borderRadius: '16px',
-          border: '1px solid rgba(255,255,255,0.1)',
+          border: '1px solid var(--border)',
           height: settingsPanelOpen && selectedNodeId ? '280px' : 'calc(100% - 100px)',
           minHeight: '280px',
           transition: 'height 0.2s ease',
         }}
       >
         {/* Header */}
-        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-white/70">
+        <div className="px-3 py-2 border-b border-token-border flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-fg-muted">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
               <circle cx="12" cy="10" r="3"/>
             </svg>
             {t('editor.preview')}
           </div>
-          <div className="text-xs text-white/40">
+          <div className="text-xs text-fg-faint">
             {avatarState.expression}
           </div>
         </div>
@@ -852,7 +852,7 @@ export default function EditorPage() {
           />
         </div>
         {/* Status bar */}
-        <div className="px-3 py-1.5 border-t border-white/10 text-xs text-white/40 flex justify-between relative z-10 bg-gray-900/95">
+        <div className="px-3 py-1.5 border-t border-token-border text-xs text-fg-faint flex justify-between relative z-10 bg-surface-strong">
           <span>{avatarConfig.renderer.toUpperCase()}</span>
           <span>Mouth: {(avatarState.mouthOpen * 100).toFixed(0)}%</span>
         </div>
@@ -868,19 +868,19 @@ export default function EditorPage() {
             left: '285px',
             width: '260px',
             height: 'calc(100% - 180px)',
-            background: 'rgba(17, 24, 39, 0.95)',
+            background: 'var(--surface-strong)',
             borderRadius: '16px',
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: '1px solid var(--border)',
           }}
         >
           {/* Tab Headers */}
-          <div className="flex border-b border-white/10">
+          <div className="flex border-b border-token-border">
             <button
               onClick={() => setAvatarControlTab('expression')}
               className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
                 avatarControlTab === 'expression'
                   ? 'text-pink-400 border-b-2 border-pink-400 bg-pink-400/5'
-                  : 'text-white/50 hover:text-white/70 hover:bg-white/5'
+                  : 'text-fg-dim hover:text-fg-muted hover:bg-hover'
               }`}
             >
               <div className="flex items-center justify-center gap-1.5">
@@ -897,7 +897,7 @@ export default function EditorPage() {
               className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
                 avatarControlTab === 'motion'
                   ? 'text-purple-400 border-b-2 border-purple-400 bg-purple-400/5'
-                  : 'text-white/50 hover:text-white/70 hover:bg-white/5'
+                  : 'text-fg-dim hover:text-fg-muted hover:bg-hover'
               }`}
             >
               <div className="flex items-center justify-center gap-1.5">
@@ -910,7 +910,7 @@ export default function EditorPage() {
             {/* Close button */}
             <button
               onClick={() => setShowAvatarControls(false)}
-              className="px-2 py-2 text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors"
+              className="px-2 py-2 text-fg-faint hover:text-fg-muted hover:bg-hover transition-colors"
               title={t('editor.close')}
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -979,13 +979,13 @@ export default function EditorPage() {
             className="absolute right-5 bottom-5 z-30 w-[280px] overflow-hidden flex flex-col"
             style={{
               top: showPreview ? '360px' : '80px',
-              background: 'rgba(17, 24, 39, 0.97)',
+              background: 'var(--surface-strong)',
               borderRadius: '16px',
-              border: '1px solid rgba(255,255,255,0.1)',
+              border: '1px solid var(--border)',
             }}
           >
-            <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between flex-shrink-0">
-              <div className="flex items-center gap-2 text-sm text-white/70">
+            <div className="px-3 py-2 border-b border-token-border flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-2 text-sm text-fg-muted">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="3"/>
                   <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -994,7 +994,7 @@ export default function EditorPage() {
               </div>
               <button
                 onClick={() => setSettingsPanelOpen(false)}
-                className="text-white/40 hover:text-white/70 transition-colors p-0.5"
+                className="text-fg-faint hover:text-fg-muted transition-colors p-0.5"
                 title={t('editor.close')}
                 aria-label={t('editor.closeSettingsPanel')}
               >
