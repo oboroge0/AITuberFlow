@@ -13,8 +13,8 @@
   "ui": {
     "label": "OBS Source Toggle",
     "icon": "Eye",
-    "color": "#302E31",
-    "bgColor": "rgba(48, 46, 49, 0.3)",
+    "color": "#8B7CC4",
+    "bgColor": "rgba(139, 124, 196, 0.15)",
     "statusText": "OBS Source Toggle"
   },
   "node": {

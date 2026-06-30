@@ -54,6 +54,31 @@ const DEFAULT_BG_COLOR = 'rgba(107, 114, 128, 0.1)';
 const DEFAULT_ICON = 'Box';
 const DEFAULT_STATUS = 'Ready';
 
+// Node body is a dark navy (#0F172A). Accent colors darker than this blend into
+// it (e.g. ollama #1F2937), so lift any too-dark accent toward white until it
+// clears a minimum luminance. Keeps the hue, just makes it legible.
+// NOTE: tuned for the current dark theme; revisit when light mode lands.
+const MIN_ACCENT_LUMINANCE = 90; // 0..255
+function legibleAccent(hex: string): string {
+  const m = /^#([0-9a-fA-F]{6})$/.exec(hex.trim());
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  let r = (n >> 16) & 255;
+  let g = (n >> 8) & 255;
+  let b = n & 255;
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  if (lum >= MIN_ACCENT_LUMINANCE) return hex;
+  const f = (MIN_ACCENT_LUMINANCE - lum) / (255 - lum); // mix toward white
+  r = Math.round(r + (255 - r) * f);
+  g = Math.round(g + (255 - g) * f);
+  b = Math.round(b + (255 - b) * f);
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+}
+
+// Subtle outline so the icon chip always has a crisp edge on the dark body,
+// even for near-neutral accent colors.
+const ICON_CHIP_RING = 'inset 0 0 0 1px rgba(255,255,255,0.14)';
+
 // Chevron SVG components
 const ChevronDown = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -866,7 +891,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   // Get visual config from plugin store (with fallbacks)
   const plugin = getPluginById(data.type);
   const config: NodeVisualConfig = {
-    color: getPluginColor(data.type) || DEFAULT_COLOR,
+    color: legibleAccent(getPluginColor(data.type) || DEFAULT_COLOR),
     bgColor: getPluginBgColor(data.type) || DEFAULT_BG_COLOR,
     icon: renderIcon(getPluginIcon(data.type) || DEFAULT_ICON, { size: 16, color: 'currentColor' }),
     statusText: plugin?.ui?.statusText || DEFAULT_STATUS,
@@ -1530,6 +1555,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               height: '20px',
               borderRadius: '4px',
               background: config.color,
+              boxShadow: ICON_CHIP_RING,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -1577,6 +1603,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             height: '28px',
             borderRadius: '6px',
             background: config.color,
+            boxShadow: ICON_CHIP_RING,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
