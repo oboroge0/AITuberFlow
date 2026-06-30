@@ -131,7 +131,7 @@ export default function ExpressionPresets({
       </div>
 
       {/* Current State Display */}
-      <div className="mt-4 p-2 bg-elevated rounded text-[10px] text-fg-dim">
+      <div className="mt-4 p-2 bg-[var(--inset-strong)] rounded text-[10px] text-fg-dim">
         <div>Expression: <span className="text-fg-muted">{currentExpression}</span></div>
         <div>Mouth: <span className="text-fg-muted">{(mouthOpen * 100).toFixed(0)}%</span></div>
       </div>

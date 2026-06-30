@@ -25,6 +25,8 @@
   --surface-strong: rgba(17, 24, 39, 0.95);
   --card: rgba(17, 24, 39, 0.8);
   --elevated: rgba(255, 255, 255, 0.05);
+  --inset: rgba(0, 0, 0, 0.2);
+  --inset-strong: rgba(0, 0, 0, 0.3);
   --hover: rgba(255, 255, 255, 0.1);
   --border: rgba(255, 255, 255, 0.1);
   --border-subtle: rgba(255, 255, 255, 0.05);
@@ -49,6 +51,8 @@
   --surface-strong: rgba(255, 255, 255, 0.95);
   --card: rgba(255, 255, 255, 0.9);
   --elevated: rgba(15, 23, 42, 0.04);
+  --inset: rgba(15, 23, 42, 0.04);
+  --inset-strong: rgba(15, 23, 42, 0.055);
   --hover: rgba(15, 23, 42, 0.06);
   --border: rgba(15, 23, 42, 0.12);
   --border-subtle: rgba(15, 23, 42, 0.07);

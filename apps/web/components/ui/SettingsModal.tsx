@@ -30,7 +30,7 @@ function PasswordInput({
         placeholder={placeholder}
         className="w-full px-3 py-2 pr-9 rounded-lg text-sm text-fg outline-none"
         style={{
-          background: 'var(--elevated)',
+          background: 'var(--inset-strong)',
           border: '1px solid var(--border)',
         }}
       />
@@ -216,7 +216,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             <h3 className="text-sm font-semibold text-fg mb-3">{t('globalSettings.llmProviders')}</h3>
 
             {/* OpenAI */}
-            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--elevated)' }}>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
               <h4 className="text-xs font-medium text-fg-muted mb-2">OpenAI</h4>
               <div className="space-y-2">
                 <div>
@@ -239,7 +239,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* Anthropic */}
-            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--elevated)' }}>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
               <h4 className="text-xs font-medium text-fg-muted mb-2">Anthropic</h4>
               <div className="space-y-2">
                 <div>
@@ -262,7 +262,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* Google */}
-            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--elevated)' }}>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
               <h4 className="text-xs font-medium text-fg-muted mb-2">Google</h4>
               <div className="space-y-2">
                 <div>
@@ -285,7 +285,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* Ollama */}
-            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--elevated)' }}>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
               <h4 className="text-xs font-medium text-fg-muted mb-2">Ollama</h4>
               <div className="space-y-2">
                 <div>
@@ -308,7 +308,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* Mistral */}
-            <div className="p-3 rounded-lg" style={{ background: 'var(--elevated)' }}>
+            <div className="p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
               <h4 className="text-xs font-medium text-fg-muted mb-2">Mistral AI</h4>
               <div className="space-y-2">
                 <div>
@@ -331,7 +331,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* Groq */}
-            <div className="p-3 rounded-lg" style={{ background: 'var(--elevated)' }}>
+            <div className="p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
               <h4 className="text-xs font-medium text-fg-muted mb-2">Groq</h4>
               <div className="space-y-2">
                 <div>
@@ -359,7 +359,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             <h3 className="text-sm font-semibold text-fg mb-3">{t('globalSettings.ttsEngines')}</h3>
 
             {/* VOICEVOX */}
-            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--elevated)' }}>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
               <h4 className="text-xs font-medium text-fg-muted mb-2">VOICEVOX</h4>
               <div>
                 <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.host')}</label>
@@ -372,7 +372,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* COEIROINK */}
-            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--elevated)' }}>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
               <h4 className="text-xs font-medium text-fg-muted mb-2">COEIROINK</h4>
               <div>
                 <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.host')}</label>
@@ -385,7 +385,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* SBV2 */}
-            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--elevated)' }}>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
               <h4 className="text-xs font-medium text-fg-muted mb-2">Style-Bert-VITS2</h4>
               <div>
                 <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.host')}</label>
@@ -398,7 +398,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* AivisSpeech */}
-            <div className="p-3 rounded-lg" style={{ background: 'var(--elevated)' }}>
+            <div className="p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
               <h4 className="text-xs font-medium text-fg-muted mb-2">AivisSpeech</h4>
               <div>
                 <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.host')}</label>

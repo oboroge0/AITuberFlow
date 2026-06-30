@@ -418,7 +418,7 @@ function TextareaEditorPopover({
         <textarea
           className="nowheel w-full text-[13px] leading-relaxed text-fg outline-none resize-y"
           style={{
-            background: 'var(--elevated)',
+            background: 'var(--inset)',
             padding: '10px 12px',
             minHeight: '180px',
             maxHeight: '50vh',
@@ -577,7 +577,7 @@ function NodeConfigFields({
   // Row that hands off to the settings panel for fields that cannot be edited
   // inline (complex editors, dynamic option lists fetched from engines)
   const OpenSettingsRow = ({ summary }: { summary?: string }) => (
-    <div style={{ background: 'var(--elevated)', borderRadius: '0 0 4px 4px' }}>
+    <div style={{ background: 'var(--inset)', borderRadius: '0 0 4px 4px' }}>
       {summary && (
         <div className="nodrag nopan px-2 pt-1.5 text-[10px] text-fg-muted truncate">{summary}</div>
       )}
@@ -734,7 +734,7 @@ function NodeConfigFields({
         return (
           <button
             className={`nodrag nopan w-full text-left px-2 py-1.5 hover:bg-hover transition-colors ${FOCUS_RING}`}
-            style={{ background: 'var(--elevated)', borderRadius: '0 0 4px 4px' }}
+            style={{ background: 'var(--inset)', borderRadius: '0 0 4px 4px' }}
             onClick={(e) => {
               e.stopPropagation();
               const rect = e.currentTarget.getBoundingClientRect();
