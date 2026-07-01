@@ -461,6 +461,10 @@
     "close": "Close",
     "retry": "Retry"
   },
+  "theme": {
+    "toLight": "Switch to light mode",
+    "toDark": "Switch to dark mode"
+  },
   "common": {
     "close": "Close",
     "copy": "Copy",

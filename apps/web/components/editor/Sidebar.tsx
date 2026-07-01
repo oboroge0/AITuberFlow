@@ -194,13 +194,13 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onIm
     <div
       className="w-[260px] h-full flex flex-col overflow-hidden"
       style={{
-        background: 'rgba(17, 24, 39, 0.95)',
+        background: 'var(--surface-strong)',
         borderRadius: '16px',
-        border: '1px solid rgba(255,255,255,0.1)',
+        border: '1px solid var(--border)',
       }}
     >
       {/* Header */}
-      <div className="p-4 border-b border-white/10">
+      <div className="p-4 border-b border-token-border">
         <h2
           className="text-lg font-bold m-0"
           style={{
@@ -211,13 +211,13 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onIm
         >
           AITuber Flow
         </h2>
-        <p className="text-xs text-white/50 mt-1 m-0">
+        <p className="text-xs text-fg-dim mt-1 m-0">
           Visual Workflow Editor
         </p>
       </div>
 
       {/* Run Control */}
-      <div className="p-4 border-b border-white/10">
+      <div className="p-4 border-b border-token-border">
         <button
           onClick={onToggleRun}
           className="w-full py-3 rounded-lg border-none text-white font-semibold text-sm cursor-pointer flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
@@ -248,13 +248,13 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onIm
       {/* Node List */}
       <div className="flex-1 overflow-hidden flex flex-col min-h-0">
         <div className="px-4 pt-4 pb-2 space-y-2">
-          <h3 className="text-xs text-white/50 uppercase tracking-wider m-0">
+          <h3 className="text-xs text-fg-dim uppercase tracking-wider m-0">
             Nodes (Drag to Canvas)
           </h3>
           {/* Search Input */}
           <div className="relative">
             <svg
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/40"
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-faint"
               width="14"
               height="14"
               viewBox="0 0 24 24"
@@ -269,12 +269,12 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onIm
               placeholder="Search nodes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-white/5 border border-white/10 rounded-md text-white placeholder:text-white/30 focus:outline-none focus:border-emerald-500/50"
+              className="w-full pl-8 pr-3 py-1.5 text-xs bg-elevated border border-token-border rounded-md text-fg placeholder:text-fg-faint focus:outline-none focus:border-emerald-500/50"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-faint hover:text-fg-muted"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M18 6L6 18M6 6l12 12"/>
@@ -286,7 +286,7 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onIm
 
         <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
           {isLoading ? (
-            <div className="text-center py-4 text-white/40 text-xs">
+            <div className="text-center py-4 text-fg-faint text-xs">
               Loading plugins...
             </div>
           ) : error ? (
@@ -294,22 +294,22 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onIm
               <div className="text-red-400 text-xs">{error}</div>
               <button
                 onClick={() => fetchPlugins()}
-                className="px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 text-white/70 rounded transition-colors"
+                className="px-3 py-1.5 text-xs bg-hover hover:bg-elevated text-fg-muted rounded transition-colors"
               >
                 Retry
               </button>
             </div>
           ) : filteredCategories.length === 0 ? (
-            <div className="text-center py-4 text-white/40 text-xs">
+            <div className="text-center py-4 text-fg-faint text-xs">
               No nodes found
             </div>
           ) : (
             filteredCategories.map((category) => (
-              <div key={category.id} className="border border-white/10 rounded-lg overflow-hidden">
+              <div key={category.id} className="border border-token-border rounded-lg overflow-hidden">
                 {/* Category Header */}
                 <button
                   onClick={() => toggleCategory(category.id)}
-                  className="w-full px-3 py-2 flex items-center justify-between text-left bg-white/5 hover:bg-white/10 transition-colors"
+                  className="w-full px-3 py-2 flex items-center justify-between text-left bg-elevated hover:bg-hover transition-colors"
                 >
                   <span className="text-xs font-medium" style={{ color: category.color }}>
                     {category.label}
@@ -321,7 +321,7 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onIm
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
-                    className={`text-white/50 transition-transform ${
+                    className={`text-fg-dim transition-transform ${
                       expandedCategories.has(category.id) ? 'rotate-180' : ''
                     }`}
                   >
@@ -344,7 +344,7 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onIm
                           draggable
                           onDragStart={(e) => handleDragStart(e, plugin)}
                           onClick={() => handleClick(plugin)}
-                          className="p-2 rounded cursor-grab active:cursor-grabbing flex items-center gap-1.5 text-xs text-white transition-all hover:opacity-80 hover:scale-105"
+                          className="p-2 rounded cursor-grab active:cursor-grabbing flex items-center gap-1.5 text-xs text-fg transition-all hover:opacity-80 hover:scale-105"
                           style={{
                             background: bgColor,
                             border: `1px solid ${color}40`,
@@ -364,10 +364,10 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onIm
       </div>
 
       {/* Footer Actions */}
-      <div className="p-4 border-t border-white/10 space-y-2">
+      <div className="p-4 border-t border-token-border space-y-2">
         <button
           onClick={onSave}
-          className="w-full py-2 rounded-md border border-white/20 bg-transparent text-white/70 text-xs cursor-pointer flex items-center justify-center gap-1 transition-colors hover:bg-white/5"
+          className="w-full py-2 rounded-md border border-token-border bg-transparent text-fg-muted text-xs cursor-pointer flex items-center justify-center gap-1 transition-colors hover:bg-hover"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
@@ -378,7 +378,7 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onIm
         <div className="flex gap-2">
           <button
             onClick={onExport}
-            className="flex-1 py-2 rounded-md border border-white/20 bg-transparent text-white/70 text-xs cursor-pointer flex items-center justify-center gap-1 transition-colors hover:bg-white/5"
+            className="flex-1 py-2 rounded-md border border-token-border bg-transparent text-fg-muted text-xs cursor-pointer flex items-center justify-center gap-1 transition-colors hover:bg-hover"
             title="Export workflow as JSON"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -389,7 +389,7 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onIm
           </button>
           <button
             onClick={onImport}
-            className="flex-1 py-2 rounded-md border border-white/20 bg-transparent text-white/70 text-xs cursor-pointer flex items-center justify-center gap-1 transition-colors hover:bg-white/5"
+            className="flex-1 py-2 rounded-md border border-token-border bg-transparent text-fg-muted text-xs cursor-pointer flex items-center justify-center gap-1 transition-colors hover:bg-hover"
             title="Import workflow from JSON"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

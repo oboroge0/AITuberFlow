@@ -34,6 +34,7 @@ import { type PromptSection } from '@/components/panels/NodeSettings';
 import { useDragStateStore } from '@/stores/dragStateStore';
 import { isEditableTarget } from '@/lib/domUtils';
 import { useTranslation } from '@/stores/localeStore';
+import { useThemeStore } from '@/stores/themeStore';
 
 interface CanvasProps {
   onNodeSelect?: (nodeId: string | null) => void;
@@ -48,6 +49,38 @@ const reactFlowNodeTypes: NodeTypes = {
 
 // Default color for edges when plugin color is not found
 const DEFAULT_EDGE_COLOR = '#10B981';
+
+// Keep connection lines visible regardless of the source node's color or the
+// active theme: lift too-dark colors against the dark canvas, darken too-light
+// colors against the light canvas. Hue is preserved; only adjusted when the
+// color would blend into the background (e.g. ollama #1F2937 / obs #302E31).
+function edgeColorForTheme(hex: string, theme: 'dark' | 'light'): string {
+  const m = /^#([0-9a-fA-F]{6})$/.exec(hex);
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  let r = (n >> 16) & 255;
+  let g = (n >> 8) & 255;
+  let b = n & 255;
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b; // 0..255
+  if (theme === 'dark') {
+    const MIN = 110;
+    if (lum < MIN) {
+      const f = (MIN - lum) / (255 - lum); // mix toward white
+      r = Math.round(r + (255 - r) * f);
+      g = Math.round(g + (255 - g) * f);
+      b = Math.round(b + (255 - b) * f);
+    }
+  } else {
+    const MAX = 175;
+    if (lum > MAX) {
+      const f = (lum - MAX) / lum; // mix toward black
+      r = Math.round(r * (1 - f));
+      g = Math.round(g * (1 - f));
+      b = Math.round(b * (1 - f));
+    }
+  }
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+}
 
 // Map plugin category to legacy category for CustomNodeData
 function mapPluginCategoryToLegacy(category: string): 'input' | 'process' | 'output' | 'control' {
@@ -111,6 +144,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
 
   const { searchVisible, searchQuery } = useUIPreferencesStore();
   const { getPluginColor, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs, getPluginConfig, isLoaded: pluginsLoaded } = usePluginStore();
+  const theme = useThemeStore((s) => s.theme);
   const { setDragging, clearDragging } = useDragStateStore();
 
   // State for the "drop-on-canvas" compatible node suggestion panel
@@ -340,7 +374,8 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     () =>
       connections.map((conn) => {
         const sourceNode = workflowNodes.find((n) => n.id === conn.from.nodeId);
-        const baseEdgeColor = sourceNode ? (getPluginColor(sourceNode.type) || DEFAULT_EDGE_COLOR) : DEFAULT_EDGE_COLOR;
+        const rawEdgeColor = sourceNode ? (getPluginColor(sourceNode.type) || DEFAULT_EDGE_COLOR) : DEFAULT_EDGE_COLOR;
+        const baseEdgeColor = edgeColorForTheme(rawEdgeColor, theme);
 
         // Check if this edge involves unreachable nodes (only when Start node exists)
         const sourceReachable = !hasStartNode || reachableNodes.has(conn.from.nodeId);
@@ -375,7 +410,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
           },
         };
       }),
-    [connections, workflowNodes, reachableNodes, hasStartNode, getPluginColor, nodeStatuses]
+    [connections, workflowNodes, reachableNodes, hasStartNode, getPluginColor, nodeStatuses, theme]
   );
 
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState(flowNodes);
@@ -780,9 +815,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
       {/* Gradient background overlay */}
       <div
         className="absolute inset-0 pointer-events-none z-0"
-        style={{
-          background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)',
-        }}
+        style={{ background: 'var(--bg-gradient)' }}
       />
       <ReactFlow
         nodes={nodes}
@@ -820,7 +853,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         multiSelectionKeyCode={['Shift']}
       >
         <Background
-          color="rgba(255,255,255,0.03)"
+          color="var(--grid-line)"
           gap={40}
           size={1}
           style={{ background: 'transparent' }}

@@ -101,7 +101,7 @@ function FieldSelectorNode({ id, data, selected }: FieldSelectorNodeProps) {
       className="relative"
       style={{
         background: bgColor,
-        border: `2px solid ${selected ? color : 'rgba(255,255,255,0.1)'}`,
+        border: `2px solid ${selected ? color : 'var(--border)'}`,
         borderRadius: '12px',
         padding: '10px 12px',
         minWidth: '160px',
@@ -161,7 +161,7 @@ function FieldSelectorNode({ id, data, selected }: FieldSelectorNodeProps) {
             <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
           </svg>
         </div>
-        <span className="font-semibold text-[11px] text-white">
+        <span className="font-semibold text-[11px] text-fg">
           Field Selector
         </span>
       </div>
@@ -181,15 +181,15 @@ function FieldSelectorNode({ id, data, selected }: FieldSelectorNodeProps) {
                 }}
                 className={`w-full flex items-center gap-2 px-2 py-1 rounded text-left transition-all ${
                   isSelected
-                    ? 'bg-violet-500/25 text-violet-200'
-                    : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/70'
+                    ? 'bg-violet-500/25 text-violet-800 dark:text-violet-200'
+                    : 'bg-elevated text-fg-dim hover:bg-hover hover:text-fg-muted'
                 }`}
               >
                 <span
                   className={`w-3.5 h-3.5 rounded border flex items-center justify-center flex-shrink-0 ${
                     isSelected
                       ? 'bg-violet-500 border-violet-500'
-                      : 'border-white/30 bg-transparent'
+                      : 'border-token-border bg-transparent'
                   }`}
                 >
                   {isSelected && (
@@ -204,7 +204,7 @@ function FieldSelectorNode({ id, data, selected }: FieldSelectorNodeProps) {
           })}
         </div>
       ) : (
-        <div className="text-[10px] text-white/30 text-center py-2">
+        <div className="text-[10px] text-fg-faint text-center py-2">
           Connect a node
         </div>
       )}
