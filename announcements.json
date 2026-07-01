@@ -1,16 +1,30 @@
 [
   {
-    "id": "upgrade-to-2.2.0",
-    "type": "warning",
+    "id": "feature-2.6.0-theme",
+    "type": "info",
     "title": {
-      "ja": "v2.2.0 へのアップデートのお願い",
-      "en": "Please update to v2.2.0"
+      "ja": "ライト/ダークモードに対応しました",
+      "en": "Light / dark mode is here"
     },
     "message": {
-      "ja": "v2.2.0 から自動アップデート機能が追加されました。お手数ですが GitHub Releases から最新版を手動でダウンロードしてください。今後はアプリ内で自動更新が届きます。",
-      "en": "Auto-update is now available starting from v2.2.0. Please manually download the latest version from GitHub Releases. Future updates will be delivered automatically."
+      "ja": "v2.6.0 でアプリ全体がライト/ダークテーマに対応しました。ヘッダーの月/太陽アイコンでいつでも切り替えられます。",
+      "en": "v2.6.0 adds light/dark theming across the whole app. Toggle it anytime with the moon/sun icon in the header."
     },
-    "targetVersions": ["2.0.0", "2.0.1", "2.0.2", "2.0.3", "2.1.0", "2.2.0"],
-    "date": "2026-02-20"
+    "targetVersions": ["2.6.0"],
+    "date": "2026-07-01"
+  },
+  {
+    "id": "manual-update-2.6.0",
+    "type": "warning",
+    "title": {
+      "ja": "手動アップデートのお願い（v2.6.0）",
+      "en": "Please update manually (v2.6.0)"
+    },
+    "message": {
+      "ja": "デスクトップ版で自動アップデートが正しく動作していない不具合を v2.6.0 で修正しました。お手数ですが GitHub Releases から v2.6.0 を手動でダウンロードしてください。以降はアプリ内の自動更新が正しく届きます。",
+      "en": "A bug that prevented the desktop auto-updater from working has been fixed in v2.6.0. Please download v2.6.0 manually from GitHub Releases this one time — auto-update will work correctly from then on."
+    },
+    "targetVersions": ["2.0.0", "2.0.1", "2.0.2", "2.0.3", "2.1.0", "2.2.0", "2.2.1", "2.2.2", "2.2.3", "2.2.4", "2.3.0", "2.3.1", "2.3.2", "2.4.0", "2.5.0", "2.5.1", "2.5.2"],
+    "date": "2026-07-01"
   }
 ]
