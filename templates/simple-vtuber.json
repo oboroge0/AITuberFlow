@@ -116,7 +116,7 @@
     },
     {
       "id": "conn-5",
-      "from": { "nodeId": "node-lipsync", "port": "audio" },
+      "from": { "nodeId": "node-tts", "port": "audio" },
       "to": { "nodeId": "node-audio", "port": "audio" }
     },
     {
@@ -126,7 +126,7 @@
     },
     {
       "id": "conn-7",
-      "from": { "nodeId": "node-emotion", "port": "text" },
+      "from": { "nodeId": "node-llm", "port": "response" },
       "to": { "nodeId": "node-subtitle", "port": "text" }
     },
     {

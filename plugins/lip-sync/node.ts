@@ -49,7 +49,7 @@ export default class LipSyncNode extends BaseNode {
 
     if (!audio && !audioUrl) {
       await context.log("No audio input provided", "warning");
-      return { mouthValues: [], duration: 0.0, audio: "" };
+      return { mouthValues: [], duration: 0.0 };
     }
 
     // If audioUrl is provided, load the audio from file
@@ -59,7 +59,7 @@ export default class LipSyncNode extends BaseNode {
     }
 
     if (!audio) {
-      return { mouthValues: [], duration: 0.0, audio: originalPath ?? "" };
+      return { mouthValues: [], duration: 0.0 };
     }
 
     // Analyze audio
@@ -87,7 +87,6 @@ export default class LipSyncNode extends BaseNode {
     return {
       mouthValues,
       duration,
-      audio: originalPath ?? "",
     };
   }
 

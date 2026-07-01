@@ -140,7 +140,7 @@ export default class EmotionAnalyzerNode extends BaseNode {
     const text: string = inputs.text ?? "";
 
     if (!text) {
-      return { expression: "neutral", intensity: 0.0, text };
+      return { expression: "neutral", intensity: 0.0 };
     }
 
     // Analyze emotion based on method
@@ -176,7 +176,7 @@ export default class EmotionAnalyzerNode extends BaseNode {
       );
     }
 
-    return { expression, intensity, text };
+    return { expression, intensity };
   }
 
   private async analyzeLlmBased(

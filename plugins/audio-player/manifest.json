@@ -30,18 +30,7 @@
         "description": "音声の長さ（秒、省略可）"
       }
     ],
-    "outputs": [
-      {
-        "id": "audio",
-        "type": "audio",
-        "description": "音声パスのパススルー"
-      },
-      {
-        "id": "duration",
-        "type": "number",
-        "description": "音声の長さ（秒）"
-      }
-    ],
+    "outputs": [],
     "events": {
       "emits": [
         "audio.play",

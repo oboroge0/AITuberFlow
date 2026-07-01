@@ -40,11 +40,6 @@
         "id": "duration",
         "type": "number",
         "description": "音声の長さ（秒）"
-      },
-      {
-        "id": "audio",
-        "type": "audio",
-        "description": "入力音声のパススルー"
       }
     ],
     "events": {

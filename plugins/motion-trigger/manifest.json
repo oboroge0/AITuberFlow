@@ -45,11 +45,6 @@
         "id": "motion",
         "type": "string",
         "description": "発動したモーション名（レガシー）"
-      },
-      {
-        "id": "passthrough",
-        "type": "any",
-        "description": "トリガー入力のパススルー"
       }
     ],
     "events": {

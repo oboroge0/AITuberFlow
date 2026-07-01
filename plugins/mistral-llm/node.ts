@@ -8,11 +8,6 @@
 import { BaseNode, NodeContext, createEvent, handleLLMError } from "@aituber-flow/sdk";
 import OpenAI from "openai";
 
-interface PromptSection {
-  type: "text" | "input";
-  content: string;
-}
-
 export default class MistralLLMNode extends BaseNode {
   private static readonly DEMO_RESPONSE =
     "これはデモモードの応答です。実際のLLMを使用するにはAPIキーを設定してください。";
@@ -22,7 +17,6 @@ export default class MistralLLMNode extends BaseNode {
   private systemPrompt: string = "You are a helpful assistant.";
   private temperature: number = 0.7;
   private maxTokens: number = 1024;
-  private promptSections: PromptSection[] | null = null;
 
   async setup(config: Record<string, any>, context: NodeContext): Promise<void> {
     const apiKey = config.apiKey ?? "";
@@ -32,7 +26,6 @@ export default class MistralLLMNode extends BaseNode {
     // Clamp to valid range [0, 2]
     this.temperature = Math.max(0, Math.min(2, this.temperature));
     this.maxTokens = config.maxTokens ?? 1024;
-    this.promptSections = config.promptSections ?? null;
 
     if (!apiKey) {
       await context.log(
@@ -48,33 +41,6 @@ export default class MistralLLMNode extends BaseNode {
     }
   }
 
-  private buildPromptFromSections(inputs: Record<string, any>): string {
-    if (!this.promptSections) {
-      return (inputs.prompt as string) ?? "";
-    }
-
-    const parts: string[] = [];
-    for (const section of this.promptSections) {
-      if (section.type === "text") {
-        parts.push(section.content);
-      } else if (section.type === "input") {
-        let inputValue: any = inputs[section.content] ?? "";
-        if (typeof inputValue === "object" && inputValue !== null && !Array.isArray(inputValue)) {
-          if ("message" in inputValue) {
-            inputValue = inputValue.message;
-          } else if ("text" in inputValue) {
-            inputValue = inputValue.text;
-          } else {
-            inputValue = String(inputValue);
-          }
-        }
-        parts.push(inputValue ? String(inputValue) : "");
-      }
-    }
-
-    return parts.join("\n");
-  }
-
   async execute(
     inputs: Record<string, any>,
     context: NodeContext,
@@ -84,9 +50,7 @@ export default class MistralLLMNode extends BaseNode {
       return { response: MistralLLMNode.DEMO_RESPONSE };
     }
 
-    const prompt = this.promptSections
-      ? this.buildPromptFromSections(inputs)
-      : ((inputs.prompt as string) ?? "");
+    const prompt = (inputs.prompt as string) ?? "";
 
     if (!prompt) {
       await context.log("No prompt provided", "warning");
