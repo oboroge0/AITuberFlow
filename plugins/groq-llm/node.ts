@@ -97,18 +97,12 @@ export default class GroqLLMNode extends BaseNode {
     try {
       await context.log(`Calling Groq API (${this.model})...`);
 
-      const characterName = context.getCharacterName();
-      const characterPersonality = context.getCharacterPersonality();
-
-      let fullSystemPrompt = this.systemPrompt;
-      if (characterPersonality) {
-        fullSystemPrompt = `${this.systemPrompt}\n\nYou are ${characterName}. ${characterPersonality}`;
-      }
+      const systemPrompt = (inputs.system as string) || this.systemPrompt || "";
 
       const response = await this.client.chat.completions.create({
         model: this.model,
         messages: [
-          { role: "system" as const, content: fullSystemPrompt },
+          { role: "system" as const, content: systemPrompt },
           { role: "user" as const, content: prompt },
         ],
         temperature: this.temperature,

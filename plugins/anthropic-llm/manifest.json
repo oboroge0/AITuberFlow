@@ -20,6 +20,11 @@
   "node": {
     "inputs": [
       {
+        "id": "system",
+        "type": "string",
+        "description": "システムプロンプト（prompt-builderから）"
+      },
+      {
         "id": "prompt",
         "type": "string",
         "description": "Claudeに送るメッセージ"

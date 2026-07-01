@@ -60,9 +60,11 @@ export default class GoogleLLMNode extends BaseNode {
     try {
       await context.log(`Calling Gemini API (${this.model})...`);
 
+      const systemPrompt = (inputs.system as string) || this.systemPrompt || "";
+
       const model = this.genAI.getGenerativeModel({
         model: this.model,
-        systemInstruction: this.systemPrompt,
+        systemInstruction: systemPrompt,
         generationConfig: {
           maxOutputTokens: this.maxTokens,
           temperature: this.temperature,

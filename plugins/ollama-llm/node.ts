@@ -121,17 +121,12 @@ export default class OllamaLLMNode extends BaseNode {
 
       const url = `${this.host.replace(/\/+$/, "")}/api/generate`;
 
-      const characterName = context.getCharacterName();
-      const characterPersonality = context.getCharacterPersonality();
-      let fullSystemPrompt = this.systemPrompt;
-      if (characterPersonality) {
-        fullSystemPrompt = `${this.systemPrompt}\n\nYou are ${characterName}. ${characterPersonality}`;
-      }
+      const systemPrompt = (inputs.system as string) || this.systemPrompt || "";
 
       const payload = {
         model: this.model,
         prompt,
-        system: fullSystemPrompt,
+        system: systemPrompt,
         stream: false,
         options: {
           temperature: this.temperature,
