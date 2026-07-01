@@ -21,8 +21,8 @@
       "en": "Please update manually (v2.6.0)"
     },
     "message": {
-      "ja": "デスクトップ版で自動アップデートが正しく動作していない不具合を v2.6.0 で修正しました。お手数ですが GitHub Releases から v2.6.0 を手動でダウンロードしてください。以降はアプリ内の自動更新が正しく届きます。",
-      "en": "A bug that prevented the desktop auto-updater from working has been fixed in v2.6.0. Please download v2.6.0 manually from GitHub Releases this one time — auto-update will work correctly from then on."
+      "ja": "デスクトップ版で自動アップデートが正しく動作していない不具合を v2.6.0 で修正しました。以降はアプリ内の自動更新が正しく届きます。お手数ですが今回だけ下記から v2.6.0 を手動でダウンロードしてください: https://github.com/oboroge0/AITuberFlow/releases/latest",
+      "en": "A bug that prevented the desktop auto-updater from working has been fixed in v2.6.0. Auto-update will work correctly from then on. Please download v2.6.0 manually just this once from: https://github.com/oboroge0/AITuberFlow/releases/latest"
     },
     "targetVersions": ["2.0.0", "2.0.1", "2.0.2", "2.0.3", "2.1.0", "2.2.0", "2.2.1", "2.2.2", "2.2.3", "2.2.4", "2.3.0", "2.3.1", "2.3.2", "2.4.0", "2.5.0", "2.5.1", "2.5.2"],
     "date": "2026-07-01"
