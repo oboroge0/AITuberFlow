@@ -301,6 +301,13 @@ docs: プラグイン開発ガイドを更新
 
 ## リリースプロセス
 
+### 0. リリース前の心得（過去の反省）
+
+- **まず `git fetch origin` して `dev`/`main` をローカル最新化してから状態を確認する。** 古いローカル dev や feature ブランチを見て「CHANGELOG が抜けている」「バージョンが古い」と誤認しやすい（実際は origin に入っていた、という取り違えが起きた）。
+- **`dev → main` の前に分岐を必ず確認する：`git log origin/dev..origin/main` が空か。** 空でなければ main→dev のマージ戻し忘れ。先に main を dev に取り込んでから進める（PR #259 の自動検知も参照）。
+- **バージョンは変更の性質で決める。** 新機能（例: ライト/ダークモード）はパッチ(z)ではなく **マイナー(y)**。バグ修正だけならパッチ。「2.5.3 のつもりが新機能入りで 2.6.0」のように途中で変わる。
+- **デスクトップ/Tauri の機能は必ず `tauri dev` の実機ビルドで検証する。** 自動アップデート・エクスポート保存・オーバーレイ・IPC 系は web/`npm run dev` では再現せず（Tauri IPC が無い）、配布ビルドは JS コンソールを隠すため失敗が見えない。実機ビルド＋stdout に出す一時診断コマンドで確認する。
+
 ### 1. リリース前チェック（ブランチ作業中）
 
 - [ ] 全ての変更が完了している（README更新含む）
@@ -309,13 +316,17 @@ docs: プラグイン開発ガイドを更新
 
 ### 2. バージョン更新
 
-以下のファイルのバージョンを更新 (5ファイル全て揃えること):
+以下のファイルのバージョンを更新 (8箇所全て揃えること):
 - `apps/web/package.json`
+- `apps/web/package-lock.json`（ルートの `"version"` と `packages[""]["version"]` の2箇所）
 - `apps/server-ts/package.json`
 - `apps/desktop/package.json`
 - `apps/desktop/src-tauri/tauri.conf.json`
-- `apps/desktop/src-tauri/Cargo.toml` (更新後 `cd apps/desktop/src-tauri && cargo update -p aituber-flow` で Cargo.lock も更新)
+- `apps/desktop/src-tauri/Cargo.toml`
+- `apps/desktop/src-tauri/Cargo.lock`（**aituber-flow パッケージの version のみ**）
 - `CHANGELOG.md`（日付は `date +%Y-%m-%d` で確認）
+
+⚠️ **Cargo.lock の更新は手動で aituber-flow の行だけ書き換えること。** `sed` 等で一括置換すると `walkdir` 等の他クレートのバージョンまで書き換わり、ビルドが壊れる（v2.5.1 で発生）。
 
 ⚠️ 過去のリリースで `apps/desktop/package.json` (2.0.0 のまま) と `Cargo.toml` (パッチずれ) の
 更新漏れが続いていた。Updater 判定の不安定や成果物バージョン文字列の齟齬を防ぐため必ず全て揃える。
@@ -339,16 +350,22 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ```bash
 git checkout main
 git pull origin main
-git merge dev        # fast-forward になるはず（ならなければ分岐を調査）
+git merge origin/dev --no-edit  # fast-forward になるはず（ならなければ分岐を調査）
+git push origin main
 ```
 
-**⚠️ 重要: タグ作成前に追加修正がないか最終確認すること**
+**⚠️ 重要: タグ作成前に以下を確認すること**
+1. 追加修正がないか
+2. **main 上でバージョンファイルが正しく更新されているか**（`git show main:apps/desktop/src-tauri/tauri.conf.json | grep version` 等）。リリース PR のマージコミットが main に含まれていなければ、タグを打ってもビルド成果物のバージョンがずれる（v2.5.1 で発生）
 
 ### 4. タグ作成（全ての修正が終わってから）
 
 ```bash
+# 必ず main 上のバージョンを確認してからタグを打つ
+git show main:apps/desktop/src-tauri/tauri.conf.json | grep '"version"'
+git show main:apps/web/package.json | grep '"version"'
+
 git tag -a vX.X.X -m "Release vX.X.X - 概要"
-git push origin main
 git push origin vX.X.X
 ```
 

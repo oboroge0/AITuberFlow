@@ -1,6 +1,8 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
+  // Theme is driven by a `data-theme` attribute on <html> (see themeStore).
+  darkMode: ['selector', '[data-theme="dark"]'],
   content: [
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -19,6 +21,22 @@ const config: Config = {
         'accent-yellow': '#F59E0B',
         'accent-pink': '#EC4899',
         'accent-purple': '#9146FF',
+        // Semantic theme tokens (resolve to CSS vars in globals.css; flip per theme)
+        'bg': 'var(--bg)',
+        'surface': 'var(--surface)',
+        'surface-2': 'var(--surface-2)',
+        'surface-strong': 'var(--surface-strong)',
+        'card': 'var(--card)',
+        'elevated': 'var(--elevated)',
+        'hover': 'var(--hover)',
+        'token-border': 'var(--border)',
+        'token-border-subtle': 'var(--border-subtle)',
+        'fg': 'var(--text)',
+        'fg-strong': 'var(--text-strong)',
+        'fg-muted': 'var(--text-muted)',
+        'fg-dim': 'var(--text-dim)',
+        'fg-faint': 'var(--text-faint)',
+        'fg-fainter': 'var(--text-fainter)',
       },
       backgroundImage: {
         'gradient-main': 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)',

@@ -50,17 +50,17 @@ function SubMenu({
         left,
         top,
         maxHeight: '420px',
-        background: 'rgba(17, 24, 39, 0.98)',
-        border: '1px solid rgba(255,255,255,0.1)',
+        background: 'var(--surface-strong)',
+        border: '1px solid var(--border)',
         minWidth: '200px',
       }}
     >
       {sections.map((section, si) => (
         <React.Fragment key={section.categoryId}>
-          {si > 0 && <div className="my-1 border-t border-white/10" />}
+          {si > 0 && <div className="my-1 border-t border-token-border" />}
           <div
             className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider"
-            style={{ color: section.color ?? 'rgba(255,255,255,0.35)' }}
+            style={{ color: section.color ?? 'var(--text-faint)' }}
           >
             {section.label}
           </div>
@@ -71,7 +71,7 @@ function SubMenu({
                 item.onClick();
                 onClose();
               }}
-              className="w-full px-3 py-1.5 text-left text-sm flex items-center gap-2 text-white/90 hover:bg-white/10 transition-colors"
+              className="w-full px-3 py-1.5 text-left text-sm flex items-center gap-2 text-fg hover:bg-hover transition-colors"
             >
               {item.icon && (
                 <span className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
@@ -141,14 +141,14 @@ export default function ContextMenu({ x, y, items, onClose }: ContextMenuProps) 
       style={{
         left: adjustedX,
         top: adjustedY,
-        background: 'rgba(17, 24, 39, 0.98)',
-        border: '1px solid rgba(255,255,255,0.1)',
+        background: 'var(--surface-strong)',
+        border: '1px solid var(--border)',
         minWidth: '160px',
       }}
     >
       {items.map((item, index) => (
         <React.Fragment key={index}>
-          {item.divider && <div className="my-1 border-t border-white/10" />}
+          {item.divider && <div className="my-1 border-t border-token-border" />}
           <button
             onMouseEnter={(e) => handleMouseEnter(index, e)}
             onClick={() => {
@@ -158,19 +158,19 @@ export default function ContextMenu({ x, y, items, onClose }: ContextMenuProps) 
             }}
             className={`
               w-full px-3 py-2 text-left text-sm flex items-center gap-2 transition-colors
-              ${item.danger ? 'text-red-400 hover:bg-red-500/20' : 'text-white/90 hover:bg-white/10'}
-              ${activeSubmenuIndex === index ? 'bg-white/10' : ''}
+              ${item.danger ? 'text-red-400 hover:bg-red-500/20' : 'text-fg hover:bg-hover'}
+              ${activeSubmenuIndex === index ? 'bg-hover' : ''}
             `}
           >
             {item.icon && <span className="w-4 h-4 flex items-center justify-center">{item.icon}</span>}
             <span className="flex-1">{item.label}</span>
             {item.submenuSections && (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white/40 flex-shrink-0">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-fg-faint flex-shrink-0">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             )}
             {item.shortcut && (
-              <span className="text-xs text-white/40">{item.shortcut}</span>
+              <span className="text-xs text-fg-faint">{item.shortcut}</span>
             )}
           </button>
         </React.Fragment>

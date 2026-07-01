@@ -79,9 +79,9 @@ export default function SearchPanel() {
   if (!searchVisible) return null;
 
   return (
-    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-gray-800/95 backdrop-blur-sm border border-white/10 rounded-lg shadow-lg px-3 py-2">
+    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-surface-strong backdrop-blur-sm border border-token-border rounded-lg shadow-lg px-3 py-2">
       {/* Search icon */}
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" strokeWidth="2">
         <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
 
@@ -93,12 +93,12 @@ export default function SearchPanel() {
         onChange={(e) => setSearchQuery(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={t('search.placeholder')}
-        className="bg-transparent text-white text-sm outline-none w-48 placeholder-white/30"
+        className="bg-transparent text-fg text-sm outline-none w-48 placeholder:text-fg-faint"
       />
 
       {/* Match count */}
       {searchQuery && (
-        <span className="text-[11px] text-white/50 whitespace-nowrap">
+        <span className="text-[11px] text-fg-dim whitespace-nowrap">
           {matches.length > 0
             ? `${searchMatchIndex + 1}/${matches.length}`
             : '0/0'}
@@ -108,7 +108,7 @@ export default function SearchPanel() {
       {/* Navigation buttons */}
       <button
         onClick={goToPrev}
-        className="text-white/50 hover:text-white/80 transition-colors p-0.5"
+        className="text-fg-dim hover:text-fg transition-colors p-0.5"
         title={t('search.prevResultShortcut')}
         aria-label={t('search.prevResult')}
       >
@@ -118,7 +118,7 @@ export default function SearchPanel() {
       </button>
       <button
         onClick={goToNext}
-        className="text-white/50 hover:text-white/80 transition-colors p-0.5"
+        className="text-fg-dim hover:text-fg transition-colors p-0.5"
         title={t('search.nextResultShortcut')}
         aria-label={t('search.nextResult')}
       >
@@ -130,7 +130,7 @@ export default function SearchPanel() {
       {/* Close button */}
       <button
         onClick={() => setSearchVisible(false)}
-        className="text-white/50 hover:text-white/80 transition-colors p-0.5 ml-1"
+        className="text-fg-dim hover:text-fg transition-colors p-0.5 ml-1"
         title={t('search.closeShortcut')}
         aria-label={t('search.closeSearch')}
       >

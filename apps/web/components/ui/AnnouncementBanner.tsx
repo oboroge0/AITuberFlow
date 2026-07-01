@@ -6,19 +6,19 @@ import { useTranslation } from '@/stores/localeStore';
 
 const typeStyles: Record<string, { bg: string; border: string; text: string }> = {
   critical: {
-    bg: 'bg-red-900/40',
-    border: 'border-red-500/50',
-    text: 'text-red-300',
+    bg: 'bg-red-100 dark:bg-red-900/40',
+    border: 'border-red-300 dark:border-red-500/50',
+    text: 'text-red-800 dark:text-red-300',
   },
   warning: {
-    bg: 'bg-yellow-900/40',
-    border: 'border-yellow-500/50',
-    text: 'text-yellow-300',
+    bg: 'bg-amber-100 dark:bg-yellow-900/40',
+    border: 'border-amber-300 dark:border-yellow-500/50',
+    text: 'text-amber-800 dark:text-yellow-300',
   },
   info: {
-    bg: 'bg-blue-900/40',
-    border: 'border-blue-500/50',
-    text: 'text-blue-300',
+    bg: 'bg-blue-100 dark:bg-blue-900/40',
+    border: 'border-blue-300 dark:border-blue-500/50',
+    text: 'text-blue-800 dark:text-blue-300',
   },
 };
 
@@ -51,13 +51,13 @@ export default function AnnouncementBanner() {
           >
             <div className="flex-1 min-w-0">
               <p className={`text-sm font-semibold ${styles.text}`}>{title}</p>
-              <p className="text-sm text-white/70 mt-0.5">{message}</p>
+              <p className="text-sm text-fg-muted mt-0.5">{message}</p>
             </div>
             <button
               onClick={() => dismiss(announcement.id)}
               aria-label={t('common.close')}
               className="flex-shrink-0 w-6 h-6 rounded flex items-center justify-center
-                text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+                text-fg-faint hover:text-fg hover:bg-hover transition-colors"
             >
               <svg
                 width="12"
