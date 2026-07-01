@@ -13,8 +13,8 @@
   "ui": {
     "label": "Ollama",
     "icon": "Cpu",
-    "color": "#1F2937",
-    "bgColor": "rgba(31, 41, 55, 0.3)",
+    "color": "#5E81AC",
+    "bgColor": "rgba(94, 129, 172, 0.15)",
     "statusText": "Model: Ollama"
   },
   "node": {
