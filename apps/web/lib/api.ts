@@ -233,6 +233,40 @@ class ApiClient {
       body: JSON.stringify(settings),
     });
   }
+
+  // Memory endpoints
+  async listMemories(
+    workflowId: string,
+    params: { tableName?: string; limit?: number } = {}
+  ): Promise<ApiResponse<WorkflowMemory[]>> {
+    const search = new URLSearchParams();
+    if (params.tableName) search.set('table_name', params.tableName);
+    if (params.limit) search.set('limit', String(params.limit));
+    const qs = search.toString();
+    return this.request<WorkflowMemory[]>(
+      `/api/workflows/${workflowId}/memories${qs ? `?${qs}` : ''}`
+    );
+  }
+
+  async listMemoryTables(workflowId: string): Promise<ApiResponse<string[]>> {
+    return this.request<string[]>(`/api/workflows/${workflowId}/memories/tables`);
+  }
+
+  async deleteMemory(workflowId: string, id: string): Promise<ApiResponse<{ status: string }>> {
+    return this.request<{ status: string }>(`/api/workflows/${workflowId}/memories/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async deleteAllMemories(
+    workflowId: string,
+    tableName?: string
+  ): Promise<ApiResponse<{ status: string }>> {
+    const qs = tableName ? `?table_name=${encodeURIComponent(tableName)}` : '';
+    return this.request<{ status: string }>(`/api/workflows/${workflowId}/memories${qs}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export interface TemplateSummary {
@@ -319,6 +353,16 @@ export interface ValidationResult {
   errors: ValidationIssue[];
   warnings: ValidationIssue[];
   issues: ValidationIssue[];
+}
+
+// Long-term memory stored per workflow (see apps/server-ts/src/routes/memories.ts)
+export interface WorkflowMemory {
+  id: string;
+  workflowId: string;
+  tableName: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export const api = new ApiClient(API_BASE);
