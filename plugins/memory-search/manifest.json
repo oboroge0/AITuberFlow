@@ -1,0 +1,79 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "memory-search",
+  "name": "Memory Search",
+  "version": "1.0.0",
+  "description": "Search the workflow's long-term memory store by recency or keyword.",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
+  },
+  "license": "MIT",
+  "category": "utility",
+  "ui": {
+    "label": "Memory Search",
+    "icon": "Search",
+    "color": "#8B5CF6",
+    "bgColor": "rgba(139, 92, 246, 0.1)",
+    "statusText": "Ready to search"
+  },
+  "node": {
+    "inputs": [
+      {
+        "id": "query",
+        "type": "string",
+        "description": "検索クエリ（recent検索時は不要）"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "memories",
+        "type": "array",
+        "description": "検索結果の記憶配列"
+      },
+      {
+        "id": "count",
+        "type": "number",
+        "description": "取得件数"
+      }
+    ],
+    "events": {
+      "emits": [],
+      "listens": []
+    }
+  },
+  "config": {
+    "tableName": {
+      "type": "string",
+      "label": "テーブル名",
+      "description": "検索対象のテーブル名",
+      "default": "default",
+      "required": true
+    },
+    "searchType": {
+      "type": "select",
+      "label": "検索タイプ",
+      "description": "recent: 直近N件を取得 / keyword: クエリに部分一致するものを検索",
+      "default": "recent",
+      "inline": true,
+      "options": [
+        { "label": "直近N件", "value": "recent" },
+        { "label": "キーワード検索", "value": "keyword" }
+      ]
+    },
+    "defaultLimit": {
+      "type": "number",
+      "label": "取得件数",
+      "description": "取得する記憶の最大件数",
+      "default": 10,
+      "min": 1,
+      "max": 500
+    },
+    "defaultQuery": {
+      "type": "string",
+      "label": "デフォルトクエリ",
+      "description": "入力ポートが空の時に使用するクエリ（キーワード検索時）",
+      "default": ""
+    }
+  }
+}

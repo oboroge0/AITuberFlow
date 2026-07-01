@@ -9,7 +9,7 @@ export { BaseNode, InputNode, ProcessNode, OutputNode } from "./base";
 
 // Context and events
 export { NodeContext, createEvent } from "./context";
-export type { Event, NodeContextOptions } from "./context";
+export type { Event, NodeContextOptions, MemoryRecord, SearchMemoriesOptions } from "./context";
 
 // Type definitions and Zod schemas
 export {

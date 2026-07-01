@@ -8,6 +8,9 @@
  * Ported from Python apps/server/engine/executor.py (1173 lines).
  */
 
+import { and, desc, eq, like } from "drizzle-orm";
+import { db } from "../db/database";
+import { memories } from "../db/schema";
 import { vtsClient } from "../integrations/vtube-studio";
 import type { Event } from "./event-bus";
 import { EventBus, EventFilter } from "./event-bus";
@@ -57,6 +60,24 @@ type StatusCallback = (
   data?: Record<string, unknown> | null,
 ) => Promise<void>;
 
+interface MemoryRecord {
+  id: string;
+  content: string;
+  createdAt: string;
+}
+
+interface SearchMemoriesOptions {
+  searchType: "recent" | "keyword";
+  query?: string;
+  limit?: number;
+}
+
+type SaveMemoryCallback = (tableName: string, content: string) => Promise<string>;
+type SearchMemoriesCallback = (
+  tableName: string,
+  options: SearchMemoriesOptions,
+) => Promise<MemoryRecord[]>;
+
 // ─── NodeContext (executor-internal) ─────────────────────────────
 
 export class NodeContext {
@@ -66,6 +87,8 @@ export class NodeContext {
   private eventBus: EventBus | null;
   private logCallback: LogCallback | null;
   private taskRegistry: TaskRegistry | null;
+  private saveMemoryCallback: SaveMemoryCallback | null;
+  private searchMemoriesCallback: SearchMemoriesCallback | null;
   private taskIds = new Set<string>();
   private localControllers = new Set<AbortController>();
 
@@ -76,6 +99,8 @@ export class NodeContext {
     eventBus?: EventBus | null;
     logCallback?: LogCallback | null;
     taskRegistry?: TaskRegistry | null;
+    saveMemoryCallback?: SaveMemoryCallback | null;
+    searchMemoriesCallback?: SearchMemoriesCallback | null;
   }) {
     this.workflowId = opts.workflowId;
     this.nodeId = opts.nodeId;
@@ -83,6 +108,8 @@ export class NodeContext {
     this.eventBus = opts.eventBus ?? null;
     this.logCallback = opts.logCallback ?? null;
     this.taskRegistry = opts.taskRegistry ?? null;
+    this.saveMemoryCallback = opts.saveMemoryCallback ?? null;
+    this.searchMemoriesCallback = opts.searchMemoriesCallback ?? null;
   }
 
   async emitEvent(event: Event | Record<string, any>): Promise<void> {
@@ -184,6 +211,21 @@ export class NodeContext {
       controller.abort();
     }
     this.localControllers.clear();
+  }
+
+  async saveMemory(tableName: string, content: string): Promise<string> {
+    if (!this.saveMemoryCallback) {
+      throw new Error("saveMemory is not available in this context");
+    }
+    return await this.saveMemoryCallback(tableName, content);
+  }
+
+  async searchMemories(
+    tableName: string,
+    options: SearchMemoriesOptions,
+  ): Promise<MemoryRecord[]> {
+    if (!this.searchMemoriesCallback) return [];
+    return await this.searchMemoriesCallback(tableName, options);
   }
 }
 
@@ -331,7 +373,59 @@ export class WorkflowExecutor {
       eventBus: this.eventBuses.get(workflowId),
       logCallback: (nid, msg, lvl) => this.log(workflowId, nid, msg, lvl),
       taskRegistry: this.taskRegistries.get(workflowId),
+      saveMemoryCallback: (tableName, content) => this.saveMemory(workflowId, tableName, content),
+      searchMemoriesCallback: (tableName, options) =>
+        this.searchMemories(workflowId, tableName, options),
     });
+  }
+
+  // ─── Memory Operations ────────────
+
+  /** Persist a memory row directly via Drizzle (same process, no HTTP round-trip). */
+  private async saveMemory(
+    workflowId: string,
+    tableName: string,
+    content: string,
+  ): Promise<string> {
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    await db.insert(memories).values({
+      id,
+      workflowId,
+      tableName,
+      content,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return id;
+  }
+
+  /** Query memory rows directly via Drizzle (same process, no HTTP round-trip). */
+  private async searchMemories(
+    workflowId: string,
+    tableName: string,
+    options: SearchMemoriesOptions,
+  ): Promise<MemoryRecord[]> {
+    const limit = options.limit ?? 50;
+    const conditions = [eq(memories.workflowId, workflowId), eq(memories.tableName, tableName)];
+    if (options.searchType === "keyword" && options.query) {
+      conditions.push(like(memories.content, `%${options.query}%`));
+    }
+
+    const rows = await db
+      .select()
+      .from(memories)
+      .where(and(...conditions))
+      .orderBy(desc(memories.createdAt))
+      .limit(limit);
+
+    return rows.map((row) => ({
+      id: row.id,
+      content: row.content,
+      createdAt: row.createdAt,
+    }));
   }
 
   // ─── Node Lifecycle ───────────────
