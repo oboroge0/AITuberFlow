@@ -162,7 +162,13 @@ To start services individually:
 bun run dev
 ```
 
-The backend starts at `http://localhost:8001`.
+The backend starts at `http://localhost:8001`, bound to `127.0.0.1` by default (not reachable from other machines on your network).
+
+If OBS or a browser overlay runs on a different machine on your LAN, set `HOST=0.0.0.0` to restore LAN-wide access:
+
+```bash
+HOST=0.0.0.0 bun run dev
+```
 
 #### Start the Frontend Development Server
 
