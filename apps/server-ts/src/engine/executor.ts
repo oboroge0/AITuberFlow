@@ -8,9 +8,7 @@
  * Ported from Python apps/server/engine/executor.py (1173 lines).
  */
 
-import { and, desc, eq, like } from "drizzle-orm";
-import { db } from "../db/database";
-import { memories } from "../db/schema";
+import * as memoriesRepository from "../db/memories-repository";
 import { vtsClient } from "../integrations/vtube-studio";
 import type { Event } from "./event-bus";
 import { EventBus, EventFilter } from "./event-bus";
@@ -213,6 +211,11 @@ export class NodeContext {
     this.localControllers.clear();
   }
 
+  /**
+   * Save a piece of text to the workflow's long-term memory store.
+   *
+   * @throws {Error} If no save callback has been configured for this context.
+   */
   async saveMemory(tableName: string, content: string): Promise<string> {
     if (!this.saveMemoryCallback) {
       throw new Error("saveMemory is not available in this context");
@@ -220,11 +223,18 @@ export class NodeContext {
     return await this.saveMemoryCallback(tableName, content);
   }
 
+  /**
+   * Search the workflow's long-term memory store.
+   *
+   * @throws {Error} If no search callback has been configured for this context.
+   */
   async searchMemories(
     tableName: string,
     options: SearchMemoriesOptions,
   ): Promise<MemoryRecord[]> {
-    if (!this.searchMemoriesCallback) return [];
+    if (!this.searchMemoriesCallback) {
+      throw new Error("searchMemories is not available in this context");
+    }
     return await this.searchMemoriesCallback(tableName, options);
   }
 }
@@ -381,45 +391,29 @@ export class WorkflowExecutor {
 
   // ─── Memory Operations ────────────
 
-  /** Persist a memory row directly via Drizzle (same process, no HTTP round-trip). */
+  /** Persist a memory row via the shared memories repository (no HTTP round-trip). */
   private async saveMemory(
     workflowId: string,
     tableName: string,
     content: string,
   ): Promise<string> {
-    const id = crypto.randomUUID();
-    const now = new Date().toISOString();
-
-    await db.insert(memories).values({
-      id,
-      workflowId,
-      tableName,
-      content,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    return id;
+    const row = await memoriesRepository.saveMemory(workflowId, tableName, content);
+    return row.id;
   }
 
-  /** Query memory rows directly via Drizzle (same process, no HTTP round-trip). */
+  /** Query memory rows via the shared memories repository (no HTTP round-trip). */
   private async searchMemories(
     workflowId: string,
     tableName: string,
     options: SearchMemoriesOptions,
   ): Promise<MemoryRecord[]> {
-    const limit = options.limit ?? 50;
-    const conditions = [eq(memories.workflowId, workflowId), eq(memories.tableName, tableName)];
-    if (options.searchType === "keyword" && options.query) {
-      conditions.push(like(memories.content, `%${options.query}%`));
-    }
-
-    const rows = await db
-      .select()
-      .from(memories)
-      .where(and(...conditions))
-      .orderBy(desc(memories.createdAt))
-      .limit(limit);
+    const rows = await memoriesRepository.searchMemories({
+      workflowId,
+      tableName,
+      searchType: options.searchType,
+      query: options.query,
+      limit: options.limit,
+    });
 
     return rows.map((row) => ({
       id: row.id,
