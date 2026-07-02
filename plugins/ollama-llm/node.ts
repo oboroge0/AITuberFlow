@@ -4,7 +4,7 @@
  * Generates text using Ollama local LLM server.
  */
 
-import { BaseNode, NodeContext, createEvent, handleLLMError } from "@aituber-flow/sdk";
+import { BaseNode, NodeContext, createEvent, handleLLMError, resolveSystemPrompt } from "@aituber-flow/sdk";
 
 interface OllamaGenerateResponse {
   response: string;
@@ -85,7 +85,7 @@ export default class OllamaLLMNode extends BaseNode {
 
       const url = `${this.host.replace(/\/+$/, "")}/api/generate`;
 
-      const systemPrompt = (inputs.system as string) || this.systemPrompt || "";
+      const systemPrompt = resolveSystemPrompt(inputs.system, this.systemPrompt);
 
       const payload = {
         model: this.model,

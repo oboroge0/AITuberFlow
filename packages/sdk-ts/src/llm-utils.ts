@@ -73,6 +73,23 @@ export function classifyLLMError(error: unknown): LLMErrorCategory {
 }
 
 /**
+ * Resolve the system prompt an LLM node should use for a call.
+ *
+ * Prefers `system` (typically wired in from an upstream node such as
+ * prompt-builder) when it is a non-empty string. Falls back to the node's
+ * configured default otherwise — including when `system` is missing, an
+ * empty string, or a non-string value (e.g. an object accidentally passed
+ * through from an upstream node), so a bad upstream value never reaches the
+ * provider API as-is.
+ */
+export function resolveSystemPrompt(system: unknown, fallback: string): string {
+  if (typeof system === "string" && system !== "") {
+    return system;
+  }
+  return fallback ?? "";
+}
+
+/**
  * Handle an LLM error: classify, log a localized message, and return a structured response.
  */
 export async function handleLLMError(

@@ -6,6 +6,7 @@ import { describe, it, expect, mock } from "bun:test";
 import {
   classifyLLMError,
   handleLLMError,
+  resolveSystemPrompt,
 } from "../../packages/sdk-ts/src/llm-utils";
 
 describe("classifyLLMError", () => {
@@ -163,5 +164,35 @@ describe("handleLLMError", () => {
     const ctx = createMockContext();
     const result = await handleLLMError("string error", "OpenAI", ctx);
     expect(result.response).toContain("string error");
+  });
+});
+
+describe("resolveSystemPrompt", () => {
+  it("prefers a non-empty string system value over the fallback", () => {
+    expect(resolveSystemPrompt("You are a pirate.", "default prompt")).toBe(
+      "You are a pirate.",
+    );
+  });
+
+  it("falls back when system is an empty string", () => {
+    expect(resolveSystemPrompt("", "default prompt")).toBe("default prompt");
+  });
+
+  it("falls back when system is undefined", () => {
+    expect(resolveSystemPrompt(undefined, "default prompt")).toBe("default prompt");
+  });
+
+  it("falls back when system is a non-string value (e.g. an object)", () => {
+    expect(resolveSystemPrompt({ text: "not a string" }, "default prompt")).toBe(
+      "default prompt",
+    );
+    expect(resolveSystemPrompt(["array", "value"], "default prompt")).toBe("default prompt");
+    expect(resolveSystemPrompt(42, "default prompt")).toBe("default prompt");
+    expect(resolveSystemPrompt(null, "default prompt")).toBe("default prompt");
+  });
+
+  it("returns an empty string when both system and fallback are unusable", () => {
+    expect(resolveSystemPrompt(undefined, "")).toBe("");
+    expect(resolveSystemPrompt(null, undefined as unknown as string)).toBe("");
   });
 });
