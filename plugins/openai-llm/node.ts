@@ -165,8 +165,7 @@ export default class OpenAILLMNode extends BaseNode {
 
       return { response: result };
     } catch (error: unknown) {
-      const result = await handleLLMError(error, "OpenAI", context);
-      return { response: result.response };
+      return await handleLLMError(error, "OpenAI", context);
     }
   }
 

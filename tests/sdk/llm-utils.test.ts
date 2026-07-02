@@ -6,6 +6,7 @@ import { describe, it, expect, mock } from "bun:test";
 import {
   classifyLLMError,
   handleLLMError,
+  LLMError,
 } from "../../packages/sdk-ts/src/llm-utils";
 
 describe("classifyLLMError", () => {
@@ -95,45 +96,48 @@ describe("handleLLMError", () => {
     };
   }
 
-  it("handles connection errors", async () => {
+  it("throws an LLMError for connection errors", async () => {
     const ctx = createMockContext();
-    const result = await handleLLMError(
-      new Error("ECONNREFUSED"),
-      "OpenAI",
-      ctx,
-    );
-    expect(result.category).toBe("connection");
-    expect(result.response).toBe("Error: Connection failed");
+    let caught: unknown;
+    try {
+      await handleLLMError(new Error("ECONNREFUSED"), "OpenAI", ctx);
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(LLMError);
+    expect((caught as LLMError).category).toBe("connection");
     expect(ctx.log).toHaveBeenCalledTimes(1);
     expect(ctx.logs[0].level).toBe("error");
     expect(ctx.logs[0].message).toContain("OpenAI");
   });
 
-  it("handles rate limit errors", async () => {
+  it("throws an LLMError for rate limit errors", async () => {
     const ctx = createMockContext();
-    const result = await handleLLMError(
-      new Error("429 Too Many Requests"),
-      "Anthropic",
-      ctx,
-    );
-    expect(result.category).toBe("rate_limit");
-    expect(result.response).toBe("Error: Rate limit exceeded");
+    let caught: unknown;
+    try {
+      await handleLLMError(new Error("429 Too Many Requests"), "Anthropic", ctx);
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(LLMError);
+    expect((caught as LLMError).category).toBe("rate_limit");
     expect(ctx.logs[0].message).toContain("Anthropic");
   });
 
-  it("handles auth errors", async () => {
+  it("throws an LLMError for auth errors", async () => {
     const ctx = createMockContext();
-    const result = await handleLLMError(
-      new Error("401 Unauthorized"),
-      "Google",
-      ctx,
-    );
-    expect(result.category).toBe("auth");
-    expect(result.response).toBe("Error: Authentication failed");
+    let caught: unknown;
+    try {
+      await handleLLMError(new Error("401 Unauthorized"), "Google", ctx);
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(LLMError);
+    expect((caught as LLMError).category).toBe("auth");
     expect(ctx.logs[0].message).toContain("Google");
   });
 
-  it("handles generic API errors", async () => {
+  it("throws an LLMError for generic API errors", async () => {
     const ctx = createMockContext();
     class APIError extends Error {
       constructor() {
@@ -141,27 +145,53 @@ describe("handleLLMError", () => {
         this.name = "APIError";
       }
     }
-    const result = await handleLLMError(new APIError(), "Ollama", ctx);
-    expect(result.category).toBe("api_error");
-    expect(result.response).toContain("Model not found");
+    let caught: unknown;
+    try {
+      await handleLLMError(new APIError(), "Ollama", ctx);
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(LLMError);
+    expect((caught as LLMError).category).toBe("api_error");
+    expect((caught as LLMError).message).toContain("Model not found");
     expect(ctx.logs[0].message).toContain("Ollama");
   });
 
-  it("handles unknown errors", async () => {
+  it("throws an LLMError for unknown errors", async () => {
     const ctx = createMockContext();
-    const result = await handleLLMError(
-      new Error("something unexpected"),
-      "OpenAI",
-      ctx,
-    );
-    expect(result.category).toBe("unknown");
-    expect(result.response).toContain("something unexpected");
+    let caught: unknown;
+    try {
+      await handleLLMError(new Error("something unexpected"), "OpenAI", ctx);
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(LLMError);
+    expect((caught as LLMError).category).toBe("unknown");
+    expect((caught as LLMError).message).toContain("something unexpected");
     expect(ctx.logs[0].level).toBe("error");
   });
 
-  it("handles non-Error values", async () => {
+  it("throws an LLMError for non-Error values", async () => {
     const ctx = createMockContext();
-    const result = await handleLLMError("string error", "OpenAI", ctx);
-    expect(result.response).toContain("string error");
+    let caught: unknown;
+    try {
+      await handleLLMError("string error", "OpenAI", ctx);
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(LLMError);
+    expect((caught as LLMError).message).toContain("string error");
+  });
+
+  it("preserves the original error via cause", async () => {
+    const ctx = createMockContext();
+    const original = new Error("ECONNREFUSED");
+    let caught: unknown;
+    try {
+      await handleLLMError(original, "OpenAI", ctx);
+    } catch (err) {
+      caught = err;
+    }
+    expect((caught as LLMError).cause).toBe(original);
   });
 });
