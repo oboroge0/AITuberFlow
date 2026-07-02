@@ -125,7 +125,9 @@ app.post("/", zValidator("json", createWorkflowBody), async (c) => {
   });
 
   const [row] = await _db.select().from(workflows).where(eq(workflows.id, id));
-  return c.json(workflowToResponse(row));
+  // Echo of client-provided data, but masked anyway so every workflow
+  // response follows the same contract (secrets never appear in responses).
+  return c.json(maskWorkflowResponse(workflowToResponse(row)));
 });
 
 // List workflows
@@ -209,7 +211,11 @@ app.post("/:id/duplicate", async (c) => {
   });
 
   const [row] = await _db.select().from(workflows).where(eq(workflows.id, newId));
-  return c.json(workflowToResponse(row));
+  // The duplicated row keeps the real secrets in the DB (so the copy is
+  // immediately runnable), but the response must be masked like every
+  // other read — otherwise duplicate would be a one-call bypass of the
+  // GET masking.
+  return c.json(maskWorkflowResponse(workflowToResponse(row)));
 });
 
 // Export workflow
@@ -301,7 +307,8 @@ app.post("/import", async (c) => {
   });
 
   const [row] = await _db.select().from(workflows).where(eq(workflows.id, id));
-  return c.json(workflowToResponse(row));
+  // Same response contract as every other workflow endpoint: masked.
+  return c.json(maskWorkflowResponse(workflowToResponse(row)));
 });
 
 // Validate workflow before execution

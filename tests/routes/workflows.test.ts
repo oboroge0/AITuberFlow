@@ -987,6 +987,52 @@ describe("Sensitive field masking on read endpoints", () => {
     expect(data).toHaveLength(1);
     expect(data[0].nodes[0].config.apiKey).toBe(SENTINEL);
   });
+
+  it("should mask the duplicate response while keeping the real key stored in the DB copy", async () => {
+    const created = await createWorkflowViaApi(app, {
+      name: "Duplicated Secret",
+      nodes: [{ id: "n1", type: "llm-node", config: { apiKey: "sk-dup-secret" } }],
+    });
+
+    // The duplicate response must NOT leak the source workflow's real key
+    // (otherwise duplicate would be a one-call bypass of the GET masking).
+    const dupRes = await app.request(
+      jsonRequest("POST", `/api/workflows/${created.id}/duplicate`)
+    );
+    expect(dupRes.status).toBe(200);
+    const dup = await dupRes.json();
+    expect(dup.nodes[0].config.apiKey).toBe(SENTINEL);
+    expect(JSON.stringify(dup)).not.toContain("sk-dup-secret");
+
+    // ...but the DB copy itself keeps the real key so the duplicate is
+    // immediately runnable.
+    const startRes = await app.request(
+      jsonRequest("POST", `/api/workflows/${dup.id}/start`)
+    );
+    expect(startRes.status).toBe(200);
+    expect(lastStartCall?.data.nodes[0].config.apiKey).toBe("sk-dup-secret");
+  });
+
+  it("should mask create and import responses too (uniform response contract)", async () => {
+    // POST / (create) echoes client-sent data, but the response contract is
+    // still "no secrets in workflow responses".
+    const created = await createWorkflowViaApi(app, {
+      name: "Created Secret",
+      nodes: [{ id: "n1", type: "llm-node", config: { apiKey: "sk-create-secret" } }],
+    });
+    expect(created.nodes[0].config.apiKey).toBe(SENTINEL);
+
+    // POST /import likewise.
+    const importRes = await app.request(
+      jsonRequest("POST", "/api/workflows/import", {
+        name: "Imported Secret",
+        nodes: [{ id: "n1", type: "llm-node", config: { apiKey: "sk-import-secret" } }],
+      })
+    );
+    expect(importRes.status).toBe(200);
+    const imported = await importRes.json();
+    expect(imported.nodes[0].config.apiKey).toBe(SENTINEL);
+  });
 });
 
 describe("PUT restores sentinel values instead of overwriting real secrets", () => {
