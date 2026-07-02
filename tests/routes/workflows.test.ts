@@ -57,12 +57,19 @@ function teardownDb(): void {
 
 // ─── Mock Executor ─────────────────────────────────────────────
 
+// Captures the args of the most recent startWorkflow() call so tests can
+// assert on what config the executor actually received (real secret vs.
+// sentinel placeholder).
+let lastStartCall: { id: string; data: any; startNodeId?: string | null } | null = null;
+
 const mockExecutor = {
   startWorkflow: async (
-    _id: string,
-    _data: any,
-    _startNodeId?: string | null
-  ) => {},
+    id: string,
+    data: any,
+    startNodeId?: string | null
+  ) => {
+    lastStartCall = { id, data, startNodeId };
+  },
   stopWorkflow: async (_id: string) => {},
   getStatus: (_id: string) => ({ status: "idle" } as Record<string, any>),
   setLogCallback: () => {},
@@ -117,6 +124,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   resetDb();
+  lastStartCall = null;
 });
 
 afterAll(() => {
@@ -418,7 +426,7 @@ describe("Workflow Export / Import", () => {
     expect(exported.nodes[0].config.temperature).toBe(0.7);
   });
 
-  it("should preserve API keys when exclude_api_keys=false", async () => {
+  it("should NOT preserve API keys even when exclude_api_keys=false is passed (query param removed)", async () => {
     const created = await createWorkflowViaApi(app, {
       name: "Keep Keys",
       nodes: [
@@ -430,6 +438,8 @@ describe("Workflow Export / Import", () => {
       ],
     });
 
+    // exclude_api_keys is no longer a supported opt-out — export always
+    // strips secrets regardless of what the caller passes here.
     const res = await app.request(
       new Request(
         `http://localhost/api/workflows/${created.id}/export?exclude_api_keys=false`,
@@ -439,7 +449,7 @@ describe("Workflow Export / Import", () => {
 
     expect(res.status).toBe(200);
     const exported = await res.json();
-    expect(exported.nodes[0].config.apiKey).toBe("sk-keep-me");
+    expect(exported.nodes[0].config.apiKey).toBe("");
   });
 
   it("should strip API keys nested deep inside config (deep strip)", async () => {
@@ -804,10 +814,9 @@ describe("Edge Cases", () => {
 
     // Export
     const exportRes = await app.request(
-      new Request(
-        `http://localhost/api/workflows/${original.id}/export?exclude_api_keys=false`,
-        { method: "GET" }
-      )
+      new Request(`http://localhost/api/workflows/${original.id}/export`, {
+        method: "GET",
+      })
     );
     const exported = await exportRes.json();
 
@@ -878,5 +887,247 @@ describe("Workflow validate body handling", () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.valid).toBeDefined();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// Sensitive field masking (GET) / restoration (PUT, start)
+// ═══════════════════════════════════════════════════════════════
+
+const SENTINEL = "********";
+
+describe("Sensitive field masking on read endpoints", () => {
+  it("should mask a non-empty API key with SENTINEL on GET /:id", async () => {
+    const created = await createWorkflowViaApi(app, {
+      name: "Has Secret",
+      nodes: [
+        {
+          id: "n1",
+          type: "llm-node",
+          config: { model: "gpt-4", apiKey: "sk-real-secret", temperature: 0.7 },
+        },
+      ],
+    });
+
+    const res = await app.request(
+      new Request(`http://localhost/api/workflows/${created.id}`, { method: "GET" })
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.nodes[0].config.apiKey).toBe(SENTINEL);
+    // Non-sensitive fields are untouched
+    expect(data.nodes[0].config.model).toBe("gpt-4");
+    expect(data.nodes[0].config.temperature).toBe(0.7);
+  });
+
+  it("should leave an empty API key empty (not masked) on GET /:id", async () => {
+    const created = await createWorkflowViaApi(app, {
+      name: "No Secret Yet",
+      nodes: [{ id: "n1", type: "llm-node", config: { apiKey: "" } }],
+    });
+
+    const res = await app.request(
+      new Request(`http://localhost/api/workflows/${created.id}`, { method: "GET" })
+    );
+    const data = await res.json();
+    expect(data.nodes[0].config.apiKey).toBe("");
+  });
+
+  it("should not mask non-sensitive fields that merely resemble config, e.g. modelUrl/host", async () => {
+    const created = await createWorkflowViaApi(app, {
+      name: "Avatar Node",
+      nodes: [
+        {
+          id: "n1",
+          type: "avatar-configuration",
+          config: { modelUrl: "https://example.com/model.vrm", host: "localhost", maxTokens: 512 },
+        },
+      ],
+    });
+
+    const res = await app.request(
+      new Request(`http://localhost/api/workflows/${created.id}`, { method: "GET" })
+    );
+    const data = await res.json();
+    expect(data.nodes[0].config.modelUrl).toBe("https://example.com/model.vrm");
+    expect(data.nodes[0].config.host).toBe("localhost");
+    expect(data.nodes[0].config.maxTokens).toBe(512);
+  });
+
+  it("should mask composite sensitive field names (botToken, oauthToken, llmApiKey)", async () => {
+    const created = await createWorkflowViaApi(app, {
+      name: "Composite Keys",
+      nodes: [
+        { id: "n1", type: "discord-chat", config: { botToken: "d-token-real" } },
+        { id: "n2", type: "twitch-chat", config: { oauthToken: "oauth:real" } },
+        { id: "n3", type: "emotion-analyzer", config: { llmApiKey: "sk-real" } },
+      ],
+    });
+
+    const res = await app.request(
+      new Request(`http://localhost/api/workflows/${created.id}`, { method: "GET" })
+    );
+    const data = await res.json();
+    expect(data.nodes[0].config.botToken).toBe(SENTINEL);
+    expect(data.nodes[1].config.oauthToken).toBe(SENTINEL);
+    expect(data.nodes[2].config.llmApiKey).toBe(SENTINEL);
+  });
+
+  it("should mask sensitive fields on GET / (list) as well", async () => {
+    await createWorkflowViaApi(app, {
+      name: "Listed Secret",
+      nodes: [{ id: "n1", type: "llm-node", config: { apiKey: "sk-listed" } }],
+    });
+
+    const res = await app.request(
+      new Request("http://localhost/api/workflows", { method: "GET" })
+    );
+    const data = await res.json();
+    expect(data).toHaveLength(1);
+    expect(data[0].nodes[0].config.apiKey).toBe(SENTINEL);
+  });
+});
+
+describe("PUT restores sentinel values instead of overwriting real secrets", () => {
+  it("should keep the real API key in storage when PUT sends back SENTINEL", async () => {
+    const created = await createWorkflowViaApi(app, {
+      name: "Round Trip Secret",
+      nodes: [{ id: "n1", type: "llm-node", config: { model: "gpt-4", apiKey: "sk-original" } }],
+    });
+
+    // Simulate the editor: it GETs (receiving SENTINEL), the user tweaks
+    // an unrelated field, and PUTs the whole node back including SENTINEL.
+    const putRes = await app.request(
+      jsonRequest("PUT", `/api/workflows/${created.id}`, {
+        nodes: [
+          { id: "n1", type: "llm-node", config: { model: "gpt-4-turbo", apiKey: SENTINEL } },
+        ],
+      })
+    );
+    expect(putRes.status).toBe(200);
+    const putData = await putRes.json();
+    // PUT response itself is also masked
+    expect(putData.nodes[0].config.apiKey).toBe(SENTINEL);
+    // Unrelated field change did take effect
+    expect(putData.nodes[0].config.model).toBe("gpt-4-turbo");
+
+    // The real key must still be usable at execution time.
+    const startRes = await app.request(
+      jsonRequest("POST", `/api/workflows/${created.id}/start`)
+    );
+    expect(startRes.status).toBe(200);
+    expect(lastStartCall?.data.nodes[0].config.apiKey).toBe("sk-original");
+  });
+
+  it("should allow explicitly clearing an API key with an empty string via PUT", async () => {
+    const created = await createWorkflowViaApi(app, {
+      name: "Clearable Secret",
+      nodes: [{ id: "n1", type: "llm-node", config: { apiKey: "sk-to-clear" } }],
+    });
+
+    const putRes = await app.request(
+      jsonRequest("PUT", `/api/workflows/${created.id}`, {
+        nodes: [{ id: "n1", type: "llm-node", config: { apiKey: "" } }],
+      })
+    );
+    expect(putRes.status).toBe(200);
+
+    await app.request(jsonRequest("POST", `/api/workflows/${created.id}/start`));
+    expect(lastStartCall?.data.nodes[0].config.apiKey).toBe("");
+  });
+
+  it("should leave SENTINEL saved literally for a brand-new node with no DB match (documented edge case)", async () => {
+    const created = await createWorkflowViaApi(app, { name: "New Node Edge Case", nodes: [] });
+
+    const putRes = await app.request(
+      jsonRequest("PUT", `/api/workflows/${created.id}`, {
+        nodes: [{ id: "brand-new", type: "llm-node", config: { apiKey: SENTINEL } }],
+      })
+    );
+    expect(putRes.status).toBe(200);
+
+    await app.request(jsonRequest("POST", `/api/workflows/${created.id}/start`));
+    expect(lastStartCall?.data.nodes[0].config.apiKey).toBe(SENTINEL);
+  });
+});
+
+describe("Execution integrity: POST /:id/start always uses real secrets", () => {
+  it("should restore the real API key when start is called with SENTINEL-laden nodes (stale client state)", async () => {
+    const created = await createWorkflowViaApi(app, {
+      name: "Stale Client",
+      nodes: [{ id: "n1", type: "llm-node", config: { apiKey: "sk-actual" } }],
+    });
+
+    // Mimic the editor/preview client: it loaded via GET (masked), never
+    // touched this node's apiKey, and sends the masked value straight
+    // through to /start.
+    const res = await app.request(
+      jsonRequest("POST", `/api/workflows/${created.id}/start`, {
+        nodes: [{ id: "n1", type: "llm-node", config: { apiKey: SENTINEL } }],
+        connections: [],
+      })
+    );
+
+    expect(res.status).toBe(200);
+    expect(lastStartCall?.data.nodes[0].config.apiKey).toBe("sk-actual");
+  });
+
+  it("should use the stored workflow's real key when start is called with no body", async () => {
+    const created = await createWorkflowViaApi(app, {
+      name: "No Body Start",
+      nodes: [{ id: "n1", type: "llm-node", config: { apiKey: "sk-from-db" } }],
+    });
+
+    const res = await app.request(
+      jsonRequest("POST", `/api/workflows/${created.id}/start`)
+    );
+
+    expect(res.status).toBe(200);
+    expect(lastStartCall?.data.nodes[0].config.apiKey).toBe("sk-from-db");
+  });
+});
+
+describe("Import validation: node type/id charset (path traversal defense)", () => {
+  it("should reject an import with a path-traversal node type", async () => {
+    const res = await app.request(
+      jsonRequest("POST", "/api/workflows/import", {
+        name: "Malicious",
+        nodes: [{ id: "n1", type: "../../../../etc/passwd", config: {} }],
+      })
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("should reject an import with a non-string node id", async () => {
+    const res = await app.request(
+      jsonRequest("POST", "/api/workflows/import", {
+        name: "Bad Id",
+        nodes: [{ id: 123, type: "llm-node", config: {} }],
+      })
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("should reject an import with an overlong or symbol-laden node type", async () => {
+    const res = await app.request(
+      jsonRequest("POST", "/api/workflows/import", {
+        name: "Bad Type",
+        nodes: [{ id: "n1", type: "llm-node; rm -rf /", config: {} }],
+      })
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("should accept an import with a well-formed node type", async () => {
+    const res = await app.request(
+      jsonRequest("POST", "/api/workflows/import", {
+        name: "Good Type",
+        nodes: [{ id: "n1", type: "llm-openai_v2.1-beta", config: {} }],
+      })
+    );
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.nodes[0].type).toBe("llm-openai_v2.1-beta");
   });
 });

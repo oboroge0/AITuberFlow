@@ -14,6 +14,7 @@ import type { WorkflowExecutor } from "../engine/executor";
 import { validateWorkflow } from "../engine/validator";
 import type { WorkflowResponse } from "../models/workflow";
 import type { WSBroadcaster } from "../websocket/handler";
+import { maskSensitiveDeep, restoreSentinelNodes, stripSensitiveDeep } from "./sensitive-fields";
 
 const app = new Hono();
 
@@ -46,36 +47,9 @@ const createWorkflowBody = z.object({
 
 // ─── Helpers ──────────────────────────────
 
-const SENSITIVE_KEYS = ["apiKey", "api_key", "password", "secret", "token", "apiSecret"];
-const SENSITIVE_KEYS_LOWER = new Set(SENSITIVE_KEYS.map((k) => k.toLowerCase()));
-const MAX_STRIP_DEPTH = 20;
-
-/**
- * Recursively strip sensitive fields (api keys, tokens, passwords) from a
- * value. Walks nested objects and arrays up to MAX_STRIP_DEPTH to guard against
- * pathological inputs. Returns a new structure; input is not mutated.
- */
-function deepStripSensitive(value: unknown, depth = 0): unknown {
-  if (depth >= MAX_STRIP_DEPTH) return value;
-  if (Array.isArray(value)) {
-    return value.map((item) => deepStripSensitive(item, depth + 1));
-  }
-  if (value && typeof value === "object") {
-    const out: Record<string, unknown> = {};
-    for (const [key, inner] of Object.entries(value as Record<string, unknown>)) {
-      if (SENSITIVE_KEYS_LOWER.has(key.toLowerCase())) {
-        out[key] = "";
-      } else {
-        out[key] = deepStripSensitive(inner, depth + 1);
-      }
-    }
-    return out;
-  }
-  return value;
-}
-
+/** Strip sensitive fields (api keys, tokens, passwords) from exported nodes. */
 function stripApiKeys(nodes: Record<string, unknown>[]): Record<string, unknown>[] {
-  return nodes.map((node) => deepStripSensitive(node) as Record<string, unknown>);
+  return nodes.map((node) => stripSensitiveDeep(node) as Record<string, unknown>);
 }
 
 type WorkflowRow = typeof workflows.$inferSelect;
@@ -95,6 +69,22 @@ function workflowToResponse(row: WorkflowRow): WorkflowResponse {
   };
 }
 
+/**
+ * Mask sensitive config fields (api keys, tokens, passwords) in a workflow
+ * response with the SENTINEL placeholder. Used for every read endpoint
+ * (GET list / GET by id) so secrets are never returned in plaintext. The
+ * PUT endpoint restores real values from the DB when it sees SENTINEL come
+ * back in a request (see restoreSentinelNodes), and workflow execution
+ * (POST /:id/start) does the same before running the workflow, so masking
+ * here does not affect execution.
+ */
+function maskWorkflowResponse(response: WorkflowResponse): WorkflowResponse {
+  return {
+    ...response,
+    nodes: response.nodes.map((node) => maskSensitiveDeep(node)) as WorkflowResponse["nodes"],
+  };
+}
+
 function generateId(): string {
   return crypto.randomUUID();
 }
@@ -102,6 +92,11 @@ function generateId(): string {
 function nowISO(): string {
   return new Date().toISOString();
 }
+
+// Node `type` is used to build a filesystem path when loading plugins
+// (`plugins/{type}/node.ts`), so on import we constrain it to a safe
+// charset to rule out path traversal (`../`, absolute paths, etc.).
+const NODE_TYPE_PATTERN = /^[A-Za-z0-9._-]{1,64}$/;
 
 // ─── Routes ───────────────────────────────
 
@@ -136,7 +131,7 @@ app.post("/", zValidator("json", createWorkflowBody), async (c) => {
 // List workflows
 app.get("/", async (c) => {
   const rows = await _db.select().from(workflows).orderBy(desc(workflows.updatedAt));
-  return c.json(rows.map(workflowToResponse));
+  return c.json(rows.map((row) => maskWorkflowResponse(workflowToResponse(row))));
 });
 
 // Get workflow
@@ -144,7 +139,7 @@ app.get("/:id", async (c) => {
   const id = c.req.param("id");
   const [row] = await _db.select().from(workflows).where(eq(workflows.id, id));
   if (!row) return c.json({ detail: "Workflow not found" }, 404);
-  return c.json(workflowToResponse(row));
+  return c.json(maskWorkflowResponse(workflowToResponse(row)));
 });
 
 // Update workflow
@@ -164,14 +159,22 @@ app.put("/:id", async (c) => {
   if (typeof body.name === "string") updates.name = body.name;
   if (body.description === null || typeof body.description === "string")
     updates.description = body.description ?? null;
-  if (body.nodes !== undefined) updates.nodesJson = JSON.stringify(body.nodes);
+  if (body.nodes !== undefined) {
+    // The client (editor/preview) round-trips whatever it received from
+    // GET, which masks sensitive fields with SENTINEL. Restore the real
+    // values from the currently-stored workflow before persisting, so we
+    // never overwrite a real secret with the mask placeholder.
+    const existingNodes = JSON.parse(existing.nodesJson || "[]") as Record<string, unknown>[];
+    const incomingNodes = body.nodes as Record<string, unknown>[];
+    updates.nodesJson = JSON.stringify(restoreSentinelNodes(incomingNodes, existingNodes));
+  }
   if (body.connections !== undefined) updates.connectionsJson = JSON.stringify(body.connections);
   if (body.character !== undefined) updates.characterJson = JSON.stringify(body.character);
 
   await _db.update(workflows).set(updates).where(eq(workflows.id, id));
 
   const [row] = await _db.select().from(workflows).where(eq(workflows.id, id));
-  return c.json(workflowToResponse(row));
+  return c.json(maskWorkflowResponse(workflowToResponse(row)));
 });
 
 // Delete workflow
@@ -210,15 +213,16 @@ app.post("/:id/duplicate", async (c) => {
 });
 
 // Export workflow
+// API keys are always stripped — there is no way to opt out via query
+// string. Exported files are commonly shared/uploaded elsewhere, so this
+// must not be bypassable by the caller.
 app.get("/:id/export", async (c) => {
   const id = c.req.param("id");
-  const excludeApiKeys = c.req.query("exclude_api_keys") !== "false";
 
   const [existing] = await _db.select().from(workflows).where(eq(workflows.id, id));
   if (!existing) return c.json({ detail: "Workflow not found" }, 404);
 
-  let nodes = JSON.parse(existing.nodesJson || "[]");
-  if (excludeApiKeys) nodes = stripApiKeys(nodes);
+  const nodes = stripApiKeys(JSON.parse(existing.nodesJson || "[]"));
 
   return c.json({
     name: existing.name,
@@ -232,13 +236,36 @@ app.get("/:id/export", async (c) => {
 });
 
 // Import workflow
-const importWorkflowBody = z.object({
-  name: z.string().max(256).optional(),
-  description: z.string().max(2048).optional().nullable(),
-  nodes: z.array(z.record(z.string(), z.unknown())).max(500).optional(),
-  connections: z.array(z.record(z.string(), z.unknown())).max(2000).optional(),
-  character: z.record(z.string(), z.unknown()).optional(),
-});
+const importWorkflowBody = z
+  .object({
+    name: z.string().max(256).optional(),
+    description: z.string().max(2048).optional().nullable(),
+    nodes: z.array(z.record(z.string(), z.unknown())).max(500).optional(),
+    connections: z.array(z.record(z.string(), z.unknown())).max(2000).optional(),
+    character: z.record(z.string(), z.unknown()).optional(),
+  })
+  .superRefine((data, ctx) => {
+    // `type` is used verbatim to build a filesystem path when loading the
+    // node's plugin (plugins/{type}/node.ts), so an imported workflow
+    // (e.g. a shared .json file) must not be able to smuggle path
+    // traversal or other unsafe characters through it.
+    data.nodes?.forEach((node, i) => {
+      if (typeof node.id !== "string") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "node.id must be a string",
+          path: ["nodes", i, "id"],
+        });
+      }
+      if (typeof node.type !== "string" || !NODE_TYPE_PATTERN.test(node.type)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "node.type must be a string matching ^[A-Za-z0-9._-]{1,64}$",
+          path: ["nodes", i, "type"],
+        });
+      }
+    });
+  });
 
 app.post("/import", async (c) => {
   let raw: unknown;
@@ -347,7 +374,19 @@ app.post("/:id/start", async (c) => {
     }
   }
 
-  const nodes = (body.nodes as unknown[] | undefined) ?? JSON.parse(existing.nodesJson || "[]");
+  // The editor/preview client sends back whatever it currently holds for
+  // `nodes`, which — if the user never touched a given field this session
+  // — is exactly what GET returned: SENTINEL in place of any real secret.
+  // Restore real values from the stored workflow before handing config to
+  // the executor, so execution always uses the actual API key rather than
+  // the mask placeholder.
+  const nodes =
+    body.nodes !== undefined
+      ? restoreSentinelNodes(
+          body.nodes as Record<string, unknown>[],
+          JSON.parse(existing.nodesJson || "[]") as Record<string, unknown>[],
+        )
+      : JSON.parse(existing.nodesJson || "[]");
   const connections =
     (body.connections as unknown[] | undefined) ?? JSON.parse(existing.connectionsJson || "[]");
   const character =
