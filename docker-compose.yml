@@ -17,6 +17,10 @@ services:
       - "${BACKEND_PORT:-8001}:8001"
     environment:
       - PORT=8001
+      # Bind to all interfaces inside the container so Docker's published port
+      # (${BACKEND_PORT:-8001}:8001) can reach it. This is safe here because the
+      # container's network namespace is the isolation boundary, not the bind address.
+      - HOST=0.0.0.0
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
     volumes:
       # Persist database

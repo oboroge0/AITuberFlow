@@ -856,3 +856,76 @@ describe("TestPluginLoadFailureNotification", () => {
     expect(logs[0].level).toBe("warning");
   });
 });
+
+// ─── TestRunLinearErrorPropagation ─────────────────────────────────
+// Regression test for the "LLM error read aloud on stream" incident: a node
+// that throws (e.g. an LLM plugin failing via handleLLMError) must stop the
+// run and must not let downstream nodes execute with no/garbage input.
+
+describe("TestRunLinearErrorPropagation", () => {
+  let executor: WorkflowExecutor;
+  const workflowId = "wf-error-halt";
+
+  beforeEach(() => {
+    executor = new WorkflowExecutor();
+    (executor as any).runningWorkflows.set(workflowId, { status: "running" });
+  });
+
+  function registerRuntime(nodeId: string, execute: (...args: any[]) => Promise<any>) {
+    const ctx = new NodeContext({
+      workflowId,
+      nodeId,
+      character: { name: "TestBot" },
+    });
+    const runtimes: Map<string, any> = (executor as any).nodeInstances.get(workflowId) ?? new Map();
+    runtimes.set(nodeId, {
+      nodeId,
+      nodeType: "process",
+      config: {},
+      instance: { execute },
+      context: ctx,
+    });
+    (executor as any).nodeInstances.set(workflowId, runtimes);
+  }
+
+  it("stops execution and does not run downstream nodes when a node throws", async () => {
+    const upstreamExecute = mock(async () => {
+      throw new Error("Error: Rate limit exceeded");
+    });
+    const downstreamExecute = mock(async () => ({ text: "should not run" }));
+
+    registerRuntime("llm", upstreamExecute);
+    registerRuntime("tts", downstreamExecute);
+
+    const nodes = [makeNode("llm", "process"), makeNode("tts", "process")];
+    const connections = [makeConnection("c1", "llm", "response", "tts", "text")];
+
+    await expect(
+      (executor as any).runLinear(workflowId, nodes, connections, {}),
+    ).rejects.toThrow("Error: Rate limit exceeded");
+
+    expect(upstreamExecute).toHaveBeenCalledTimes(1);
+    expect(downstreamExecute).not.toHaveBeenCalled();
+  });
+
+  it("marks the failing node as errored via the status callback", async () => {
+    const statusUpdates: Array<{ nodeId: string; status: string }> = [];
+    executor.setStatusCallback(workflowId, async (nodeId, status) => {
+      statusUpdates.push({ nodeId, status });
+    });
+
+    registerRuntime("llm", async () => {
+      throw new Error("boom");
+    });
+
+    const nodes = [makeNode("llm", "process")];
+
+    await expect(
+      (executor as any).runLinear(workflowId, nodes, [], {}),
+    ).rejects.toThrow("boom");
+
+    expect(statusUpdates).toContainEqual({ nodeId: "llm", status: "running" });
+    expect(statusUpdates).toContainEqual({ nodeId: "llm", status: "error" });
+    expect(statusUpdates.find((s) => s.status === "completed")).toBeUndefined();
+  });
+});

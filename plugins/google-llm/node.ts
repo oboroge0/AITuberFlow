@@ -83,8 +83,7 @@ export default class GoogleLLMNode extends BaseNode {
 
       return { response: result };
     } catch (error: unknown) {
-      const result = await handleLLMError(error, "Google", context);
-      return { response: result.response };
+      return await handleLLMError(error, "Google", context);
     }
   }
 
