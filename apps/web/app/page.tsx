@@ -207,6 +207,7 @@ export default function HomePage() {
           });
           toast.success(`保存しました: ${String(savedPath)}`);
         } catch (invokeError) {
+          if (String(invokeError) === 'cancelled') return;
           setError(invokeError instanceof Error ? invokeError.message : t('home.saveFailed'));
         }
         return;
