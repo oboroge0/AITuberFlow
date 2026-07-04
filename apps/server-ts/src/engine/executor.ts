@@ -228,10 +228,7 @@ export class NodeContext {
    *
    * @throws {Error} If no search callback has been configured for this context.
    */
-  async searchMemories(
-    tableName: string,
-    options: SearchMemoriesOptions,
-  ): Promise<MemoryRecord[]> {
+  async searchMemories(tableName: string, options: SearchMemoriesOptions): Promise<MemoryRecord[]> {
     if (!this.searchMemoriesCallback) {
       throw new Error("searchMemories is not available in this context");
     }
