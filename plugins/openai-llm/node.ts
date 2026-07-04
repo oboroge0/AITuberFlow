@@ -4,7 +4,7 @@
  * Generates text responses using OpenAI's GPT models.
  */
 
-import { BaseNode, NodeContext, createEvent, handleLLMError } from "@aituber-flow/sdk";
+import { BaseNode, NodeContext, createEvent, handleLLMError, resolveSystemPrompt } from "@aituber-flow/sdk";
 import type { Event } from "@aituber-flow/sdk";
 import OpenAI from "openai";
 
@@ -82,7 +82,7 @@ export default class OpenAILLMNode extends BaseNode {
     try {
       await context.log(`Calling OpenAI API (${this.model})...`);
 
-      const systemPrompt = (inputs.system as string) || this.systemPrompt || "";
+      const systemPrompt = resolveSystemPrompt(inputs.system, this.systemPrompt);
 
       // Build API parameters
       const apiParams: OpenAI.ChatCompletionCreateParamsNonStreaming = {
@@ -115,8 +115,7 @@ export default class OpenAILLMNode extends BaseNode {
 
       return { response: result };
     } catch (error: unknown) {
-      const result = await handleLLMError(error, "OpenAI", context);
-      return { response: result.response };
+      return await handleLLMError(error, "OpenAI", context);
     }
   }
 

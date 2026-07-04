@@ -8,6 +8,7 @@ This document describes all API endpoints and WebSocket events for the AITuberFl
 
 - [System Endpoints](#system-endpoints)
 - [Workflows API](#workflows-api)
+- [Memories API](#memories-api)
 - [Plugins API](#plugins-api)
 - [Templates API](#templates-api)
 - [Integrations API](#integrations-api)
@@ -258,6 +259,110 @@ Returns the current execution status of a workflow.
 
 ---
 
+## Memories API
+
+Base path: `/api/workflows`
+
+Per-workflow long-term memory store used by the `memory-save` / `memory-search` node plugins. Each memory is scoped to a `workflowId` and a logical `table_name` (a free-form collection name you choose, e.g. `"chat-history"` or `"facts"`).
+
+### List Memories
+
+**GET** `/api/workflows/{workflow_id}/memories`
+
+Returns memories for a workflow, either the most recent rows or a keyword match.
+
+**Query Parameters:**
+- `table_name` (optional): Restrict results to a single logical table. Omit to search across all tables.
+- `search_type` (optional): `recent` (default) or `keyword`.
+- `query` (required when `search_type=keyword`): Substring to search for in memory content. Matched as a literal substring — `%` and `_` in the query are treated literally, not as SQL wildcards.
+- `limit` (optional): Max rows to return. Default `50`, max `500`.
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "id": "uuid-string",
+    "workflowId": "workflow-uuid",
+    "tableName": "chat-history",
+    "content": "User said hello.",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+]
+```
+
+**Error:** `400 Bad Request` - `search_type=keyword` without a `query`
+
+**Error:** `404 Not Found` - Workflow not found
+
+### Create Memory
+
+**POST** `/api/workflows/{workflow_id}/memories`
+
+Saves a new memory row.
+
+**Request Body:**
+```json
+{
+  "table_name": "chat-history",
+  "content": "User said hello."
+}
+```
+
+**Response:** `201 Created` - Returns the created memory (same shape as List Memories)
+
+**Error:** `404 Not Found` - Workflow not found
+
+**Error:** `400 Bad Request` - Validation error (missing/empty `table_name` or `content`)
+
+### List Memory Tables
+
+**GET** `/api/workflows/{workflow_id}/memories/tables`
+
+Returns the distinct `table_name` values that have at least one memory saved for this workflow.
+
+**Response:** `200 OK`
+```json
+["chat-history", "facts"]
+```
+
+**Error:** `404 Not Found` - Workflow not found
+
+### Delete Memories
+
+**DELETE** `/api/workflows/{workflow_id}/memories`
+
+Deletes all memories for a workflow, or all memories in one table if `table_name` is given.
+
+**Query Parameters:**
+- `table_name` (optional): Only delete memories in this table.
+
+**Response:** `200 OK`
+```json
+{
+  "status": "deleted"
+}
+```
+
+**Error:** `404 Not Found` - Workflow not found
+
+### Delete a Single Memory
+
+**DELETE** `/api/workflows/{workflow_id}/memories/{id}`
+
+Deletes one memory by id, scoped to the given workflow.
+
+**Response:** `200 OK`
+```json
+{
+  "status": "deleted"
+}
+```
+
+**Error:** `404 Not Found` - Memory not found, or it belongs to a different workflow
+
+---
+
 ## Plugins API
 
 Base path: `/api/plugins`
@@ -292,6 +397,10 @@ Returns a specific plugin manifest.
 **Response:** `200 OK` - Plugin manifest JSON
 
 **Error:** `404 Not Found` - Plugin not found
+
+### LLM Node `system` Input
+
+All LLM node plugins (`openai-llm`, `anthropic-llm`, `google-llm`, `ollama-llm`, `groq-llm`, `mistral-llm`) accept a `system` input port (type `string`). When an upstream node — typically `prompt-builder` — is connected to `system`, its output is used as the system prompt for that call. If `system` is unconnected, empty, or receives a non-string value, the node falls back to its own `systemPrompt` config field. LLM nodes no longer inject the workflow's character personality into the system prompt automatically; include it explicitly via `prompt-builder` (or the `systemPrompt` config field) if needed.
 
 ---
 

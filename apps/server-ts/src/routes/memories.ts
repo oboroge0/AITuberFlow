@@ -3,14 +3,19 @@
  *
  * Mounted at /api/workflows so routes read as
  * /api/workflows/:workflowId/memories(...).
+ *
+ * Query/mutation logic lives in `db/memories-repository.ts`, shared with the
+ * in-process executor callbacks used by memory-save/memory-search nodes.
  */
 
 import { zValidator } from "@hono/zod-validator";
-import { and, desc, eq, like } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { db as defaultDb } from "../db/database";
-import { memories, workflows } from "../db/schema";
+import * as memoriesRepository from "../db/memories-repository";
+import type { MemoryRow } from "../db/memories-repository";
+import { workflows } from "../db/schema";
 
 const app = new Hono();
 
@@ -18,19 +23,10 @@ let _db: typeof defaultDb = defaultDb;
 
 export function setDb(newDb: typeof defaultDb): void {
   _db = newDb;
+  memoriesRepository.setDb(newDb);
 }
 
 // ─── Helpers ──────────────────────────────
-
-function generateId(): string {
-  return crypto.randomUUID();
-}
-
-function nowISO(): string {
-  return new Date().toISOString();
-}
-
-type MemoryRow = typeof memories.$inferSelect;
 
 function memoryToResponse(row: MemoryRow) {
   return {
@@ -83,16 +79,13 @@ app.get("/:workflowId/memories", zValidator("query", listMemoriesQuery), async (
     return c.json({ error: "query is required when search_type is keyword" }, 400);
   }
 
-  const conditions = [eq(memories.workflowId, workflowId)];
-  if (table_name) conditions.push(eq(memories.tableName, table_name));
-  if (search_type === "keyword" && query) conditions.push(like(memories.content, `%${query}%`));
-
-  const rows = await _db
-    .select()
-    .from(memories)
-    .where(and(...conditions))
-    .orderBy(desc(memories.createdAt))
-    .limit(limit);
+  const rows = await memoriesRepository.searchMemories({
+    workflowId,
+    tableName: table_name,
+    searchType: search_type,
+    query,
+    limit,
+  });
 
   return c.json(rows.map(memoryToResponse));
 });
@@ -105,19 +98,7 @@ app.post("/:workflowId/memories", zValidator("json", createMemoryBody), async (c
   }
 
   const body = c.req.valid("json");
-  const id = generateId();
-  const now = nowISO();
-
-  await _db.insert(memories).values({
-    id,
-    workflowId,
-    tableName: body.table_name,
-    content: body.content,
-    createdAt: now,
-    updatedAt: now,
-  });
-
-  const [row] = await _db.select().from(memories).where(eq(memories.id, id));
+  const row = await memoriesRepository.saveMemory(workflowId, body.table_name, body.content);
   return c.json(memoryToResponse(row), 201);
 });
 
@@ -128,12 +109,8 @@ app.get("/:workflowId/memories/tables", async (c) => {
     return c.json({ detail: "Workflow not found" }, 404);
   }
 
-  const rows = await _db
-    .selectDistinct({ tableName: memories.tableName })
-    .from(memories)
-    .where(eq(memories.workflowId, workflowId));
-
-  return c.json(rows.map((row) => row.tableName));
+  const tableNames = await memoriesRepository.listMemoryTables(workflowId);
+  return c.json(tableNames);
 });
 
 // Delete all memories for a workflow (optionally scoped to one table)
@@ -144,10 +121,7 @@ app.delete("/:workflowId/memories", async (c) => {
   }
 
   const tableName = c.req.query("table_name");
-  const conditions = [eq(memories.workflowId, workflowId)];
-  if (tableName) conditions.push(eq(memories.tableName, tableName));
-
-  await _db.delete(memories).where(and(...conditions));
+  await memoriesRepository.deleteMemories(workflowId, tableName);
   return c.json({ status: "deleted" });
 });
 
@@ -156,13 +130,9 @@ app.delete("/:workflowId/memories/:id", async (c) => {
   const workflowId = c.req.param("workflowId");
   const id = c.req.param("id");
 
-  const [existing] = await _db
-    .select()
-    .from(memories)
-    .where(and(eq(memories.id, id), eq(memories.workflowId, workflowId)));
-  if (!existing) return c.json({ detail: "Memory not found" }, 404);
+  const deleted = await memoriesRepository.deleteMemory(workflowId, id);
+  if (!deleted) return c.json({ detail: "Memory not found" }, 404);
 
-  await _db.delete(memories).where(eq(memories.id, id));
   return c.json({ status: "deleted" });
 });
 

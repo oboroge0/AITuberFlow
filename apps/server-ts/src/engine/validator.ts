@@ -12,7 +12,7 @@
 import { join } from "node:path";
 import { checkInvalidConnections } from "./connection-integrity";
 import { GLOBAL_SETTINGS_MAP, loadGlobalSettings } from "./global-settings";
-import { SOURCE_NODE_TYPES, getPluginsDir } from "./plugin-loader";
+import { SOURCE_NODE_TYPES, resolvePluginDir } from "./plugin-loader";
 import { resolvePortId } from "./port-aliases";
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -86,8 +86,12 @@ async function loadManifest(nodeType: string): Promise<PluginManifest | null> {
     return manifestCache.get(nodeType) ?? null;
   }
 
-  const pluginsDir = getPluginsDir();
-  const manifestPath = join(pluginsDir, nodeType, "manifest.json");
+  const pluginDir = resolvePluginDir(nodeType);
+  if (!pluginDir) {
+    manifestCache.set(nodeType, null);
+    return null;
+  }
+  const manifestPath = join(pluginDir, "manifest.json");
 
   try {
     const file = Bun.file(manifestPath);

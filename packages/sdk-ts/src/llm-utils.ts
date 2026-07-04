@@ -14,9 +14,21 @@ export type LLMErrorCategory =
   | "api_error"
   | "unknown";
 
-export interface LLMErrorResult {
-  response: string;
-  category: LLMErrorCategory;
+/**
+ * Error thrown by {@link handleLLMError} once an LLM call has failed.
+ *
+ * `message` is a user-facing, classified message (localized where possible)
+ * followed by a short summary of the original error. `category` retains the
+ * classification so callers (e.g. retry logic) can branch on it.
+ */
+export class LLMError extends Error {
+  readonly category: LLMErrorCategory;
+
+  constructor(message: string, category: LLMErrorCategory, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "LLMError";
+    this.category = category;
+  }
 }
 
 /**
@@ -73,49 +85,80 @@ export function classifyLLMError(error: unknown): LLMErrorCategory {
 }
 
 /**
- * Handle an LLM error: classify, log a localized message, and return a structured response.
+ * Resolve the system prompt an LLM node should use for a call.
+ *
+ * Prefers `system` (typically wired in from an upstream node such as
+ * prompt-builder) when it is a non-empty string. Falls back to the node's
+ * configured default otherwise — including when `system` is missing, an
+ * empty string, or a non-string value (e.g. an object accidentally passed
+ * through from an upstream node), so a bad upstream value never reaches the
+ * provider API as-is.
+ */
+export function resolveSystemPrompt(system: unknown, fallback: string): string {
+  if (typeof system === "string" && system !== "") {
+    return system;
+  }
+  return fallback ?? "";
+}
+
+/**
+ * Handle an LLM error: classify, log a localized message, and throw.
+ *
+ * This never returns a value — LLM failures must not be mistaken for
+ * successful responses by downstream nodes (e.g. a TTS node reading an
+ * error string aloud on stream). Callers should `return await
+ * handleLLMError(...)` from their `catch` block; the executor is
+ * responsible for catching the thrown {@link LLMError}, logging it, and
+ * marking the node as errored so execution does not continue downstream.
  */
 export async function handleLLMError(
   error: unknown,
   provider: string,
   context: { log: (message: string, level?: string) => Promise<void> },
-): Promise<LLMErrorResult> {
+): Promise<never> {
   const category = classifyLLMError(error);
   const message = error instanceof Error ? error.message : String(error);
 
+  let errorMsg: string;
+  let llmErrorMessage: string;
+
   switch (category) {
     case "connection": {
-      const errorMsg = getErrorMessage(ErrorCode.LLM_CONNECTION_FAILED, "ja", {
+      errorMsg = getErrorMessage(ErrorCode.LLM_CONNECTION_FAILED, "ja", {
         provider,
       });
-      await context.log(errorMsg, "error");
-      return { response: "Error: Connection failed", category };
+      llmErrorMessage = `${errorMsg} (${message})`;
+      break;
     }
     case "rate_limit": {
-      const errorMsg = getErrorMessage(ErrorCode.LLM_RATE_LIMIT, "ja", {
+      errorMsg = getErrorMessage(ErrorCode.LLM_RATE_LIMIT, "ja", {
         provider,
       });
-      await context.log(errorMsg, "error");
-      return { response: "Error: Rate limit exceeded", category };
+      llmErrorMessage = `${errorMsg} (${message})`;
+      break;
     }
     case "auth": {
-      const errorMsg = getErrorMessage(ErrorCode.LLM_API_KEY_MISSING, "ja", {
+      errorMsg = getErrorMessage(ErrorCode.LLM_API_KEY_MISSING, "ja", {
         provider,
       });
-      await context.log(errorMsg, "error");
-      return { response: "Error: Authentication failed", category };
+      llmErrorMessage = `${errorMsg} (${message})`;
+      break;
     }
     case "api_error": {
-      const errorMsg = getErrorMessage(ErrorCode.LLM_API_ERROR, "ja", {
+      errorMsg = getErrorMessage(ErrorCode.LLM_API_ERROR, "ja", {
         provider,
         error: message,
       });
-      await context.log(errorMsg, "error");
-      return { response: `Error: ${message}`, category };
+      llmErrorMessage = errorMsg;
+      break;
     }
     default: {
-      await context.log(`Unexpected error: ${message}`, "error");
-      return { response: `Error: ${message}`, category };
+      errorMsg = `Unexpected error: ${message}`;
+      llmErrorMessage = errorMsg;
+      break;
     }
   }
+
+  await context.log(errorMsg, "error");
+  throw new LLMError(llmErrorMessage, category, { cause: error });
 }

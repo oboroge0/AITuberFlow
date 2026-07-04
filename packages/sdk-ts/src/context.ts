@@ -174,6 +174,7 @@ export class NodeContext {
    * @param tableName Logical table/collection to save the memory under.
    * @param content Text content to persist.
    * @returns The generated id of the saved memory.
+   * @throws {Error} If no save callback has been configured for this context.
    */
   async saveMemory(tableName: string, content: string): Promise<string> {
     if (!this._saveMemoryCallback) {
@@ -188,12 +189,15 @@ export class NodeContext {
    * @param tableName Logical table/collection to search within.
    * @param options Search parameters (recent vs. keyword, limit).
    * @returns Matching memories, most recent first.
+   * @throws {Error} If no search callback has been configured for this context.
    */
   async searchMemories(
     tableName: string,
     options: SearchMemoriesOptions,
   ): Promise<MemoryRecord[]> {
-    if (!this._searchMemoriesCallback) return [];
+    if (!this._searchMemoriesCallback) {
+      throw new Error("searchMemories is not available in this context");
+    }
     return await this._searchMemoriesCallback(tableName, options);
   }
 

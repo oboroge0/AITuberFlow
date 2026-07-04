@@ -40,6 +40,7 @@ import { AvatarView, AvatarState, RendererType } from '@/components/avatar';
 import api from '@/lib/api';
 import { resolveWorkflowId } from '@/lib/routeParams';
 import { getApiBaseUrl, getWsBaseUrl } from '@/lib/runtimeEndpoints';
+import { ReconnectingWebSocket } from '@/lib/reconnectingWebSocket';
 
 const WS_URL = getWsBaseUrl();
 const API_BASE = getApiBaseUrl();
@@ -190,208 +191,217 @@ export default function OverlayPage() {
     if (!workflowId || workflowId === '_') return;
 
     const wsUrl = `${WS_URL.replace(/^http/, 'ws')}/ws`;
-    const ws = new WebSocket(wsUrl);
 
-    ws.onopen = () => {
-      console.log('[Overlay] Connected');
-      setConnected(true);
-      ws.send(JSON.stringify({ type: 'join', payload: { workflowId } }));
-    };
+    // OBS Browser Sources run unattended (no one to hit "reload"), so the
+    // overlay must keep retrying forever on disconnect rather than giving
+    // up after a fixed number of attempts.
+    const rws = new ReconnectingWebSocket({
+      url: wsUrl,
+      maxReconnectAttempts: Infinity,
+      onStatusChange: (status) => {
+        setConnected(status === 'connected');
+        if (status === 'connecting') {
+          console.log('[Overlay] Connecting');
+        } else if (status === 'reconnecting') {
+          console.log('[Overlay] Reconnecting');
+        } else if (status === 'disconnected') {
+          console.log('[Overlay] Disconnected');
+        }
+      },
+      onOpen: () => {
+        console.log('[Overlay] Connected');
+        rws.send(JSON.stringify({ type: 'join', payload: { workflowId } }));
+      },
+      onMessage: (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          const { type, ...rest } = data;
 
-    ws.onclose = () => {
-      console.log('[Overlay] Disconnected');
-      setConnected(false);
-    };
+          switch (type) {
+            // Avatar events
+            case 'avatar.expression':
+              setAvatarState((prev) => ({ ...prev, expression: rest.expression }));
+              break;
 
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        const { type, ...rest } = data;
+            case 'avatar.mouth':
+              setAvatarState((prev) => ({ ...prev, mouthOpen: rest.value }));
+              break;
 
-        switch (type) {
-          // Avatar events
-          case 'avatar.expression':
-            setAvatarState((prev) => ({ ...prev, expression: rest.expression }));
-            break;
-
-          case 'avatar.mouth':
-            setAvatarState((prev) => ({ ...prev, mouthOpen: rest.value }));
-            break;
-
-          case 'avatar.motion': {
-            const motionUrl = rest.motionUrl || rest.motion;
-            if (motionUrl) {
-              setAvatarState((prev) => ({ ...prev, motion: motionUrl }));
-            }
-            break;
-          }
-
-          case 'avatar.lookAt':
-            setAvatarState((prev) => ({ ...prev, lookAt: rest }));
-            break;
-
-          case 'avatar.update': {
-            if (rest.renderer || rest.modelUrl || rest.idleAnimation || rest.vtubePort || rest.vtubeMouthParam || rest.vtubeExpressionMap) {
-              let expressionMap: Record<string, string> | undefined;
-              if (rest.vtubeExpressionMap) {
-                try {
-                  expressionMap = typeof rest.vtubeExpressionMap === 'string'
-                    ? JSON.parse(rest.vtubeExpressionMap)
-                    : rest.vtubeExpressionMap;
-                } catch {
-                  console.warn('Failed to parse vtubeExpressionMap');
-                }
+            case 'avatar.motion': {
+              const motionUrl = rest.motionUrl || rest.motion;
+              if (motionUrl) {
+                setAvatarState((prev) => ({ ...prev, motion: motionUrl }));
               }
-
-              setAvatarConfig((prev) => ({
-                renderer: rest.renderer || prev.renderer,
-                modelUrl: rest.modelUrl || prev.modelUrl,
-                animationUrl: rest.idleAnimation || prev.animationUrl,
-                vtubePort: rest.vtubePort || prev.vtubePort,
-                vtubeMouthParam: rest.vtubeMouthParam || prev.vtubeMouthParam,
-                vtubeExpressionMap: expressionMap || prev.vtubeExpressionMap,
-              }));
-            }
-            // Whitelist known avatar state fields instead of spreading arbitrary data
-            setAvatarState((prev) => {
-              const updated: Partial<AvatarState> = {};
-              if (rest.expression !== undefined) updated.expression = rest.expression;
-              if (rest.mouthOpen !== undefined) updated.mouthOpen = rest.mouthOpen;
-              if (rest.motion !== undefined) updated.motion = rest.motion;
-              if (rest.lookAt !== undefined) updated.lookAt = rest.lookAt;
-              return { ...prev, ...updated };
-            });
-            break;
-          }
-
-          // Subtitle events
-          case 'subtitle': {
-            if (subtitleTimerRef.current) clearTimeout(subtitleTimerRef.current);
-            if (subtitleFadeTimerRef.current) clearTimeout(subtitleFadeTimerRef.current);
-
-            if (!rest.text) {
-              setSubtitleVisible(false);
-              subtitleFadeTimerRef.current = setTimeout(() => setSubtitle(null), 300);
               break;
             }
 
-            setSubtitle(rest as SubtitleData);
-            setSubtitleVisible(true);
+            case 'avatar.lookAt':
+              setAvatarState((prev) => ({ ...prev, lookAt: rest }));
+              break;
 
-            if (rest.duration && rest.duration > 0) {
-              subtitleTimerRef.current = setTimeout(() => {
+            case 'avatar.update': {
+              if (rest.renderer || rest.modelUrl || rest.idleAnimation || rest.vtubePort || rest.vtubeMouthParam || rest.vtubeExpressionMap) {
+                let expressionMap: Record<string, string> | undefined;
+                if (rest.vtubeExpressionMap) {
+                  try {
+                    expressionMap = typeof rest.vtubeExpressionMap === 'string'
+                      ? JSON.parse(rest.vtubeExpressionMap)
+                      : rest.vtubeExpressionMap;
+                  } catch {
+                    console.warn('Failed to parse vtubeExpressionMap');
+                  }
+                }
+
+                setAvatarConfig((prev) => ({
+                  renderer: rest.renderer || prev.renderer,
+                  modelUrl: rest.modelUrl || prev.modelUrl,
+                  animationUrl: rest.idleAnimation || prev.animationUrl,
+                  vtubePort: rest.vtubePort || prev.vtubePort,
+                  vtubeMouthParam: rest.vtubeMouthParam || prev.vtubeMouthParam,
+                  vtubeExpressionMap: expressionMap || prev.vtubeExpressionMap,
+                }));
+              }
+              // Whitelist known avatar state fields instead of spreading arbitrary data
+              setAvatarState((prev) => {
+                const updated: Partial<AvatarState> = {};
+                if (rest.expression !== undefined) updated.expression = rest.expression;
+                if (rest.mouthOpen !== undefined) updated.mouthOpen = rest.mouthOpen;
+                if (rest.motion !== undefined) updated.motion = rest.motion;
+                if (rest.lookAt !== undefined) updated.lookAt = rest.lookAt;
+                return { ...prev, ...updated };
+              });
+              break;
+            }
+
+            // Subtitle events
+            case 'subtitle': {
+              if (subtitleTimerRef.current) clearTimeout(subtitleTimerRef.current);
+              if (subtitleFadeTimerRef.current) clearTimeout(subtitleFadeTimerRef.current);
+
+              if (!rest.text) {
                 setSubtitleVisible(false);
                 subtitleFadeTimerRef.current = setTimeout(() => setSubtitle(null), 300);
-              }, rest.duration);
-            }
-            break;
-          }
-
-          // Audio events
-          case 'audio': {
-            if (!rest.filename) break;
-            const audioUrl = rest.filename.startsWith('http')
-              ? rest.filename
-              : `${API_BASE}/api/integrations/audio/${rest.filename}`;
-
-            if (audioRef.current) {
-              audioRef.current.pause();
-            }
-
-            const audio = new Audio(audioUrl);
-            audio.volume = volume;
-            audioRef.current = audio;
-
-            audio.onended = () => {
-              setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
-            };
-
-            audio.play().catch(console.error);
-            break;
-          }
-
-          case 'audio.play': {
-            if (!rest.filename) break;
-            const playUrl = rest.filename.startsWith('http')
-              ? rest.filename
-              : `${API_BASE}/api/integrations/audio/${rest.filename}`;
-
-            if (audioRef.current) {
-              audioRef.current.pause();
-            }
-
-            const playAudio = new Audio(playUrl);
-            playAudio.volume = rest.volume ?? volume;
-            audioRef.current = playAudio;
-
-            playAudio.onended = () => {
-              setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
-            };
-
-            playAudio.play().catch(console.error);
-            break;
-          }
-
-          case 'audio.stop':
-            if (audioRef.current) {
-              audioRef.current.pause();
-              audioRef.current = null;
-            }
-            break;
-
-          // Donation alert events
-          case 'donation.alert': {
-            const alertData = rest as DonationAlertData;
-            setDonationAlert(alertData);
-            setDonationAlertVisible(true);
-
-            if (alertData.sound) {
-              const soundUrl = alertData.sound.startsWith('http')
-                ? alertData.sound
-                : `${API_BASE}${alertData.sound}`;
-
-              if (donationAudioRef.current) {
-                donationAudioRef.current.pause();
+                break;
               }
 
-              const alertAudio = new Audio(soundUrl);
-              alertAudio.volume = volume;
-              donationAudioRef.current = alertAudio;
-              alertAudio.play().catch(console.error);
+              setSubtitle(rest as SubtitleData);
+              setSubtitleVisible(true);
+
+              if (rest.duration && rest.duration > 0) {
+                subtitleTimerRef.current = setTimeout(() => {
+                  setSubtitleVisible(false);
+                  subtitleFadeTimerRef.current = setTimeout(() => setSubtitle(null), 300);
+                }, rest.duration);
+              }
+              break;
             }
 
-            const duration = alertData.duration || 5000;
-            if (donationTimerRef.current) clearTimeout(donationTimerRef.current);
-            if (donationFadeTimerRef.current) clearTimeout(donationFadeTimerRef.current);
-            donationTimerRef.current = setTimeout(() => {
-              setDonationAlertVisible(false);
-              donationFadeTimerRef.current = setTimeout(() => setDonationAlert(null), 500);
-            }, duration);
-            break;
+            // Audio events
+            case 'audio': {
+              if (!rest.filename) break;
+              const audioUrl = rest.filename.startsWith('http')
+                ? rest.filename
+                : `${API_BASE}/api/integrations/audio/${rest.filename}`;
+
+              if (audioRef.current) {
+                audioRef.current.pause();
+              }
+
+              const audio = new Audio(audioUrl);
+              audio.volume = volume;
+              audioRef.current = audio;
+
+              audio.onended = () => {
+                setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
+              };
+
+              audio.play().catch(console.error);
+              break;
+            }
+
+            case 'audio.play': {
+              if (!rest.filename) break;
+              const playUrl = rest.filename.startsWith('http')
+                ? rest.filename
+                : `${API_BASE}/api/integrations/audio/${rest.filename}`;
+
+              if (audioRef.current) {
+                audioRef.current.pause();
+              }
+
+              const playAudio = new Audio(playUrl);
+              playAudio.volume = rest.volume ?? volume;
+              audioRef.current = playAudio;
+
+              playAudio.onended = () => {
+                setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
+              };
+
+              playAudio.play().catch(console.error);
+              break;
+            }
+
+            case 'audio.stop':
+              if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+              }
+              break;
+
+            // Donation alert events
+            case 'donation.alert': {
+              const alertData = rest as DonationAlertData;
+              setDonationAlert(alertData);
+              setDonationAlertVisible(true);
+
+              if (alertData.sound) {
+                const soundUrl = alertData.sound.startsWith('http')
+                  ? alertData.sound
+                  : `${API_BASE}${alertData.sound}`;
+
+                if (donationAudioRef.current) {
+                  donationAudioRef.current.pause();
+                }
+
+                const alertAudio = new Audio(soundUrl);
+                alertAudio.volume = volume;
+                donationAudioRef.current = alertAudio;
+                alertAudio.play().catch(console.error);
+              }
+
+              const duration = alertData.duration || 5000;
+              if (donationTimerRef.current) clearTimeout(donationTimerRef.current);
+              if (donationFadeTimerRef.current) clearTimeout(donationFadeTimerRef.current);
+              donationTimerRef.current = setTimeout(() => {
+                setDonationAlertVisible(false);
+                donationFadeTimerRef.current = setTimeout(() => setDonationAlert(null), 500);
+              }, duration);
+              break;
+            }
+
+            // Execution events
+            case 'execution.stopped':
+              setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
+              setSubtitleVisible(false);
+              if (subtitleTimerRef.current) clearTimeout(subtitleTimerRef.current);
+              subtitleFadeTimerRef.current = setTimeout(() => setSubtitle(null), 300);
+              if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+              }
+              break;
           }
-
-          // Execution events
-          case 'execution.stopped':
-            setAvatarState((prev) => ({ ...prev, mouthOpen: 0 }));
-            setSubtitleVisible(false);
-            if (subtitleTimerRef.current) clearTimeout(subtitleTimerRef.current);
-            subtitleFadeTimerRef.current = setTimeout(() => setSubtitle(null), 300);
-            if (audioRef.current) {
-              audioRef.current.pause();
-              audioRef.current = null;
-            }
-            break;
+        } catch (err) {
+          console.warn('Failed to parse WebSocket message:', err);
         }
-      } catch (err) {
-        console.warn('Failed to parse WebSocket message:', err);
-      }
-    };
+      },
+    });
+
+    rws.connect();
 
     return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'leave', payload: { workflowId } }));
-      }
-      ws.close();
+      rws.send(JSON.stringify({ type: 'leave', payload: { workflowId } }));
+      rws.close();
       if (subtitleTimerRef.current) clearTimeout(subtitleTimerRef.current);
       if (subtitleFadeTimerRef.current) clearTimeout(subtitleFadeTimerRef.current);
       if (donationTimerRef.current) clearTimeout(donationTimerRef.current);

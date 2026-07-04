@@ -5,31 +5,13 @@
  */
 
 import { readdir } from "node:fs/promises";
-import { join, resolve, sep } from "node:path";
+import { join } from "node:path";
 import { Hono } from "hono";
-import { getPluginsDir } from "../engine/plugin-loader";
+import { getPluginsDir, resolvePluginDir } from "../engine/plugin-loader";
 
 const app = new Hono();
 
 const PLUGINS_DIR = getPluginsDir();
-const RESOLVED_PLUGINS_DIR = resolve(PLUGINS_DIR);
-
-function resolvePluginDir(pluginId: string): string | null {
-  if (!/^[A-Za-z0-9._-]+$/.test(pluginId)) {
-    return null;
-  }
-
-  const pluginDir = resolve(RESOLVED_PLUGINS_DIR, pluginId);
-  const rootWithSep = RESOLVED_PLUGINS_DIR.endsWith(sep)
-    ? RESOLVED_PLUGINS_DIR
-    : `${RESOLVED_PLUGINS_DIR}${sep}`;
-
-  if (!pluginDir.startsWith(rootWithSep)) {
-    return null;
-  }
-
-  return pluginDir;
-}
 
 async function loadPluginManifest(pluginDir: string): Promise<Record<string, unknown> | null> {
   const manifestPath = join(pluginDir, "manifest.json");

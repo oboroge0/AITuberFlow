@@ -5,7 +5,7 @@
  * Uses OpenAI-compatible API format with custom baseURL.
  */
 
-import { BaseNode, NodeContext, createEvent, handleLLMError } from "@aituber-flow/sdk";
+import { BaseNode, NodeContext, createEvent, handleLLMError, resolveSystemPrompt } from "@aituber-flow/sdk";
 import OpenAI from "openai";
 
 export default class MistralLLMNode extends BaseNode {
@@ -60,7 +60,7 @@ export default class MistralLLMNode extends BaseNode {
     try {
       await context.log(`Calling Mistral API (${this.model})...`);
 
-      const systemPrompt = (inputs.system as string) || this.systemPrompt || "";
+      const systemPrompt = resolveSystemPrompt(inputs.system, this.systemPrompt);
 
       const response = await this.client.chat.completions.create({
         model: this.model,
@@ -84,8 +84,7 @@ export default class MistralLLMNode extends BaseNode {
 
       return { response: result };
     } catch (error: unknown) {
-      const result = await handleLLMError(error, "Mistral", context);
-      return { response: result.response };
+      return await handleLLMError(error, "Mistral", context);
     }
   }
 
