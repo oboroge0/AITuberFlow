@@ -85,8 +85,7 @@ export default class GroqLLMNode extends BaseNode {
 
       return { response: result };
     } catch (error: unknown) {
-      const result = await handleLLMError(error, "Groq", context);
-      return { response: result.response };
+      return await handleLLMError(error, "Groq", context);
     }
   }
 

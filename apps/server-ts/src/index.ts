@@ -115,7 +115,12 @@ initDb();
 
 const parsedPort = process.env.PORT === undefined ? Number.NaN : Number(process.env.PORT);
 const port = Number.isFinite(parsedPort) ? parsedPort : 8001;
-console.log(`Started development server: http://localhost:${port}`);
+// Default to localhost-only binding for security: without an explicit hostname,
+// Bun binds to 0.0.0.0 (all network interfaces), exposing unauthenticated REST/WS
+// routes to anyone on the same LAN. Set HOST=0.0.0.0 to restore LAN-wide access
+// (e.g. when OBS or the browser overlay runs on a different machine).
+const hostname = process.env.HOST || "127.0.0.1";
+console.log(`Started development server: http://${hostname}:${port}`);
 
 // Graceful shutdown handler
 const SHUTDOWN_TIMEOUT_MS = 10_000;
@@ -172,6 +177,7 @@ if (parentPidEnv) {
 // This ensures --hot mode works correctly (handler replacement without restart).
 export default {
   port,
+  hostname,
   fetch: app.fetch,
   websocket,
 };

@@ -1,0 +1,65 @@
+name: Desktop Cache Warm
+
+# Desktop Release はタグ push でしか動かないため、タグ ref からは過去のタグで保存した
+# Rust キャッシュを復元できない（GitHub Actions のキャッシュはデフォルトブランチ main か
+# 同一 ref のものしか見えない）。このワークフローが main 上で cargo build を行い、
+# タグビルドが復元できるキャッシュを main に作っておく。
+# shared-key は desktop-release.yml 側の rust-cache と一致させること。
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/desktop/src-tauri/**'
+      - '.github/workflows/desktop-cache-warm.yml'
+  workflow_dispatch:
+
+jobs:
+  warm:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            rust-target: aarch64-apple-darwin
+            cargo-args: '--target aarch64-apple-darwin'
+            sidecar-suffix: '-aarch64-apple-darwin'
+          - platform: macos-latest
+            rust-target: x86_64-apple-darwin
+            cargo-args: '--target x86_64-apple-darwin'
+            sidecar-suffix: '-x86_64-apple-darwin'
+          - platform: windows-latest
+            rust-target: x86_64-pc-windows-msvc
+            cargo-args: ''
+            sidecar-suffix: '-x86_64-pc-windows-msvc.exe'
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './apps/desktop/src-tauri -> target'
+          shared-key: desktop-${{ matrix.rust-target }}
+
+      # Tauri のビルドスクリプトが externalBin と resources の実在チェックをするため、
+      # サイドカーとリソースのダミーを置く（キャッシュ生成が目的なので中身は不要）
+      - name: Create placeholder sidecar and resources
+        shell: bash
+        run: |
+          mkdir -p apps/desktop/src-tauri/binaries
+          touch "apps/desktop/src-tauri/binaries/server${{ matrix.sidecar-suffix }}"
+          for dir in plugins templates web-dist; do
+            mkdir -p "apps/desktop/src-tauri/resources/$dir"
+            touch "apps/desktop/src-tauri/resources/$dir/placeholder.txt"
+          done
+
+      - name: Build (warm cache)
+        working-directory: apps/desktop/src-tauri
+        run: cargo build --release ${{ matrix.cargo-args }}

@@ -316,11 +316,12 @@ docs: プラグイン開発ガイドを更新
 
 ### 2. バージョン更新
 
-以下のファイルのバージョンを更新 (8箇所全て揃えること):
+以下のファイルのバージョンを更新 (9箇所全て揃えること):
 - `apps/web/package.json`
 - `apps/web/package-lock.json`（ルートの `"version"` と `packages[""]["version"]` の2箇所）
 - `apps/server-ts/package.json`
 - `apps/desktop/package.json`
+- `apps/desktop/package-lock.json`（ルートの `"version"` と `packages[""]["version"]` の2箇所）
 - `apps/desktop/src-tauri/tauri.conf.json`
 - `apps/desktop/src-tauri/Cargo.toml`
 - `apps/desktop/src-tauri/Cargo.lock`（**aituber-flow パッケージの version のみ**）
@@ -330,6 +331,7 @@ docs: プラグイン開発ガイドを更新
 
 ⚠️ 過去のリリースで `apps/desktop/package.json` (2.0.0 のまま) と `Cargo.toml` (パッチずれ) の
 更新漏れが続いていた。Updater 判定の不安定や成果物バージョン文字列の齟齬を防ぐため必ず全て揃える。
+v2.6.1 で `apps/desktop/package-lock.json` が 2.4.0 のまま drift していたのを発見・修正した。PR #297 以降、リリースビルドは `npm ci` を使うため、この lockfile の version 不整合はデスクトップビルドの失敗として顕在化する。
 
 ### 3. コミット＆マージ
 

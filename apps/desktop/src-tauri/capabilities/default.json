@@ -20,6 +20,7 @@
     "shell:allow-spawn",
     "shell:allow-stdin-write",
     "updater:default",
-    "process:allow-restart"
+    "process:allow-restart",
+    "dialog:default"
   ]
 }

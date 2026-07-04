@@ -155,37 +155,25 @@ fn save_workflow_export(
     content: String,
 ) -> Result<String, String> {
     let safe_name = sanitize_export_filename(&filename);
-    let base_dir = app
-        .path()
-        .download_dir()
-        .or_else(|_| app.path().desktop_dir())
-        .or_else(|_| app.path().app_data_dir())
-        .map_err(|err| format!("failed to resolve export directory: {}", err))?;
-    std::fs::create_dir_all(&base_dir)
-        .map_err(|err| format!("failed to create export directory: {}", err))?;
 
-    let mut target = base_dir.join(&safe_name);
-    if target.exists() {
-        let stem = target
-            .file_stem()
-            .and_then(|v| v.to_str())
-            .unwrap_or("workflow-export");
-        let unique_name = format!("{}-{}.json", stem, chrono_like_timestamp());
-        target = base_dir.join(unique_name);
-    }
+    let file_path = app
+        .dialog()
+        .file()
+        .add_filter("JSON", &["json"])
+        .set_file_name(&safe_name)
+        .blocking_save_file();
+
+    let target = match file_path {
+        Some(path) => path
+            .as_path()
+            .map(|p| p.to_path_buf())
+            .ok_or_else(|| "Invalid file path".to_string())?,
+        None => return Err("cancelled".to_string()),
+    };
 
     std::fs::write(&target, content.as_bytes())
         .map_err(|err| format!("failed to write export file: {}", err))?;
     Ok(target.display().to_string())
-}
-
-fn chrono_like_timestamp() -> String {
-    use std::time::{SystemTime, UNIX_EPOCH};
-    let secs = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0);
-    secs.to_string()
 }
 
 pub fn run() {

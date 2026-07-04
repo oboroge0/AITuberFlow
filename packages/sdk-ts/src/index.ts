@@ -53,5 +53,5 @@ export {
 } from "./errors";
 
 // LLM error utilities
-export { handleLLMError, classifyLLMError, resolveSystemPrompt } from "./llm-utils";
-export type { LLMErrorCategory, LLMErrorResult } from "./llm-utils";
+export { handleLLMError, classifyLLMError, resolveSystemPrompt, LLMError } from "./llm-utils";
+export type { LLMErrorCategory } from "./llm-utils";

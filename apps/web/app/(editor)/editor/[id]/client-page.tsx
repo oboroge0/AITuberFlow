@@ -487,7 +487,6 @@ export default function EditorPage() {
 
   // Export workflow as JSON file
   const handleExport = async () => {
-    // Use API endpoint which strips API keys by default for security
     const response = await api.exportWorkflow(workflowId, { excludeApiKeys: true });
 
     if (response.error) {
@@ -507,17 +506,35 @@ export default function EditorPage() {
       },
     };
 
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const jsonText = JSON.stringify(exportData, null, 2);
+    const safeName = `${(exportData.workflow.name || 'workflow').replace(/[^a-zA-Z0-9_-]/g, '_')}-${new Date().toISOString().split('T')[0]}.json`;
+    const tauri = (window as Window & { __TAURI_INTERNALS__?: TauriInternals }).__TAURI_INTERNALS__;
+
+    if (typeof tauri?.invoke === 'function') {
+      try {
+        const savedPath = await tauri.invoke('save_workflow_export', {
+          filename: safeName,
+          content: jsonText,
+        });
+        addLog({ level: 'success', message: `Exported: ${String(savedPath)}` });
+      } catch (err) {
+        if (String(err) === 'cancelled') return;
+        addLog({ level: 'error', message: `Export failed: ${err}` });
+      }
+      return;
+    }
+
+    const blob = new Blob([jsonText], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${exportData.workflow.name || 'workflow'}-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = safeName;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    addLog({ level: 'success', message: 'Workflow exported (API keys excluded for security)' });
+    addLog({ level: 'success', message: 'Workflow exported' });
   };
 
   // Import workflow from JSON file - creates a new workflow

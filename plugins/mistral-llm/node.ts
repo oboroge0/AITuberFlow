@@ -84,8 +84,7 @@ export default class MistralLLMNode extends BaseNode {
 
       return { response: result };
     } catch (error: unknown) {
-      const result = await handleLLMError(error, "Mistral", context);
-      return { response: result.response };
+      return await handleLLMError(error, "Mistral", context);
     }
   }
 
