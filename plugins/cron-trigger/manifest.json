@@ -23,12 +23,12 @@
       {
         "id": "timestamp",
         "type": "string",
-        "description": "Execution timestamp (ISO 8601)"
+        "description": "実行時刻（ISO 8601）"
       },
       {
         "id": "executionCount",
         "type": "number",
-        "description": "Number of times this trigger has fired"
+        "description": "トリガーの実行回数"
       }
     ],
     "events": {

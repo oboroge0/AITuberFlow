@@ -13,8 +13,8 @@
   "ui": {
     "label": "OBS Scene Switch",
     "icon": "Monitor",
-    "color": "#302E31",
-    "bgColor": "rgba(48, 46, 49, 0.3)",
+    "color": "#8B7CC4",
+    "bgColor": "rgba(139, 124, 196, 0.15)",
     "statusText": "OBS Scene Switch"
   },
   "node": {
@@ -22,29 +22,29 @@
       {
         "id": "trigger",
         "type": "any",
-        "description": "Trigger to switch scene"
+        "description": "シーン切替のトリガー"
       },
       {
         "id": "sceneName",
         "type": "string",
-        "description": "Scene name (overrides config if provided)"
+        "description": "シーン名（設定値を上書き）"
       }
     ],
     "outputs": [
       {
         "id": "success",
         "type": "boolean",
-        "description": "Whether the scene switch was successful"
+        "description": "シーン切替の成否"
       },
       {
         "id": "currentScene",
         "type": "string",
-        "description": "Current scene name after switch"
+        "description": "切替後の現在のシーン名"
       },
       {
         "id": "scenes",
         "type": "array",
-        "description": "List of available scene names"
+        "description": "利用可能なシーン名の一覧"
       }
     ],
     "events": {

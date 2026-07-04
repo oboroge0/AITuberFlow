@@ -13,7 +13,7 @@ import type { Event } from "./event-bus";
 import { EventBus, EventFilter } from "./event-bus";
 import { EventQueue } from "./event-queue";
 import { loadGlobalSettings, mergeGlobalSettings } from "./global-settings";
-import { SOURCE_NODE_TYPES, loadPlugin } from "./plugin-loader";
+import { PluginLoadError, SOURCE_NODE_TYPES, loadPlugin } from "./plugin-loader";
 import { resolvePortId } from "./port-aliases";
 import { TaskRegistry } from "./task-registry";
 
@@ -196,6 +196,8 @@ interface NodeRuntime {
   config: Record<string, any>;
   instance: unknown;
   context: NodeContext;
+  /** Set when loadPlugin() threw PluginLoadError; instance stays null. */
+  loadError?: string;
 }
 
 // ─── Error ───────────────────────────────────────────────────────
@@ -224,6 +226,12 @@ export class WorkflowExecutor {
   private taskRegistries = new Map<string, TaskRegistry>();
   private vtsWorkflows = new Set<string>();
   private workflowLocks = new Map<string, Promise<void>>();
+
+  // Plugin lifecycle calls are capped so a hung plugin (e.g. a chat client
+  // stuck in a connect-retry loop, issue #239) cannot block workflow
+  // start/stop. Overridable in tests.
+  private setupTimeoutMs = 10_000;
+  private teardownTimeoutMs = 5_000;
 
   // ─── Callbacks ────────────────────
 
@@ -341,7 +349,26 @@ export class WorkflowExecutor {
 
     for (const node of nodes) {
       const context = this.createNodeContext(workflowId, node.id, character);
-      const instance = await loadPlugin(node.type);
+
+      let instance: unknown = null;
+      let loadError: string | undefined;
+      try {
+        instance = await loadPlugin(node.type);
+      } catch (err) {
+        if (err instanceof PluginLoadError) {
+          loadError = err.message;
+          await this.log(
+            workflowId,
+            node.id,
+            `プラグインの読み込みに失敗しました: ${err.message}`,
+            "error",
+          );
+          await this.updateNodeStatus(workflowId, node.id, "error", { error: err.message });
+        } else {
+          throw err;
+        }
+      }
+
       const mergedConfig = mergeGlobalSettings(node.type, node.config ?? {}, settings);
 
       const runtime: NodeRuntime = {
@@ -350,17 +377,39 @@ export class WorkflowExecutor {
         config: mergedConfig,
         instance,
         context,
+        loadError,
       };
       runtimes.set(node.id, runtime);
 
       const pluginInstance = instance as Record<string, any> | null;
       if (pluginInstance?.setup) {
         try {
-          await pluginInstance.setup(mergedConfig, context);
+          await this.runWithTimeout(
+            pluginInstance.setup(mergedConfig, context),
+            this.setupTimeoutMs,
+            `setup of ${node.type}`,
+          );
         } catch (err) {
           await this.log(workflowId, node.id, `Node setup error: ${err}`, "error");
         }
       }
+    }
+  }
+
+  /** Cap a plugin lifecycle call so a hung plugin cannot block the engine. */
+  private async runWithTimeout(
+    promise: Promise<unknown>,
+    ms: number,
+    label: string,
+  ): Promise<void> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+    });
+    try {
+      await Promise.race([promise, timeout]);
+    } finally {
+      clearTimeout(timer);
     }
   }
 
@@ -377,7 +426,13 @@ export class WorkflowExecutor {
       const inst = runtime.instance as Record<string, any>;
       return await inst.execute(inputs, runtime.context);
     }
-    return await this.executeBuiltinNode(runtime.nodeType, runtime.config, inputs, runtime.context);
+    return await this.executeBuiltinNode(
+      runtime.nodeType,
+      runtime.config,
+      inputs,
+      runtime.context,
+      runtime.loadError,
+    );
   }
 
   private async teardownNodes(workflowId: string): Promise<void> {
@@ -385,17 +440,24 @@ export class WorkflowExecutor {
     if (!runtimes) return;
     this.nodeInstances.delete(workflowId);
 
-    for (const runtime of runtimes.values()) {
-      // biome-ignore lint/suspicious/noExplicitAny: plugin instance shape defined at runtime
-      const inst = runtime.instance as Record<string, any> | null;
-      if (inst?.teardown) {
+    // Concurrent with a per-node cap: one hung teardown must not delay the
+    // others, and total stop time stays bounded regardless of node count.
+    await Promise.allSettled(
+      [...runtimes.values()].map(async (runtime) => {
+        // biome-ignore lint/suspicious/noExplicitAny: plugin instance shape defined at runtime
+        const inst = runtime.instance as Record<string, any> | null;
+        if (!inst?.teardown) return;
         try {
-          await inst.teardown();
+          await this.runWithTimeout(
+            inst.teardown(),
+            this.teardownTimeoutMs,
+            `teardown of ${runtime.nodeType}`,
+          );
         } catch (err) {
           console.error(`Error tearing down node ${runtime.nodeId}:`, err);
         }
-      }
-    }
+      }),
+    );
   }
 
   // ─── Event Filter Check ───────────
@@ -655,10 +717,15 @@ export class WorkflowExecutor {
     for (const node of sourceNodes) {
       const runtime = this.getNodeRuntime(workflowId, node.id);
       if (!runtime?.instance) {
-        await this.log(workflowId, node.id, `Failed to load source node: ${node.type}`, "error");
-        await this.updateNodeStatus(workflowId, node.id, "error", {
-          error: "Plugin not found",
-        });
+        // initializeNodes() already logged + flagged status "error" with the
+        // specific reason when loadPlugin() threw PluginLoadError - avoid
+        // double-reporting and only cover the plain "no plugin" case here.
+        if (!runtime?.loadError) {
+          await this.log(workflowId, node.id, `Failed to load source node: ${node.type}`, "error");
+          await this.updateNodeStatus(workflowId, node.id, "error", {
+            error: "Plugin not found",
+          });
+        }
         continue;
       }
 
@@ -1229,6 +1296,7 @@ export class WorkflowExecutor {
     config: Record<string, any>,
     inputs: Record<string, any>,
     context: NodeContext,
+    loadError?: string,
   ): Promise<Record<string, any>> {
     switch (nodeType) {
       case "start":
@@ -1253,7 +1321,16 @@ export class WorkflowExecutor {
       }
 
       default:
-        await context.log(`Unknown node type: ${nodeType}`, "warning");
+        if (loadError) {
+          // The node type has no built-in fallback and its plugin failed to
+          // load - say why instead of downgrading to a generic warning.
+          await context.log(
+            `Unknown node type: ${nodeType}（プラグインの読み込みに失敗しました: ${loadError}）`,
+            "error",
+          );
+        } else {
+          await context.log(`Unknown node type: ${nodeType}`, "warning");
+        }
         return {};
     }
   }

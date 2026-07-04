@@ -1,14 +1,72 @@
 /**
- * Global CSS - Minimal shared styles
+ * Global CSS - Minimal shared styles + theme tokens
  *
  * Route-specific styles are in:
  * - (editor)/editor.css - Editor interface styles
  * - (overlay)/overlay.css - Streaming overlay styles
+ *
+ * Theming: semantic design tokens live as CSS variables. `:root` / [data-theme="dark"]
+ * is the default (dark); [data-theme="light"] overrides them. Surfaces should consume
+ * these tokens (inline `var(--...)` or the Tailwind semantic colors in tailwind.config)
+ * instead of hardcoded colors, so both themes stay in sync.
  */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0f172a;
+  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  --surface: rgba(17, 24, 39, 0.8);
+  --surface-2: rgba(17, 24, 39, 0.6);
+  --surface-strong: rgba(17, 24, 39, 0.95);
+  --card: rgba(17, 24, 39, 0.8);
+  --elevated: rgba(255, 255, 255, 0.05);
+  --inset: rgba(0, 0, 0, 0.2);
+  --inset-strong: rgba(0, 0, 0, 0.3);
+  --hover: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.1);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --grid-line: rgba(255, 255, 255, 0.03);
+  --text: #ffffff;
+  --text-strong: rgba(255, 255, 255, 0.8);
+  --text-muted: rgba(255, 255, 255, 0.6);
+  --text-dim: rgba(255, 255, 255, 0.5);
+  --text-faint: #6b7280;
+  --text-fainter: #4b5563;
+  --node-bg: #0f172a;
+  --node-field: rgba(255, 255, 255, 0.07);
+  --focus-ring: rgba(255, 255, 255, 0.45);
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f1f5f9;
+  --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #eaeef4 50%, #f8fafc 100%);
+  --surface: rgba(255, 255, 255, 0.92);
+  --surface-2: rgba(255, 255, 255, 0.7);
+  --surface-strong: rgba(255, 255, 255, 0.95);
+  --card: rgba(255, 255, 255, 0.9);
+  --elevated: rgba(15, 23, 42, 0.04);
+  --inset: rgba(15, 23, 42, 0.04);
+  --inset-strong: rgba(15, 23, 42, 0.055);
+  --hover: rgba(15, 23, 42, 0.06);
+  --border: rgba(15, 23, 42, 0.12);
+  --border-subtle: rgba(15, 23, 42, 0.07);
+  --grid-line: rgba(15, 23, 42, 0.04);
+  --text: #0f172a;
+  --text-strong: rgba(15, 23, 42, 0.85);
+  --text-muted: rgba(15, 23, 42, 0.65);
+  --text-dim: rgba(15, 23, 42, 0.55);
+  --text-faint: rgba(15, 23, 42, 0.5);
+  --text-fainter: rgba(15, 23, 42, 0.4);
+  --node-bg: #ffffff;
+  --node-field: rgba(15, 23, 42, 0.06);
+  --focus-ring: rgba(15, 23, 42, 0.4);
+}
 
 /* Minimal reset */
 *,
@@ -17,6 +75,11 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
 }
 
 /* Toast animations */

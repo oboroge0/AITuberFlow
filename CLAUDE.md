@@ -250,6 +250,15 @@ feat/xxx (worktree) ──PR──▶ dev ──リリース時にまとめて�
 
 ## Git / GitHub ルール
 
+### dev への直接 push 禁止
+
+**dev ブランチに直接コミット・push しないこと。** 小さな修正でも必ず作業ブランチから PR を経由する。直接 push すると履歴が散らかり、force push でのまとめ直しが必要になる（v2.5.1 で発生）。
+
+```
+# NG: git commit && git push origin dev
+# OK: git checkout -b fix/xxx dev → commit → push → PR → マージ
+```
+
 ### コミットメッセージ
 
 - **日本語で書くこと**
@@ -275,6 +284,9 @@ docs: プラグイン開発ガイドを更新
 - 日付を変更する前に、必ず現在の日付を確認すること（`date` コマンド等）
 - フォーマット: `## [バージョン] - YYYY-MM-DD`
 - Keep a Changelog 形式に従う
+- **各リリースで該当バージョンのセクションを必ず追加する（パッチも含む）。** 抜けると告知やUpdater判定の齟齬につながる。
+- **有無・内容の確認は作業ブランチではなく `dev`/`main` の最新で行う。** feature ブランチは dev より遅れていることがあり、実際は入っているのに「抜けている」ように見える罠がある（過去に誤認あり）。
+- GitHub Release の告知文（本文）は **`/release-notes` スキル**のテンプレ（日英併記）に従って書く。
 
 ### ドキュメント
 
@@ -289,6 +301,13 @@ docs: プラグイン開発ガイドを更新
 
 ## リリースプロセス
 
+### 0. リリース前の心得（過去の反省）
+
+- **まず `git fetch origin` して `dev`/`main` をローカル最新化してから状態を確認する。** 古いローカル dev や feature ブランチを見て「CHANGELOG が抜けている」「バージョンが古い」と誤認しやすい（実際は origin に入っていた、という取り違えが起きた）。
+- **`dev → main` の前に分岐を必ず確認する：`git log origin/dev..origin/main` が空か。** 空でなければ main→dev のマージ戻し忘れ。先に main を dev に取り込んでから進める（PR #259 の自動検知も参照）。
+- **バージョンは変更の性質で決める。** 新機能（例: ライト/ダークモード）はパッチ(z)ではなく **マイナー(y)**。バグ修正だけならパッチ。「2.5.3 のつもりが新機能入りで 2.6.0」のように途中で変わる。
+- **デスクトップ/Tauri の機能は必ず `tauri dev` の実機ビルドで検証する。** 自動アップデート・エクスポート保存・オーバーレイ・IPC 系は web/`npm run dev` では再現せず（Tauri IPC が無い）、配布ビルドは JS コンソールを隠すため失敗が見えない。実機ビルド＋stdout に出す一時診断コマンドで確認する。
+
 ### 1. リリース前チェック（ブランチ作業中）
 
 - [ ] 全ての変更が完了している（README更新含む）
@@ -297,16 +316,22 @@ docs: プラグイン開発ガイドを更新
 
 ### 2. バージョン更新
 
-以下のファイルのバージョンを更新 (5ファイル全て揃えること):
+以下のファイルのバージョンを更新 (9箇所全て揃えること):
 - `apps/web/package.json`
+- `apps/web/package-lock.json`（ルートの `"version"` と `packages[""]["version"]` の2箇所）
 - `apps/server-ts/package.json`
 - `apps/desktop/package.json`
+- `apps/desktop/package-lock.json`（ルートの `"version"` と `packages[""]["version"]` の2箇所）
 - `apps/desktop/src-tauri/tauri.conf.json`
-- `apps/desktop/src-tauri/Cargo.toml` (更新後 `cd apps/desktop/src-tauri && cargo update -p aituber-flow` で Cargo.lock も更新)
+- `apps/desktop/src-tauri/Cargo.toml`
+- `apps/desktop/src-tauri/Cargo.lock`（**aituber-flow パッケージの version のみ**）
 - `CHANGELOG.md`（日付は `date +%Y-%m-%d` で確認）
+
+⚠️ **Cargo.lock の更新は手動で aituber-flow の行だけ書き換えること。** `sed` 等で一括置換すると `walkdir` 等の他クレートのバージョンまで書き換わり、ビルドが壊れる（v2.5.1 で発生）。
 
 ⚠️ 過去のリリースで `apps/desktop/package.json` (2.0.0 のまま) と `Cargo.toml` (パッチずれ) の
 更新漏れが続いていた。Updater 判定の不安定や成果物バージョン文字列の齟齬を防ぐため必ず全て揃える。
+v2.6.1 で `apps/desktop/package-lock.json` が 2.4.0 のまま drift していたのを発見・修正した。PR #297 以降、リリースビルドは `npm ci` を使うため、この lockfile の version 不整合はデスクトップビルドの失敗として顕在化する。
 
 ### 3. コミット＆マージ
 
@@ -327,16 +352,22 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ```bash
 git checkout main
 git pull origin main
-git merge dev        # fast-forward になるはず（ならなければ分岐を調査）
+git merge origin/dev --no-edit  # fast-forward になるはず（ならなければ分岐を調査）
+git push origin main
 ```
 
-**⚠️ 重要: タグ作成前に追加修正がないか最終確認すること**
+**⚠️ 重要: タグ作成前に以下を確認すること**
+1. 追加修正がないか
+2. **main 上でバージョンファイルが正しく更新されているか**（`git show main:apps/desktop/src-tauri/tauri.conf.json | grep version` 等）。リリース PR のマージコミットが main に含まれていなければ、タグを打ってもビルド成果物のバージョンがずれる（v2.5.1 で発生）
 
 ### 4. タグ作成（全ての修正が終わってから）
 
 ```bash
+# 必ず main 上のバージョンを確認してからタグを打つ
+git show main:apps/desktop/src-tauri/tauri.conf.json | grep '"version"'
+git show main:apps/web/package.json | grep '"version"'
+
 git tag -a vX.X.X -m "Release vX.X.X - 概要"
-git push origin main
 git push origin vX.X.X
 ```
 
@@ -349,10 +380,57 @@ git push origin vX.X.X
 
 **⚠️ `gh release create` で手動リリースを作成しないこと。CIと競合してエラーになる。**
 
-### 6. 最終確認
+### 6. リリースノートの作成
+
+GitHub Release のリリースノートは**必ず日英両方で記述すること**。CI が CHANGELOG.md から自動抽出する場合もあるが、抽出に失敗した場合や内容が不十分な場合は `gh release edit vX.X.X --notes` で手動更新する。
+
+リリースノートのフォーマット（v2.3.2以降のテンプレート）:
+
+```
+vX.X.Xをリリースしました！
+
+[日本語で主な変更内容を2〜3文で要約]
+
+---
+
+vX.X.X has been released!
+
+[英語で同じ内容を要約]
+```
+
+⚠️ リリースノートが空のまま公開しないこと。タグ push 後、デスクトップビルド完了を待つ間にリリースノートを書く。
+
+### 7. お知らせ（新機能紹介）の追加 — `announcements.json`
+
+注目機能を含むリリースでは、アプリ内お知らせ（`AnnouncementBanner`）にエントリを1件追加して新機能を紹介すること。**新機能紹介用のモーダルは作らない**（モーダルは使わない方針）。お知らせはこの帯に寄せる。
+
+- 編集対象はリポジトリ**ルートの `announcements.json`**。クライアントは **main の生ファイル**（`https://raw.githubusercontent.com/oboroge0/AITuberFlow/main/announcements.json`）を毎回取得するため、**main にマージした瞬間に全ユーザーへ配信される（ビルド不要・即本番反映）**。内容は慎重に。
+- ホーム画面上部に帯で表示され、`type` で配色（`info`=青／`warning`=黄／`critical`=赤）。× で閉じると localStorage に記憶され再表示されない。
+- 新機能紹介は `type: "info"` を使う。**title / message は日英両方**を必ず書く。
+- `targetVersions` は**完全一致の表示許可リスト**（範囲指定ではない）。
+  - 新機能を「更新済みの人にだけ」見せる → その新バージョンだけ列挙（例 `["2.5.2"]`）
+  - 全ユーザーに見せる → `targetVersions` を省略
+  - 旧版ユーザーへ「更新して」と促す → 対象の旧バージョンを列挙
+- 不要になった古いお知らせは削除してよい（`dismissedIds` は自動で掃除される）。
+
+フォーマット:
+
+```json
+{
+  "id": "feature-vX.Y.Z",
+  "type": "info",
+  "title":   { "ja": "…", "en": "…" },
+  "message": { "ja": "…", "en": "…" },
+  "targetVersions": ["X.Y.Z"],
+  "date": "YYYY-MM-DD"
+}
+```
+
+### 8. 最終確認
 
 - [ ] タグが正しいコミットを指している
 - [ ] マイルストーンのissueがクローズされている
 - [ ] CIのリリースワークフローが成功している
-- [ ] リリースノートが公開されている
+- [ ] **リリースノートが日英両方で記載されている**
 - [ ] デスクトップビルドの成果物がリリースに添付されている
+- [ ] 注目機能がある場合、`announcements.json` に新機能紹介を追加した（日英両方）

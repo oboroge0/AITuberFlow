@@ -22,14 +22,14 @@
       {
         "id": "prompt",
         "type": "string",
-        "description": "User message to send to Claude"
+        "description": "Claudeに送るメッセージ"
       }
     ],
     "outputs": [
       {
         "id": "response",
         "type": "string",
-        "description": "Generated response from Claude"
+        "description": "Claudeの応答テキスト"
       }
     ],
     "events": {

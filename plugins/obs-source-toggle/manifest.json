@@ -13,8 +13,8 @@
   "ui": {
     "label": "OBS Source Toggle",
     "icon": "Eye",
-    "color": "#302E31",
-    "bgColor": "rgba(48, 46, 49, 0.3)",
+    "color": "#8B7CC4",
+    "bgColor": "rgba(139, 124, 196, 0.15)",
     "statusText": "OBS Source Toggle"
   },
   "node": {
@@ -22,29 +22,29 @@
       {
         "id": "trigger",
         "type": "any",
-        "description": "Trigger to toggle source visibility"
+        "description": "ソース表示切替のトリガー"
       },
       {
         "id": "visible",
         "type": "boolean",
-        "description": "Set visibility (true=show, false=hide). If not provided, toggles current state."
+        "description": "表示状態（true=表示、false=非表示）"
       }
     ],
     "outputs": [
       {
         "id": "success",
         "type": "boolean",
-        "description": "Whether the operation was successful"
+        "description": "操作の成否"
       },
       {
         "id": "visible",
         "type": "boolean",
-        "description": "Current visibility state after operation"
+        "description": "操作後の表示状態"
       },
       {
         "id": "sourceName",
         "type": "string",
-        "description": "Name of the affected source"
+        "description": "対象ソースの名前"
       }
     ],
     "events": {

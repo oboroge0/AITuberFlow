@@ -83,8 +83,7 @@ export default class AnthropicLLMNode extends BaseNode {
 
       return { response };
     } catch (error: unknown) {
-      const result = await handleLLMError(error, "Anthropic", context);
-      return { response: result.response };
+      return await handleLLMError(error, "Anthropic", context);
     }
   }
 

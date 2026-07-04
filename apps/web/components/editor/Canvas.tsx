@@ -33,6 +33,8 @@ import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 import { type PromptSection } from '@/components/panels/NodeSettings';
 import { useDragStateStore } from '@/stores/dragStateStore';
 import { isEditableTarget } from '@/lib/domUtils';
+import { useTranslation } from '@/stores/localeStore';
+import { useThemeStore } from '@/stores/themeStore';
 
 interface CanvasProps {
   onNodeSelect?: (nodeId: string | null) => void;
@@ -47,6 +49,38 @@ const reactFlowNodeTypes: NodeTypes = {
 
 // Default color for edges when plugin color is not found
 const DEFAULT_EDGE_COLOR = '#10B981';
+
+// Keep connection lines visible regardless of the source node's color or the
+// active theme: lift too-dark colors against the dark canvas, darken too-light
+// colors against the light canvas. Hue is preserved; only adjusted when the
+// color would blend into the background (e.g. ollama #1F2937 / obs #302E31).
+function edgeColorForTheme(hex: string, theme: 'dark' | 'light'): string {
+  const m = /^#([0-9a-fA-F]{6})$/.exec(hex);
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  let r = (n >> 16) & 255;
+  let g = (n >> 8) & 255;
+  let b = n & 255;
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b; // 0..255
+  if (theme === 'dark') {
+    const MIN = 110;
+    if (lum < MIN) {
+      const f = (MIN - lum) / (255 - lum); // mix toward white
+      r = Math.round(r + (255 - r) * f);
+      g = Math.round(g + (255 - g) * f);
+      b = Math.round(b + (255 - b) * f);
+    }
+  } else {
+    const MAX = 175;
+    if (lum > MAX) {
+      const f = (lum - MAX) / lum; // mix toward black
+      r = Math.round(r * (1 - f));
+      g = Math.round(g * (1 - f));
+      b = Math.round(b * (1 - f));
+    }
+  }
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+}
 
 // Map plugin category to legacy category for CustomNodeData
 function mapPluginCategoryToLegacy(category: string): 'input' | 'process' | 'output' | 'control' {
@@ -78,6 +112,7 @@ interface ContextMenuState {
 
 // Canvas component - requires ReactFlowProvider to be provided by parent
 export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasProps) {
+  const { t } = useTranslation();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
@@ -107,8 +142,9 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     nodeStatuses,
   } = useWorkflowStore();
 
-  const { nodeDisplayMode, setNodeDisplayMode, searchVisible, searchQuery } = useUIPreferencesStore();
+  const { searchVisible, searchQuery } = useUIPreferencesStore();
   const { getPluginColor, getPluginLabel, getPluginById, getPluginInputs, getPluginOutputs, getPluginConfig, isLoaded: pluginsLoaded } = usePluginStore();
+  const theme = useThemeStore((s) => s.theme);
   const { setDragging, clearDragging } = useDragStateStore();
 
   // State for the "drop-on-canvas" compatible node suggestion panel
@@ -238,7 +274,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         // Get inputs from plugin store or fall back to dynamic input logic
         const pluginInputs = getPluginInputs(node.type);
         let nodeInputs = pluginInputs.length > 0
-          ? pluginInputs.map(p => ({ id: p.id, label: formatPortLabel(p.id), type: p.type as PortType }))
+          ? pluginInputs.map(p => ({ id: p.id, label: formatPortLabel(p.id), type: p.type as PortType, description: p.description }))
           : getNodeInputs(node.type, node.config);
 
         // Dynamic port generation based on manifest config field types
@@ -274,7 +310,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         // Get outputs from plugin store or fall back to static definitions
         const pluginOutputs = getPluginOutputs(node.type);
         const nodeOutputs = pluginOutputs.length > 0
-          ? pluginOutputs.map(p => ({ id: p.id, label: formatPortLabel(p.id), type: p.type as PortType }))
+          ? pluginOutputs.map(p => ({ id: p.id, label: formatPortLabel(p.id), type: p.type as PortType, description: p.description }))
           : getNodeOutputs(node.type);
 
         const isEntryPoint = entryPointTypes.has(node.type) || nodeInputs.length === 0;
@@ -338,7 +374,8 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
     () =>
       connections.map((conn) => {
         const sourceNode = workflowNodes.find((n) => n.id === conn.from.nodeId);
-        const baseEdgeColor = sourceNode ? (getPluginColor(sourceNode.type) || DEFAULT_EDGE_COLOR) : DEFAULT_EDGE_COLOR;
+        const rawEdgeColor = sourceNode ? (getPluginColor(sourceNode.type) || DEFAULT_EDGE_COLOR) : DEFAULT_EDGE_COLOR;
+        const baseEdgeColor = edgeColorForTheme(rawEdgeColor, theme);
 
         // Check if this edge involves unreachable nodes (only when Start node exists)
         const sourceReachable = !hasStartNode || reachableNodes.has(conn.from.nodeId);
@@ -373,7 +410,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
           },
         };
       }),
-    [connections, workflowNodes, reachableNodes, hasStartNode, getPluginColor, nodeStatuses]
+    [connections, workflowNodes, reachableNodes, hasStartNode, getPluginColor, nodeStatuses, theme]
   );
 
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState(flowNodes);
@@ -402,7 +439,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         }
         if (change.type === 'remove') {
           removeNode(change.id);
-          toast.success('ノードを削除しました');
+          toast.success(t('canvas.nodeDeleted'));
         }
       });
     },
@@ -762,7 +799,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
 
     return [
       {
-        label: 'ノードを追加',
+        label: t('canvas.addNode'),
         icon: (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
@@ -778,9 +815,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
       {/* Gradient background overlay */}
       <div
         className="absolute inset-0 pointer-events-none z-0"
-        style={{
-          background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)',
-        }}
+        style={{ background: 'var(--bg-gradient)' }}
       />
       <ReactFlow
         nodes={nodes}
@@ -795,6 +830,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         onReconnect={onReconnect}
         onReconnectEnd={onReconnectEnd}
         reconnectRadius={20}
+        onNodeDragStart={(_event, node) => selectNode(node.id)}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
         onDragOver={onDragOver}
@@ -805,7 +841,10 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         nodeTypes={reactFlowNodeTypes}
         fitView
         className="!bg-transparent"
-        connectionMode={ConnectionMode.Loose}
+        connectionMode={ConnectionMode.Strict}
+        elevateNodesOnSelect
+        elevateEdgesOnSelect
+        selectNodesOnDrag
         defaultEdgeOptions={{
           animated: true,
           style: { stroke: DEFAULT_EDGE_COLOR, strokeWidth: 3 },
@@ -814,7 +853,7 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
         multiSelectionKeyCode={['Shift']}
       >
         <Background
-          color="rgba(255,255,255,0.03)"
+          color="var(--grid-line)"
           gap={40}
           size={1}
           style={{ background: 'transparent' }}
@@ -830,66 +869,6 @@ export default function Canvas({ onNodeSelect, onSave, onRunWorkflow }: CanvasPr
       {/* Search Panel */}
       <SearchPanel />
 
-      {/* Connect-suggest panel: shown when dragging a wire onto empty canvas */}
-      {connectSuggest && (() => {
-        const { plugins } = usePluginStore.getState();
-        const nodeTypesList = getNodeTypes();
-        const compatible = nodeTypesList.filter((nt) => {
-          const plugin = plugins.find((p) => p.id === nt.id);
-          if (!plugin) return false;
-          const inputs = plugin.node?.inputs ?? [];
-          return inputs.some((inp) => arePortTypesCompatible(connectSuggest.sourceType, inp.type as PortType));
-        });
-        if (compatible.length === 0) return null;
-        const adjust = (v: number, max: number, size: number) => Math.min(v, max - size);
-        const px = adjust(connectSuggest.x, window.innerWidth, 220);
-        const py = adjust(connectSuggest.y, window.innerHeight, compatible.length * 36 + 48);
-        return (
-          <div
-            className="fixed z-50 py-1 rounded-lg shadow-xl"
-            style={{ left: px, top: py, background: 'rgba(17,24,39,0.98)', border: '1px solid rgba(255,255,255,0.1)', minWidth: '210px' }}
-          >
-            <div className="px-3 pt-2 pb-1 text-[10px] text-white/40 uppercase tracking-wider flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full" style={{ background: PORT_TYPE_COLORS[connectSuggest.sourceType] }} />
-              接続できるノード
-            </div>
-            {compatible.map((nt) => (
-              <button
-                key={nt.id}
-                onClick={() => {
-                  const bounds = reactFlowWrapper.current?.getBoundingClientRect();
-                  if (!bounds) return;
-                  addNode({ type: nt.id, position: { x: connectSuggest.x - bounds.left - 80, y: connectSuggest.y - bounds.top - 30 }, config: { ...nt.defaultConfig } });
-                  setConnectSuggest(null);
-                }}
-                className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 text-white/90 hover:bg-white/10 transition-colors"
-              >
-                <span style={{ color: nt.color }}>{nt.icon}</span>
-                {nt.label}
-              </button>
-            ))}
-            <button onClick={() => setConnectSuggest(null)} className="w-full px-3 py-1.5 text-left text-[11px] text-white/30 hover:text-white/60 border-t border-white/10 mt-1">キャンセル</button>
-          </div>
-        );
-      })()}
-
-      {/* Display Mode Toggle */}
-      <div className="absolute top-4 right-4 flex gap-1 bg-gray-800/95 rounded-lg p-1 border border-white/10 shadow-lg z-10">
-        <span className="px-2 py-1.5 text-[10px] text-white/40">表示:</span>
-        {(['simple', 'standard', 'detailed'] as const).map((mode) => (
-          <button
-            key={mode}
-            onClick={() => setNodeDisplayMode(mode)}
-            className={`px-3 py-1.5 text-[11px] rounded transition-colors ${
-              nodeDisplayMode === mode
-                ? 'bg-white/20 text-white font-medium'
-                : 'text-white/60 hover:bg-white/10 hover:text-white/80'
-            }`}
-          >
-            {mode === 'simple' ? '簡易' : mode === 'standard' ? '標準' : '詳細'}
-          </button>
-        ))}
-      </div>
 
       {/* Custom styles for React Flow */}
       <style jsx global>{`

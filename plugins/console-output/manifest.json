@@ -22,10 +22,16 @@
       {
         "id": "text",
         "type": "string",
-        "description": "The text to display in the log"
+        "description": "表示するテキスト"
       }
     ],
-    "outputs": [],
+    "outputs": [
+      {
+        "id": "text",
+        "type": "string",
+        "description": "入力テキストのパススルー"
+      }
+    ],
     "events": {
       "emits": [],
       "listens": []

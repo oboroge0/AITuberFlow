@@ -1,4 +1,6 @@
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
+import { mkdir, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import {
   WorkflowExecutor,
   NodeContext,
@@ -6,6 +8,7 @@ import {
 } from "../../apps/server-ts/src/engine/executor";
 import { EventBus, EventFilter } from "../../apps/server-ts/src/engine/event-bus";
 import { EventQueue } from "../../apps/server-ts/src/engine/event-queue";
+import { getPluginsDir } from "../../apps/server-ts/src/engine/plugin-loader";
 import type { Event } from "@aituber-flow/sdk";
 
 // ─── Helpers ──────────────────────────────────────────────────────
@@ -705,5 +708,224 @@ describe("TestNodeContext", () => {
 
     expect(ctx.getCharacterName()).toBe("AI Assistant");
     expect(ctx.getCharacterPersonality()).toBe("");
+  });
+});
+
+// ─── TestPluginLoadFailureNotification ────────────────────────────
+//
+// loadPlugin() distinguishes "no plugin for this node type" (returns null,
+// falls through to a built-in node) from "plugin exists but failed to load"
+// (throws PluginLoadError). initializeNodes() must surface the latter via
+// the log and status callbacks instead of silently registering a no-op node.
+
+describe("TestPluginLoadFailureNotification", () => {
+  let executor: WorkflowExecutor;
+  const PLUGINS_DIR = getPluginsDir();
+  const fixtureDirs: string[] = [];
+
+  beforeEach(() => {
+    executor = new WorkflowExecutor();
+  });
+
+  afterEach(async () => {
+    while (fixtureDirs.length > 0) {
+      const dir = fixtureDirs.pop();
+      if (dir) await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  async function makeBrokenPlugin(name: string): Promise<string> {
+    const dir = join(PLUGINS_DIR, name);
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, "node.ts"), `throw new Error("boom");\n`, "utf-8");
+    fixtureDirs.push(dir);
+    return name;
+  }
+
+  it("rejects a path-traversal node type without touching the filesystem", async () => {
+    const logs: Array<{ nodeId: string | null; message: string; level: string }> = [];
+    const statuses: Array<{ nodeId: string; status: string; data?: any }> = [];
+    executor.setLogCallback("wf1", async (nodeId, message, level) => {
+      logs.push({ nodeId, message, level });
+    });
+    executor.setStatusCallback("wf1", async (nodeId, status, data) => {
+      statuses.push({ nodeId, status, data });
+    });
+
+    const nodes = [makeNode("n1", "../../evil")];
+    await (executor as any).initializeNodes("wf1", nodes, {}, {});
+
+    const runtime = (executor as any).getNodeRuntime("wf1", "n1");
+    expect(runtime.instance).toBeNull();
+    expect(runtime.loadError).toContain("Invalid plugin type");
+
+    expect(statuses).toHaveLength(1);
+    expect(statuses[0]).toMatchObject({ nodeId: "n1", status: "error" });
+    expect(statuses[0].data.error).toContain("Invalid plugin type");
+
+    expect(logs).toHaveLength(1);
+    expect(logs[0].level).toBe("error");
+    expect(logs[0].message).toContain("プラグインの読み込みに失敗しました");
+  });
+
+  it("reports a broken plugin (import failure) via log + status callbacks", async () => {
+    const nodeType = await makeBrokenPlugin("__test-exec-broken-plugin__");
+
+    const logs: Array<{ nodeId: string | null; message: string; level: string }> = [];
+    const statuses: Array<{ nodeId: string; status: string; data?: any }> = [];
+    executor.setLogCallback("wf1", async (nodeId, message, level) => {
+      logs.push({ nodeId, message, level });
+    });
+    executor.setStatusCallback("wf1", async (nodeId, status, data) => {
+      statuses.push({ nodeId, status, data });
+    });
+
+    const nodes = [makeNode("n1", nodeType)];
+    await (executor as any).initializeNodes("wf1", nodes, {}, {});
+
+    const runtime = (executor as any).getNodeRuntime("wf1", "n1");
+    expect(runtime.instance).toBeNull();
+    expect(runtime.loadError).toContain("boom");
+
+    expect(statuses).toHaveLength(1);
+    expect(statuses[0]).toMatchObject({ nodeId: "n1", status: "error" });
+
+    expect(logs).toHaveLength(1);
+    expect(logs[0].level).toBe("error");
+    expect(logs[0].message).toContain("プラグインの読み込みに失敗しました");
+    expect(logs[0].message).toContain("boom");
+  });
+
+  it("leaves a missing (never-existed) plugin type to the built-in-node fallback silently", async () => {
+    const logs: Array<{ nodeId: string | null; message: string; level: string }> = [];
+    const statuses: Array<{ nodeId: string; status: string; data?: any }> = [];
+    executor.setLogCallback("wf1", async (nodeId, message, level) => {
+      logs.push({ nodeId, message, level });
+    });
+    executor.setStatusCallback("wf1", async (nodeId, status, data) => {
+      statuses.push({ nodeId, status, data });
+    });
+
+    const nodes = [makeNode("n1", "console-output")];
+    await (executor as any).initializeNodes("wf1", nodes, {}, {});
+
+    const runtime = (executor as any).getNodeRuntime("wf1", "n1");
+    expect(runtime.instance).not.toBeNull();
+    expect(runtime.loadError).toBeUndefined();
+    expect(statuses).toHaveLength(0);
+  });
+
+  it("executeBuiltinNode surfaces the load-error reason instead of a generic warning", async () => {
+    const logs: Array<{ message: string; level: string }> = [];
+    const ctx = new NodeContext({
+      workflowId: "wf1",
+      nodeId: "n1",
+      character: {},
+      logCallback: async (_nid, message, level) => {
+        logs.push({ message, level });
+      },
+    });
+
+    await (executor as any).executeBuiltinNode(
+      "some-nonexistent-node-type",
+      {},
+      {},
+      ctx,
+      "boom during import",
+    );
+
+    expect(logs).toHaveLength(1);
+    expect(logs[0].level).toBe("error");
+    expect(logs[0].message).toContain("boom during import");
+  });
+
+  it("executeBuiltinNode falls back to a plain warning when there is no load error", async () => {
+    const logs: Array<{ message: string; level: string }> = [];
+    const ctx = new NodeContext({
+      workflowId: "wf1",
+      nodeId: "n1",
+      character: {},
+      logCallback: async (_nid, message, level) => {
+        logs.push({ message, level });
+      },
+    });
+
+    await (executor as any).executeBuiltinNode("some-nonexistent-node-type", {}, {}, ctx);
+
+    expect(logs).toHaveLength(1);
+    expect(logs[0].level).toBe("warning");
+  });
+});
+
+// ─── TestRunLinearErrorPropagation ─────────────────────────────────
+// Regression test for the "LLM error read aloud on stream" incident: a node
+// that throws (e.g. an LLM plugin failing via handleLLMError) must stop the
+// run and must not let downstream nodes execute with no/garbage input.
+
+describe("TestRunLinearErrorPropagation", () => {
+  let executor: WorkflowExecutor;
+  const workflowId = "wf-error-halt";
+
+  beforeEach(() => {
+    executor = new WorkflowExecutor();
+    (executor as any).runningWorkflows.set(workflowId, { status: "running" });
+  });
+
+  function registerRuntime(nodeId: string, execute: (...args: any[]) => Promise<any>) {
+    const ctx = new NodeContext({
+      workflowId,
+      nodeId,
+      character: { name: "TestBot" },
+    });
+    const runtimes: Map<string, any> = (executor as any).nodeInstances.get(workflowId) ?? new Map();
+    runtimes.set(nodeId, {
+      nodeId,
+      nodeType: "process",
+      config: {},
+      instance: { execute },
+      context: ctx,
+    });
+    (executor as any).nodeInstances.set(workflowId, runtimes);
+  }
+
+  it("stops execution and does not run downstream nodes when a node throws", async () => {
+    const upstreamExecute = mock(async () => {
+      throw new Error("Error: Rate limit exceeded");
+    });
+    const downstreamExecute = mock(async () => ({ text: "should not run" }));
+
+    registerRuntime("llm", upstreamExecute);
+    registerRuntime("tts", downstreamExecute);
+
+    const nodes = [makeNode("llm", "process"), makeNode("tts", "process")];
+    const connections = [makeConnection("c1", "llm", "response", "tts", "text")];
+
+    await expect(
+      (executor as any).runLinear(workflowId, nodes, connections, {}),
+    ).rejects.toThrow("Error: Rate limit exceeded");
+
+    expect(upstreamExecute).toHaveBeenCalledTimes(1);
+    expect(downstreamExecute).not.toHaveBeenCalled();
+  });
+
+  it("marks the failing node as errored via the status callback", async () => {
+    const statusUpdates: Array<{ nodeId: string; status: string }> = [];
+    executor.setStatusCallback(workflowId, async (nodeId, status) => {
+      statusUpdates.push({ nodeId, status });
+    });
+
+    registerRuntime("llm", async () => {
+      throw new Error("boom");
+    });
+
+    const nodes = [makeNode("llm", "process")];
+
+    await expect(
+      (executor as any).runLinear(workflowId, nodes, [], {}),
+    ).rejects.toThrow("boom");
+
+    expect(statusUpdates).toContainEqual({ nodeId: "llm", status: "running" });
+    expect(statusUpdates).toContainEqual({ nodeId: "llm", status: "error" });
+    expect(statusUpdates.find((s) => s.status === "completed")).toBeUndefined();
   });
 });

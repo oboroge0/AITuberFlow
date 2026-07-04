@@ -28,16 +28,16 @@ function PasswordInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-3 py-2 pr-9 rounded-lg text-sm text-white outline-none"
+        className="w-full px-3 py-2 pr-9 rounded-lg text-sm text-fg outline-none"
         style={{
-          background: 'rgba(0,0,0,0.3)',
-          border: '1px solid rgba(255,255,255,0.2)',
+          background: 'var(--inset-strong)',
+          border: '1px solid var(--border)',
         }}
       />
       <button
         type="button"
         onClick={() => setShow((p) => !p)}
-        className="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors"
+        className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-dim hover:text-fg transition-colors"
         aria-label={show ? 'Hide' : 'Show'}
       >
         {show ? (
@@ -70,10 +70,10 @@ function ModelSelect({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full px-3 py-2 rounded-lg text-sm text-white outline-none"
+      className="w-full px-3 py-2 rounded-lg text-sm text-fg outline-none"
       style={{
-        background: 'rgba(0,0,0,0.3)',
-        border: '1px solid rgba(255,255,255,0.2)',
+        background: 'var(--elevated)',
+        border: '1px solid var(--border)',
       }}
     >
       <option value="">---</option>
@@ -102,10 +102,10 @@ function TextInput({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-3 py-2 rounded-lg text-sm text-white outline-none"
+      className="w-full px-3 py-2 rounded-lg text-sm text-fg outline-none"
       style={{
-        background: 'rgba(0,0,0,0.3)',
-        border: '1px solid rgba(255,255,255,0.2)',
+        background: 'var(--elevated)',
+        border: '1px solid var(--border)',
       }}
     />
   );
@@ -169,9 +169,9 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
       {/* Modal */}
       <div
-        className="relative z-10 w-full max-w-lg mx-4 rounded-2xl border border-white/10 overflow-hidden max-h-[85vh] flex flex-col"
+        className="relative z-10 w-full max-w-lg mx-4 rounded-2xl border border-token-border overflow-hidden max-h-[85vh] flex flex-col"
         style={{
-          background: 'rgba(17, 24, 39, 0.98)',
+          background: 'var(--surface-strong)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
         }}
       >
@@ -179,8 +179,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         <div
           className="px-6 py-4 flex items-center justify-between flex-shrink-0"
           style={{
-            background: 'rgba(255,255,255,0.05)',
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            background: 'var(--border-subtle)',
+            borderBottom: '1px solid var(--border)',
           }}
         >
           <div className="flex items-center gap-3">
@@ -194,13 +194,13 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               </svg>
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">{t('globalSettings.title')}</h2>
-              <p className="text-xs text-white/50">{t('globalSettings.description')}</p>
+              <h2 className="text-lg font-semibold text-fg">{t('globalSettings.title')}</h2>
+              <p className="text-xs text-fg-dim">{t('globalSettings.description')}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-fg-dim hover:text-fg hover:bg-hover transition-colors"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -213,14 +213,14 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         <div className="px-6 py-5 overflow-y-auto flex-1 space-y-6">
           {/* LLM Providers */}
           <section>
-            <h3 className="text-sm font-semibold text-white/80 mb-3">{t('globalSettings.llmProviders')}</h3>
+            <h3 className="text-sm font-semibold text-fg mb-3">{t('globalSettings.llmProviders')}</h3>
 
             {/* OpenAI */}
-            <div className="mb-4 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
-              <h4 className="text-xs font-medium text-white/60 mb-2">OpenAI</h4>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
+              <h4 className="text-xs font-medium text-fg-muted mb-2">OpenAI</h4>
               <div className="space-y-2">
                 <div>
-                  <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.apiKey')}</label>
+                  <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.apiKey')}</label>
                   <PasswordInput
                     value={local['openai.apiKey'] || ''}
                     onChange={(v) => set('openai.apiKey', v)}
@@ -228,7 +228,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.model')}</label>
+                  <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.model')}</label>
                   <ModelSelect
                     value={local['openai.model'] || ''}
                     onChange={(v) => set('openai.model', v)}
@@ -239,11 +239,11 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* Anthropic */}
-            <div className="mb-4 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
-              <h4 className="text-xs font-medium text-white/60 mb-2">Anthropic</h4>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
+              <h4 className="text-xs font-medium text-fg-muted mb-2">Anthropic</h4>
               <div className="space-y-2">
                 <div>
-                  <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.apiKey')}</label>
+                  <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.apiKey')}</label>
                   <PasswordInput
                     value={local['anthropic.apiKey'] || ''}
                     onChange={(v) => set('anthropic.apiKey', v)}
@@ -251,7 +251,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.model')}</label>
+                  <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.model')}</label>
                   <ModelSelect
                     value={local['anthropic.model'] || ''}
                     onChange={(v) => set('anthropic.model', v)}
@@ -262,11 +262,11 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* Google */}
-            <div className="mb-4 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
-              <h4 className="text-xs font-medium text-white/60 mb-2">Google</h4>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
+              <h4 className="text-xs font-medium text-fg-muted mb-2">Google</h4>
               <div className="space-y-2">
                 <div>
-                  <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.apiKey')}</label>
+                  <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.apiKey')}</label>
                   <PasswordInput
                     value={local['google.apiKey'] || ''}
                     onChange={(v) => set('google.apiKey', v)}
@@ -274,7 +274,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.model')}</label>
+                  <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.model')}</label>
                   <ModelSelect
                     value={local['google.model'] || ''}
                     onChange={(v) => set('google.model', v)}
@@ -285,11 +285,11 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* Ollama */}
-            <div className="mb-4 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
-              <h4 className="text-xs font-medium text-white/60 mb-2">Ollama</h4>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
+              <h4 className="text-xs font-medium text-fg-muted mb-2">Ollama</h4>
               <div className="space-y-2">
                 <div>
-                  <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.host')}</label>
+                  <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.host')}</label>
                   <TextInput
                     value={local['ollama.host'] || ''}
                     onChange={(v) => set('ollama.host', v)}
@@ -297,7 +297,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.model')}</label>
+                  <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.model')}</label>
                   <TextInput
                     value={local['ollama.model'] || ''}
                     onChange={(v) => set('ollama.model', v)}
@@ -308,11 +308,11 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* Mistral */}
-            <div className="p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
-              <h4 className="text-xs font-medium text-white/60 mb-2">Mistral AI</h4>
+            <div className="p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
+              <h4 className="text-xs font-medium text-fg-muted mb-2">Mistral AI</h4>
               <div className="space-y-2">
                 <div>
-                  <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.apiKey')}</label>
+                  <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.apiKey')}</label>
                   <PasswordInput
                     value={local['mistral.apiKey'] || ''}
                     onChange={(v) => set('mistral.apiKey', v)}
@@ -320,7 +320,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.model')}</label>
+                  <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.model')}</label>
                   <ModelSelect
                     value={local['mistral.model'] || ''}
                     onChange={(v) => set('mistral.model', v)}
@@ -331,11 +331,11 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* Groq */}
-            <div className="p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
-              <h4 className="text-xs font-medium text-white/60 mb-2">Groq</h4>
+            <div className="p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
+              <h4 className="text-xs font-medium text-fg-muted mb-2">Groq</h4>
               <div className="space-y-2">
                 <div>
-                  <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.apiKey')}</label>
+                  <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.apiKey')}</label>
                   <PasswordInput
                     value={local['groq.apiKey'] || ''}
                     onChange={(v) => set('groq.apiKey', v)}
@@ -343,7 +343,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.model')}</label>
+                  <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.model')}</label>
                   <ModelSelect
                     value={local['groq.model'] || ''}
                     onChange={(v) => set('groq.model', v)}
@@ -356,13 +356,13 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
           {/* TTS Engines */}
           <section>
-            <h3 className="text-sm font-semibold text-white/80 mb-3">{t('globalSettings.ttsEngines')}</h3>
+            <h3 className="text-sm font-semibold text-fg mb-3">{t('globalSettings.ttsEngines')}</h3>
 
             {/* VOICEVOX */}
-            <div className="mb-4 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
-              <h4 className="text-xs font-medium text-white/60 mb-2">VOICEVOX</h4>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
+              <h4 className="text-xs font-medium text-fg-muted mb-2">VOICEVOX</h4>
               <div>
-                <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.host')}</label>
+                <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.host')}</label>
                 <TextInput
                   value={local['voicevox.host'] || ''}
                   onChange={(v) => set('voicevox.host', v)}
@@ -372,10 +372,10 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* COEIROINK */}
-            <div className="mb-4 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
-              <h4 className="text-xs font-medium text-white/60 mb-2">COEIROINK</h4>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
+              <h4 className="text-xs font-medium text-fg-muted mb-2">COEIROINK</h4>
               <div>
-                <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.host')}</label>
+                <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.host')}</label>
                 <TextInput
                   value={local['coeiroink.host'] || ''}
                   onChange={(v) => set('coeiroink.host', v)}
@@ -385,10 +385,10 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* SBV2 */}
-            <div className="mb-4 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
-              <h4 className="text-xs font-medium text-white/60 mb-2">Style-Bert-VITS2</h4>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
+              <h4 className="text-xs font-medium text-fg-muted mb-2">Style-Bert-VITS2</h4>
               <div>
-                <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.host')}</label>
+                <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.host')}</label>
                 <TextInput
                   value={local['sbv2.host'] || ''}
                   onChange={(v) => set('sbv2.host', v)}
@@ -398,10 +398,10 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* AivisSpeech */}
-            <div className="p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
-              <h4 className="text-xs font-medium text-white/60 mb-2">AivisSpeech</h4>
+            <div className="p-3 rounded-lg" style={{ background: 'var(--inset)' }}>
+              <h4 className="text-xs font-medium text-fg-muted mb-2">AivisSpeech</h4>
               <div>
-                <label className="block text-[11px] text-white/50 mb-1">{t('globalSettings.host')}</label>
+                <label className="block text-[11px] text-fg-dim mb-1">{t('globalSettings.host')}</label>
                 <TextInput
                   value={local['aivis.host'] || ''}
                   onChange={(v) => set('aivis.host', v)}
@@ -416,13 +416,13 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         <div
           className="px-6 py-4 flex items-center justify-end gap-3 flex-shrink-0"
           style={{
-            background: 'rgba(255,255,255,0.02)',
-            borderTop: '1px solid rgba(255,255,255,0.05)',
+            background: 'var(--elevated)',
+            borderTop: '1px solid var(--border-subtle)',
           }}
         >
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-white/60 text-sm hover:bg-white/10 transition-colors"
+            className="px-4 py-2 rounded-lg text-fg-muted text-sm hover:bg-hover transition-colors"
           >
             {t('update.close')}
           </button>

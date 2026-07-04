@@ -54,6 +54,31 @@ const DEFAULT_BG_COLOR = 'rgba(107, 114, 128, 0.1)';
 const DEFAULT_ICON = 'Box';
 const DEFAULT_STATUS = 'Ready';
 
+// Node body is a dark navy (#0F172A). Accent colors darker than this blend into
+// it (e.g. ollama #1F2937), so lift any too-dark accent toward white until it
+// clears a minimum luminance. Keeps the hue, just makes it legible.
+// NOTE: tuned for the current dark theme; revisit when light mode lands.
+const MIN_ACCENT_LUMINANCE = 90; // 0..255
+function legibleAccent(hex: string): string {
+  const m = /^#([0-9a-fA-F]{6})$/.exec(hex.trim());
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  let r = (n >> 16) & 255;
+  let g = (n >> 8) & 255;
+  let b = n & 255;
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  if (lum >= MIN_ACCENT_LUMINANCE) return hex;
+  const f = (MIN_ACCENT_LUMINANCE - lum) / (255 - lum); // mix toward white
+  r = Math.round(r + (255 - r) * f);
+  g = Math.round(g + (255 - g) * f);
+  b = Math.round(b + (255 - b) * f);
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+}
+
+// Subtle outline so the icon chip always has a crisp edge on the dark body,
+// even for near-neutral accent colors.
+const ICON_CHIP_RING = 'inset 0 0 0 1px rgba(255,255,255,0.14)';
+
 // Chevron SVG components
 const ChevronDown = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -81,9 +106,9 @@ function formatDuration(ms: number | undefined): string {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
-const FIELD_BAR_BG = 'rgba(255,255,255,0.07)';
-const FOCUS_RING = 'focus-visible:shadow-[0_0_0_1.5px_rgba(255,255,255,0.45)]';
-const FOCUS_RING_WITHIN = 'focus-within:shadow-[0_0_0_1.5px_rgba(255,255,255,0.45)]';
+const FIELD_BAR_BG = 'var(--node-field)';
+const FOCUS_RING = 'focus-visible:shadow-[0_0_0_1.5px_var(--focus-ring)]';
+const FOCUS_RING_WITHIN = 'focus-within:shadow-[0_0_0_1.5px_var(--focus-ring)]';
 
 // Text input with draft state: commits on blur/Enter, reverts on Escape.
 // Keeping edits local until commit means one undo entry / one auto-save per
@@ -101,6 +126,7 @@ function InlineTextField({
   password?: boolean;
   onCommit: (val: string) => void;
 }) {
+  const { t } = useLocaleStore();
   const [draft, setDraft] = useState<string | null>(null);
   const [showPw, setShowPw] = useState(false);
   const cancelRef = useRef(false);
@@ -123,7 +149,7 @@ function InlineTextField({
       <div className="flex items-center px-2 h-[26px] gap-1">
         <input
           type={password && !showPw ? 'password' : 'text'}
-          className="nodrag nopan bg-transparent text-[10px] text-white/75 outline-none flex-1 min-w-0"
+          className="nodrag nopan bg-transparent text-[10px] text-fg-strong outline-none flex-1 min-w-0"
           value={draft ?? value}
           placeholder={placeholder}
           aria-label={ariaLabel}
@@ -141,9 +167,9 @@ function InlineTextField({
         />
         {password && (
           <button
-            className={`nodrag nopan text-white/30 hover:text-white/60 flex-shrink-0 ${FOCUS_RING}`}
-            aria-label={showPw ? 'キーを隠す' : 'キーを表示'}
-            title={showPw ? 'キーを隠す' : 'キーを表示'}
+            className={`nodrag nopan text-fg-faint hover:text-fg-muted flex-shrink-0 ${FOCUS_RING}`}
+            aria-label={showPw ? t('inline.hideKey') : t('inline.showKey')}
+            title={showPw ? t('inline.hideKey') : t('inline.showKey')}
             onClick={(e) => { e.stopPropagation(); setShowPw(!showPw); }}
           >
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -181,6 +207,7 @@ function InlineNumberField({
   accentColor: string;
   onCommit: (val: number) => void;
 }) {
+  const { t } = useLocaleStore();
   const hasRange = typeof min === 'number' && typeof max === 'number' && max > min;
   const step = !hasRange ? 1 : (max! - min!) <= 2 ? 0.01 : (max! - min!) <= 10 ? 0.1 : 1;
   const useSlider = hasRange && (max! - min!) / step <= 200;
@@ -268,7 +295,7 @@ function InlineNumberField({
   const editInput = (
     <input
       type="number"
-      className="nodrag nopan bg-transparent text-[10px] text-white/90 outline-none text-right flex-1 min-w-0 tabular-nums"
+      className="nodrag nopan bg-transparent text-[10px] text-fg outline-none text-right flex-1 min-w-0 tabular-nums"
       value={draft}
       min={min}
       max={max}
@@ -302,7 +329,7 @@ function InlineNumberField({
           {editing ? editInput : (
             <input
               type="number"
-              className="nodrag nopan bg-transparent text-[10px] text-white/75 outline-none text-right flex-1 min-w-0 tabular-nums"
+              className="nodrag nopan bg-transparent text-[10px] text-fg-strong outline-none text-right flex-1 min-w-0 tabular-nums"
               value={format(value)}
               min={min}
               max={max}
@@ -328,7 +355,7 @@ function InlineNumberField({
       aria-valuemin={min}
       aria-valuemax={max}
       aria-valuenow={display}
-      title="ドラッグで調整 / クリックで数値入力"
+      title={t('inline.dragToAdjust')}
       className={`nodrag nopan relative select-none ${editing ? '' : `cursor-ew-resize ${FOCUS_RING}`} ${FOCUS_RING_WITHIN}`}
       style={{ background: FIELD_BAR_BG, borderRadius: '0 0 4px 4px', overflow: 'hidden', touchAction: 'none' }}
       onPointerDown={onPointerDown}
@@ -344,7 +371,7 @@ function InlineNumberField({
       />
       <div className="relative flex items-center justify-end px-2 h-[26px]">
         {editing ? editInput : (
-          <span className="text-[10px] text-white/75 tabular-nums select-none">
+          <span className="text-[10px] text-fg-strong tabular-nums select-none">
             {format(display)}
           </span>
         )}
@@ -369,6 +396,7 @@ function TextareaEditorPopover({
   onCommit: (val: string) => void;
   onClose: () => void;
 }) {
+  const { t } = useLocaleStore();
   const [draft, setDraft] = useState(value);
   const popRef = useRef<HTMLDivElement>(null);
   const draftRef = useRef(draft);
@@ -406,16 +434,16 @@ function TextareaEditorPopover({
     >
       <div
         className="backdrop-blur-md rounded-lg shadow-2xl overflow-hidden flex flex-col"
-        style={{ background: 'rgba(15, 23, 42, 0.97)', border: '1px solid rgba(255,255,255,0.15)' }}
+        style={{ background: 'var(--surface-strong)', border: '1px solid var(--border)' }}
       >
-        <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
-          <span className="text-[12px] font-semibold text-white/85">{label}</span>
-          <span className="text-[10px] text-white/35">Ctrl+Enter で保存 / Esc でキャンセル</span>
+        <div className="flex items-center justify-between px-3 py-2 border-b border-token-border">
+          <span className="text-[12px] font-semibold text-fg-strong">{label}</span>
+          <span className="text-[10px] text-fg-faint">{t('inline.ctrlEnterSave')}</span>
         </div>
         <textarea
-          className="nowheel w-full text-[13px] leading-relaxed text-white/90 outline-none resize-y"
+          className="nowheel w-full text-[13px] leading-relaxed text-fg outline-none resize-y"
           style={{
-            background: 'rgba(0,0,0,0.25)',
+            background: 'var(--inset)',
             padding: '10px 12px',
             minHeight: '180px',
             maxHeight: '50vh',
@@ -433,21 +461,21 @@ function TextareaEditorPopover({
             }
           }}
         />
-        <div className="flex items-center justify-between px-3 py-2 border-t border-white/10">
-          <span className="text-[10px] text-white/40 tabular-nums">{draft.length}字</span>
+        <div className="flex items-center justify-between px-3 py-2 border-t border-token-border">
+          <span className="text-[10px] text-fg-faint tabular-nums">{draft.length}</span>
           <div className="flex items-center gap-2">
             <button
-              className="text-[11px] text-white/50 hover:text-white/80 px-2 py-1 rounded transition-colors"
+              className="text-[11px] text-fg-dim hover:text-fg-strong px-2 py-1 rounded transition-colors"
               onClick={onClose}
             >
-              キャンセル
+              {t('common.cancel')}
             </button>
             <button
               className="text-[11px] text-white px-3 py-1 rounded transition-colors"
               style={{ background: 'rgba(16, 185, 129, 0.7)' }}
               onClick={() => { onCommit(draft); onClose(); }}
             >
-              保存
+              {t('common.save')}
             </button>
           </div>
         </div>
@@ -464,16 +492,16 @@ const COMPLEX_FIELD_TYPES = new Set([
 ]);
 
 // Get a summary string for a field value (used in collapsed view)
-function getValueSummary(field: ConfigField, value: unknown): string {
+function getValueSummary(field: ConfigField, value: unknown, t: (key: string) => string): string {
   if (value === undefined || value === null || value === '') {
     return '';
   }
 
   if (COMPLEX_FIELD_TYPES.has(field.type)) {
-    if (Array.isArray(value) && value.length > 0) return 'Configured';
-    if (typeof value === 'object' && value !== null && Object.keys(value).length > 0) return 'Configured';
-    if (typeof value === 'string' && value) return 'Configured';
-    return 'Not set';
+    if (Array.isArray(value) && value.length > 0) return t('common.configured');
+    if (typeof value === 'object' && value !== null && Object.keys(value).length > 0) return t('common.configured');
+    if (typeof value === 'string' && value) return t('common.configured');
+    return t('common.notSet');
   }
 
   switch (field.type) {
@@ -487,7 +515,7 @@ function getValueSummary(field: ConfigField, value: unknown): string {
     case 'number':
       return String(value);
     case 'boolean':
-      return value ? 'ON' : 'OFF';
+      return value ? t('common.on') : t('common.off');
     case 'password':
       return value ? '••••••' : '';
     case 'textarea': {
@@ -507,9 +535,9 @@ function getValueSummary(field: ConfigField, value: unknown): string {
 function ConfigFieldsSkeleton() {
   return (
     <div className="space-y-1 animate-pulse" aria-hidden="true">
-      <div className="h-[26px] rounded bg-white/5" />
-      <div className="h-[26px] rounded bg-white/5" />
-      <div className="h-[26px] rounded bg-white/5" />
+      <div className="h-[26px] rounded bg-elevated" />
+      <div className="h-[26px] rounded bg-elevated" />
+      <div className="h-[26px] rounded bg-elevated" />
     </div>
   );
 }
@@ -530,6 +558,7 @@ function NodeConfigFields({
   accentColor: string;
   onOpenSettings: () => void;
 }) {
+  const { t } = useLocaleStore();
   // Build initial expanded state: inline fields start expanded, others collapsed
   const allFields = Object.entries(pluginConfig);
   const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>(() => {
@@ -573,19 +602,19 @@ function NodeConfigFields({
   // Row that hands off to the settings panel for fields that cannot be edited
   // inline (complex editors, dynamic option lists fetched from engines)
   const OpenSettingsRow = ({ summary }: { summary?: string }) => (
-    <div style={{ background: 'rgba(0,0,0,0.15)', borderRadius: '0 0 4px 4px' }}>
+    <div style={{ background: 'var(--inset)', borderRadius: '0 0 4px 4px' }}>
       {summary && (
-        <div className="nodrag nopan px-2 pt-1.5 text-[10px] text-white/60 truncate">{summary}</div>
+        <div className="nodrag nopan px-2 pt-1.5 text-[10px] text-fg-muted truncate">{summary}</div>
       )}
       <button
-        className={`nodrag nopan w-full px-2 py-1.5 text-[10px] text-white/55 hover:text-white/90 hover:bg-white/10 transition-colors flex items-center gap-1.5 ${FOCUS_RING}`}
+        className={`nodrag nopan w-full px-2 py-1.5 text-[10px] text-fg-dim hover:text-fg hover:bg-hover transition-colors flex items-center gap-1.5 ${FOCUS_RING}`}
         onClick={(e) => { e.stopPropagation(); onOpenSettings(); }}
       >
         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0">
           <circle cx="12" cy="12" r="3"/>
           <path d="M12 1v3m0 16v3m11-11h-3M4 12H1m18.4-7.4l-2.1 2.1M6.7 17.3l-2.1 2.1m14.8 0l-2.1-2.1M6.7 6.7L4.6 4.6"/>
         </svg>
-        詳細設定で編集
+        {t('inline.editInSettings')}
       </button>
     </div>
   );
@@ -596,7 +625,7 @@ function NodeConfigFields({
       width="8" height="8" viewBox="0 0 24 24"
       fill="none" stroke="currentColor" strokeWidth="3"
       className="flex-shrink-0"
-      style={{ color: 'rgba(255,255,255,0.3)' }}
+      style={{ color: 'var(--text-faint)' }}
     >
       {expanded
         ? <polyline points="6 9 12 15 18 9"/>
@@ -617,8 +646,8 @@ function NodeConfigFields({
     // Dynamic fields: options are fetched from external engines in the
     // settings panel (e.g. VOICEVOX speakers) — show value + hand-off button
     if (field.dynamic) {
-      const summary = getValueSummary(field, value);
-      return <OpenSettingsRow summary={summary || 'Not set'} />;
+      const summary = getValueSummary(field, value, t);
+      return <OpenSettingsRow summary={summary || t('common.notSet')} />;
     }
 
     switch (field.type) {
@@ -635,7 +664,7 @@ function NodeConfigFields({
             onDoubleClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-2 h-[26px]">
-              <span className="text-[10px] text-white/75 select-none">{selectedLabel}</span>
+              <span className="text-[10px] text-fg-strong select-none">{selectedLabel}</span>
             </div>
             <select
               className="nodrag nopan absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -692,7 +721,7 @@ function NodeConfigFields({
             <div className="relative flex items-center justify-end px-2 h-[26px]">
               <div
                 className="relative flex-shrink-0 rounded-full transition-colors"
-                style={{ width: '20px', height: '11px', background: boolValue ? accentColor : 'rgba(255,255,255,0.2)' }}
+                style={{ width: '20px', height: '11px', background: boolValue ? accentColor : 'var(--border)' }}
               >
                 <span
                   className="absolute top-[1.5px] rounded-full bg-white transition-transform"
@@ -729,8 +758,8 @@ function NodeConfigFields({
         const str = String(value ?? '');
         return (
           <button
-            className={`nodrag nopan w-full text-left px-2 py-1.5 hover:bg-white/10 transition-colors ${FOCUS_RING}`}
-            style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '0 0 4px 4px' }}
+            className={`nodrag nopan w-full text-left px-2 py-1.5 hover:bg-hover transition-colors ${FOCUS_RING}`}
+            style={{ background: 'var(--inset)', borderRadius: '0 0 4px 4px' }}
             onClick={(e) => {
               e.stopPropagation();
               const rect = e.currentTarget.getBoundingClientRect();
@@ -743,16 +772,16 @@ function NodeConfigFields({
             onDoubleClick={(e) => e.stopPropagation()}
           >
             {str ? (
-              <div className="text-[10px] text-white/70 line-clamp-2 whitespace-pre-wrap break-words">
+              <div className="text-[10px] text-fg-muted line-clamp-2 whitespace-pre-wrap break-words">
                 {str}
               </div>
             ) : (
-              <div className="text-[10px] text-white/35 italic">
-                {field.placeholder || '未設定'}
+              <div className="text-[10px] text-fg-faint italic">
+                {field.placeholder || t('common.notSet')}
               </div>
             )}
-            <div className="text-[9px] text-white/35 mt-0.5">
-              {str.length}字 — クリックで編集
+            <div className="text-[9px] text-fg-faint mt-0.5">
+              {str.length}{t('inline.charCountEdit')}
             </div>
           </button>
         );
@@ -779,8 +808,8 @@ function NodeConfigFields({
         const summary = usedGlobalKey
           ? field.type === 'password'
             ? ''
-            : getValueSummary(field, globalSettings[usedGlobalKey])
-          : getValueSummary(field, value);
+            : getValueSummary(field, globalSettings[usedGlobalKey], t)
+          : getValueSummary(field, value, t);
 
         return (
           <div key={key} style={{ borderRadius: '4px', overflow: 'hidden' }}>
@@ -792,18 +821,18 @@ function NodeConfigFields({
               onClick={(e) => { e.stopPropagation(); toggleField(key); }}
             >
               <ToggleIcon expanded={isExpanded} />
-              <span className="text-[10px] text-white/55 select-none flex-shrink-0">{field.label}</span>
+              <span className="text-[10px] text-fg-dim select-none flex-shrink-0">{field.label}</span>
               {usedGlobalKey && (
                 <span
                   className="text-[9px] px-1 py-px rounded select-none flex-shrink-0 ml-auto"
-                  style={{ background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)' }}
-                  title="ノード側が未設定のため、グローバル設定の値を使用しています（入力すると上書き）"
+                  style={{ background: 'var(--elevated)', color: 'var(--text-muted)' }}
+                  title={t('inline.globalTooltip')}
                 >
-                  グローバル
+                  {t('inline.globalBadge')}
                 </span>
               )}
               {!isExpanded && summary && (
-                <span className={`text-[10px] text-white/60 select-none truncate max-w-[60%] text-right ${usedGlobalKey ? '' : 'ml-auto'}`}>
+                <span className={`text-[10px] text-fg-muted select-none truncate max-w-[60%] text-right ${usedGlobalKey ? '' : 'ml-auto'}`}>
                   {summary}
                 </span>
               )}
@@ -841,8 +870,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   }, [id, selectNode, setSettingsPanelOpen]);
   const status = data.nodeStatus;
   const { getPluginColor, getPluginBgColor, getPluginIcon, getPluginById } = usePluginStore();
-  const { nodeDisplayMode, collapsedNodeIds, toggleNodeCollapse } = useUIPreferencesStore();
-  const { getNodeDesc } = useLocaleStore();
+  const { collapsedNodeIds, toggleNodeCollapse } = useUIPreferencesStore();
+  const { getNodeDesc, t } = useLocaleStore();
   const [showTooltip, setShowTooltip] = useState(false);
   const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -853,16 +882,16 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const nodeRef = useRef<HTMLDivElement>(null);
 
   // Track drag state for port highlight/dim
-  const { draggingSourceType } = useDragStateStore();
+  const { draggingSourceType, draggingHandleType } = useDragStateStore();
   // Hover state for port tooltips
-  const [hoveredPort, setHoveredPort] = useState<{ id: string; label: string; type: PortType; description?: string; side: 'input' | 'output' } | null>(null);
+  const [hoveredPort, setHoveredPort] = useState<{ id: string; label: string; type: PortType; description?: string; side: 'input' | 'output'; rect?: DOMRect } | null>(null);
 
   const collapsed = collapsedNodeIds.includes(id);
 
   // Get visual config from plugin store (with fallbacks)
   const plugin = getPluginById(data.type);
   const config: NodeVisualConfig = {
-    color: getPluginColor(data.type) || DEFAULT_COLOR,
+    color: legibleAccent(getPluginColor(data.type) || DEFAULT_COLOR),
     bgColor: getPluginBgColor(data.type) || DEFAULT_BG_COLOR,
     icon: renderIcon(getPluginIcon(data.type) || DEFAULT_ICON, { size: 16, color: 'currentColor' }),
     statusText: plugin?.ui?.statusText || DEFAULT_STATUS,
@@ -1021,7 +1050,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const getNodeStyle = (): React.CSSProperties => {
     // Status-based border and glow
     const statusVisual = status?.status ? STATUS_BORDER_COLORS[status.status] : undefined;
-    let borderColor = 'rgba(255,255,255,0.1)';
+    let borderColor = 'var(--border)';
     let boxShadow = '0 4px 20px rgba(0,0,0,0.2)';
 
     if (selected) {
@@ -1036,7 +1065,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     const NODE_WIDTH = 240;
 
     const baseStyle: React.CSSProperties = {
-      background: config.bgColor,
+      background: 'var(--node-bg)',
       border: `2px solid ${borderColor}`,
       borderRadius: '12px',
       boxShadow,
@@ -1049,22 +1078,15 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       return { ...baseStyle, padding: '8px 12px' };
     }
 
-    switch (nodeDisplayMode) {
-      case 'simple':
-        return { ...baseStyle, padding: '8px 12px' };
-      case 'detailed':
-        return { ...baseStyle, padding: '0' };
-      default: // standard
-        return { ...baseStyle, padding: '12px 16px' };
-    }
+    return { ...baseStyle, padding: '12px 16px' };
   };
 
   // Collapse toggle button
   const CollapseButton = ({ className }: { className?: string }) => (
     <button
       onClick={handleCollapseToggle}
-      className={`text-white/40 hover:text-white/80 transition-colors flex-shrink-0 ${className ?? ''}`}
-      title={collapsed ? '展開する' : '折りたたむ'}
+      className={`text-fg-faint hover:text-fg-strong transition-colors flex-shrink-0 ${className ?? ''}`}
+      title={collapsed ? t('inline.expand') : t('inline.collapse')}
     >
       {collapsed ? <ChevronRight /> : <ChevronDown />}
     </button>
@@ -1075,9 +1097,9 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     <button
       onClick={(e) => { e.stopPropagation(); openSettings(); }}
       onDoubleClick={(e) => e.stopPropagation()}
-      className="nodrag text-white/30 hover:text-white/80 transition-colors flex-shrink-0 p-0.5"
-      title="詳細設定"
-      aria-label="詳細設定を開く"
+      className="nodrag text-fg-faint hover:text-fg-strong transition-colors flex-shrink-0 p-0.5"
+      title={t('inline.detailSettings')}
+      aria-label={t('inline.openDetailSettings')}
     >
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="12" cy="12" r="3"/>
@@ -1097,7 +1119,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           border: '2px solid #1F2937',
           boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
         }}
-        title="Run from this node"
+        title={t('inline.runFromNode')}
       >
         <svg width="10" height="10" viewBox="0 0 24 24" fill="white" stroke="none">
           <polygon points="5 3 19 12 5 21 5 3"/>
@@ -1151,7 +1173,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             >
               <div className="bg-amber-900/95 backdrop-blur-sm border border-amber-500/50 rounded-lg p-2 shadow-xl">
                 <div className="text-[10px] font-semibold text-amber-200 mb-1">Warning</div>
-                <div className="text-[11px] text-white/90 leading-relaxed break-words">
+                <div className="text-[11px] text-fg leading-relaxed break-words">
                   {String(status?.data?.validationIssue ?? '')}
                 </div>
               </div>
@@ -1187,7 +1209,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             >
               <div className="bg-red-900/95 backdrop-blur-sm border border-red-500/50 rounded-lg p-2 shadow-xl">
                 <div className="text-[10px] font-semibold text-red-200 mb-1">Error</div>
-                <div className="text-[11px] text-white/90 leading-relaxed break-words">
+                <div className="text-[11px] text-fg leading-relaxed break-words">
                   {String(status?.data?.error || status?.data?.validationIssue || '')}
                 </div>
               </div>
@@ -1198,51 +1220,76 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     </>
   );
 
-  // Tooltip component
+  // Tooltip component — rendered via portal so it's always above all nodes
   const Tooltip = () => {
-    const description = getNodeDesc(data.type);
+    if (!showTooltip || !nodeRef.current) return null;
 
-    return showTooltip ? (
+    const inputs = data.inputs ?? [];
+    const outputs = data.outputs ?? [];
+    const hasContent = inputs.length > 0 || outputs.length > 0;
+    if (!hasContent) return null;
+
+    const rect = nodeRef.current.getBoundingClientRect();
+
+    return createPortal(
       <div
-        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-50 pointer-events-none"
-        style={{ overflow: 'hidden' }}
+        className="fixed pointer-events-none whitespace-nowrap"
+        style={{ left: rect.left + rect.width / 2, top: rect.top - 8, transform: 'translate(-50%, -100%)', zIndex: 10000 }}
       >
-        <div
-          className="bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-lg p-3 shadow-xl"
-        >
-          <div className="text-[11px] text-white/90 whitespace-pre-line leading-relaxed">
-            {description}
-          </div>
+        <div className="bg-surface-strong backdrop-blur-sm border border-token-border rounded-lg p-2.5 shadow-xl min-w-[180px]">
+          {inputs.length > 0 && (
+            <div className="mb-1.5">
+              <div className="text-[9px] text-fg-faint uppercase tracking-wider mb-0.5">{t('inline.inputs')}</div>
+              {inputs.map((inp) => (
+                <div key={inp.id} className="flex items-center gap-1.5 py-px">
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: PORT_TYPE_COLORS[inp.type as PortType] ?? '#6B7280' }} />
+                  <span className="text-[10px] text-fg-strong">{inp.label}</span>
+                  <span className="text-[9px] text-fg-faint ml-auto">{PORT_TYPE_LABELS[inp.type as PortType] ?? inp.type}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {outputs.length > 0 && (
+            <div className={inputs.length > 0 ? 'pt-1 border-t border-token-border' : ''}>
+              <div className="text-[9px] text-fg-faint uppercase tracking-wider mb-0.5">{t('inline.outputs')}</div>
+              {outputs.map((out) => (
+                <div key={out.id} className="flex items-center gap-1.5 py-px">
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: PORT_TYPE_COLORS[out.type as PortType] ?? '#6B7280' }} />
+                  <span className="text-[10px] text-fg-strong">{out.label}</span>
+                  <span className="text-[9px] text-fg-faint ml-auto">{PORT_TYPE_LABELS[out.type as PortType] ?? out.type}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        {/* Arrow */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-gray-900/95 border-r border-b border-white/20 rotate-45"
-        />
-      </div>
-    ) : null;
+      </div>,
+      document.body,
+    );
   };
 
-  // Port hover tooltip — only renders for the port currently hovered
+  // Port hover tooltip — rendered via portal so it's always above all nodes
   const PortTooltip = ({ portId, side }: { portId: string; side: 'input' | 'output' }) => {
-    if (!hoveredPort || hoveredPort.id !== portId || hoveredPort.side !== side) return null;
+    if (!hoveredPort || hoveredPort.id !== portId || hoveredPort.side !== side || !hoveredPort.rect) return null;
     const typeColor = PORT_TYPE_COLORS[hoveredPort.type] ?? '#6B7280';
     const typeLabel = PORT_TYPE_LABELS[hoveredPort.type] ?? hoveredPort.type;
-    return (
+    const r = hoveredPort.rect;
+    return createPortal(
       <div
-        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[60] pointer-events-none"
-        style={{ overflow: 'hidden' }}
+        className="fixed pointer-events-none whitespace-nowrap"
+        style={{ left: r.left + r.width / 2, top: r.top - 8, transform: 'translate(-50%, -100%)', zIndex: 10001 }}
       >
-        <div className="bg-gray-950/98 backdrop-blur-sm border rounded-lg p-2 shadow-xl" style={{ borderColor: `${typeColor}60` }}>
+        <div className="bg-surface-strong backdrop-blur-sm border rounded-lg p-2 shadow-xl" style={{ borderColor: `${typeColor}60` }}>
           <div className="flex items-center gap-1.5 mb-1">
             <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: typeColor }} />
-            <span className="text-[11px] font-semibold text-white/90">{hoveredPort.label}</span>
+            <span className="text-[11px] font-semibold text-fg">{hoveredPort.label}</span>
             <span className="text-[10px] ml-auto" style={{ color: typeColor }}>{typeLabel}</span>
           </div>
           {hoveredPort.description && (
-            <div className="text-[10px] text-white/60 leading-relaxed">{hoveredPort.description}</div>
+            <div className="text-[10px] text-fg-muted leading-relaxed whitespace-normal">{hoveredPort.description}</div>
           )}
         </div>
-      </div>
+      </div>,
+      document.body,
     );
   };
 
@@ -1298,7 +1345,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         <div
           className="backdrop-blur-md rounded-lg shadow-2xl overflow-hidden"
           style={{
-            background: 'rgba(15, 23, 42, 0.95)',
+            background: 'var(--surface-strong)',
             border: `1px solid ${statusColor}40`,
           }}
         >
@@ -1308,18 +1355,18 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${status.status === 'running' ? 'animate-pulse' : ''}`}
               style={{ background: statusColor }}
             />
-            <span className="text-[12px] font-semibold text-white truncate flex-1">
+            <span className="text-[12px] font-semibold text-fg truncate flex-1">
               {data.label}
             </span>
             {duration !== undefined && (
-              <span className="text-[10px] text-white/50 flex-shrink-0">
+              <span className="text-[10px] text-fg-dim flex-shrink-0">
                 {formatDuration(duration)}
               </span>
             )}
             <button
               onClick={togglePin}
               className={`w-5 h-5 flex items-center justify-center rounded transition-colors flex-shrink-0 ${
-                popoverPinned ? 'text-blue-400 bg-blue-400/20' : 'text-white/30 hover:text-white/60'
+                popoverPinned ? 'text-blue-400 bg-blue-400/20' : 'text-fg-faint hover:text-fg-muted'
               }`}
               title={popoverPinned ? 'Unpin' : 'Pin'}
             >
@@ -1348,8 +1395,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           <div className="px-3 py-2 space-y-1.5">
             {resultSummary && (
               <div className="flex items-start gap-2">
-                <span className="text-[10px] text-white/40 w-14 flex-shrink-0">Result</span>
-                <span className="text-[11px] text-white/80">{resultSummary}</span>
+                <span className="text-[10px] text-fg-faint w-14 flex-shrink-0">Result</span>
+                <span className="text-[11px] text-fg-strong">{resultSummary}</span>
               </div>
             )}
             {errorMsg && (
@@ -1360,8 +1407,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             )}
             {duration !== undefined && (
               <div className="flex items-start gap-2">
-                <span className="text-[10px] text-white/40 w-14 flex-shrink-0">Duration</span>
-                <span className="text-[11px] text-white/80">{formatDuration(duration)}</span>
+                <span className="text-[10px] text-fg-faint w-14 flex-shrink-0">Duration</span>
+                <span className="text-[11px] text-fg-strong">{formatDuration(duration)}</span>
               </div>
             )}
           </div>
@@ -1369,9 +1416,9 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           {/* Output preview */}
           {outputs && Object.keys(outputs).length > 0 && (
             <div className="px-3 pb-2">
-              <div className="text-[9px] text-white/30 uppercase tracking-wider mb-1">Output Preview</div>
+              <div className="text-[9px] text-fg-faint uppercase tracking-wider mb-1">Output Preview</div>
               <pre
-                className="text-[10px] text-white/60 bg-black/30 rounded p-2 overflow-auto max-h-[80px] whitespace-pre-wrap break-words"
+                className="text-[10px] text-fg-muted bg-black/30 rounded p-2 overflow-auto max-h-[80px] whitespace-pre-wrap break-words"
                 style={{ fontFamily: 'monospace' }}
               >
                 {JSON.stringify(outputs, null, 2).slice(0, 500)}
@@ -1384,7 +1431,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             <div className="px-3 pb-2 flex justify-end">
               <button
                 onClick={copyErrorToClipboard}
-                className="text-white/30 hover:text-white/70 transition-colors p-1 rounded hover:bg-white/10"
+                className="text-fg-faint hover:text-fg-muted transition-colors p-1 rounded hover:bg-hover"
                 title="Copy error message"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1412,7 +1459,12 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       // idle: normal appearance
       return { ...base, width: '14px', height: '14px', background: PORT_TYPE_COLORS[portType] ?? '#374151' };
     }
-    // Something is being dragged — check compatibility
+    // Something is being dragged — only highlight ports of the opposite side
+    // (source→target or target→source). Same-side ports stay dimmed.
+    const isOppositeSide = draggingHandleType === 'source' ? isTarget : !isTarget;
+    if (!isOppositeSide) {
+      return { ...base, width: '14px', height: '14px', background: PORT_TYPE_COLORS[portType] ?? '#374151', opacity: 0.3 };
+    }
     const compatible = isTarget
       ? arePortTypesCompatible(draggingSourceType, portType)
       : arePortTypesCompatible(portType, draggingSourceType);
@@ -1503,6 +1555,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               height: '20px',
               borderRadius: '4px',
               background: config.color,
+              boxShadow: ICON_CHIP_RING,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -1512,7 +1565,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           >
             {config.icon}
           </div>
-          <span className="font-semibold text-[11px] text-white truncate">
+          <span className="font-semibold text-[11px] text-fg truncate">
             {data.label}
           </span>
         </div>
@@ -1522,231 +1575,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     );
   }
 
-  // ============ SIMPLE MODE ============
-  if (nodeDisplayMode === 'simple') {
-    return (
-      <div
-        ref={nodeRef}
-        onClick={handleClick}
-        onDoubleClick={handleDoubleClick}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        className="relative"
-        style={getNodeStyle()}
-      >
-        <Tooltip />
-        <PlayButton />
-        <NodeStatusPopover />
-
-        {/* Input handles - simple circles */}
-        {data.inputs && data.inputs.length > 0 && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 flex flex-col gap-1">
-            {data.inputs.map((input) => (
-              <Handle
-                key={input.id}
-                type="target"
-                position={Position.Left}
-                id={input.id}
-                style={{
-                  width: '12px',
-                  height: '12px',
-                  borderRadius: '50%',
-                  background: PORT_TYPE_COLORS[input.type] || '#374151',
-                  border: '2px solid #1F2937',
-                  position: 'relative',
-                }}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Output handles - simple circles */}
-        {data.outputs && data.outputs.length > 0 && (
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 flex flex-col gap-1">
-            {data.outputs.map((output) => (
-              <Handle
-                key={output.id}
-                type="source"
-                position={Position.Right}
-                id={output.id}
-                style={{
-                  width: '12px',
-                  height: '12px',
-                  borderRadius: '50%',
-                  background: PORT_TYPE_COLORS[output.type] || config.color,
-                  border: '2px solid #1F2937',
-                  position: 'relative',
-                }}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Compact header - icon and label only */}
-        <div className="flex items-center gap-2">
-          <CollapseButton />
-          <div
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '4px',
-              background: config.color,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              flexShrink: 0,
-            }}
-          >
-            {config.icon}
-          </div>
-          <span className="font-semibold text-[12px] text-white truncate">
-            {data.label}
-          </span>
-        </div>
-
-        <StatusIndicator />
-      </div>
-    );
-  }
-
-  // ============ DETAILED MODE ============
-  if (nodeDisplayMode === 'detailed') {
-    return (
-      <div
-        ref={nodeRef}
-        onClick={handleClick}
-        onDoubleClick={handleDoubleClick}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        className="relative"
-        style={getNodeStyle()}
-      >
-        <Tooltip />
-        <PlayButton />
-        <NodeStatusPopover />
-
-        {/* Header section */}
-        <div
-          className="flex items-center gap-2 px-3 py-2"
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}
-        >
-          <CollapseButton />
-          <div
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '4px',
-              background: config.color,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              flexShrink: 0,
-            }}
-          >
-            {config.icon}
-          </div>
-          <span className="font-semibold text-[12px] text-white truncate flex-1 min-w-0">
-            {data.label}
-          </span>
-          <SettingsButton />
-        </div>
-
-        {/* Inputs section */}
-        {data.inputs && data.inputs.length > 0 && (
-          <div className="px-3 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-            <div className="text-[9px] text-white/40 uppercase tracking-wider mb-1">Inputs</div>
-            {data.inputs.map((input) => (
-              <div key={input.id} className="flex items-center gap-2 py-1 relative">
-                <Handle
-                  type="target"
-                  position={Position.Left}
-                  id={input.id}
-                  style={{
-                    width: '10px',
-                    height: '10px',
-                    borderRadius: '50%',
-                    background: PORT_TYPE_COLORS[input.type] || '#374151',
-                    border: '1px solid #1F2937',
-                    left: '-5px',
-                    position: 'absolute',
-                  }}
-                />
-                <span className="text-[11px] text-white/80 ml-2">{input.label}</span>
-                <span
-                  className="text-[9px] ml-auto"
-                  style={{ color: PORT_TYPE_COLORS[input.type] || '#6B7280' }}
-                >
-                  {input.type}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Outputs section */}
-        {data.outputs && data.outputs.length > 0 && (
-          <div className="px-3 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-            <div className="text-[9px] text-white/40 uppercase tracking-wider mb-1">Outputs</div>
-            {data.outputs.map((output) => (
-              <div key={output.id} className="flex items-center gap-2 py-1 relative">
-                <span
-                  className="text-[9px]"
-                  style={{ color: PORT_TYPE_COLORS[output.type] || '#6B7280' }}
-                >
-                  {output.type}
-                </span>
-                <span className="text-[11px] text-white/80 ml-auto mr-2">{output.label}</span>
-                <Handle
-                  type="source"
-                  position={Position.Right}
-                  id={output.id}
-                  style={{
-                    width: '10px',
-                    height: '10px',
-                    borderRadius: '50%',
-                    background: PORT_TYPE_COLORS[output.type] || config.color,
-                    border: '1px solid #1F2937',
-                    right: '-5px',
-                    position: 'absolute',
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Status footer */}
-        <div className="px-3 py-2 text-[10px] text-white/50">
-          {getStatusText()}
-        </div>
-
-        {/* Config fields */}
-        {data.pluginConfig && (
-          <div className="px-3 pb-2">
-            <NodeConfigFields
-              nodeType={data.type}
-              config={data.config}
-              pluginConfig={data.pluginConfig}
-              onConfigChange={onInlineConfigChange}
-              accentColor={config.color}
-              onOpenSettings={openSettings}
-            />
-          </div>
-        )}
-        {!data.pluginConfig && data.pluginsLoaded === false && (
-          <div className="px-3 pb-2">
-            <ConfigFieldsSkeleton />
-          </div>
-        )}
-
-        <StatusIndicator />
-      </div>
-    );
-  }
-
-  // ============ STANDARD MODE (default) ============
+  // ============ STANDARD MODE ============
   const inputCount = data.inputs?.length || 0;
   const outputCount = data.outputs?.length || 0;
   const maxPorts = Math.max(inputCount, outputCount);
@@ -1774,6 +1603,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             height: '28px',
             borderRadius: '6px',
             background: config.color,
+            boxShadow: ICON_CHIP_RING,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -1783,7 +1613,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         >
           {config.icon}
         </div>
-        <span className="font-semibold text-[13px] text-white truncate flex-1 min-w-0">
+        <span className="font-semibold text-[13px] text-fg truncate flex-1 min-w-0">
           {data.label}
         </span>
         <SettingsButton />
@@ -1798,7 +1628,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               <div
                 key={input.id}
                 className="flex items-center gap-1 relative h-5"
-                onMouseEnter={() => setHoveredPort({ id: input.id, label: input.label, type: input.type as PortType, description: (input as any).description, side: 'input' })}
+                onMouseEnter={(e) => setHoveredPort({ id: input.id, label: input.label, type: input.type as PortType, description: (input as any).description, side: 'input', rect: (e.currentTarget as HTMLElement).getBoundingClientRect() })}
                 onMouseLeave={() => setHoveredPort(null)}
               >
                 <PortTooltip portId={input.id} side="input" />
@@ -1806,9 +1636,9 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   type="target"
                   position={Position.Left}
                   id={input.id}
-                  style={{ ...getHandleStyle(input.type as PortType, true), left: '-7px', position: 'absolute' }}
+                  style={{ ...getHandleStyle(input.type as PortType, true), left: '-7px', position: 'absolute', top: '50%', transform: 'translateY(-50%)' }}
                 />
-                <span className="text-[10px] text-white/60 pl-2 whitespace-nowrap">
+                <span className="text-[10px] text-fg-muted pl-2 whitespace-nowrap">
                   {input.label}
                 </span>
               </div>
@@ -1821,18 +1651,18 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               <div
                 key={output.id}
                 className="flex items-center gap-1 relative h-5"
-                onMouseEnter={() => setHoveredPort({ id: output.id, label: output.label, type: output.type as PortType, description: (output as any).description, side: 'output' })}
+                onMouseEnter={(e) => setHoveredPort({ id: output.id, label: output.label, type: output.type as PortType, description: (output as any).description, side: 'output', rect: (e.currentTarget as HTMLElement).getBoundingClientRect() })}
                 onMouseLeave={() => setHoveredPort(null)}
               >
                 <PortTooltip portId={output.id} side="output" />
-                <span className="text-[10px] text-white/60 pr-2 whitespace-nowrap">
+                <span className="text-[10px] text-fg-muted pr-2 whitespace-nowrap">
                   {output.label}
                 </span>
                 <Handle
                   type="source"
                   position={Position.Right}
                   id={output.id}
-                  style={{ ...getHandleStyle(output.type as PortType, false), right: '-7px', position: 'absolute' }}
+                  style={{ ...getHandleStyle(output.type as PortType, false), right: '-7px', position: 'absolute', top: '50%', transform: 'translateY(-50%)' }}
                 />
               </div>
             ))}
@@ -1841,7 +1671,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       )}
 
       {/* Status */}
-      <div className="text-[10px] text-white/40 truncate">
+      <div className="text-[10px] text-fg-faint truncate">
         {getStatusText()}
       </div>
 

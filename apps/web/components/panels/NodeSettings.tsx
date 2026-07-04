@@ -33,6 +33,7 @@ function PasswordField({
   placeholder,
   style,
 }: PasswordFieldProps) {
+  const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
 
   return (
@@ -47,10 +48,10 @@ function PasswordField({
       <button
         type="button"
         onClick={() => setShowPassword((prev) => !prev)}
-        aria-label={showPassword ? "Hide password" : "Show password"}
+        aria-label={showPassword ? t("settings.hidePassword") : t("settings.showPassword")}
         aria-pressed={showPassword}
-        className="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors"
-        title={showPassword ? "Hide password" : "Show password"}
+        className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-dim hover:text-fg transition-colors"
+        title={showPassword ? t("settings.hidePassword") : t("settings.showPassword")}
       >
         {showPassword ? (
           // Eye-off icon
@@ -92,6 +93,7 @@ interface InputListFieldProps {
 }
 
 function InputListField({ value, onChange, placeholder }: InputListFieldProps) {
+  const { t } = useTranslation();
   const [newInput, setNewInput] = useState("");
   const inputs = value || [];
 
@@ -139,7 +141,7 @@ function InputListField({ value, onChange, placeholder }: InputListFieldProps) {
             flex: 1,
             padding: "6px 8px",
             borderRadius: "6px",
-            border: "1px solid rgba(255,255,255,0.2)",
+            border: "1px solid var(--border)",
             background: "rgba(0,0,0,0.3)",
             color: "#fff",
             fontSize: "11px",
@@ -150,13 +152,13 @@ function InputListField({ value, onChange, placeholder }: InputListFieldProps) {
           onClick={addInput}
           className="px-3 py-1 rounded-md border border-blue-500/50 bg-blue-500/10 text-blue-400 text-[11px] cursor-pointer hover:bg-blue-500/20"
         >
-          Add
+          {t('nodeConfig.common.add')}
         </button>
       </div>
 
       {/* Help text */}
-      <div className="text-[9px] text-white/40">
-        Add input names to create ports. Use {`{{name}}`} in template.
+      <div className="text-[9px] text-fg-faint">
+        {t('settings.addInputHelp')}
       </div>
     </div>
   );
@@ -214,6 +216,7 @@ interface ExpressionListFieldProps {
 }
 
 function ExpressionListField({ value, onChange }: ExpressionListFieldProps) {
+  const { t } = useTranslation();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newExpr, setNewExpr] = useState<Partial<Expression>>({
     id: "",
@@ -258,7 +261,7 @@ function ExpressionListField({ value, onChange }: ExpressionListFieldProps) {
   const inputStyle = {
     padding: "6px 8px",
     borderRadius: "4px",
-    border: "1px solid rgba(255,255,255,0.2)",
+    border: "1px solid var(--border)",
     background: "rgba(0,0,0,0.3)",
     color: "#fff",
     fontSize: "11px",
@@ -282,7 +285,7 @@ function ExpressionListField({ value, onChange }: ExpressionListFieldProps) {
         {expressions.map((expr) => (
           <div
             key={expr.id}
-            className="p-2 rounded-md border border-white/10 bg-black/20"
+            className="p-2 rounded-md border border-token-border bg-black/20"
           >
             {editingId === expr.id ? (
               // Edit mode
@@ -309,11 +312,11 @@ function ExpressionListField({ value, onChange }: ExpressionListFieldProps) {
                   onChange={(e) =>
                     updateExpression(expr.id, { description: e.target.value })
                   }
-                  placeholder="Description for LLM (e.g., 'Self-satisfied, proud, confident')"
+                  placeholder={t('settings.descriptionForLlmPlaceholder')}
                   rows={2}
                   style={{ ...inputStyle, width: "100%", resize: "vertical" }}
                 />
-                <div className="text-[9px] text-white/40">
+                <div className="text-[9px] text-fg-faint">
                   ID: {expr.id} (cannot be changed)
                 </div>
               </div>
@@ -321,11 +324,11 @@ function ExpressionListField({ value, onChange }: ExpressionListFieldProps) {
               // View mode
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs text-white font-medium">
+                  <div className="text-xs text-fg font-medium">
                     {expr.label}
                   </div>
-                  <div className="text-[10px] text-white/50">ID: {expr.id}</div>
-                  <div className="text-[10px] text-white/40 truncate">
+                  <div className="text-[10px] text-fg-dim">ID: {expr.id}</div>
+                  <div className="text-[10px] text-fg-faint truncate">
                     {expr.description}
                   </div>
                 </div>
@@ -350,14 +353,14 @@ function ExpressionListField({ value, onChange }: ExpressionListFieldProps) {
       </div>
 
       {/* Add new expression */}
-      <div className="border-t border-white/10 pt-2 mt-2">
-        <div className="text-[10px] text-white/50 mb-2">Add New Expression</div>
+      <div className="border-t border-token-border pt-2 mt-2">
+        <div className="text-[10px] text-fg-dim mb-2">Add New Expression</div>
         <div className="flex gap-2 mb-2">
           <input
             type="text"
             value={newExpr.id || ""}
             onChange={(e) => setNewExpr({ ...newExpr, id: e.target.value })}
-            placeholder="ID (e.g., smug)"
+            placeholder={t('settings.expressionIdPlaceholder')}
             style={{ ...inputStyle, flex: 1 }}
           />
           <input
@@ -375,7 +378,7 @@ function ExpressionListField({ value, onChange }: ExpressionListFieldProps) {
             onChange={(e) =>
               setNewExpr({ ...newExpr, description: e.target.value })
             }
-            placeholder="Description for LLM analysis"
+            placeholder={t('settings.descriptionForLlm')}
             style={{ ...inputStyle, flex: 1 }}
           />
           <button
@@ -389,7 +392,7 @@ function ExpressionListField({ value, onChange }: ExpressionListFieldProps) {
       </div>
 
       {/* Info text */}
-      <div className="text-[9px] text-white/40 pt-1">
+      <div className="text-[9px] text-fg-faint pt-1">
         Expressions define emotions the LLM can detect. The ID must match your
         avatar&apos;s expression/image names.
       </div>
@@ -421,6 +424,7 @@ function PngExpressionMapField({
   onChange,
   onUploadImage,
 }: PngExpressionMapFieldProps) {
+  const { t } = useTranslation();
   const [newMapping, setNewMapping] = useState<PngExpressionMapping>({
     id: "",
     filename: "",
@@ -494,7 +498,7 @@ function PngExpressionMapField({
   const inputStyle = {
     padding: "6px 8px",
     borderRadius: "4px",
-    border: "1px solid rgba(255,255,255,0.2)",
+    border: "1px solid var(--border)",
     background: "rgba(0,0,0,0.3)",
     color: "#fff",
     fontSize: "11px",
@@ -505,7 +509,7 @@ function PngExpressionMapField({
     <div className="space-y-3">
       {/* Base URL */}
       <div>
-        <label className="block text-[10px] text-white/50 mb-1">
+        <label className="block text-[10px] text-fg-dim mb-1">
           Base URL (画像フォルダ)
         </label>
         <input
@@ -532,13 +536,13 @@ function PngExpressionMapField({
         {mappings.map(({ id, filename }) => (
           <div
             key={id}
-            className="flex items-center gap-2 p-2 rounded-md border border-white/10 bg-black/20"
+            className="flex items-center gap-2 p-2 rounded-md border border-token-border bg-black/20"
           >
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-purple-400 font-mono">{id}</span>
-                <span className="text-white/30">→</span>
-                <span className="text-xs text-white/70 truncate">
+                <span className="text-fg-faint">→</span>
+                <span className="text-xs text-fg-muted truncate">
                   {filename}
                 </span>
               </div>
@@ -554,8 +558,8 @@ function PngExpressionMapField({
       </div>
 
       {/* Add new mapping */}
-      <div className="border-t border-white/10 pt-3">
-        <div className="text-[10px] text-white/50 mb-2">
+      <div className="border-t border-token-border pt-3">
+        <div className="text-[10px] text-fg-dim mb-2">
           Add Expression Mapping
         </div>
         <div className="flex gap-2 mb-2">
@@ -565,7 +569,7 @@ function PngExpressionMapField({
             onChange={(e) =>
               setNewMapping({ ...newMapping, id: e.target.value })
             }
-            placeholder="Expression ID (e.g., smug)"
+            placeholder={t('settings.expressionIdPlaceholder')}
             style={{ ...inputStyle, flex: 1 }}
           />
         </div>
@@ -576,7 +580,7 @@ function PngExpressionMapField({
             onChange={(e) =>
               setNewMapping({ ...newMapping, filename: e.target.value })
             }
-            placeholder="Image filename (e.g., smug.png)"
+            placeholder={t('settings.imageFilenamePlaceholder')}
             style={{ ...inputStyle, flex: 1 }}
           />
           <input
@@ -604,7 +608,7 @@ function PngExpressionMapField({
       </div>
 
       {/* Preview info */}
-      <div className="text-[9px] text-white/40 pt-1">
+      <div className="text-[9px] text-fg-faint pt-1">
         Map expression IDs to image files. Full path: {config.baseUrl}[filename]
       </div>
     </div>
@@ -1909,10 +1913,10 @@ export default function NodeSettings() {
           // Refresh the animations list
           fetchAnimations();
         } else if (response.error) {
-          toast.error(`Upload failed: ${response.error}`);
+          toast.error(t('settings.uploadFailed') + response.error);
         }
       } catch {
-        toast.error("Failed to upload animation file");
+        toast.error(t('settings.uploadAnimationFailed'));
       } finally {
         setAnimationUploading(false);
       }
@@ -1936,10 +1940,10 @@ export default function NodeSettings() {
           // Refresh the models list
           fetchModels();
         } else if (response.error) {
-          toast.error(`Upload failed: ${response.error}`);
+          toast.error(t('settings.uploadFailed') + response.error);
         }
       } catch {
-        toast.error("Failed to upload model file");
+        toast.error(t('settings.uploadModelFailed'));
       } finally {
         setModelUploading(false);
       }
@@ -1955,10 +1959,10 @@ export default function NodeSettings() {
         if (response.data) {
           return response.data.url;
         } else if (response.error) {
-          toast.error(`Upload failed: ${response.error}`);
+          toast.error(t('settings.uploadFailed') + response.error);
         }
       } catch {
-        toast.error("Failed to upload image");
+        toast.error(t('settings.uploadImageFailed'));
       }
       return null;
     },
@@ -2070,7 +2074,7 @@ export default function NodeSettings() {
 
   const handleDelete = () => {
     removeNode(selectedNode.id);
-    toast.info("ノードを削除しました");
+    toast.info(t('settings.nodeDeleted'));
   };
 
   const renderField = (field: NodeField) => {
@@ -2080,7 +2084,7 @@ export default function NodeSettings() {
       width: "100%",
       padding: "8px",
       borderRadius: "6px",
-      border: "1px solid rgba(255,255,255,0.2)",
+      border: "1px solid var(--border)",
       background: "rgba(0,0,0,0.3)",
       color: "#fff",
       fontSize: "12px",
@@ -2166,7 +2170,7 @@ export default function NodeSettings() {
         ) {
           if (voicevoxLoading) {
             return (
-              <div style={{ ...inputStyle, color: "rgba(255,255,255,0.5)" }}>
+              <div style={{ ...inputStyle, color: "var(--text-dim)" }}>
                 Loading speakers...
               </div>
             );
@@ -2242,9 +2246,9 @@ export default function NodeSettings() {
               type="checkbox"
               checked={(value ?? field.defaultValue ?? false) as boolean}
               onChange={(e) => handleChange(field.key, e.target.checked)}
-              className="w-4 h-4 rounded border-white/20 bg-black/30 text-emerald-500 focus:ring-emerald-500"
+              className="w-4 h-4 rounded border-token-border bg-black/30 text-emerald-500 focus:ring-emerald-500"
             />
-            <span className="text-white/70 text-xs">
+            <span className="text-fg-muted text-xs">
               {field.placeholder || "Enabled"}
             </span>
           </label>
@@ -2291,7 +2295,7 @@ export default function NodeSettings() {
                   cursor: animationUploading ? "wait" : "pointer",
                   textAlign: "center",
                   background: animationUploading
-                    ? "rgba(255,255,255,0.1)"
+                    ? "var(--border)"
                     : "rgba(59, 130, 246, 0.2)",
                   border: "1px solid rgba(59, 130, 246, 0.5)",
                 }}
@@ -2316,7 +2320,7 @@ export default function NodeSettings() {
               </select>
             )}
 
-            <div className="text-[10px] text-white/40">
+            <div className="text-[10px] text-fg-faint">
               Download idle animations from{" "}
               <a
                 href="https://www.mixamo.com/"
@@ -2372,7 +2376,7 @@ export default function NodeSettings() {
                   cursor: modelUploading ? "wait" : "pointer",
                   textAlign: "center",
                   background: modelUploading
-                    ? "rgba(255,255,255,0.1)"
+                    ? "var(--border)"
                     : "rgba(168, 85, 247, 0.2)",
                   border: "1px solid rgba(168, 85, 247, 0.5)",
                 }}
@@ -2397,7 +2401,7 @@ export default function NodeSettings() {
               </select>
             )}
 
-            <div className="text-[10px] text-white/40">
+            <div className="text-[10px] text-fg-faint">
               Upload a VRM model file or select from existing uploads.
             </div>
           </div>
@@ -2449,21 +2453,21 @@ export default function NodeSettings() {
             {sections.map((section, index) => (
               <div key={section.id} className="relative">
                 {section.type === "text" ? (
-                  <div className="border border-white/20 rounded-md overflow-hidden">
+                  <div className="border border-token-border rounded-md overflow-hidden">
                     <div className="flex items-center justify-between px-2 py-1 bg-emerald-500/20 text-[10px] text-emerald-400">
                       <span>Text Block</span>
                       <div className="flex gap-1">
                         <button
                           onClick={() => moveSection(index, "up")}
                           disabled={index === 0}
-                          className="px-1 hover:bg-white/10 rounded disabled:opacity-30"
+                          className="px-1 hover:bg-hover rounded disabled:opacity-30"
                         >
                           ↑
                         </button>
                         <button
                           onClick={() => moveSection(index, "down")}
                           disabled={index === sections.length - 1}
-                          className="px-1 hover:bg-white/10 rounded disabled:opacity-30"
+                          className="px-1 hover:bg-hover rounded disabled:opacity-30"
                         >
                           ↓
                         </button>
@@ -2480,7 +2484,7 @@ export default function NodeSettings() {
                       onChange={(e) =>
                         updateSection(section.id, e.target.value)
                       }
-                      placeholder="Enter static text for this part of the prompt..."
+                      placeholder={t('settings.staticTextPlaceholder')}
                       rows={2}
                       style={{
                         width: "100%",
@@ -2503,14 +2507,14 @@ export default function NodeSettings() {
                         <button
                           onClick={() => moveSection(index, "up")}
                           disabled={index === 0}
-                          className="px-1 hover:bg-white/10 rounded disabled:opacity-30"
+                          className="px-1 hover:bg-hover rounded disabled:opacity-30"
                         >
                           ↑
                         </button>
                         <button
                           onClick={() => moveSection(index, "down")}
                           disabled={index === sections.length - 1}
-                          className="px-1 hover:bg-white/10 rounded disabled:opacity-30"
+                          className="px-1 hover:bg-hover rounded disabled:opacity-30"
                         >
                           ↓
                         </button>
@@ -2544,7 +2548,7 @@ export default function NodeSettings() {
                           outline: "none",
                         }}
                       />
-                      <div className="text-[9px] text-white/40 mt-1">
+                      <div className="text-[9px] text-fg-faint mt-1">
                         This will create an input port named "{section.content}"
                       </div>
                     </div>
@@ -2571,7 +2575,7 @@ export default function NodeSettings() {
 
             {/* Info text */}
             {sections.length === 0 && (
-              <div className="text-[10px] text-white/40 text-center py-2">
+              <div className="text-[10px] text-fg-faint text-center py-2">
                 Build your prompt by adding text blocks and input ports.
                 <br />
                 Input ports will appear as connection points on the node.
@@ -2667,16 +2671,16 @@ export default function NodeSettings() {
 
   return (
     <div className="p-4 flex-1 overflow-auto">
-      <h3 className="text-xs text-white/50 uppercase tracking-wider mb-3 m-0">
+      <h3 className="text-xs text-fg-dim uppercase tracking-wider mb-3 m-0">
         {t("settings.nodeSettings")}
       </h3>
       <div className="p-3 rounded-lg" style={{ background: "rgba(0,0,0,0.3)" }}>
         {/* Node Type */}
         <div className="mb-3">
-          <label className="block text-[11px] text-white/60 mb-1">
+          <label className="block text-[11px] text-fg-muted mb-1">
             {t("nodeConfig.nodeType")}
           </label>
-          <div className="text-white font-medium text-sm">
+          <div className="text-fg font-medium text-sm">
             {getNodeLabel(selectedNode.type)}
           </div>
         </div>
@@ -2684,7 +2688,7 @@ export default function NodeSettings() {
         {/* Config Fields */}
         {normalFields.map((field) => (
           <div key={field.key} className="mb-3">
-            <label className="block text-[11px] text-white/60 mb-1">
+            <label className="block text-[11px] text-fg-muted mb-1">
               {getFieldLabel(selectedNode.type, field.key, field.label)}
             </label>
             {renderField(field)}
@@ -2703,7 +2707,7 @@ export default function NodeSettings() {
             </div>
             <button
               onClick={() => setShowOverrides(true)}
-              className="mt-1.5 text-[10px] text-white/40 hover:text-white/60 transition-colors"
+              className="mt-1.5 text-[10px] text-fg-faint hover:text-fg-muted transition-colors"
             >
               {t("globalSettings.override")}
             </button>
@@ -2712,19 +2716,19 @@ export default function NodeSettings() {
 
         {/* Overridable fields (expanded) */}
         {showOverrides && overridableFields.length > 0 && (
-          <div className="mt-2 pt-2 border-t border-white/10">
+          <div className="mt-2 pt-2 border-t border-token-border">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] text-white/40">{t("globalSettings.override")}</span>
+              <span className="text-[10px] text-fg-faint">{t("globalSettings.override")}</span>
               <button
                 onClick={() => setShowOverrides(false)}
-                className="text-[10px] text-white/30 hover:text-white/50 transition-colors"
+                className="text-[10px] text-fg-faint hover:text-fg-dim transition-colors"
               >
                 {t("globalSettings.collapse")}
               </button>
             </div>
             {overridableFields.map((field) => (
               <div key={field.key} className="mb-3">
-                <label className="block text-[11px] text-white/60 mb-1">
+                <label className="block text-[11px] text-fg-muted mb-1">
                   {getFieldLabel(selectedNode.type, field.key, field.label)}
                   <span className="ml-1 text-emerald-400 text-[10px]">
                     ({t("globalSettings.usingGlobal")})

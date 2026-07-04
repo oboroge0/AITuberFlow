@@ -13,8 +13,8 @@
   "ui": {
     "label": "Ollama",
     "icon": "Cpu",
-    "color": "#1F2937",
-    "bgColor": "rgba(31, 41, 55, 0.3)",
+    "color": "#5E81AC",
+    "bgColor": "rgba(94, 129, 172, 0.15)",
     "statusText": "Model: Ollama"
   },
   "node": {
@@ -22,14 +22,14 @@
       {
         "id": "prompt",
         "type": "string",
-        "description": "User message to send to the model"
+        "description": "モデルに送るメッセージ"
       }
     ],
     "outputs": [
       {
         "id": "response",
         "type": "string",
-        "description": "Generated response from the model"
+        "description": "モデルの応答テキスト"
       }
     ],
     "events": {
@@ -59,6 +59,11 @@
       "description": "System instructions for the model",
       "default": "You are a helpful assistant."
     },
+    "promptSections": {
+      "type": "prompt-builder",
+      "label": "Prompt Builder",
+      "description": "Build complex prompts by combining static text, system prompt, and dynamic input sections"
+    },
     "temperature": {
       "type": "number",
       "label": "Temperature",
@@ -67,6 +72,14 @@
       "min": 0,
       "max": 1,
       "inline": true
+    },
+    "maxTokens": {
+      "type": "number",
+      "label": "Max Tokens",
+      "description": "Maximum number of tokens in the response",
+      "default": 1024,
+      "min": 1,
+      "max": 4096
     },
     "contextLength": {
       "type": "number",

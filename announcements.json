@@ -1,16 +1,44 @@
 [
   {
-    "id": "upgrade-to-2.2.0",
-    "type": "warning",
+    "id": "update-v2.6.2",
+    "type": "info",
     "title": {
-      "ja": "v2.2.0 へのアップデートのお願い",
-      "en": "Please update to v2.2.0"
+      "ja": "v2.6.2を公開しました（更新推奨）",
+      "en": "v2.6.2 is out (update recommended)"
     },
     "message": {
-      "ja": "v2.2.0 から自動アップデート機能が追加されました。お手数ですが GitHub Releases から最新版を手動でダウンロードしてください。今後はアプリ内で自動更新が届きます。",
-      "en": "Auto-update is now available starting from v2.2.0. Please manually download the latest version from GitHub Releases. Future updates will be delivered automatically."
+      "ja": "APIキー等の機微情報がAPIレスポンスに平文で露出する問題や、LLM失敗時にエラー文字列をそのまま読み上げてしまう配信事故につながる不具合など、セキュリティ・安定性の修正をまとめた v2.6.1 に加え、v2.6.2 ではデスクトップ版でワークフローをエクスポートする際に保存先を選択できるようになりました。更新をおすすめします。なお、サーバーの既定バインド先が localhost に変更されたため、別マシンのOBS等から接続している場合は環境変数 HOST=0.0.0.0 の設定が必要です。",
+      "en": "v2.6.1 bundled security and stability fixes, including exposure of API keys in API responses and an issue where a failed LLM call could be read aloud on stream. v2.6.2 adds the ability to choose a save location when exporting a workflow on desktop. Update is recommended. Note: the server now binds to localhost by default, so if you connect from another machine (e.g. OBS on a different PC), set the HOST=0.0.0.0 environment variable."
     },
-    "targetVersions": ["2.0.0", "2.0.1", "2.0.2", "2.0.3", "2.1.0", "2.2.0"],
-    "date": "2026-02-20"
+    "targetVersions": ["2.5.0", "2.5.1", "2.5.2", "2.6.0", "2.6.1"],
+    "date": "2026-07-04"
+  },
+  {
+    "id": "feature-2.6.0-theme",
+    "type": "info",
+    "title": {
+      "ja": "ライト/ダークモードに対応しました",
+      "en": "Light / dark mode is here"
+    },
+    "message": {
+      "ja": "v2.6.0 でアプリ全体がライト/ダークテーマに対応しました。ヘッダーの月/太陽アイコンでいつでも切り替えられます。",
+      "en": "v2.6.0 adds light/dark theming across the whole app. Toggle it anytime with the moon/sun icon in the header."
+    },
+    "targetVersions": ["2.6.0"],
+    "date": "2026-07-01"
+  },
+  {
+    "id": "manual-update-2.6.0",
+    "type": "warning",
+    "title": {
+      "ja": "手動アップデートのお願い（v2.6.0）",
+      "en": "Please update manually (v2.6.0)"
+    },
+    "message": {
+      "ja": "デスクトップ版で自動アップデートが正しく動作していない不具合を v2.6.0 で修正しました。以降はアプリ内の自動更新が正しく届きます。お手数ですが今回だけ下記から v2.6.0 を手動でダウンロードしてください: https://github.com/oboroge0/AITuberFlow/releases/latest",
+      "en": "A bug that prevented the desktop auto-updater from working has been fixed in v2.6.0. Auto-update will work correctly from then on. Please download v2.6.0 manually just this once from: https://github.com/oboroge0/AITuberFlow/releases/latest"
+    },
+    "targetVersions": ["2.0.0", "2.0.1", "2.0.2", "2.0.3", "2.1.0", "2.2.0", "2.2.1", "2.2.2", "2.2.3", "2.2.4", "2.3.0", "2.3.1", "2.3.2", "2.4.0", "2.5.0", "2.5.1", "2.5.2"],
+    "date": "2026-07-01"
   }
 ]

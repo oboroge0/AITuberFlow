@@ -66,6 +66,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -77,10 +79,15 @@ jobs:
         with:
           targets: ${{ matrix.rust-target }}
 
+      # キャッシュは desktop-cache-warm.yml が main 上で生成したものを復元する
+      # （shared-key を一致させること）。タグ ref で保存しても次のタグ run から
+      # 復元できないため、保存はしない（save-if: false）
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './apps/desktop/src-tauri -> target'
+          shared-key: desktop-${{ matrix.rust-target }}
+          save-if: false
 
       # Build frontend static export
       - name: Install frontend dependencies
@@ -110,7 +117,7 @@ jobs:
 
       # Install Tauri CLI and build
       - name: Install desktop dependencies
-        run: cd apps/desktop && npm install
+        run: cd apps/desktop && npm ci
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0

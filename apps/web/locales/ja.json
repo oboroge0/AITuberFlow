@@ -18,7 +18,10 @@
     "delete": "削除",
     "duplicate": "複製",
     "export": "エクスポート",
-    "deleteConfirm": "このワークフローを削除しますか？"
+    "deleteConfirm": "このワークフローを削除しますか？",
+    "workflowDeleted": "ワークフローを削除しました",
+    "saveFailed": "保存に失敗しました",
+    "workflowDownloaded": "ワークフローをダウンロードしました"
   },
   "editor": {
     "save": "保存",
@@ -29,7 +32,33 @@
     "running": "実行中",
     "back": "戻る",
     "undo": "元に戻す",
-    "redo": "やり直す"
+    "redo": "やり直す",
+    "zoomIn": "ズームイン",
+    "zoomOut": "ズームアウト",
+    "fitView": "全体表示",
+    "backToWorkflows": "ワークフロー一覧に戻る",
+    "clickToEditName": "クリックして名前を編集",
+    "toggleAvatarControls": "アバターコントロールを切替",
+    "openOverlay": "オーバーレイウィンドウを開く",
+    "copyOverlayUrl": "OBS用オーバーレイURLをコピー",
+    "overlay": "オーバーレイ",
+    "copyUrl": "URLをコピー",
+    "controls": "コントロール",
+    "reconnecting": "再接続中...",
+    "offline": "オフライン",
+    "nodeDetailSettings": "ノード詳細設定",
+    "close": "閉じる",
+    "closeSettingsPanel": "設定パネルを閉じる",
+    "preview": "プレビュー",
+    "expression": "表情",
+    "motion": "モーション",
+    "copiedOverlayUrl": "OBS用オーバーレイURLをコピーしました",
+    "copyUrlFailed": "URLコピーに失敗しました",
+    "importComplete": "インポート完了: ",
+    "loadWorkflowFailed": "ワークフローの読み込みに失敗: ",
+    "autoSaveFailed": "自動保存に失敗: ",
+    "validationSkipped": "バリデーションをスキップしました: ",
+    "importFailed": "インポートに失敗: "
   },
   "sidebar": {
     "search": "ノードを検索...",
@@ -43,7 +72,20 @@
   "settings": {
     "nodeSettings": "ノード設定",
     "selectNode": "ノードを選択して編集",
-    "deleteNode": "ノードを削除"
+    "deleteNode": "ノードを削除",
+    "hidePassword": "パスワードを隠す",
+    "showPassword": "パスワードを表示",
+    "nodeDeleted": "ノードを削除しました",
+    "uploadFailed": "アップロードに失敗: ",
+    "uploadAnimationFailed": "アニメーションファイルのアップロードに失敗しました",
+    "uploadModelFailed": "モデルファイルのアップロードに失敗しました",
+    "uploadImageFailed": "画像のアップロードに失敗しました",
+    "staticTextPlaceholder": "このプロンプトパーツの固定テキストを入力...",
+    "addInputHelp": "入力名を追加してポートを作成します。テンプレートで {{name}} を使用。",
+    "expressionIdPlaceholder": "表情ID (例: smug)",
+    "imageFilenamePlaceholder": "画像ファイル名 (例: smug.png)",
+    "descriptionForLlm": "LLM分析用の説明",
+    "descriptionForLlmPlaceholder": "LLMへの説明 (例: '得意げ、自信満々')"
   },
   "logs": {
     "title": "実行ログ",
@@ -413,13 +455,81 @@
     }
   },
   "update": {
-    "title": "アップデート",
+    "restart": "再起動して更新",
     "downloading": "ダウンロード中...",
     "error": "アップデートに失敗しました",
-    "now": "今すぐ更新",
-    "later": "あとで",
     "close": "閉じる",
     "retry": "再試行"
+  },
+  "theme": {
+    "toLight": "ライトモードに切り替え",
+    "toDark": "ダークモードに切り替え"
+  },
+  "common": {
+    "close": "閉じる",
+    "copy": "コピー",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "configured": "設定済み",
+    "notSet": "未設定",
+    "on": "ON",
+    "off": "OFF"
+  },
+  "activity": {
+    "title": "アクティビティ",
+    "rawLog": "生ログ",
+    "clear": "クリア",
+    "emptyHistory": "まだ実行履歴がありません。ワークフローを実行するとここに表示されます",
+    "emptyLog": "ログはまだありません",
+    "clickToSelect": "クリックでノードを選択",
+    "items": "件",
+    "triggerRun": "実行",
+    "triggerManual": "手動実行",
+    "running": "実行中",
+    "copiedError": "エラー内容をコピーしました",
+    "copyFailed": "コピーに失敗しました"
+  },
+  "search": {
+    "placeholder": "ノードを検索...",
+    "prevResult": "前の結果",
+    "prevResultShortcut": "前の結果 (Shift+Enter)",
+    "nextResult": "次の結果",
+    "nextResultShortcut": "次の結果 (Enter)",
+    "closeShortcut": "閉じる (Esc)",
+    "closeSearch": "検索を閉じる"
+  },
+  "inline": {
+    "hideKey": "キーを隠す",
+    "showKey": "キーを表示",
+    "dragToAdjust": "ドラッグで調整 / クリックで数値入力",
+    "editInSettings": "詳細設定で編集",
+    "globalBadge": "グローバル",
+    "globalTooltip": "ノード側が未設定のため、グローバル設定の値を使用しています（入力すると上書き）",
+    "expand": "展開する",
+    "collapse": "折りたたむ",
+    "detailSettings": "詳細設定",
+    "openDetailSettings": "詳細設定を開く",
+    "charCountEdit": "字 — クリックで編集",
+    "ctrlEnterSave": "Ctrl+Enter で保存 / Esc でキャンセル",
+    "runFromNode": "このノードから実行"
+  },
+  "canvas": {
+    "nodeDeleted": "ノードを削除しました",
+    "addNode": "ノードを追加",
+    "displayLabel": "表示:",
+    "simple": "簡易",
+    "standard": "標準",
+    "detailed": "詳細",
+    "connectableNodes": "接続できるノード"
+  },
+  "preview": {
+    "loadFailed": "ワークフローの読み込みに失敗しました",
+    "noWorkflowData": "ワークフローデータが読み込まれていません",
+    "startFailed": "ワークフローの開始に失敗しました",
+    "stopFailed": "ワークフローの停止に失敗しました"
+  },
+  "toast": {
+    "closeNotification": "通知を閉じる"
   },
   "globalSettings": {
     "title": "グローバル設定",
@@ -435,5 +545,24 @@
     "usingGlobal": "グローバル設定を使用",
     "override": "個別設定で上書き",
     "collapse": "閉じる"
+  },
+  "inline": {
+    "inputs": "入力",
+    "outputs": "出力",
+    "settings": "設定",
+    "moreItems": "項目",
+    "hideKey": "キーを隠す",
+    "showKey": "キーを表示",
+    "dragToAdjust": "ドラッグで調整 / クリックで数値入力",
+    "ctrlEnterSave": "Ctrl+Enter で保存 / Esc でキャンセル",
+    "editInSettings": "詳細設定で編集",
+    "charCountEdit": "字 — クリックで編集",
+    "globalTooltip": "ノード側が未設定のため、グローバル設定の値を使用しています（入力すると上書き）",
+    "globalBadge": "グローバル",
+    "expand": "展開する",
+    "collapse": "折りたたむ",
+    "detailSettings": "詳細設定",
+    "openDetailSettings": "詳細設定を開く",
+    "runFromNode": "このノードから実行"
   }
 }

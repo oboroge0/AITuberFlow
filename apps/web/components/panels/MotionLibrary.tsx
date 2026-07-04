@@ -74,13 +74,13 @@ export default function MotionLibrary({ onSelect, onPreview, selectedUrl }: Moti
   return (
     <div className="flex flex-col h-full max-h-full overflow-hidden">
       {/* Header */}
-      <div className="p-3 border-b border-white/10">
-        <h3 className="text-sm font-semibold text-white mb-2">Motion Library</h3>
+      <div className="p-3 border-b border-token-border">
+        <h3 className="text-sm font-semibold text-fg mb-2">Motion Library</h3>
 
         {/* Search */}
         <div className="relative mb-2">
           <svg
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/40"
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-faint"
             width="12"
             height="12"
             viewBox="0 0 24 24"
@@ -95,7 +95,7 @@ export default function MotionLibrary({ onSelect, onPreview, selectedUrl }: Moti
             placeholder="Search motions..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-xs bg-white/5 border border-white/10 rounded text-white placeholder:text-white/30 focus:outline-none focus:border-purple-500/50"
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-elevated border border-token-border rounded text-fg placeholder:text-fg-faint focus:outline-none focus:border-purple-500/50"
           />
         </div>
 
@@ -105,8 +105,8 @@ export default function MotionLibrary({ onSelect, onPreview, selectedUrl }: Moti
             onClick={() => setSelectedCategory(null)}
             className={`px-2 py-0.5 text-[10px] rounded ${
               !selectedCategory
-                ? 'bg-purple-500/30 text-purple-300'
-                : 'bg-white/5 text-white/50 hover:bg-white/10'
+                ? 'bg-purple-500/30 text-purple-700 dark:text-purple-300'
+                : 'bg-elevated text-fg-dim hover:bg-hover'
             }`}
           >
             All
@@ -117,8 +117,8 @@ export default function MotionLibrary({ onSelect, onPreview, selectedUrl }: Moti
               onClick={() => setSelectedCategory(cat)}
               className={`px-2 py-0.5 text-[10px] rounded ${
                 selectedCategory === cat
-                  ? 'bg-purple-500/30 text-purple-300'
-                  : 'bg-white/5 text-white/50 hover:bg-white/10'
+                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-300'
+                  : 'bg-elevated text-fg-dim hover:bg-hover'
               }`}
             >
               {cat}
@@ -131,7 +131,7 @@ export default function MotionLibrary({ onSelect, onPreview, selectedUrl }: Moti
       <div className="flex-1 overflow-y-auto p-2 space-y-3">
         {Object.entries(groupedMotions).map(([category, motions]) => (
           <div key={category}>
-            <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1 px-1">
+            <div className="text-[10px] text-fg-faint uppercase tracking-wider mb-1 px-1">
               {category}
             </div>
             <div className="grid grid-cols-2 gap-1">
@@ -143,11 +143,11 @@ export default function MotionLibrary({ onSelect, onPreview, selectedUrl }: Moti
                   className={`p-2 rounded text-left transition-all ${
                     selectedUrl === motion.url
                       ? 'bg-purple-500/30 border border-purple-500/50'
-                      : 'bg-white/5 border border-transparent hover:bg-white/10'
+                      : 'bg-elevated border border-transparent hover:bg-hover'
                   }`}
                 >
-                  <div className="text-xs text-white truncate">{motion.name}</div>
-                  <div className="text-[10px] text-white/40 truncate">{motion.url.split('/').pop()}</div>
+                  <div className="text-xs text-fg truncate">{motion.name}</div>
+                  <div className="text-[10px] text-fg-faint truncate">{motion.url.split('/').pop()}</div>
                 </button>
               ))}
             </div>
@@ -155,26 +155,26 @@ export default function MotionLibrary({ onSelect, onPreview, selectedUrl }: Moti
         ))}
 
         {filteredMotions.length === 0 && (
-          <div className="text-center py-4 text-white/40 text-xs">
+          <div className="text-center py-4 text-fg-faint text-xs">
             No motions found
           </div>
         )}
       </div>
 
       {/* Custom URL Input */}
-      <div className="p-3 border-t border-white/10">
-        <div className="text-[10px] text-white/40 mb-1">Custom FBX URL</div>
+      <div className="p-3 border-t border-token-border">
+        <div className="text-[10px] text-fg-faint mb-1">Custom FBX URL</div>
         <div className="flex gap-1">
           <input
             type="text"
             placeholder="/animations/custom.fbx"
             value={customUrl}
             onChange={(e) => setCustomUrl(e.target.value)}
-            className="flex-1 px-2 py-1 text-xs bg-white/5 border border-white/10 rounded text-white placeholder:text-white/30 focus:outline-none focus:border-purple-500/50"
+            className="flex-1 px-2 py-1 text-xs bg-elevated border border-token-border rounded text-fg placeholder:text-fg-faint focus:outline-none focus:border-purple-500/50"
           />
           <button
             onClick={handleCustomUrlSubmit}
-            className="px-2 py-1 text-xs bg-purple-500/20 text-purple-300 rounded hover:bg-purple-500/30"
+            className="px-2 py-1 text-xs bg-purple-500/20 text-purple-700 dark:text-purple-300 rounded hover:bg-purple-500/30"
           >
             Use
           </button>

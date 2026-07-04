@@ -23,12 +23,12 @@
       {
         "id": "tick",
         "type": "number",
-        "description": "Current tick count"
+        "description": "現在のティック回数"
       },
       {
         "id": "timestamp",
         "type": "string",
-        "description": "Current timestamp"
+        "description": "現在のタイムスタンプ"
       }
     ],
     "events": {
