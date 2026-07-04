@@ -18,6 +18,11 @@ versions.set('apps/web/package-lock.json (packages."")', webLock.packages[""].ve
 
 versions.set("apps/server-ts/package.json", readJson("apps/server-ts/package.json").version);
 versions.set("apps/desktop/package.json", readJson("apps/desktop/package.json").version);
+
+const desktopLock = readJson("apps/desktop/package-lock.json");
+versions.set("apps/desktop/package-lock.json (version)", desktopLock.version);
+versions.set('apps/desktop/package-lock.json (packages."")', desktopLock.packages[""].version);
+
 versions.set(
 	"apps/desktop/src-tauri/tauri.conf.json",
 	readJson("apps/desktop/src-tauri/tauri.conf.json").version,
