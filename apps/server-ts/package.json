@@ -21,7 +21,7 @@
     "@hono/zod-validator": "^0.4.0",
     "discord.js": "^14.26.4",
     "drizzle-orm": "^0.45.2",
-    "hono": "^4.12.22",
+    "hono": "^4.12.27",
     "obs-websocket-js": "^5.0.8",
     "openai": "^6.39.0",
     "tmi.js": "^1.8.5",
