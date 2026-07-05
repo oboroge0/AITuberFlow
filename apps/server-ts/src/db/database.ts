@@ -60,11 +60,26 @@ const CREATE_MEMORIES_INDEX_SQL = `
   ON memories (workflow_id, table_name)
 `;
 
+const CREATE_MEMORY_TABLES_SQL = `
+  CREATE TABLE IF NOT EXISTS memory_tables (
+    workflow_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  )
+`;
+
+const CREATE_MEMORY_TABLES_INDEX_SQL = `
+  CREATE UNIQUE INDEX IF NOT EXISTS memory_tables_workflow_name_idx
+  ON memory_tables (workflow_id, name)
+`;
+
 export function initDb(): void {
   sqlite.exec(CREATE_TABLE_SQL);
   sqlite.exec(CREATE_GLOBAL_SETTINGS_SQL);
   sqlite.exec(CREATE_MEMORIES_SQL);
   sqlite.exec(CREATE_MEMORIES_INDEX_SQL);
+  sqlite.exec(CREATE_MEMORY_TABLES_SQL);
+  sqlite.exec(CREATE_MEMORY_TABLES_INDEX_SQL);
 }
 
 // ─── JSON helpers ───────────────────────────────────────────────

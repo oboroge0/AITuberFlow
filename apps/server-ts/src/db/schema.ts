@@ -1,4 +1,4 @@
-import { blob, index, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { blob, index, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const workflows = sqliteTable("workflows", {
   id: text("id").primaryKey(),
@@ -32,5 +32,25 @@ export const memories = sqliteTable(
   },
   (table) => ({
     workflowTableIdx: index("memories_workflow_table_idx").on(table.workflowId, table.tableName),
+  }),
+);
+
+/**
+ * Registry of memory table names per workflow. Lets the node-config UI offer
+ * a selector instead of free-text input (avoids typo-driven table splits),
+ * while still allowing empty tables to exist before any memory is saved.
+ */
+export const memoryTables = sqliteTable(
+  "memory_tables",
+  {
+    workflowId: text("workflow_id").notNull(),
+    name: text("name").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => ({
+    workflowNameIdx: uniqueIndex("memory_tables_workflow_name_idx").on(
+      table.workflowId,
+      table.name,
+    ),
   }),
 );
