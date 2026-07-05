@@ -29,6 +29,9 @@ export default function MemoryViewer({ workflowId, onClose }: MemoryViewerProps)
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pendingDeleteAll, setPendingDeleteAll] = useState(false);
   const deleteAllTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [addingTable, setAddingTable] = useState(false);
+  const [newTableName, setNewTableName] = useState('');
+  const [creatingTable, setCreatingTable] = useState(false);
 
   const loadTables = useCallback(async () => {
     const response = await api.listMemoryTables(workflowId);
@@ -57,6 +60,29 @@ export default function MemoryViewer({ workflowId, onClose }: MemoryViewerProps)
     loadTables();
     loadMemories();
   }, [loadTables, loadMemories]);
+
+  const handleCreateTable = async () => {
+    const name = newTableName.trim();
+    if (!name) {
+      toast.warning(t('memories.tableNameRequired'));
+      return;
+    }
+
+    setCreatingTable(true);
+    const response = await api.createMemoryTable(workflowId, name);
+    setCreatingTable(false);
+
+    if (response.error) {
+      toast.error(t('memories.createTableError') + response.error);
+      return;
+    }
+
+    toast.success(t('memories.createTableSuccess'));
+    setNewTableName('');
+    setAddingTable(false);
+    setSelectedTable(response.data?.name ?? name);
+    await loadTables();
+  };
 
   // Initial load + reload when the panel is opened for a different workflow
   useEffect(() => {
@@ -198,6 +224,18 @@ export default function MemoryViewer({ workflowId, onClose }: MemoryViewerProps)
             ))}
           </select>
 
+          <button
+            onClick={() => setAddingTable((prev) => !prev)}
+            className="w-7 h-7 flex-shrink-0 rounded-lg flex items-center justify-center text-fg-dim hover:text-fg hover:bg-hover transition-colors"
+            title={t('memories.addTable')}
+            aria-label={t('memories.addTable')}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </button>
+
           {!loading && (
             <span className="text-xs text-fg-faint whitespace-nowrap">
               {memoriesList.length} {t('memories.itemCount')}
@@ -236,6 +274,47 @@ export default function MemoryViewer({ workflowId, onClose }: MemoryViewerProps)
             {t('memories.deleteAll')}
           </button>
         </div>
+
+        {/* Inline "create table" row */}
+        {addingTable && (
+          <div
+            className="px-6 py-3 flex items-center gap-2 flex-shrink-0"
+            style={{ borderBottom: '1px solid var(--border-subtle)' }}
+          >
+            <input
+              type="text"
+              autoFocus
+              value={newTableName}
+              onChange={(e) => setNewTableName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleCreateTable();
+                if (e.key === 'Escape') {
+                  setAddingTable(false);
+                  setNewTableName('');
+                }
+              }}
+              placeholder={t('memories.newTablePlaceholder')}
+              className="flex-1 px-3 py-1.5 rounded-lg text-sm text-fg outline-none"
+              style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
+            />
+            <button
+              onClick={handleCreateTable}
+              disabled={creatingTable}
+              className="px-3 py-1.5 rounded-lg text-xs text-emerald-400 hover:bg-hover transition-colors disabled:opacity-40"
+            >
+              {t('memories.createTable')}
+            </button>
+            <button
+              onClick={() => {
+                setAddingTable(false);
+                setNewTableName('');
+              }}
+              className="px-3 py-1.5 rounded-lg text-xs text-fg-muted hover:bg-hover transition-colors"
+            >
+              {t('memories.cancel')}
+            </button>
+          </div>
+        )}
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto min-h-[240px]">
