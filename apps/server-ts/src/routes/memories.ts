@@ -126,20 +126,16 @@ app.get("/:workflowId/memories/tables", async (c) => {
 // Register a new (possibly empty) memory table name. Idempotent: returns
 // 200 with the existing name if it's already registered, so the node-config
 // UI can call this unconditionally without checking first.
-app.post(
-  "/:workflowId/memories/tables",
-  zValidator("json", createMemoryTableBody),
-  async (c) => {
-    const workflowId = c.req.param("workflowId");
-    if (!(await workflowExists(workflowId))) {
-      return c.json({ detail: "Workflow not found" }, 404);
-    }
+app.post("/:workflowId/memories/tables", zValidator("json", createMemoryTableBody), async (c) => {
+  const workflowId = c.req.param("workflowId");
+  if (!(await workflowExists(workflowId))) {
+    return c.json({ detail: "Workflow not found" }, 404);
+  }
 
-    const { name } = c.req.valid("json");
-    const created = await memoriesRepository.createMemoryTable(workflowId, name);
-    return c.json({ name: created });
-  },
-);
+  const { name } = c.req.valid("json");
+  const created = await memoriesRepository.createMemoryTable(workflowId, name);
+  return c.json({ name: created });
+});
 
 // Delete all memories for a workflow (optionally scoped to one table)
 app.delete("/:workflowId/memories", async (c) => {
