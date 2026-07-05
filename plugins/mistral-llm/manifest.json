@@ -12,9 +12,9 @@
   "category": "llm",
   "ui": {
     "label": "Mistral",
-    "icon": "Wind",
-    "color": "#FF7000",
-    "bgColor": "rgba(255, 112, 0, 0.1)",
+    "icon": "si:mistralai",
+    "color": "#FA520F",
+    "bgColor": "rgba(250, 82, 15, 0.1)",
     "statusText": "Mistral AI"
   },
   "node": {

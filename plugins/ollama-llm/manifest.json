@@ -12,7 +12,7 @@
   "category": "llm",
   "ui": {
     "label": "Ollama",
-    "icon": "Cpu",
+    "icon": "si:ollama",
     "color": "#5E81AC",
     "bgColor": "rgba(94, 129, 172, 0.15)",
     "statusText": "Model: Ollama"

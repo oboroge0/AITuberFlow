@@ -344,7 +344,7 @@ export default function Sidebar({ isRunning, onToggleRun, onSave, onExport, onIm
                           draggable
                           onDragStart={(e) => handleDragStart(e, plugin)}
                           onClick={() => handleClick(plugin)}
-                          className="p-2 rounded cursor-grab active:cursor-grabbing flex items-center gap-1.5 text-xs text-fg transition-all hover:opacity-80 hover:scale-105"
+                          className="p-2 rounded cursor-grab active:cursor-grabbing flex items-center gap-1.5 text-xs text-left text-fg transition-all hover:opacity-80 hover:scale-105"
                           style={{
                             background: bgColor,
                             border: `1px solid ${color}40`,

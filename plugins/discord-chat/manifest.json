@@ -12,7 +12,7 @@
   "category": "input",
   "ui": {
     "label": "Discord Chat",
-    "icon": "MessageSquare",
+    "icon": "si:discord",
     "color": "#5865F2",
     "bgColor": "rgba(88, 101, 242, 0.1)",
     "statusText": "Waiting for messages..."

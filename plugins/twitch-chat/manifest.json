@@ -12,7 +12,7 @@
   "category": "input",
   "ui": {
     "label": "Twitch Chat",
-    "icon": "MessageSquare",
+    "icon": "si:twitch",
     "color": "#9146FF",
     "bgColor": "rgba(145, 70, 255, 0.1)",
     "statusText": "Waiting for chat..."

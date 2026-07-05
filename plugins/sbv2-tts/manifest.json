@@ -12,7 +12,7 @@
   "category": "tts",
   "ui": {
     "label": "Style-Bert-VITS2",
-    "icon": "Volume2",
+    "icon": "Mic2",
     "color": "#9C27B0",
     "bgColor": "rgba(156, 39, 176, 0.1)",
     "statusText": "Engine: Style-Bert-VITS2"

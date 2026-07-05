@@ -12,7 +12,7 @@
   "category": "obs",
   "ui": {
     "label": "OBS Scene Switch",
-    "icon": "Monitor",
+    "icon": "si:obsstudio",
     "color": "#8B7CC4",
     "bgColor": "rgba(139, 124, 196, 0.15)",
     "statusText": "OBS Scene Switch"

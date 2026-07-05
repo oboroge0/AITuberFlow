@@ -12,7 +12,7 @@
   "category": "control",
   "ui": {
     "label": "Delay",
-    "icon": "Clock",
+    "icon": "Hourglass",
     "color": "#F97316",
     "bgColor": "rgba(249, 115, 22, 0.1)",
     "statusText": "Delay: 1000ms"

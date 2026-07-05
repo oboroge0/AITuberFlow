@@ -12,9 +12,9 @@
   "category": "llm",
   "ui": {
     "label": "Gemini",
-    "icon": "Cpu",
-    "color": "#4285F4",
-    "bgColor": "rgba(66, 133, 244, 0.1)",
+    "icon": "si:googlegemini",
+    "color": "#8E75B2",
+    "bgColor": "rgba(142, 117, 178, 0.1)",
     "statusText": "Model: Gemini"
   },
   "node": {

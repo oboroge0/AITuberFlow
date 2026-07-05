@@ -12,7 +12,7 @@
   "category": "utility",
   "ui": {
     "label": "Text Transform",
-    "icon": "Type",
+    "icon": "CaseSensitive",
     "color": "#EC4899",
     "bgColor": "rgba(236, 72, 153, 0.1)",
     "statusText": "Text Transform"
