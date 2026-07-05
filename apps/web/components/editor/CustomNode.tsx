@@ -488,7 +488,7 @@ function TextareaEditorPopover({
 // Complex field types that cannot be edited inline
 const COMPLEX_FIELD_TYPES = new Set([
   'prompt-builder', 'expression-list', 'animation-file',
-  'model-file', 'png-expression-map', 'input-list',
+  'model-file', 'png-expression-map', 'input-list', 'memory-table',
 ]);
 
 // Get a summary string for a field value (used in collapsed view)

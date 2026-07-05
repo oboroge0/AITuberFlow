@@ -86,7 +86,14 @@
     "expressionIdPlaceholder": "表情ID (例: smug)",
     "imageFilenamePlaceholder": "画像ファイル名 (例: smug.png)",
     "descriptionForLlm": "LLM分析用の説明",
-    "descriptionForLlmPlaceholder": "LLMへの説明 (例: '得意げ、自信満々')"
+    "descriptionForLlmPlaceholder": "LLMへの説明 (例: '得意げ、自信満々')",
+    "memoryTableSelectPlaceholder": "テーブルを選択...",
+    "memoryTableCreateNew": "＋ 新しいテーブルを作成",
+    "memoryTableNewNamePlaceholder": "新しいテーブル名",
+    "memoryTableCreate": "作成",
+    "memoryTableCancel": "キャンセル",
+    "memoryTableCreateFailed": "テーブルの作成に失敗しました: ",
+    "memoryTableLoadFailed": "テーブル一覧の読み込みに失敗しました: "
   },
   "logs": {
     "title": "実行ログ",
@@ -510,7 +517,14 @@
     "emptyFiltered": "このテーブルにはメモリーがありません",
     "unsavedWorkflow": "メモリーを見るにはワークフローを保存してください",
     "close": "閉じる",
-    "itemCount": "件"
+    "itemCount": "件",
+    "addTable": "テーブルを追加",
+    "newTablePlaceholder": "新しいテーブル名",
+    "createTable": "作成",
+    "cancel": "キャンセル",
+    "tableNameRequired": "テーブル名を入力してください",
+    "createTableSuccess": "テーブルを作成しました",
+    "createTableError": "テーブルの作成に失敗しました: "
   },
   "search": {
     "placeholder": "ノードを検索...",

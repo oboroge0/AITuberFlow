@@ -44,7 +44,7 @@
   },
   "config": {
     "tableName": {
-      "type": "string",
+      "type": "memory-table",
       "label": "テーブル名",
       "description": "検索対象のテーブル名",
       "default": "default",
@@ -73,7 +73,8 @@
       "type": "string",
       "label": "デフォルトクエリ",
       "description": "入力ポートが空の時に使用するクエリ（キーワード検索時）",
-      "default": ""
+      "default": "",
+      "showWhen": { "key": "searchType", "value": "keyword" }
     }
   }
 }

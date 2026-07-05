@@ -86,7 +86,14 @@
     "expressionIdPlaceholder": "Expression ID (e.g., smug)",
     "imageFilenamePlaceholder": "Image filename (e.g., smug.png)",
     "descriptionForLlm": "Description for LLM analysis",
-    "descriptionForLlmPlaceholder": "Description for LLM (e.g., 'Self-satisfied, proud, confident')"
+    "descriptionForLlmPlaceholder": "Description for LLM (e.g., 'Self-satisfied, proud, confident')",
+    "memoryTableSelectPlaceholder": "Select a table...",
+    "memoryTableCreateNew": "+ Create new table",
+    "memoryTableNewNamePlaceholder": "New table name",
+    "memoryTableCreate": "Create",
+    "memoryTableCancel": "Cancel",
+    "memoryTableCreateFailed": "Failed to create table: ",
+    "memoryTableLoadFailed": "Failed to load tables: "
   },
   "logs": {
     "title": "Execution Log",
@@ -510,7 +517,14 @@
     "emptyFiltered": "No memories in this table",
     "unsavedWorkflow": "Save the workflow before viewing memories",
     "close": "Close",
-    "itemCount": "memories"
+    "itemCount": "memories",
+    "addTable": "Add table",
+    "newTablePlaceholder": "New table name",
+    "createTable": "Create",
+    "cancel": "Cancel",
+    "tableNameRequired": "Enter a table name",
+    "createTableSuccess": "Table created",
+    "createTableError": "Failed to create table: "
   },
   "search": {
     "placeholder": "Search nodes...",
