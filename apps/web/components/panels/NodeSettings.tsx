@@ -85,6 +85,142 @@ function PasswordField({
   );
 }
 
+// Memory table selector: fetches the registered/in-use table names for the
+// current workflow and offers an inline "create new table" flow so typos
+// can't silently split a memory-save/memory-search node onto a new table.
+interface MemoryTableFieldProps {
+  value: string;
+  workflowId: string | null;
+  onChange: (newValue: string) => void;
+  style?: React.CSSProperties;
+}
+
+const MEMORY_TABLE_CREATE_NEW = "__create_new__";
+
+function MemoryTableField({ value, workflowId, onChange, style }: MemoryTableFieldProps) {
+  const { t } = useTranslation();
+  const [tables, setTables] = useState<string[]>([]);
+  const [creating, setCreating] = useState(false);
+  const [newTableName, setNewTableName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const loadTables = useCallback(async () => {
+    if (!workflowId) return;
+    const response = await api.listMemoryTables(workflowId);
+    if (response.data) {
+      setTables(response.data);
+    } else if (response.error) {
+      toast.error(t("settings.memoryTableLoadFailed") + response.error);
+    }
+  }, [workflowId, t]);
+
+  useEffect(() => {
+    loadTables();
+  }, [loadTables]);
+
+  // Ensure the node's current value is always selectable, even if it isn't
+  // (yet) registered or used — important for existing workflows saved
+  // before this selector existed (backward compatibility).
+  const options = value && !tables.includes(value) ? [value, ...tables] : tables;
+
+  const handleCreate = async () => {
+    if (!workflowId) return;
+    const name = newTableName.trim();
+    if (!name) return;
+
+    setSubmitting(true);
+    const response = await api.createMemoryTable(workflowId, name);
+    setSubmitting(false);
+
+    if (response.error) {
+      toast.error(t("settings.memoryTableCreateFailed") + response.error);
+      return;
+    }
+
+    const createdName = response.data?.name ?? name;
+    setCreating(false);
+    setNewTableName("");
+    await loadTables();
+    onChange(createdName);
+  };
+
+  if (creating) {
+    return (
+      <div className="flex gap-2">
+        <input
+          type="text"
+          autoFocus
+          value={newTableName}
+          onChange={(e) => setNewTableName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleCreate();
+            if (e.key === "Escape") {
+              setCreating(false);
+              setNewTableName("");
+            }
+          }}
+          placeholder={t("settings.memoryTableNewNamePlaceholder")}
+          style={{ ...style, flex: 1 }}
+        />
+        <button
+          onClick={handleCreate}
+          disabled={submitting || !newTableName.trim()}
+          style={{
+            padding: "8px 10px",
+            borderRadius: "6px",
+            border: "1px solid rgba(16, 185, 129, 0.5)",
+            background: "rgba(16, 185, 129, 0.2)",
+            color: "#fff",
+            fontSize: "12px",
+            cursor: submitting ? "wait" : "pointer",
+          }}
+        >
+          {t("settings.memoryTableCreate")}
+        </button>
+        <button
+          onClick={() => {
+            setCreating(false);
+            setNewTableName("");
+          }}
+          style={{
+            padding: "8px 10px",
+            borderRadius: "6px",
+            border: "1px solid var(--border)",
+            background: "rgba(0,0,0,0.3)",
+            color: "#fff",
+            fontSize: "12px",
+            cursor: "pointer",
+          }}
+        >
+          {t("settings.memoryTableCancel")}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <select
+      value={value ?? ""}
+      onChange={(e) => {
+        if (e.target.value === MEMORY_TABLE_CREATE_NEW) {
+          setCreating(true);
+          return;
+        }
+        onChange(e.target.value);
+      }}
+      style={style}
+    >
+      <option value="">{t("settings.memoryTableSelectPlaceholder")}</option>
+      {options.map((tableName) => (
+        <option key={tableName} value={tableName}>
+          {tableName}
+        </option>
+      ))}
+      <option value={MEMORY_TABLE_CREATE_NEW}>{t("settings.memoryTableCreateNew")}</option>
+    </select>
+  );
+}
+
 // Separate component for input-list field to properly use hooks
 interface InputListFieldProps {
   value: string[];
@@ -1833,7 +1969,7 @@ function normalizeLegacyConfig(
 }
 
 export default function NodeSettings() {
-  const { selectedNodeId, nodes, updateNode, removeNode } = useWorkflowStore();
+  const { selectedNodeId, nodes, updateNode, removeNode, workflowId } = useWorkflowStore();
   const { t } = useTranslation();
   const { settings: globalSettingsValues, loaded: globalSettingsLoaded, fetchSettings: fetchGlobalSettings } = useSettingsStore();
   const [showOverrides, setShowOverrides] = useState(false);
@@ -2593,6 +2729,16 @@ export default function NodeSettings() {
             value={(value ?? field.defaultValue ?? "") as string}
             onChange={(newValue) => handleChange(field.key, newValue)}
             placeholder={field.placeholder}
+            style={inputStyle}
+          />
+        );
+
+      case "memory-table":
+        return (
+          <MemoryTableField
+            value={(value ?? field.defaultValue ?? "") as string}
+            workflowId={workflowId}
+            onChange={(newValue) => handleChange(field.key, newValue)}
             style={inputStyle}
           />
         );

@@ -33,7 +33,7 @@
   },
   "config": {
     "tableName": {
-      "type": "string",
+      "type": "memory-table",
       "label": "テーブル名",
       "description": "記憶の保存先テーブル名",
       "default": "default",

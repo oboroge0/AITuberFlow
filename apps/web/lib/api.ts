@@ -252,6 +252,17 @@ class ApiClient {
     return this.request<string[]>(`/api/workflows/${workflowId}/memories/tables`);
   }
 
+  // Idempotent: returns the existing table if `name` is already registered.
+  async createMemoryTable(
+    workflowId: string,
+    name: string
+  ): Promise<ApiResponse<{ name: string }>> {
+    return this.request<{ name: string }>(`/api/workflows/${workflowId}/memories/tables`, {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    });
+  }
+
   async deleteMemory(workflowId: string, id: string): Promise<ApiResponse<{ status: string }>> {
     return this.request<{ status: string }>(`/api/workflows/${workflowId}/memories/${id}`, {
       method: 'DELETE',

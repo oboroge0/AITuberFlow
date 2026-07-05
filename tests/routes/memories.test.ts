@@ -18,7 +18,7 @@ import { Hono } from "hono";
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { memoryRoutes, setDb } from "../../apps/server-ts/src/routes/memories";
-import { memories, workflows } from "../../apps/server-ts/src/db/schema";
+import { memories, memoryTables, workflows } from "../../apps/server-ts/src/db/schema";
 
 // ─── Test Database ─────────────────────────────────────────────
 
@@ -49,11 +49,23 @@ function setupTestDb(): ReturnType<typeof drizzle> {
       updated_at TEXT NOT NULL
     )
   `);
-  return drizzle(sqlite, { schema: { workflows, memories } });
+  sqlite.run(`
+    CREATE TABLE IF NOT EXISTS memory_tables (
+      workflow_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    )
+  `);
+  sqlite.run(`
+    CREATE UNIQUE INDEX IF NOT EXISTS memory_tables_workflow_name_idx
+    ON memory_tables (workflow_id, name)
+  `);
+  return drizzle(sqlite, { schema: { workflows, memories, memoryTables } });
 }
 
 function resetDb(): void {
   sqlite.run("DELETE FROM memories");
+  sqlite.run("DELETE FROM memory_tables");
   sqlite.run("DELETE FROM workflows");
 }
 
@@ -95,6 +107,17 @@ async function insertMemory(
     [id, workflowId, tableName, content, createdAt, createdAt],
   );
   return id;
+}
+
+async function insertMemoryTable(
+  workflowId: string,
+  name: string,
+  createdAt: string = NOW,
+): Promise<void> {
+  sqlite.run(
+    `INSERT INTO memory_tables (workflow_id, name, created_at) VALUES (?, ?, ?)`,
+    [workflowId, name, createdAt],
+  );
 }
 
 // ─── Setup ────────────────────────────────────────────────────
@@ -306,6 +329,111 @@ describe("GET /:workflowId/memories/tables", () => {
     const data = await res.json();
     expect(data.sort()).toEqual(["table-a", "table-b"]);
   });
+
+  it("returns the union of registered tables and tables already in use, deduplicated", async () => {
+    await insertWorkflow("wf-1");
+    await insertMemory("wf-1", "table-a", "a1");
+    await insertMemoryTable("wf-1", "table-a"); // registered AND in use
+    await insertMemoryTable("wf-1", "table-empty"); // registered, never used
+
+    const res = await app.request(jsonRequest("GET", "/api/workflows/wf-1/memories/tables"));
+    const data = await res.json();
+    expect(data.sort()).toEqual(["table-a", "table-empty"]);
+  });
+
+  it("does not leak table names registered under a different workflow", async () => {
+    await insertWorkflow("wf-1");
+    await insertWorkflow("wf-2");
+    await insertMemoryTable("wf-2", "other-workflow-table");
+
+    const res = await app.request(jsonRequest("GET", "/api/workflows/wf-1/memories/tables"));
+    const data = await res.json();
+    expect(data).toEqual([]);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// POST /:workflowId/memories/tables
+// ═══════════════════════════════════════════════════════════════
+
+describe("POST /:workflowId/memories/tables", () => {
+  it("returns 404 when the workflow does not exist", async () => {
+    const res = await app.request(
+      jsonRequest("POST", "/api/workflows/does-not-exist/memories/tables", {
+        name: "new-table",
+      }),
+    );
+    expect(res.status).toBe(404);
+  });
+
+  it("registers a new table and it shows up in the tables list", async () => {
+    await insertWorkflow("wf-1");
+
+    const res = await app.request(
+      jsonRequest("POST", "/api/workflows/wf-1/memories/tables", { name: "new-table" }),
+    );
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.name).toBe("new-table");
+
+    const listRes = await app.request(jsonRequest("GET", "/api/workflows/wf-1/memories/tables"));
+    expect(await listRes.json()).toEqual(["new-table"]);
+  });
+
+  it("is idempotent: creating the same table twice returns 200 both times", async () => {
+    await insertWorkflow("wf-1");
+
+    const first = await app.request(
+      jsonRequest("POST", "/api/workflows/wf-1/memories/tables", { name: "dup-table" }),
+    );
+    expect(first.status).toBe(200);
+
+    const second = await app.request(
+      jsonRequest("POST", "/api/workflows/wf-1/memories/tables", { name: "dup-table" }),
+    );
+    expect(second.status).toBe(200);
+    expect((await second.json()).name).toBe("dup-table");
+
+    const listRes = await app.request(jsonRequest("GET", "/api/workflows/wf-1/memories/tables"));
+    expect(await listRes.json()).toEqual(["dup-table"]);
+  });
+
+  it("trims whitespace from the name", async () => {
+    await insertWorkflow("wf-1");
+
+    const res = await app.request(
+      jsonRequest("POST", "/api/workflows/wf-1/memories/tables", { name: "  spaced  " }),
+    );
+    expect(res.status).toBe(200);
+    expect((await res.json()).name).toBe("spaced");
+  });
+
+  it("rejects an empty name", async () => {
+    await insertWorkflow("wf-1");
+
+    const res = await app.request(
+      jsonRequest("POST", "/api/workflows/wf-1/memories/tables", { name: "   " }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a name longer than 64 characters", async () => {
+    await insertWorkflow("wf-1");
+
+    const res = await app.request(
+      jsonRequest("POST", "/api/workflows/wf-1/memories/tables", { name: "a".repeat(65) }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a request missing name", async () => {
+    await insertWorkflow("wf-1");
+
+    const res = await app.request(
+      jsonRequest("POST", "/api/workflows/wf-1/memories/tables", {}),
+    );
+    expect(res.status).toBe(400);
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -348,6 +476,33 @@ describe("DELETE /:workflowId/memories", () => {
     const remaining = await listRes.json();
     expect(remaining).toHaveLength(1);
     expect(remaining[0].tableName).toBe("table-b");
+  });
+
+  it("also removes the table's registry entry when deleting scoped to that table", async () => {
+    await insertWorkflow("wf-1");
+    await insertMemory("wf-1", "table-a", "a1");
+    await insertMemoryTable("wf-1", "table-a");
+    await insertMemoryTable("wf-1", "table-b"); // untouched registry entry
+
+    const res = await app.request(
+      jsonRequest("DELETE", "/api/workflows/wf-1/memories?table_name=table-a"),
+    );
+    expect(res.status).toBe(200);
+
+    const tablesRes = await app.request(jsonRequest("GET", "/api/workflows/wf-1/memories/tables"));
+    expect(await tablesRes.json()).toEqual(["table-b"]);
+  });
+
+  it("removes all registry entries for the workflow when deleting all memories", async () => {
+    await insertWorkflow("wf-1");
+    await insertMemoryTable("wf-1", "table-a");
+    await insertMemoryTable("wf-1", "table-b");
+
+    const res = await app.request(jsonRequest("DELETE", "/api/workflows/wf-1/memories"));
+    expect(res.status).toBe(200);
+
+    const tablesRes = await app.request(jsonRequest("GET", "/api/workflows/wf-1/memories/tables"));
+    expect(await tablesRes.json()).toEqual([]);
   });
 });
 

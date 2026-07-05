@@ -64,6 +64,16 @@ const createMemoryBody = z.object({
   content: z.string({ required_error: "content is required" }).min(1),
 });
 
+const MAX_TABLE_NAME_LENGTH = 64;
+
+const createMemoryTableBody = z.object({
+  name: z
+    .string({ required_error: "name is required" })
+    .trim()
+    .min(1, "name must not be empty")
+    .max(MAX_TABLE_NAME_LENGTH, `name must be at most ${MAX_TABLE_NAME_LENGTH} characters`),
+});
+
 // ─── Routes ───────────────────────────────
 
 // List memories (recent or keyword search)
@@ -102,7 +112,7 @@ app.post("/:workflowId/memories", zValidator("json", createMemoryBody), async (c
   return c.json(memoryToResponse(row), 201);
 });
 
-// List distinct table names for a workflow
+// List table names for a workflow (registered tables ∪ tables already in use)
 app.get("/:workflowId/memories/tables", async (c) => {
   const workflowId = c.req.param("workflowId");
   if (!(await workflowExists(workflowId))) {
@@ -111,6 +121,20 @@ app.get("/:workflowId/memories/tables", async (c) => {
 
   const tableNames = await memoriesRepository.listMemoryTables(workflowId);
   return c.json(tableNames);
+});
+
+// Register a new (possibly empty) memory table name. Idempotent: returns
+// 200 with the existing name if it's already registered, so the node-config
+// UI can call this unconditionally without checking first.
+app.post("/:workflowId/memories/tables", zValidator("json", createMemoryTableBody), async (c) => {
+  const workflowId = c.req.param("workflowId");
+  if (!(await workflowExists(workflowId))) {
+    return c.json({ detail: "Workflow not found" }, 404);
+  }
+
+  const { name } = c.req.valid("json");
+  const created = await memoriesRepository.createMemoryTable(workflowId, name);
+  return c.json({ name: created });
 });
 
 // Delete all memories for a workflow (optionally scoped to one table)

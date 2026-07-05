@@ -134,7 +134,8 @@ export interface ConfigField {
     | 'expression-list'
     | 'animation-file'
     | 'model-file'
-    | 'png-expression-map';
+    | 'png-expression-map'
+    | 'memory-table';
   label: string;
   description?: string;
   required?: boolean;
@@ -168,7 +169,8 @@ export interface NodeField {
     | 'input-list'
     | 'expression-list'
     | 'password'
-    | 'png-expression-map';
+    | 'png-expression-map'
+    | 'memory-table';
   label: string;
   placeholder?: string;
   options?: { label: string; value: string | number }[];

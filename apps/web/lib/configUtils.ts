@@ -38,6 +38,7 @@ function mapFieldType(manifestType: ConfigField['type']): NodeField['type'] {
     case 'animation-file':
     case 'model-file':
     case 'png-expression-map':
+    case 'memory-table':
       return manifestType;
     default:
       return 'text';

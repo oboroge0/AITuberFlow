@@ -14,7 +14,7 @@
 
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db as defaultDb } from "./database";
-import { memories } from "./schema";
+import { memories, memoryTables } from "./schema";
 
 const DEFAULT_SEARCH_LIMIT = 50;
 
@@ -94,13 +94,47 @@ export async function searchMemories(params: SearchMemoriesParams): Promise<Memo
     .limit(limit ?? DEFAULT_SEARCH_LIMIT);
 }
 
-/** List the distinct table names that have at least one memory for a workflow. */
+/**
+ * List the table names available for a workflow: the union of tables
+ * explicitly registered (via `createMemoryTable`, e.g. empty tables created
+ * ahead of use) and tables that already hold at least one memory row.
+ * Deduplicated and sorted for a stable UI order.
+ */
 export async function listMemoryTables(workflowId: string): Promise<string[]> {
-  const rows = await _db
-    .selectDistinct({ tableName: memories.tableName })
-    .from(memories)
-    .where(eq(memories.workflowId, workflowId));
-  return rows.map((row) => row.tableName);
+  const [registered, used] = await Promise.all([
+    _db
+      .select({ name: memoryTables.name })
+      .from(memoryTables)
+      .where(eq(memoryTables.workflowId, workflowId)),
+    _db
+      .selectDistinct({ tableName: memories.tableName })
+      .from(memories)
+      .where(eq(memories.workflowId, workflowId)),
+  ]);
+
+  const names = new Set<string>();
+  for (const row of registered) names.add(row.name);
+  for (const row of used) names.add(row.tableName);
+  return Array.from(names).sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * Register a memory table name for a workflow (idempotent — if the name is
+ * already registered, this is a no-op and the existing name is returned).
+ */
+export async function createMemoryTable(workflowId: string, name: string): Promise<string> {
+  const [existing] = await _db
+    .select({ name: memoryTables.name })
+    .from(memoryTables)
+    .where(and(eq(memoryTables.workflowId, workflowId), eq(memoryTables.name, name)));
+  if (existing) return existing.name;
+
+  await _db.insert(memoryTables).values({
+    workflowId,
+    name,
+    createdAt: nowISO(),
+  });
+  return name;
 }
 
 /** Delete all memories for a workflow, optionally scoped to a single table. */
@@ -108,6 +142,10 @@ export async function deleteMemories(workflowId: string, tableName?: string): Pr
   const conditions = [eq(memories.workflowId, workflowId)];
   if (tableName) conditions.push(eq(memories.tableName, tableName));
   await _db.delete(memories).where(and(...conditions));
+
+  const registryConditions = [eq(memoryTables.workflowId, workflowId)];
+  if (tableName) registryConditions.push(eq(memoryTables.name, tableName));
+  await _db.delete(memoryTables).where(and(...registryConditions));
 }
 
 /**
