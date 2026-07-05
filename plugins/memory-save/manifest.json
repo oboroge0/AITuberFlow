@@ -1,0 +1,43 @@
+{
+  "$schema": "https://aituber-flow.dev/schemas/plugin-manifest.json",
+  "id": "memory-save",
+  "name": "Memory Save",
+  "version": "1.0.0",
+  "description": "Save text to the workflow's long-term memory store for later recall.",
+  "author": {
+    "name": "AITuberFlow",
+    "url": "https://github.com/oboroge0/AITuberFlow"
+  },
+  "license": "MIT",
+  "category": "utility",
+  "ui": {
+    "label": "Memory Save",
+    "icon": "Database",
+    "color": "#8B5CF6",
+    "bgColor": "rgba(139, 92, 246, 0.1)",
+    "statusText": "Ready to save"
+  },
+  "node": {
+    "inputs": [
+      {
+        "id": "content",
+        "type": "string",
+        "description": "保存するテキスト"
+      }
+    ],
+    "outputs": [],
+    "events": {
+      "emits": [],
+      "listens": []
+    }
+  },
+  "config": {
+    "tableName": {
+      "type": "string",
+      "label": "テーブル名",
+      "description": "記憶の保存先テーブル名",
+      "default": "default",
+      "required": true
+    }
+  }
+}

@@ -9,6 +9,7 @@ import { logger } from "hono/logger";
 import { initDb } from "./db/database";
 import { WorkflowExecutor } from "./engine/executor";
 import { integrationRoutes } from "./routes/integrations";
+import { memoryRoutes } from "./routes/memories";
 import { pluginRoutes } from "./routes/plugins";
 import { settingsRoutes } from "./routes/settings";
 import { templateRoutes } from "./routes/templates";
@@ -53,6 +54,7 @@ app.get("/health", (c) => c.json({ status: "healthy", version: "2.0.0", runtime:
 
 // API routes (must be registered BEFORE static file serving)
 app.route("/api/workflows", workflowRoutes);
+app.route("/api/workflows", memoryRoutes);
 app.route("/api/plugins", pluginRoutes);
 app.route("/api/templates", templateRoutes);
 app.route("/api/integrations", integrationRoutes);

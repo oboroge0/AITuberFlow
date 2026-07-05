@@ -8,6 +8,7 @@
 
 - [システムエンドポイント](#システムエンドポイント)
 - [ワークフローAPI](#ワークフローapi)
+- [記憶API](#記憶api)
 - [プラグインAPI](#プラグインapi)
 - [テンプレートAPI](#テンプレートapi)
 - [連携API](#連携api)
@@ -258,6 +259,110 @@ JSONデータからワークフローをインポートします。
 
 ---
 
+## 記憶API
+
+ベースパス: `/api/workflows`
+
+`memory-save` / `memory-search` ノードプラグインが使うワークフロー単位の長期記憶ストア。各記憶は `workflowId` と論理的な `table_name`（`"chat-history"` や `"facts"` のように自由に名付けられるコレクション名）に紐づきます。
+
+### 記憶一覧取得
+
+**GET** `/api/workflows/{workflow_id}/memories`
+
+ワークフローの記憶を、直近順またはキーワード一致で返します。
+
+**クエリパラメータ:**
+- `table_name`（任意）: 特定のテーブルに限定します。省略時は全テーブルを対象にします。
+- `search_type`（任意）: `recent`（デフォルト）または `keyword`。
+- `query`（`search_type=keyword` の場合は必須）: 記憶内容を検索する部分文字列。リテラルな部分一致として扱われ、`query` 内の `%` や `_` はSQLのワイルドカードではなくリテラル文字として扱われます。
+- `limit`（任意）: 返却件数の上限。デフォルト `50`、最大 `500`。
+
+**レスポンス:** `200 OK`
+```json
+[
+  {
+    "id": "uuid-string",
+    "workflowId": "workflow-uuid",
+    "tableName": "chat-history",
+    "content": "User said hello.",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+]
+```
+
+**エラー:** `400 Bad Request` - `search_type=keyword` なのに `query` が無い
+
+**エラー:** `404 Not Found` - ワークフローが見つかりません
+
+### 記憶作成
+
+**POST** `/api/workflows/{workflow_id}/memories`
+
+新しい記憶を保存します。
+
+**リクエストボディ:**
+```json
+{
+  "table_name": "chat-history",
+  "content": "User said hello."
+}
+```
+
+**レスポンス:** `201 Created` - 作成された記憶を返します（記憶一覧取得と同じ形式）
+
+**エラー:** `404 Not Found` - ワークフローが見つかりません
+
+**エラー:** `400 Bad Request` - バリデーションエラー（`table_name` または `content` が未指定・空文字）
+
+### 記憶テーブル一覧取得
+
+**GET** `/api/workflows/{workflow_id}/memories/tables`
+
+そのワークフローで記憶が1件以上存在する `table_name` の一覧（重複なし）を返します。
+
+**レスポンス:** `200 OK`
+```json
+["chat-history", "facts"]
+```
+
+**エラー:** `404 Not Found` - ワークフローが見つかりません
+
+### 記憶削除（一括）
+
+**DELETE** `/api/workflows/{workflow_id}/memories`
+
+ワークフローの全記憶を削除します。`table_name` を指定した場合はそのテーブルの記憶のみ削除します。
+
+**クエリパラメータ:**
+- `table_name`（任意）: このテーブルの記憶のみ削除します。
+
+**レスポンス:** `200 OK`
+```json
+{
+  "status": "deleted"
+}
+```
+
+**エラー:** `404 Not Found` - ワークフローが見つかりません
+
+### 記憶削除（単体）
+
+**DELETE** `/api/workflows/{workflow_id}/memories/{id}`
+
+指定したワークフローに属する記憶を1件、idで削除します。
+
+**レスポンス:** `200 OK`
+```json
+{
+  "status": "deleted"
+}
+```
+
+**エラー:** `404 Not Found` - 記憶が見つからない、または別のワークフローに属している
+
+---
+
 ## プラグインAPI
 
 ベースパス: `/api/plugins`
@@ -292,6 +397,10 @@ JSONデータからワークフローをインポートします。
 **レスポンス:** `200 OK` - プラグインマニフェストJSON
 
 **エラー:** `404 Not Found` - プラグインが見つかりません
+
+### LLMノードの `system` 入力
+
+すべてのLLMノードプラグイン（`openai-llm`、`anthropic-llm`、`google-llm`、`ollama-llm`、`groq-llm`、`mistral-llm`）は `system` 入力ポート（型: `string`）を受け付けます。上流ノード（典型的には `prompt-builder`）を `system` に接続すると、その出力がそのLLM呼び出しのシステムプロンプトとして使われます。`system` が未接続・空文字・または文字列以外の値を受け取った場合は、ノード自身の `systemPrompt` 設定フィールドにフォールバックします。LLMノードはキャラクターの人格をシステムプロンプトへ自動注入しなくなりました。必要な場合は `prompt-builder`（または `systemPrompt` 設定フィールド）で明示的に組み込んでください。
 
 ---
 

@@ -39,7 +39,7 @@ export default class SubtitleDisplayNode extends BaseNode {
     const text: string = inputs.text ?? "";
 
     if (!text) {
-      return { text: "" };
+      return {};
     }
 
     // Get character name if show_speaker is enabled
@@ -68,7 +68,7 @@ export default class SubtitleDisplayNode extends BaseNode {
       `Subtitle displayed: ${text.substring(0, 50)}${text.length > 50 ? "..." : ""}`,
     );
 
-    return { text };
+    return {};
   }
 
   async teardown(): Promise<void> {

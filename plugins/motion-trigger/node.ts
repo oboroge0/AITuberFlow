@@ -32,14 +32,11 @@ export default class MotionTriggerNode extends BaseNode {
     inputs: Record<string, any>,
     context: NodeContext,
   ): Promise<Record<string, any>> {
-    const triggerInput = inputs.trigger;
-
     const result: Record<string, any> = {
       expression: this.expression ? this.expression : null,
       intensity: this.expression ? this.intensity : null,
       motionUrl: this.motionUrl ? this.motionUrl : null,
       motion: this.motion ? this.motion : null, // Legacy
-      passthrough: triggerInput,
     };
 
     // Direct event emission (optional, disabled by default)

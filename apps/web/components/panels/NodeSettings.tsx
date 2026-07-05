@@ -753,11 +753,6 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         placeholder: "Enter character settings...",
       },
       {
-        key: "promptSections",
-        type: "prompt-builder",
-        label: "Prompt Builder",
-      },
-      {
         key: "temperature",
         type: "number",
         label: "Temperature",
@@ -892,11 +887,6 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         placeholder: "Enter character settings...",
       },
       {
-        key: "promptSections",
-        type: "prompt-builder",
-        label: "Prompt Builder",
-      },
-      {
         key: "temperature",
         type: "number",
         label: "Temperature",
@@ -924,11 +914,6 @@ const nodeConfigs: Record<string, { label: string; fields: NodeField[] }> = {
         type: "textarea",
         label: "System Prompt",
         placeholder: "Enter character settings...",
-      },
-      {
-        key: "promptSections",
-        type: "prompt-builder",
-        label: "Prompt Builder",
       },
       {
         key: "temperature",

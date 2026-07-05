@@ -4,14 +4,9 @@
  * Generates text responses using OpenAI's GPT models.
  */
 
-import { BaseNode, NodeContext, createEvent, handleLLMError } from "@aituber-flow/sdk";
+import { BaseNode, NodeContext, createEvent, handleLLMError, resolveSystemPrompt } from "@aituber-flow/sdk";
 import type { Event } from "@aituber-flow/sdk";
 import OpenAI from "openai";
-
-interface PromptSection {
-  type: "text" | "input";
-  content: string;
-}
 
 export default class OpenAILLMNode extends BaseNode {
   /** Demo mode response */
@@ -40,7 +35,6 @@ export default class OpenAILLMNode extends BaseNode {
   private temperature: number = 0.7;
   private maxTokens: number = 1024;
   private reasoningEffort: string | null = null;
-  private promptSections: PromptSection[] | null = null;
 
   async setup(config: Record<string, any>, context: NodeContext): Promise<void> {
     this.apiKey = config.apiKey ?? "";
@@ -51,7 +45,6 @@ export default class OpenAILLMNode extends BaseNode {
     this.temperature = Math.max(0, Math.min(2, this.temperature));
     this.maxTokens = config.maxTokens ?? 1024;
     this.reasoningEffort = config.reasoningEffort ?? null;
-    this.promptSections = config.promptSections ?? null;
 
     if (!this.apiKey) {
       // Auto demo mode when API key is not set
@@ -69,39 +62,6 @@ export default class OpenAILLMNode extends BaseNode {
     }
   }
 
-  /**
-   * Build prompt from sections configuration.
-   */
-  private buildPromptFromSections(inputs: Record<string, any>): string {
-    if (!this.promptSections) {
-      return (inputs.prompt as string) ?? "";
-    }
-
-    const parts: string[] = [];
-    for (const section of this.promptSections) {
-      if (section.type === "text") {
-        // Static text block
-        parts.push(section.content);
-      } else if (section.type === "input") {
-        // Dynamic input from connection - content is the port name
-        let inputValue: any = inputs[section.content] ?? "";
-        // Handle objects by extracting common fields
-        if (typeof inputValue === "object" && inputValue !== null && !Array.isArray(inputValue)) {
-          if ("message" in inputValue) {
-            inputValue = inputValue.message;
-          } else if ("text" in inputValue) {
-            inputValue = inputValue.text;
-          } else {
-            inputValue = String(inputValue);
-          }
-        }
-        parts.push(inputValue ? String(inputValue) : "");
-      }
-    }
-
-    return parts.join("\n");
-  }
-
   async execute(
     inputs: Record<string, any>,
     context: NodeContext,
@@ -112,10 +72,7 @@ export default class OpenAILLMNode extends BaseNode {
       return { response: OpenAILLMNode.DEMO_RESPONSE };
     }
 
-    // Build prompt from sections or use simple prompt input
-    const prompt = this.promptSections
-      ? this.buildPromptFromSections(inputs)
-      : ((inputs.prompt as string) ?? "");
+    const prompt = (inputs.prompt as string) ?? "";
 
     if (!prompt) {
       await context.log("No prompt provided", "warning");
@@ -125,20 +82,13 @@ export default class OpenAILLMNode extends BaseNode {
     try {
       await context.log(`Calling OpenAI API (${this.model})...`);
 
-      // Include character personality in system prompt
-      const characterName = context.getCharacterName();
-      const characterPersonality = context.getCharacterPersonality();
-
-      let fullSystemPrompt = this.systemPrompt;
-      if (characterPersonality) {
-        fullSystemPrompt = `${this.systemPrompt}\n\nYou are ${characterName}. ${characterPersonality}`;
-      }
+      const systemPrompt = resolveSystemPrompt(inputs.system, this.systemPrompt);
 
       // Build API parameters
       const apiParams: OpenAI.ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
         messages: [
-          { role: "system" as const, content: fullSystemPrompt },
+          { role: "system" as const, content: systemPrompt },
           { role: "user" as const, content: prompt },
         ],
         temperature: this.temperature,

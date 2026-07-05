@@ -35,6 +35,28 @@ type EmitCallback = (event: Event) => Promise<void>;
 type LogCallback = (message: string, level: string) => Promise<void>;
 type UpdateCharacterCallback = (updates: Record<string, any>) => Promise<void>;
 
+/**
+ * A single stored memory row as returned by memory search operations.
+ */
+export interface MemoryRecord {
+  id: string;
+  content: string;
+  createdAt: string;
+}
+
+/** Options accepted by {@link NodeContext.searchMemories}. */
+export interface SearchMemoriesOptions {
+  searchType: "recent" | "keyword";
+  query?: string;
+  limit?: number;
+}
+
+type SaveMemoryCallback = (tableName: string, content: string) => Promise<string>;
+type SearchMemoriesCallback = (
+  tableName: string,
+  options: SearchMemoriesOptions,
+) => Promise<MemoryRecord[]>;
+
 export interface NodeContextOptions {
   workflowId: string;
   nodeId: string;
@@ -42,6 +64,8 @@ export interface NodeContextOptions {
   emitCallback?: EmitCallback;
   logCallback?: LogCallback;
   updateCharacterCallback?: UpdateCharacterCallback;
+  saveMemoryCallback?: SaveMemoryCallback;
+  searchMemoriesCallback?: SearchMemoriesCallback;
 }
 
 /**
@@ -58,6 +82,8 @@ export class NodeContext {
   private _emitCallback?: EmitCallback;
   private _logCallback?: LogCallback;
   private _updateCharacterCallback?: UpdateCharacterCallback;
+  private _saveMemoryCallback?: SaveMemoryCallback;
+  private _searchMemoriesCallback?: SearchMemoriesCallback;
   private _abortControllers: Set<AbortController> = new Set();
 
   constructor(options: NodeContextOptions) {
@@ -67,6 +93,8 @@ export class NodeContext {
     this._emitCallback = options.emitCallback;
     this._logCallback = options.logCallback;
     this._updateCharacterCallback = options.updateCharacterCallback;
+    this._saveMemoryCallback = options.saveMemoryCallback;
+    this._searchMemoriesCallback = options.searchMemoriesCallback;
   }
 
   /**
@@ -138,6 +166,39 @@ export class NodeContext {
       current: "neutral",
       intensity: 0.5,
     };
+  }
+
+  /**
+   * Save a piece of text to the workflow's long-term memory store.
+   *
+   * @param tableName Logical table/collection to save the memory under.
+   * @param content Text content to persist.
+   * @returns The generated id of the saved memory.
+   * @throws {Error} If no save callback has been configured for this context.
+   */
+  async saveMemory(tableName: string, content: string): Promise<string> {
+    if (!this._saveMemoryCallback) {
+      throw new Error("saveMemory is not available in this context");
+    }
+    return await this._saveMemoryCallback(tableName, content);
+  }
+
+  /**
+   * Search the workflow's long-term memory store.
+   *
+   * @param tableName Logical table/collection to search within.
+   * @param options Search parameters (recent vs. keyword, limit).
+   * @returns Matching memories, most recent first.
+   * @throws {Error} If no search callback has been configured for this context.
+   */
+  async searchMemories(
+    tableName: string,
+    options: SearchMemoriesOptions,
+  ): Promise<MemoryRecord[]> {
+    if (!this._searchMemoriesCallback) {
+      throw new Error("searchMemories is not available in this context");
+    }
+    return await this._searchMemoriesCallback(tableName, options);
   }
 
   /**

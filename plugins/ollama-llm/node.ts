@@ -4,16 +4,11 @@
  * Generates text using Ollama local LLM server.
  */
 
-import { BaseNode, NodeContext, createEvent, handleLLMError } from "@aituber-flow/sdk";
+import { BaseNode, NodeContext, createEvent, handleLLMError, resolveSystemPrompt } from "@aituber-flow/sdk";
 
 interface OllamaGenerateResponse {
   response: string;
   [key: string]: any;
-}
-
-interface PromptSection {
-  type: "text" | "input";
-  content: string;
 }
 
 export default class OllamaLLMNode extends BaseNode {
@@ -27,7 +22,6 @@ export default class OllamaLLMNode extends BaseNode {
   private maxTokens: number = 1024;
   private contextLength: number = 4096;
   private connectionAvailable: boolean = true;
-  private promptSections: PromptSection[] | null = null;
 
   async setup(config: Record<string, any>, context: NodeContext): Promise<void> {
     this.host = config.host ?? "http://localhost:11434";
@@ -37,7 +31,6 @@ export default class OllamaLLMNode extends BaseNode {
     this.temperature = Math.max(0, Math.min(2, this.temperature));
     this.maxTokens = config.maxTokens ?? 1024;
     this.contextLength = config.contextLength ?? 4096;
-    this.promptSections = config.promptSections ?? null;
 
     // Test connection - auto demo mode if unavailable
     try {
@@ -71,40 +64,11 @@ export default class OllamaLLMNode extends BaseNode {
     }
   }
 
-  private buildPromptFromSections(inputs: Record<string, any>): string {
-    if (!this.promptSections) {
-      return (inputs.prompt as string) ?? "";
-    }
-
-    const parts: string[] = [];
-    for (const section of this.promptSections) {
-      if (section.type === "text") {
-        parts.push(section.content);
-      } else if (section.type === "input") {
-        let inputValue: any = inputs[section.content] ?? "";
-        if (typeof inputValue === "object" && inputValue !== null && !Array.isArray(inputValue)) {
-          if ("message" in inputValue) {
-            inputValue = inputValue.message;
-          } else if ("text" in inputValue) {
-            inputValue = inputValue.text;
-          } else {
-            inputValue = String(inputValue);
-          }
-        }
-        parts.push(inputValue ? String(inputValue) : "");
-      }
-    }
-
-    return parts.join("\n");
-  }
-
   async execute(
     inputs: Record<string, any>,
     context: NodeContext,
   ): Promise<Record<string, any>> {
-    const prompt = this.promptSections
-      ? this.buildPromptFromSections(inputs)
-      : ((inputs.prompt as string) ?? "");
+    const prompt = (inputs.prompt as string) ?? "";
 
     if (!prompt) {
       await context.log("No prompt provided", "warning");
@@ -121,17 +85,12 @@ export default class OllamaLLMNode extends BaseNode {
 
       const url = `${this.host.replace(/\/+$/, "")}/api/generate`;
 
-      const characterName = context.getCharacterName();
-      const characterPersonality = context.getCharacterPersonality();
-      let fullSystemPrompt = this.systemPrompt;
-      if (characterPersonality) {
-        fullSystemPrompt = `${this.systemPrompt}\n\nYou are ${characterName}. ${characterPersonality}`;
-      }
+      const systemPrompt = resolveSystemPrompt(inputs.system, this.systemPrompt);
 
       const payload = {
         model: this.model,
         prompt,
-        system: fullSystemPrompt,
+        system: systemPrompt,
         stream: false,
         options: {
           temperature: this.temperature,

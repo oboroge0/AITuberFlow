@@ -32,7 +32,7 @@ export default class AudioPlayerNode extends BaseNode {
 
     if (!audioPath) {
       await context.log("No audio file provided", "warning");
-      return { audio: "", duration: 0 };
+      return {};
     }
 
     // Calculate duration if not provided
@@ -60,7 +60,7 @@ export default class AudioPlayerNode extends BaseNode {
       await context.emitEvent(createEvent("audio.stop", { filename: audioPath }));
     }
 
-    return { audio: audioPath, duration };
+    return {};
   }
 
   private async getAudioDuration(

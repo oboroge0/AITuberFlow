@@ -4,7 +4,7 @@
  * Generates text using Anthropic's Claude models.
  */
 
-import { BaseNode, NodeContext, createEvent, handleLLMError } from "@aituber-flow/sdk";
+import { BaseNode, NodeContext, createEvent, handleLLMError, resolveSystemPrompt } from "@aituber-flow/sdk";
 import Anthropic from "@anthropic-ai/sdk";
 
 export default class AnthropicLLMNode extends BaseNode {
@@ -60,11 +60,13 @@ export default class AnthropicLLMNode extends BaseNode {
     try {
       await context.log(`Calling Claude API (${this.model})...`);
 
+      const systemPrompt = resolveSystemPrompt(inputs.system, this.systemPrompt);
+
       const message = await this.client.messages.create({
         model: this.model,
         max_tokens: this.maxTokens,
         temperature: this.temperature,
-        system: this.systemPrompt,
+        system: systemPrompt,
         messages: [{ role: "user" as const, content: prompt }],
       });
 

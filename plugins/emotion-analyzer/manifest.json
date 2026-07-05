@@ -35,11 +35,6 @@
         "id": "intensity",
         "type": "number",
         "description": "表情の強度（0.0〜1.0）"
-      },
-      {
-        "id": "text",
-        "type": "string",
-        "description": "入力テキストのパススルー"
       }
     ],
     "events": {

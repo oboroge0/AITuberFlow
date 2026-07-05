@@ -5,14 +5,9 @@
  * Uses OpenAI-compatible API format with custom baseURL.
  */
 
-import { BaseNode, NodeContext, createEvent, handleLLMError } from "@aituber-flow/sdk";
+import { BaseNode, NodeContext, createEvent, handleLLMError, resolveSystemPrompt } from "@aituber-flow/sdk";
 import type { Event } from "@aituber-flow/sdk";
 import OpenAI from "openai";
-
-interface PromptSection {
-  type: "text" | "input";
-  content: string;
-}
 
 export default class GroqLLMNode extends BaseNode {
   private static readonly DEMO_RESPONSE =
@@ -23,7 +18,6 @@ export default class GroqLLMNode extends BaseNode {
   private systemPrompt: string = "You are a helpful assistant.";
   private temperature: number = 0.7;
   private maxTokens: number = 1024;
-  private promptSections: PromptSection[] | null = null;
 
   async setup(config: Record<string, any>, context: NodeContext): Promise<void> {
     const apiKey = config.apiKey ?? "";
@@ -33,7 +27,6 @@ export default class GroqLLMNode extends BaseNode {
     // Clamp to valid range [0, 2]
     this.temperature = Math.max(0, Math.min(2, this.temperature));
     this.maxTokens = config.maxTokens ?? 1024;
-    this.promptSections = config.promptSections ?? null;
 
     if (!apiKey) {
       await context.log(
@@ -49,33 +42,6 @@ export default class GroqLLMNode extends BaseNode {
     }
   }
 
-  private buildPromptFromSections(inputs: Record<string, any>): string {
-    if (!this.promptSections) {
-      return (inputs.prompt as string) ?? "";
-    }
-
-    const parts: string[] = [];
-    for (const section of this.promptSections) {
-      if (section.type === "text") {
-        parts.push(section.content);
-      } else if (section.type === "input") {
-        let inputValue: any = inputs[section.content] ?? "";
-        if (typeof inputValue === "object" && inputValue !== null && !Array.isArray(inputValue)) {
-          if ("message" in inputValue) {
-            inputValue = inputValue.message;
-          } else if ("text" in inputValue) {
-            inputValue = inputValue.text;
-          } else {
-            inputValue = String(inputValue);
-          }
-        }
-        parts.push(inputValue ? String(inputValue) : "");
-      }
-    }
-
-    return parts.join("\n");
-  }
-
   async execute(
     inputs: Record<string, any>,
     context: NodeContext,
@@ -85,9 +51,7 @@ export default class GroqLLMNode extends BaseNode {
       return { response: GroqLLMNode.DEMO_RESPONSE };
     }
 
-    const prompt = this.promptSections
-      ? this.buildPromptFromSections(inputs)
-      : ((inputs.prompt as string) ?? "");
+    const prompt = (inputs.prompt as string) ?? "";
 
     if (!prompt) {
       await context.log("No prompt provided", "warning");
@@ -97,18 +61,12 @@ export default class GroqLLMNode extends BaseNode {
     try {
       await context.log(`Calling Groq API (${this.model})...`);
 
-      const characterName = context.getCharacterName();
-      const characterPersonality = context.getCharacterPersonality();
-
-      let fullSystemPrompt = this.systemPrompt;
-      if (characterPersonality) {
-        fullSystemPrompt = `${this.systemPrompt}\n\nYou are ${characterName}. ${characterPersonality}`;
-      }
+      const systemPrompt = resolveSystemPrompt(inputs.system, this.systemPrompt);
 
       const response = await this.client.chat.completions.create({
         model: this.model,
         messages: [
-          { role: "system" as const, content: fullSystemPrompt },
+          { role: "system" as const, content: systemPrompt },
           { role: "user" as const, content: prompt },
         ],
         temperature: this.temperature,

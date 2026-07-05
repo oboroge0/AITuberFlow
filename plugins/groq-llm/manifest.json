@@ -20,6 +20,11 @@
   "node": {
     "inputs": [
       {
+        "id": "system",
+        "type": "string",
+        "description": "システムプロンプト（prompt-builderから）"
+      },
+      {
         "id": "prompt",
         "type": "string",
         "description": "モデルに送るプロンプト"
@@ -65,11 +70,6 @@
       "label": "System Prompt",
       "description": "The system message that sets the AI's behavior",
       "default": "You are a helpful assistant."
-    },
-    "promptSections": {
-      "type": "prompt-builder",
-      "label": "Prompt Builder",
-      "description": "Build complex prompts by combining static text, system prompt, and dynamic input sections"
     },
     "temperature": {
       "type": "number",
