@@ -9,6 +9,7 @@ import NodeSettings from '@/components/panels/NodeSettings';
 import ActivityDrawer from '@/components/panels/ActivityDrawer';
 import ExpressionPresets from '@/components/panels/ExpressionPresets';
 import MotionLibrary, { Motion } from '@/components/panels/MotionLibrary';
+import MemoryViewer from '@/components/panels/MemoryViewer';
 import { AvatarView, RendererType } from '@/components/avatar';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { useWebSocket } from '@/hooks/useWebSocket';
@@ -102,6 +103,7 @@ export default function EditorPage() {
   const [editedName, setEditedName] = useState('');
   const [showAvatarControls, setShowAvatarControls] = useState(false);
   const [avatarControlTab, setAvatarControlTab] = useState<'expression' | 'motion'>('expression');
+  const [showMemoryViewer, setShowMemoryViewer] = useState(false);
   const { t } = useTranslation();
   const nameInputRef = useRef<HTMLInputElement>(null);
   const isInitialLoad = useRef(true);
@@ -218,6 +220,14 @@ export default function EditorPage() {
 
     window.open(overlayPath, '_blank');
   }, [workflowId]);
+
+  const toggleMemoryViewer = useCallback(() => {
+    if (!workflowId || workflowId === 'new' || workflowId === '_') {
+      toast.warning(t('memories.unsavedWorkflow'));
+      return;
+    }
+    setShowMemoryViewer((prev) => !prev);
+  }, [workflowId, t]);
 
   const copyOverlayUrl = useCallback(async () => {
     if (!workflowId || workflowId === '_') return;
@@ -826,6 +836,30 @@ export default function EditorPage() {
           {t('editor.copyUrl')}
         </button>
       </div>
+
+      {/* Top-right toolbar */}
+      <div className="absolute top-5 right-5 z-10 flex items-center gap-2">
+        <button
+          onClick={toggleMemoryViewer}
+          className={`w-10 h-10 rounded-[10px] flex items-center justify-center border transition-all ${
+            showMemoryViewer
+              ? 'bg-cyan-500/30 border-cyan-500/50 text-cyan-700 dark:text-cyan-300'
+              : 'bg-cyan-500/20 border-cyan-500/50 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/30'
+          }`}
+          title={t('editor.toggleMemories')}
+          aria-label={t('editor.toggleMemories')}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9.5 2A2.5 2.5 0 0 0 7 4.5v.5a2.5 2.5 0 0 0-1.96 2.4c0 .38.08.75.22 1.08A2.5 2.5 0 0 0 4 11c0 .8.36 1.52.94 2V14a2.5 2.5 0 0 0 2.5 2.5c.19 0 .38-.02.56-.06V19a2 2 0 1 0 4 0V4.5A2.5 2.5 0 0 0 9.5 2z" />
+            <path d="M14.5 2A2.5 2.5 0 0 1 17 4.5v.5a2.5 2.5 0 0 1 1.96 2.4c0 .38-.08.75-.22 1.08A2.5 2.5 0 0 1 20 11c0 .8-.36 1.52-.94 2V14a2.5 2.5 0 0 1-2.5 2.5c-.19 0-.38-.02-.56-.06V19a2 2 0 1 1-4 0V4.5A2.5 2.5 0 0 1 14.5 2z" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Memory Viewer overlay */}
+      {showMemoryViewer && workflowId && workflowId !== 'new' && workflowId !== '_' && (
+        <MemoryViewer workflowId={workflowId} onClose={() => setShowMemoryViewer(false)} />
+      )}
 
       {/* Preview Panel - Avatar Only (shown only when avatar node exists and VRM is selected) */}
       {showPreview && (
