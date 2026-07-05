@@ -12,7 +12,7 @@
   "category": "tts",
   "ui": {
     "label": "AivisSpeech",
-    "icon": "Volume2",
+    "icon": "AudioWaveform",
     "color": "#8B5CF6",
     "bgColor": "rgba(139, 92, 246, 0.1)",
     "statusText": "Engine: AivisSpeech"

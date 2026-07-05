@@ -12,7 +12,7 @@
   "category": "avatar",
   "ui": {
     "label": "Motion Trigger",
-    "icon": "Play",
+    "icon": "Move",
     "color": "#C084FC",
     "bgColor": "rgba(192, 132, 252, 0.1)",
     "statusText": "Motion Trigger"

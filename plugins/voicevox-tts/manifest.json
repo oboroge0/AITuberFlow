@@ -12,7 +12,7 @@
   "category": "tts",
   "ui": {
     "label": "VOICEVOX",
-    "icon": "Volume2",
+    "icon": "Speaker",
     "color": "#F59E0B",
     "bgColor": "rgba(245, 158, 11, 0.1)",
     "statusText": "Engine: VOICEVOX"

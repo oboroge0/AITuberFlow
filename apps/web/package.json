@@ -16,9 +16,11 @@
     "@tauri-apps/plugin-updater": "^2.10.0",
     "@types/three": "^0.182.0",
     "@xyflow/react": "^12.0.0",
+    "lucide-react": "^1.23.0",
     "next": "^16.2.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "simple-icons": "^16.25.0",
     "three": "^0.182.0",
     "uuid": "^14.0.0",
     "zustand": "^4.5.0"

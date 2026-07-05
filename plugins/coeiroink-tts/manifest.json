@@ -12,7 +12,7 @@
   "category": "tts",
   "ui": {
     "label": "COEIROINK",
-    "icon": "Volume2",
+    "icon": "Radio",
     "color": "#E91E63",
     "bgColor": "rgba(233, 30, 99, 0.1)",
     "statusText": "Engine: COEIROINK"

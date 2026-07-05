@@ -12,9 +12,9 @@
   "category": "llm",
   "ui": {
     "label": "Claude",
-    "icon": "Cpu",
-    "color": "#D97706",
-    "bgColor": "rgba(217, 119, 6, 0.1)",
+    "icon": "si:anthropic",
+    "color": "#191919",
+    "bgColor": "rgba(25, 25, 25, 0.1)",
     "statusText": "Model: Claude"
   },
   "node": {
