@@ -13,8 +13,8 @@
   "ui": {
     "label": "OBS Scene Switch",
     "icon": "si:obsstudio",
-    "color": "#302E31",
-    "bgColor": "rgba(48, 46, 49, 0.15)",
+    "color": "#8B7CC4",
+    "bgColor": "rgba(139, 124, 196, 0.15)",
     "statusText": "OBS Scene Switch"
   },
   "node": {

@@ -13,8 +13,8 @@
   "ui": {
     "label": "Claude",
     "icon": "si:anthropic",
-    "color": "#191919",
-    "bgColor": "rgba(25, 25, 25, 0.1)",
+    "color": "#D97757",
+    "bgColor": "rgba(217, 119, 87, 0.1)",
     "statusText": "Model: Claude"
   },
   "node": {
