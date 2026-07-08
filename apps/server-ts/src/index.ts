@@ -16,6 +16,7 @@ import { templateRoutes } from "./routes/templates";
 import { setExecutor, setWSBroadcaster, workflowRoutes } from "./routes/workflows";
 import { shutdownGracefully } from "./shutdown";
 import { createWebSocketHandler, setExecutorForWS, wsBroadcaster } from "./websocket/handler";
+import { buildAllowedWsOrigins, createWsOriginGuard } from "./websocket/origin-check";
 
 const app = new Hono();
 // biome-ignore lint/suspicious/noExplicitAny: Bun ServerWebSocket requires any as data type parameter
@@ -23,6 +24,9 @@ const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket<any>>
 
 // Static file serving directory (set by Tauri for desktop mode)
 const STATIC_DIR = process.env.STATIC_DIR;
+
+const parsedPort = process.env.PORT === undefined ? Number.NaN : Number(process.env.PORT);
+const port = Number.isFinite(parsedPort) ? parsedPort : 8001;
 
 // CORS configuration
 const corsOrigins = process.env.CORS_ORIGINS
@@ -61,9 +65,13 @@ app.route("/api/integrations", integrationRoutes);
 app.route("/api/settings", settingsRoutes);
 
 // WebSocket endpoint
+// CORS does not apply to WebSocket handshakes, so validate Origin explicitly:
+// without this, any web page could connect to ws://127.0.0.1:8001/ws.
 const wsHandler = createWebSocketHandler();
+const allowedWsOrigins = buildAllowedWsOrigins(corsOrigins, port);
 app.get(
   "/ws",
+  createWsOriginGuard(allowedWsOrigins),
   upgradeWebSocket(() => wsHandler),
 );
 
@@ -113,8 +121,6 @@ if (STATIC_DIR) {
 // Initialize database on startup
 initDb();
 
-const parsedPort = process.env.PORT === undefined ? Number.NaN : Number(process.env.PORT);
-const port = Number.isFinite(parsedPort) ? parsedPort : 8001;
 // Default to localhost-only binding for security: without an explicit hostname,
 // Bun binds to 0.0.0.0 (all network interfaces), exposing unauthenticated REST/WS
 // routes to anyone on the same LAN. Set HOST=0.0.0.0 to restore LAN-wide access
