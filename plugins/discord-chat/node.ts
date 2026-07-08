@@ -70,14 +70,23 @@ export default class DiscordChatNode extends InputNode {
       ],
     });
 
-    // Set up event handlers
+    // Set up event handlers.
+    // discord.js listeners are synchronous: an async callback that rejects
+    // becomes an unhandled rejection and can bring down the whole Bun
+    // process, so every promise created here must catch its own errors.
     this.client.on("ready", () => {
       this.running = true;
-      context.log(`Discord bot connected as ${this.client!.user?.tag}`);
+      context
+        .log(`Discord bot connected as ${this.client!.user?.tag}`)
+        .catch(() => {});
     });
 
     this.client.on("messageCreate", (message: DiscordMessage) => {
-      this.handleMessage(message, context);
+      this.handleMessage(message, context).catch((e) => {
+        context
+          .log(`Failed to handle Discord message: ${String(e)}`, "error")
+          .catch(() => {});
+      });
     });
 
     // Start bot in background
