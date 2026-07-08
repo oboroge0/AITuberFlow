@@ -85,18 +85,27 @@ export default class TwitchChatNode extends InputNode {
         self: boolean,
       ) => {
         if (self) return;
-        this.handleMessage(channel, userstate, message, context);
+        // tmi.js listeners are synchronous: a rejected promise here becomes
+        // an unhandled rejection and can bring down the whole Bun process,
+        // so every promise created in these handlers must catch its own errors.
+        this.handleMessage(channel, userstate, message, context).catch((e) => {
+          context
+            .log(`Failed to handle Twitch message: ${String(e)}`, "error")
+            .catch(() => {});
+        });
       },
     );
 
     this.tmiClient.on("connected", () => {
       this.connected = true;
-      context.log(`Connected to Twitch chat: #${this.channel}`);
+      context.log(`Connected to Twitch chat: #${this.channel}`).catch(() => {});
     });
 
     this.tmiClient.on("disconnected", (reason: string) => {
       this.connected = false;
-      context.log(`Disconnected from Twitch: ${reason}`, "warning");
+      context
+        .log(`Disconnected from Twitch: ${reason}`, "warning")
+        .catch(() => {});
     });
 
     // connect() never settles while tmi.js is in its reconnect-retry loop
