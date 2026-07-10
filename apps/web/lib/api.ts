@@ -1,24 +1,27 @@
 import { Workflow, PluginManifest, ApiResponse } from './types';
+import { getApiBaseUrl, ensureDevPortResolved } from './runtimeEndpoints';
 
-// Use relative URLs in browser (proxied via Next.js rewrites)
-// Use full URL only for server-side or when explicitly set
-const API_BASE = typeof window !== 'undefined'
-  ? ''  // Browser: use relative URLs (proxied by Next.js)
-  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001');
+// Resolve the API base per request so the client follows the backend's actual
+// port. In dev mode the backend can auto-switch off 8001 (see runtimeEndpoints),
+// so we access it directly (backend CORS allows localhost:3000-3010) instead of
+// relying on Next.js rewrites, whose destination is fixed at dev-server startup.
+async function resolveApiBase(): Promise<string> {
+  if (typeof window !== 'undefined') {
+    await ensureDevPortResolved();
+    return getApiBaseUrl();
+  }
+  // Server-side (SSR): no rewrites available, use the configured URL.
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+}
 
 class ApiClient {
-  private baseUrl: string;
-
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
-  }
-
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const baseUrl = await resolveApiBase();
+      const response = await fetch(`${baseUrl}${endpoint}`, {
         ...options,
         headers: {
           'Content-Type': 'application/json',
@@ -161,7 +164,8 @@ class ApiClient {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(`${this.baseUrl}/api/integrations/models/upload`, {
+      const baseUrl = await resolveApiBase();
+      const response = await fetch(`${baseUrl}/api/integrations/models/upload`, {
         method: 'POST',
         body: formData,
         // Don't set Content-Type header - browser will set it with boundary
@@ -195,7 +199,8 @@ class ApiClient {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(`${this.baseUrl}/api/integrations/animations/upload`, {
+      const baseUrl = await resolveApiBase();
+      const response = await fetch(`${baseUrl}/api/integrations/animations/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -365,5 +370,5 @@ export interface WorkflowMemory {
   updatedAt: string;
 }
 
-export const api = new ApiClient(API_BASE);
+export const api = new ApiClient();
 export default api;

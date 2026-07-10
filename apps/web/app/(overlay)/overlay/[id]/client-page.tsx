@@ -39,11 +39,8 @@ import { useSearchParams, useParams } from 'next/navigation';
 import { AvatarView, AvatarState, RendererType } from '@/components/avatar';
 import api from '@/lib/api';
 import { resolveWorkflowId } from '@/lib/routeParams';
-import { getApiBaseUrl, getWsBaseUrl } from '@/lib/runtimeEndpoints';
+import { getApiBaseUrl, getWsBaseUrl, ensureDevPortResolved } from '@/lib/runtimeEndpoints';
 import { ReconnectingWebSocket } from '@/lib/reconnectingWebSocket';
-
-const WS_URL = getWsBaseUrl();
-const API_BASE = getApiBaseUrl();
 
 const getFullUrl = (url: string | undefined): string | undefined => {
   if (!url) return undefined;
@@ -51,7 +48,7 @@ const getFullUrl = (url: string | undefined): string | undefined => {
     return url;
   }
   if (url.startsWith('/api/')) {
-    return `${API_BASE}${url}`;
+    return `${getApiBaseUrl()}${url}`;
   }
   return url;
 };
@@ -190,12 +187,18 @@ export default function OverlayPage() {
   useEffect(() => {
     if (!workflowId || workflowId === '_') return;
 
-    const wsUrl = `${WS_URL.replace(/^http/, 'ws')}/ws`;
+    let cancelled = false;
+    let rws: ReconnectingWebSocket | null = null;
+
+    // Resolve the (possibly auto-switched) backend port before connecting.
+    ensureDevPortResolved().then(() => {
+      if (cancelled) return;
+      const wsUrl = `${getWsBaseUrl().replace(/^http/, 'ws')}/ws`;
 
     // OBS Browser Sources run unattended (no one to hit "reload"), so the
     // overlay must keep retrying forever on disconnect rather than giving
     // up after a fixed number of attempts.
-    const rws = new ReconnectingWebSocket({
+    const socket: ReconnectingWebSocket = new ReconnectingWebSocket({
       url: wsUrl,
       maxReconnectAttempts: Infinity,
       onStatusChange: (status) => {
@@ -210,7 +213,7 @@ export default function OverlayPage() {
       },
       onOpen: () => {
         console.log('[Overlay] Connected');
-        rws.send(JSON.stringify({ type: 'join', payload: { workflowId } }));
+        socket.send(JSON.stringify({ type: 'join', payload: { workflowId } }));
       },
       onMessage: (event) => {
         try {
@@ -301,7 +304,7 @@ export default function OverlayPage() {
               if (!rest.filename) break;
               const audioUrl = rest.filename.startsWith('http')
                 ? rest.filename
-                : `${API_BASE}/api/integrations/audio/${rest.filename}`;
+                : `${getApiBaseUrl()}/api/integrations/audio/${rest.filename}`;
 
               if (audioRef.current) {
                 audioRef.current.pause();
@@ -323,7 +326,7 @@ export default function OverlayPage() {
               if (!rest.filename) break;
               const playUrl = rest.filename.startsWith('http')
                 ? rest.filename
-                : `${API_BASE}/api/integrations/audio/${rest.filename}`;
+                : `${getApiBaseUrl()}/api/integrations/audio/${rest.filename}`;
 
               if (audioRef.current) {
                 audioRef.current.pause();
@@ -357,7 +360,7 @@ export default function OverlayPage() {
               if (alertData.sound) {
                 const soundUrl = alertData.sound.startsWith('http')
                   ? alertData.sound
-                  : `${API_BASE}${alertData.sound}`;
+                  : `${getApiBaseUrl()}${alertData.sound}`;
 
                 if (donationAudioRef.current) {
                   donationAudioRef.current.pause();
@@ -397,11 +400,16 @@ export default function OverlayPage() {
       },
     });
 
-    rws.connect();
+      rws = socket;
+      socket.connect();
+    });
 
     return () => {
-      rws.send(JSON.stringify({ type: 'leave', payload: { workflowId } }));
-      rws.close();
+      cancelled = true;
+      if (rws) {
+        rws.send(JSON.stringify({ type: 'leave', payload: { workflowId } }));
+        rws.close();
+      }
       if (subtitleTimerRef.current) clearTimeout(subtitleTimerRef.current);
       if (subtitleFadeTimerRef.current) clearTimeout(subtitleFadeTimerRef.current);
       if (donationTimerRef.current) clearTimeout(donationTimerRef.current);

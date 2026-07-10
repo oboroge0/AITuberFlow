@@ -21,8 +21,6 @@ import { DEFAULT_MODEL_URL } from '@/lib/constants';
 import { resolveWorkflowId } from '@/lib/routeParams';
 import { getApiBaseUrl } from '@/lib/runtimeEndpoints';
 
-const API_BASE = getApiBaseUrl();
-
 // Auto-save error throttling state (module-level to persist across re-renders)
 let lastAutoSaveError: string | null = null;
 let lastAutoSaveErrorAt: number = 0;
@@ -81,7 +79,7 @@ const getFullUrl = (url: string | undefined): string | undefined => {
   }
   // API path - prepend backend URL
   if (url.startsWith('/api/')) {
-    return `${API_BASE}${url}`;
+    return `${getApiBaseUrl()}${url}`;
   }
   return url;
 };
