@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { PluginManifest, CategoryDefinition, PluginCategory, ConfigField } from '@/lib/types';
-import { getApiBaseUrl } from '@/lib/runtimeEndpoints';
+import { getApiBaseUrl, ensureDevPortResolved } from '@/lib/runtimeEndpoints';
 
 // Default categories (fallback if API fails)
 const DEFAULT_CATEGORIES: CategoryDefinition[] = [
@@ -37,8 +37,6 @@ interface PluginState {
   getPluginConfig: (id: string) => Record<string, ConfigField> | undefined;
 }
 
-const API_BASE = getApiBaseUrl();
-
 export const usePluginStore = create<PluginState>((set, get) => ({
   plugins: [],
   categories: DEFAULT_CATEGORIES,
@@ -53,7 +51,8 @@ export const usePluginStore = create<PluginState>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const response = await fetch(`${API_BASE}/api/plugins`);
+      await ensureDevPortResolved();
+      const response = await fetch(`${getApiBaseUrl()}/api/plugins`);
       if (!response.ok) {
         throw new Error(`Failed to fetch plugins: ${response.status}`);
       }

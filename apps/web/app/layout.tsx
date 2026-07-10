@@ -1,5 +1,6 @@
 import './globals.css';
 import ToastContainer from '@/components/ui/ToastContainer';
+import PortSwitchNotice from '@/components/ui/PortSwitchNotice';
 
 /**
  * Root Layout
@@ -29,6 +30,7 @@ export default function RootLayout({
       <body suppressHydrationWarning>
         {children}
         <ToastContainer />
+        <PortSwitchNotice />
       </body>
     </html>
   );

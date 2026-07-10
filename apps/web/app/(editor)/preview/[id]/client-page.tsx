@@ -7,12 +7,9 @@ import api, { ModelInfo } from '@/lib/api';
 import { Workflow } from '@/lib/types';
 import { DEFAULT_MODEL_URL } from '@/lib/constants';
 import { resolveWorkflowId } from '@/lib/routeParams';
-import { getApiBaseUrl, getWsBaseUrl } from '@/lib/runtimeEndpoints';
+import { getApiBaseUrl, getWsBaseUrl, ensureDevPortResolved } from '@/lib/runtimeEndpoints';
 import { useTranslation } from '@/stores/localeStore';
 import { toast } from '@/stores/toastStore';
-
-const WS_URL = getWsBaseUrl();
-const API_BASE = getApiBaseUrl();
 
 // Helper to get full URL (backend serves uploaded files)
 const getFullUrl = (url: string | undefined): string | undefined => {
@@ -23,7 +20,7 @@ const getFullUrl = (url: string | undefined): string | undefined => {
   }
   // If it's an API path, prepend the API base
   if (url.startsWith('/api/')) {
-    return `${API_BASE}${url}`;
+    return `${getApiBaseUrl()}${url}`;
   }
   return url;
 };
@@ -134,10 +131,19 @@ export default function PreviewPage() {
   useEffect(() => {
     if (!workflowId || workflowId === '_') return;
 
-    const wsUrl = `${WS_URL.replace(/^http/, 'ws')}/ws`;
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
+    let cancelled = false;
+    let ws: WebSocket | null = null;
 
+    // Resolve the (possibly auto-switched) backend port before connecting.
+    ensureDevPortResolved().then(() => {
+      if (cancelled) return;
+      const wsUrl = `${getWsBaseUrl().replace(/^http/, 'ws')}/ws`;
+      ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
+      attachHandlers(ws);
+    });
+
+    function attachHandlers(ws: WebSocket) {
     ws.onopen = () => {
       console.log('Connected to WebSocket');
       setConnected(true);
@@ -175,7 +181,7 @@ export default function PreviewPage() {
             break;
           case 'audio':
             if (rest.filename) {
-              const audioUrl = `${API_BASE}/api/integrations/audio/${rest.filename}`;
+              const audioUrl = `${getApiBaseUrl()}/api/integrations/audio/${rest.filename}`;
               console.log('Playing audio:', audioUrl);
               if (audioRef.current) {
                 audioRef.current.pause();
@@ -198,12 +204,16 @@ export default function PreviewPage() {
         console.warn('Failed to parse WebSocket message:', err);
       }
     };
+    }
 
     return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'leave', payload: { workflowId } }));
+      cancelled = true;
+      if (ws) {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'leave', payload: { workflowId } }));
+        }
+        ws.close();
       }
-      ws.close();
       wsRef.current = null;
       if (audioRef.current) {
         audioRef.current.pause();

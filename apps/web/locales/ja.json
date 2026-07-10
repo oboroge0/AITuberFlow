@@ -587,5 +587,8 @@
     "detailSettings": "詳細設定",
     "openDetailSettings": "詳細設定を開く",
     "runFromNode": "このノードから実行"
+  },
+  "portNotice": {
+    "message": "ポート 8001 が使用中だったため、ポート {port} で起動しました"
   }
 }

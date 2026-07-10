@@ -587,5 +587,8 @@
     "detailSettings": "Detail Settings",
     "openDetailSettings": "Open detail settings",
     "runFromNode": "Run from this node"
+  },
+  "portNotice": {
+    "message": "Port 8001 was in use, so the server started on port {port}"
   }
 }

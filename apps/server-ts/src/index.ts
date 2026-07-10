@@ -8,6 +8,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { initDb } from "./db/database";
 import { WorkflowExecutor } from "./engine/executor";
+import { healthPayload, resolvePort } from "./port";
 import { integrationRoutes } from "./routes/integrations";
 import { memoryRoutes } from "./routes/memories";
 import { pluginRoutes } from "./routes/plugins";
@@ -49,8 +50,35 @@ setExecutor(executor);
 setWSBroadcaster(wsBroadcaster);
 setExecutorForWS(executor);
 
-// Health check
-app.get("/health", (c) => c.json({ status: "healthy", version: "2.0.0", runtime: "bun" }));
+// Resolve the bind port BEFORE any handler that reports it (e.g. /health) so
+// the whole app closes over a single, settled port value.
+//
+// - Explicit PORT (e.g. desktop mode / PORT=9000): use it as-is, no auto-switch.
+// - Otherwise: scan 8001..8010 for the first free port so `bun run dev` no
+//   longer fails when 8001 is already in use.
+//
+// Default to localhost-only binding for security: without an explicit hostname,
+// Bun binds to 0.0.0.0 (all network interfaces), exposing unauthenticated
+// REST/WS routes to anyone on the same LAN. Set HOST=0.0.0.0 to restore
+// LAN-wide access (e.g. when OBS or the browser overlay runs on another machine).
+const hostname = process.env.HOST || "127.0.0.1";
+const resolved = resolvePort({
+  portEnv: process.env.PORT,
+  // Reused across --hot reloads within the same process so the port stays put.
+  reusePort: process.env.AITUBERFLOW_RESOLVED_PORT,
+  hostname,
+});
+const port = resolved.port;
+// Persist the chosen port so --hot reloads reuse it instead of re-scanning.
+process.env.AITUBERFLOW_RESOLVED_PORT = String(port);
+if (resolved.switched && !resolved.explicit) {
+  console.log(
+    `[port] Default port ${resolved.defaultPort} was in use; started on port ${port} instead`,
+  );
+}
+
+// Health check (reports the actual port + default so the frontend can detect a switch)
+app.get("/health", (c) => c.json(healthPayload(port, resolved.defaultPort)));
 
 // API routes (must be registered BEFORE static file serving)
 app.route("/api/workflows", workflowRoutes);
@@ -113,13 +141,6 @@ if (STATIC_DIR) {
 // Initialize database on startup
 initDb();
 
-const parsedPort = process.env.PORT === undefined ? Number.NaN : Number(process.env.PORT);
-const port = Number.isFinite(parsedPort) ? parsedPort : 8001;
-// Default to localhost-only binding for security: without an explicit hostname,
-// Bun binds to 0.0.0.0 (all network interfaces), exposing unauthenticated REST/WS
-// routes to anyone on the same LAN. Set HOST=0.0.0.0 to restore LAN-wide access
-// (e.g. when OBS or the browser overlay runs on a different machine).
-const hostname = process.env.HOST || "127.0.0.1";
 console.log(`Started development server: http://${hostname}:${port}`);
 
 // Graceful shutdown handler

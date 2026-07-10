@@ -1,10 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { AvatarState } from '@/components/avatar';
-import { getApiBaseUrl, getWsBaseUrl } from '@/lib/runtimeEndpoints';
-
-const WS_URL = getWsBaseUrl();
-const API_URL = getApiBaseUrl();
+import { getApiBaseUrl, getWsBaseUrl, ensureDevPortResolved } from '@/lib/runtimeEndpoints';
 
 // Reconnection settings with exponential backoff
 const INITIAL_RECONNECT_DELAY = 1000; // 1 second
@@ -50,8 +47,8 @@ export function useWebSocket(workflowId: string | null) {
     let intentionalClose = false;
 
     function getWsUrl(): string {
-      // Convert http(s):// to ws(s)://
-      const base = WS_URL.replace(/^http/, 'ws');
+      // Read the (possibly auto-switched) port lazily at connect time.
+      const base = getWsBaseUrl().replace(/^http/, 'ws');
       return `${base}/ws`;
     }
 
@@ -233,7 +230,7 @@ export function useWebSocket(workflowId: string | null) {
 
         case 'audio':
           if (rest.filename) {
-            const audioUrl = `${API_URL}/api/integrations/audio/${rest.filename}`;
+            const audioUrl = `${getApiBaseUrl()}/api/integrations/audio/${rest.filename}`;
             addLog({
               level: 'info',
               message: `${audioRef.current ? 'Queued' : 'Playing'} audio: ${rest.text?.substring(0, 30) || 'audio'}...`,
@@ -272,7 +269,11 @@ export function useWebSocket(workflowId: string | null) {
       }
     }
 
-    connect();
+    // Ensure the backend port is resolved before the first connection so we
+    // don't attempt ws://localhost:8001 when the server auto-switched ports.
+    ensureDevPortResolved().then(() => {
+      if (!intentionalClose) connect();
+    });
 
     return () => {
       intentionalClose = true;
